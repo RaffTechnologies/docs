@@ -1,68 +1,99 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Raff Cloud Platform",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "baseUrl": "https://api.rafftechnologies.com",
+    "auth": {
+      "method": "key",
+      "name": "X-API-Key"
+    },
+    "playground": {
+      "mode": "simple"
+    }
+  },
+  "openapi": ["/api-reference/openapi.yaml"],
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "authentication"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Guides",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/create-your-first-vm"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
-              "api-reference/introduction"
+              "reference/introduction"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "APIs",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/introduction",
+              {
+                "group": "Virtual Machines",
+                "pages": [
+                  "api-reference/endpoint/list-vms",
+                  "api-reference/endpoint/create-vm",
+                  "api-reference/endpoint/get-vm",
+                  "api-reference/endpoint/delete-vm",
+                  "api-reference/endpoint/start-vm",
+                  "api-reference/endpoint/stop-vm",
+                  "api-reference/endpoint/reboot-vm",
+                  "api-reference/endpoint/resize-vm"
+                ]
+              },
+              {
+                "group": "Volumes",
+                "pages": ["api-reference/volumes/introduction"]
+              },
+              {
+                "group": "Snapshots",
+                "pages": ["api-reference/snapshots/introduction"]
+              },
+              {
+                "group": "Backups",
+                "pages": ["api-reference/backups/introduction"]
+              }
+            ]
+          },
+          {
+            "group": "CLI",
+            "pages": [
+              "reference/cli/introduction"
+            ]
+          },
+          {
+            "group": "Terraform",
+            "pages": [
+              "reference/terraform/introduction"
             ]
           }
         ]
@@ -71,52 +102,36 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Dashboard",
+          "href": "https://app.rafftechnologies.com",
+          "icon": "gauge"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "mailto:support@rafftechnologies.com",
+          "icon": "envelope"
         }
       ]
     }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@rafftechnologies.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://app.rafftechnologies.com"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/rafftechnologies",
+      "github": "https://github.com/rafftechnologies",
+      "linkedin": "https://linkedin.com/company/rafftechnologies"
     }
   }
 }

@@ -1,0 +1,656 @@
+openapi: 3.0.3
+info:
+  title: Raff Cloud Platform API
+  description: |
+    REST API for managing cloud infrastructure on the Raff Cloud Platform.
+
+    ## Authentication
+    All endpoints require authentication via API key.
+
+    ### API Key Authentication
+    Use the `X-API-Key` header with your API key:
+
+    Include your API key in the `X-API-Key` header:
+      ```
+      curl -H "X-API-Key: YOUR_API_KEY" https://api.rafftechnologies.com/api/v1/vms
+      ```
+
+  version: 1.0.0
+  contact:
+    name: Raff Technologies
+    url: https://rafftechnologies.com
+
+servers:
+  - url: https://api.raffcomputing.com
+    description: Development
+  - url: https://api.rafftechnologies.com
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Virtual Machines
+    description: Create, manage, and control virtual machines
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the API gateway. No authentication required.
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+  /api/v1/vms:
+    get:
+      tags:
+        - Virtual Machines
+      summary: List VMs
+      description: List all virtual machines for the authenticated account.
+      operationId: listVMs
+      parameters:
+        - name: project_id
+          in: query
+          description: Filter by project ID
+          schema:
+            type: string
+            format: uuid
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by VM status
+          schema:
+            type: string
+            enum: [active, passive, provisioning, booting, initiating, finalizing, failure]
+        - name: limit
+          in: query
+          description: Maximum number of VMs to return
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of VMs to skip for pagination
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of VMs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VM'
+                  total:
+                    type: integer
+                    description: Total number of VMs matching the query
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Virtual Machines
+      summary: Create VM
+      description: |
+        Create a new virtual machine with automatic VPC network setup.
+
+        ## VPC Network Options
+
+        Each VM is automatically attached to a VPC for secure private networking.
+        You can control which VPC the VM joins using these options (in priority order):
+
+        1. **Use existing VPC** (`vpc_id`): Attach to an existing VPC
+        2. **Create custom VPC** (`vpc_name` + `vpc_cidr`): Create a new VPC with your preferred name and CIDR
+        3. **Auto-create VPC** (default): Creates a VPC named `vpc-{vm-name}` with auto-assigned /24 CIDR
+
+        ## Billing Checks
+
+        Before creating a VM, the following validations are performed:
+        - Account billing status (not banned, no failed payments)
+        - Active payment method exists
+        - Activation deposit paid (if trial completed)
+        - Account VM/RAM limits not exceeded
+      operationId: createVM
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVMRequest'
+      responses:
+        '201':
+          description: VM created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VM'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+        '503':
+          $ref: '#/components/responses/ResourcesUnavailable'
+
+  /api/v1/vms/{id}:
+    get:
+      tags:
+        - Virtual Machines
+      summary: Get VM
+      description: Get details of a specific virtual machine.
+      operationId: getVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+      responses:
+        '200':
+          description: VM details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VM'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Virtual Machines
+      summary: Delete VM
+      description: Permanently delete a virtual machine and release all associated resources.
+      operationId: deleteVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VM deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/start:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Start VM
+      description: Start a stopped virtual machine.
+      operationId: startVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VM started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/stop:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Stop VM
+      description: Stop a running virtual machine. The VM will retain its resources and can be started again.
+      operationId: stopVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VM stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/reboot:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Reboot VM
+      description: Reboot a running virtual machine.
+      operationId: rebootVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VM rebooted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/resize:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Resize VM
+      description: Resize a virtual machine's CPU and RAM allocation. The VM must be stopped before resizing.
+      operationId: resizeVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResizeVMRequest'
+      responses:
+        '200':
+          description: VM resized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication. Each key is bound to a specific account.
+  parameters:
+    VMIDPath:
+      name: id
+      in: path
+      required: true
+      description: VM ID (UUID)
+      schema:
+        type: string
+        format: uuid
+    ProjectIDHeader:
+      name: X-Project-ID
+      in: header
+      required: true
+      description: Project ID. Required for all mutating operations (create, delete, power actions, resize).
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    BillingError:
+      type: object
+      description: Billing validation error response
+      properties:
+        error:
+          type: string
+          example: Billing validation failed
+        message:
+          type: string
+          example: Payment failed. Please update your payment method.
+        reason:
+          type: string
+          description: Machine-readable reason code
+          enum:
+            - no_billing_customer
+            - banned
+            - failed
+            - no_payment_method
+            - activation_required
+            - vm_limit_exceeded
+            - resources_unavailable
+        amount_needed:
+          type: number
+          description: Amount needed for activation (only present when reason is activation_required)
+          example: 10.00
+
+    VM:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique VM identifier
+        name:
+          type: string
+          description: VM display name
+          example: my-ubuntu-server
+        status:
+          type: string
+          enum: [active, passive, provisioning, booting, initiating, finalizing, failure]
+          description: Current VM status
+        cpu:
+          type: integer
+          description: Number of vCPU cores
+          example: 2
+        ram:
+          type: integer
+          description: RAM in GB
+          example: 4
+        storage:
+          type: integer
+          description: Base storage in GB
+          example: 80
+        added_storage:
+          type: integer
+          description: Additional storage in GB
+          example: 0
+        total_storage:
+          type: integer
+          description: Total storage (base + added) in GB
+          example: 80
+        template_id:
+          type: string
+          format: uuid
+          description: OS template ID used to create this VM
+        template_name:
+          type: string
+          description: OS template name
+          example: Ubuntu
+        template_version:
+          type: string
+          description: OS template version
+          example: "24.10x64"
+        vm_id:
+          type: integer
+          description: Internal VM identifier
+        version:
+          type: string
+          description: VM version
+        price_per_hour:
+          type: string
+          description: Hourly billing rate in USD
+          example: "0.027764"
+        pricing_id:
+          type: integer
+          description: Pricing plan ID
+          example: 3
+        created_by:
+          type: string
+          description: User ID who created this VM
+        billing_type:
+          type: string
+          description: Billing type for this VM
+          enum: [payg, subscription]
+          example: payg
+        subscription_id:
+          type: string
+          format: uuid
+          description: Subscription ID if billing_type is subscription
+        backup_type:
+          type: string
+          description: Backup schedule type
+          nullable: true
+          example: weekly
+        region:
+          type: string
+          description: Data center region
+          example: us-east
+        project_id:
+          type: string
+          format: uuid
+          description: Project this VM belongs to
+        reserved_ip:
+          type: string
+          description: Reserved IP address
+          nullable: true
+        public_ipv4_address:
+          type: string
+          description: Public IPv4 address
+          example: "15.204.178.3"
+        public_ipv6_address:
+          type: string
+          description: Public IPv6 address
+          nullable: true
+        private_ipv4_address:
+          type: string
+          description: Private IPv4 address (VPC)
+          example: "10.10.0.96"
+        private_ipv6_address:
+          type: string
+          description: Private IPv6 address
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          description: Custom tags
+        active:
+          type: boolean
+          description: Whether the VM is active
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVMRequest:
+      type: object
+      required:
+        - name
+        - template_id
+        - pricing_id
+        - region
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: VM display name
+          example: my-ubuntu-server
+        project_id:
+          type: string
+          format: uuid
+          description: Project to assign VM to
+        template_id:
+          type: string
+          format: uuid
+          description: OS template ID
+          example: "5ac21891-32e6-41ce-8a93-b5d6ab708b0d"
+        pricing_id:
+          type: integer
+          minimum: 1
+          maximum: 13
+          description: Pricing plan ID (1-13) that determines vCPU, RAM, storage, and bandwidth
+          example: 3
+        region:
+          type: string
+          description: Data center region
+          example: us-east
+        ssh_keys:
+          type: array
+          items:
+            type: string
+          description: SSH public keys for VM access
+        password:
+          type: string
+          description: Optional root password
+        extra_storage:
+          type: integer
+          minimum: 0
+          description: Additional storage in GB
+          example: 100
+        extra_storage_type:
+          type: string
+          enum: [ext4, xfs, btrfs]
+          description: Filesystem type for extra storage
+          example: ext4
+        backup_type:
+          type: string
+          enum: [none, daily, weekly, monthly]
+          description: Backup schedule type
+          example: weekly
+        backup_time:
+          type: string
+          description: Backup time (e.g., "8am")
+          example: "8am"
+        backup_date:
+          type: string
+          description: Backup day for weekly/monthly schedules
+          example: Saturday
+        tags:
+          type: array
+          items:
+            type: string
+          description: Custom tags for the VM
+        vpc_id:
+          type: string
+          format: uuid
+          description: Attach to an existing VPC
+        vpc_name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Create a new VPC with this name (requires vpc_cidr)
+          example: my-custom-vpc
+        vpc_cidr:
+          type: string
+          description: CIDR block for new VPC (requires vpc_name)
+          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+          example: "10.0.1.0/24"
+
+    ResizeVMRequest:
+      type: object
+      properties:
+        cpu:
+          type: integer
+          minimum: 1
+          maximum: 64
+          description: New number of vCPU cores
+        ram:
+          type: integer
+          minimum: 1
+          maximum: 512
+          description: New RAM allocation in GB
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BillingValidationFailed:
+      description: |
+        Billing validation failed. Check the `reason` field for details:
+        - `no_billing_customer`: No billing account found
+        - `banned`: Account has been suspended
+        - `failed`: Payment failed, update payment method
+        - `no_payment_method`: No active payment method
+        - `activation_required`: Activation deposit needed
+        - `vm_limit_exceeded`: Account VM/RAM limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BillingError'
+    MissingProjectID:
+      description: X-Project-ID header is required for this endpoint
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Bad Request
+            message: X-Project-ID required
+    ResourcesUnavailable:
+      description: System resources temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BillingError'

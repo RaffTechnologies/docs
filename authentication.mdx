@@ -1,0 +1,78 @@
+---
+title: Authentication
+description: Authenticate with the Raff Cloud Platform API
+---
+
+All API endpoints (except `/health` and `/ready`) require authentication via API key.
+
+## API Key Authentication
+
+Pass your API key in the `X-API-Key` header. Each key is bound to a specific account.
+
+```bash
+curl -H "X-API-Key: YOUR_API_KEY" \
+  https://api.rafftechnologies.com/api/v1/vms
+```
+
+## Required Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-API-Key` | Always | Your API key for authentication |
+| `X-Project-ID` | Mutating endpoints | Project ID for create, delete, power actions, resize, and other write operations |
+
+Mutating operations (POST, DELETE, PATCH) return `400 Bad Request` with `"X-Project-ID required"` if this header is missing.
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/vms \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "X-Project-ID: YOUR_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-vm", "template_id": "<template-uuid>", "pricing_id": 1, "region": "us-east"}'
+```
+
+## Response Format
+
+API responses return the same standard fields:
+
+```json
+{
+  "id": "69590a15-...",
+  "name": "ubuntu-2cpu-4gb-01",
+  "status": "active",
+  "cpu": 2,
+  "ram": 4,
+  "storage": 80,
+  "public_ipv4_address": "15.204.178.3",
+  "price_per_hour": "0.027764",
+  "pricing_id": 3,
+  "billing_type": "payg",
+  "region": "us-east",
+  "created_at": "2025-07-12T02:36:56Z"
+}
+```
+
+## Managing API Keys
+
+API keys are managed from the [Raff Dashboard](https://app.rafftechnologies.com):
+
+1. Navigate to **Settings** > **API Keys**
+2. Click **Create API Key**
+3. Name your key and click **Create**
+4. Copy the key immediately - it's only shown once
+
+<Warning>
+  Store your API keys securely. Never commit them to version control or expose them in client-side code.
+</Warning>
+
+## Rate Limiting
+
+API requests are rate limited per API key:
+
+| Tier | Requests/sec | Burst |
+|------|-------------|-------|
+| Standard | 50 | 100 |
+| High | 200 | 500 |
+| Unlimited | No limit | No limit |
+
+When rate limited, the API returns `429 Too Many Requests`. Implement exponential backoff in your applications.

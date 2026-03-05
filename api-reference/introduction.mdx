@@ -1,33 +1,146 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: API Reference
+description: Complete reference for the Raff Cloud Platform REST API
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Base URL
 
-## Welcome
-
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://api.rafftechnologies.com
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints require an `X-API-Key` header with your API key.
+
+See [Authentication](/authentication) for details.
+
+## Required Headers
+
+| Header | When Required | Description |
+|--------|--------------|-------------|
+| `X-API-Key` | All endpoints | Your API key for authentication |
+| `X-Project-ID` | Mutating endpoints (POST, DELETE, PATCH) | Project ID for write operations |
+| `Content-Type` | Requests with a body | Must be `application/json` |
+
+Mutating endpoints return `400 Bad Request` if `X-Project-ID` is missing.
+
+## Request Format
+
+- All request bodies must be JSON with `Content-Type: application/json`
+- Query parameters are used for filtering and pagination
+- Path parameters use UUIDs (e.g., `/api/v1/vms/{id}`)
+
+## Response Format
+
+All responses follow a consistent structure:
+
+### Success Response
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation completed successfully"
+}
 ```
+
+### List Response
+
+```json
+{
+  "data": [ ... ],
+  "total": 42
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Error type",
+  "message": "Human-readable description"
+}
+```
+
+## HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `201` | Resource created |
+| `400` | Invalid request parameters |
+| `401` | Authentication required |
+| `403` | Access denied or billing validation failed |
+| `404` | Resource not found |
+| `429` | Rate limit exceeded |
+| `500` | Internal server error |
+| `503` | Resources temporarily unavailable |
+
+## Pagination
+
+List endpoints support pagination via query parameters:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `limit` | 20 | Maximum items to return |
+| `offset` | 0 | Number of items to skip |
+
+```bash
+# Get page 2 with 10 items per page
+curl -H "X-API-Key: YOUR_API_KEY" \
+  "https://api.rafftechnologies.com/api/v1/vms?limit=10&offset=10"
+```
+
+## Available Endpoints
+
+### Virtual Machines
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/vms` | [List VMs](/api-reference/endpoint/list-vms) |
+| `POST` | `/api/v1/vms` | [Create VM](/api-reference/endpoint/create-vm) |
+| `GET` | `/api/v1/vms/{id}` | [Get VM](/api-reference/endpoint/get-vm) |
+| `DELETE` | `/api/v1/vms/{id}` | [Delete VM](/api-reference/endpoint/delete-vm) |
+| `POST` | `/api/v1/vms/{id}/start` | [Start VM](/api-reference/endpoint/start-vm) |
+| `POST` | `/api/v1/vms/{id}/stop` | [Stop VM](/api-reference/endpoint/stop-vm) |
+| `POST` | `/api/v1/vms/{id}/reboot` | [Reboot VM](/api-reference/endpoint/reboot-vm) |
+| `POST` | `/api/v1/vms/{id}/resize` | [Resize VM](/api-reference/endpoint/resize-vm) |
+
+### Volumes
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/volumes` | List volumes |
+| `POST` | `/api/v1/volumes` | Create a volume |
+| `GET` | `/api/v1/volumes/{id}` | Get volume details |
+| `DELETE` | `/api/v1/volumes/{id}` | Delete a volume |
+| `PATCH` | `/api/v1/volumes/{id}` | Resize a volume |
+| `POST` | `/api/v1/volumes/{id}/attach` | Attach to a VM |
+| `POST` | `/api/v1/volumes/{id}/detach` | Detach from a VM |
+
+### Snapshots
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/snapshots` | List snapshots |
+| `POST` | `/api/v1/snapshots` | Create a snapshot |
+| `GET` | `/api/v1/snapshots/{id}` | Get snapshot details |
+| `DELETE` | `/api/v1/snapshots/{id}` | Delete a snapshot |
+| `POST` | `/api/v1/snapshots/{id}/restore` | Restore a snapshot |
+| `PATCH` | `/api/v1/snapshots/{id}/rename` | Rename a snapshot |
+
+### Backups
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/backups` | List backups |
+| `POST` | `/api/v1/backups` | Create a backup |
+| `GET` | `/api/v1/backups/{id}` | Get backup details |
+| `DELETE` | `/api/v1/backups/{id}` | Delete a backup |
+| `POST` | `/api/v1/backups/{id}/restore` | Restore a backup |
+| `GET` | `/api/v1/backup-schedules` | List backup schedules |
+| `POST` | `/api/v1/backup-schedules` | Create a schedule |
+| `GET` | `/api/v1/backup-schedules/{id}` | Get schedule details |
+| `DELETE` | `/api/v1/backup-schedules/{id}` | Delete a schedule |
+| `PATCH` | `/api/v1/backup-schedules/{id}` | Update a schedule |
