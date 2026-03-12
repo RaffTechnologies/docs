@@ -15,6 +15,13 @@ info:
       curl -H "X-API-Key: YOUR_API_KEY" https://api.rafftechnologies.com/api/v1/vms
       ```
 
+    ## Regions
+    Available data center regions:
+
+    | Region | Location |
+    |--------|----------|
+    | `us-east` | US East |
+
   version: 1.0.0
   contact:
     name: Raff Technologies
@@ -32,6 +39,8 @@ security:
 tags:
   - name: Health
     description: Health check endpoints
+  - name: Projects
+    description: Organize resources into projects for billing and access control
   - name: Virtual Machines
     description: Create, manage, and control virtual machines
 
@@ -56,6 +65,154 @@ paths:
                     type: string
                     example: healthy
 
+  /api/v1/projects:
+    get:
+      tags:
+        - Projects
+      summary: List projects
+      description: List all projects for the authenticated account.
+      operationId: listProjects
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of projects to return
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          description: Number of projects to skip for pagination
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  total:
+                    type: integer
+                    description: Total number of projects
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Projects
+      summary: Create project
+      description: Create a new project within the authenticated account.
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/projects/{id}:
+    get:
+      tags:
+        - Projects
+      summary: Get project
+      description: Get details of a specific project.
+      operationId: getProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Projects
+      summary: Update project
+      description: Update an existing project's settings.
+      operationId: updateProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete project
+      description: Delete a project. The project must not contain any active resources.
+      operationId: deleteProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+      responses:
+        '200':
+          description: Project deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/vms:
     get:
       tags:
@@ -75,6 +232,7 @@ paths:
           description: Filter by region
           schema:
             type: string
+            enum: [us-east]
         - name: status
           in: query
           description: Filter by VM status
@@ -327,6 +485,14 @@ components:
       schema:
         type: string
         format: uuid
+    ProjectIDPath:
+      name: id
+      in: path
+      required: true
+      description: Project ID (UUID)
+      schema:
+        type: string
+        format: uuid
     ProjectIDHeader:
       name: X-Project-ID
       in: header
@@ -461,6 +627,7 @@ components:
           example: weekly
         region:
           type: string
+          enum: [us-east]
           description: Data center region
           example: us-east
         project_id:
@@ -533,6 +700,7 @@ components:
           example: 3
         region:
           type: string
+          enum: [us-east]
           description: Data center region
           example: us-east
         ssh_keys:
@@ -600,6 +768,86 @@ components:
           minimum: 1
           maximum: 512
           description: New RAM allocation in GB
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique project identifier
+        account_id:
+          type: string
+          format: uuid
+          description: Account this project belongs to
+        name:
+          type: string
+          description: Project name
+          example: production
+        slug:
+          type: string
+          description: URL-friendly project identifier
+          example: production
+        description:
+          type: string
+          description: Project description
+        default_region:
+          type: string
+          enum: [us-east]
+          description: Default region for resources in this project
+          example: us-east
+        is_default:
+          type: boolean
+          description: Whether this is the account's default project
+        is_active:
+          type: boolean
+          description: Whether the project is active
+        created_by:
+          type: string
+          format: uuid
+          description: User who created the project
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Project name
+          example: production
+        description:
+          type: string
+          description: Project description
+        default_region:
+          type: string
+          enum: [us-east]
+          description: Default region for resources
+          example: us-east
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Project name
+        description:
+          type: string
+          description: Project description
+        default_region:
+          type: string
+          enum: [us-east]
+          description: Default region for resources
+          example: us-east
 
   responses:
     BadRequest:

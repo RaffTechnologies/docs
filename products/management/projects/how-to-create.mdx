@@ -1,0 +1,72 @@
+---
+title: How to Create Projects
+description: Create new projects to organize your Raff Cloud resources
+---
+
+## Overview
+
+Projects are containers for organizing your cloud resources. Create separate projects for different environments (production, staging, development) or teams.
+
+## Prerequisites
+
+```bash
+export RAFF_API_KEY="YOUR_API_KEY"
+```
+
+## Create a Project
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/projects \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "my-project",
+    "description": "A description of this project"
+  }'
+```
+
+### Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Project name (must be unique within your account) |
+| `description` | string | No | Optional description of the project's purpose |
+
+## Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "my-project",
+    "description": "A description of this project",
+    "created_at": "2026-03-12T10:00:00Z"
+  }
+}
+```
+
+## Using Your Project
+
+Once created, pass the project ID in the `X-Project-ID` header for all resource operations:
+
+```bash
+export RAFF_PROJECT_ID="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+curl -X POST https://api.rafftechnologies.com/api/v1/vms \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+## Best Practices
+
+- **One project per environment** — Separate production, staging, and development resources
+- **Descriptive names** — Use clear names like `prod-backend` or `staging-frontend`
+- **Add descriptions** — Document the purpose of each project for team clarity
+
+## Next Steps
+
+- [Move Resources](/products/management/projects/how-to-move-resources) — Move existing resources between projects
+- [API Reference: Create Project](/api-reference/projects/create-project) — Full API specification

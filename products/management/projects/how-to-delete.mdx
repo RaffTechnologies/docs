@@ -1,0 +1,46 @@
+---
+title: How to Delete Projects
+description: Remove projects from your Raff Cloud account
+---
+
+## Overview
+
+Delete projects that are no longer needed. Before deleting a project, you should move or delete all resources within it.
+
+## Prerequisites
+
+```bash
+export RAFF_API_KEY="YOUR_API_KEY"
+```
+
+## Step 1: Check Project Resources
+
+Before deleting, verify the project has no remaining resources:
+
+```bash
+curl -H "X-API-Key: $RAFF_API_KEY" \
+  https://api.rafftechnologies.com/api/v1/projects/{project-id}
+```
+
+## Step 2: Move or Delete Resources
+
+If the project still contains resources, either:
+
+- **Move them** to another project ([how to move resources](/products/management/projects/how-to-move-resources))
+- **Delete them** individually (VMs, volumes, snapshots, etc.)
+
+## Step 3: Delete the Project
+
+```bash
+curl -X DELETE -H "X-API-Key: $RAFF_API_KEY" \
+  https://api.rafftechnologies.com/api/v1/projects/{project-id}
+```
+
+<Warning>
+  Deleting a project is permanent and cannot be undone. Ensure all resources have been moved or deleted first.
+</Warning>
+
+## Next Steps
+
+- [Create Projects](/products/management/projects/how-to-create) — Create a new project
+- [API Reference: Delete Project](/api-reference/projects/delete-project) — Full API specification

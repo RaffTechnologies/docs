@@ -1,0 +1,69 @@
+---
+title: How to Resize Virtual Machines
+description: Scale CPU and RAM resources on your Raff Cloud VMs
+---
+
+## Overview
+
+Resizing a VM allows you to change its CPU and RAM allocation. This is useful when your workload requirements change and you need more or fewer resources.
+
+## Prerequisites
+
+- The VM must be **stopped** before resizing
+- An API key and project ID
+
+```bash
+export RAFF_API_KEY="YOUR_API_KEY"
+export RAFF_PROJECT_ID="YOUR_PROJECT_ID"
+```
+
+## Step 1: Stop the VM
+
+Resizing requires the VM to be in `passive` (stopped) state:
+
+```bash
+curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  https://api.rafftechnologies.com/api/v1/vms/{vm-id}/stop
+```
+
+## Step 2: Resize the VM
+
+Change the CPU and RAM allocation:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/vms/{vm-id}/resize \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"cpu": 4, "ram": 8}'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `cpu` | integer | New vCPU count |
+| `ram` | integer | New RAM in GB |
+
+<Note>
+  Resizing changes your hourly billing rate. The new rate takes effect immediately after the resize completes.
+</Note>
+
+## Step 3: Start the VM
+
+Start the VM with its new resources:
+
+```bash
+curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  https://api.rafftechnologies.com/api/v1/vms/{vm-id}/start
+```
+
+## Important Notes
+
+- **Storage cannot be reduced** — you can only increase storage, not decrease it
+- **IP address is preserved** — resizing does not change your VM's public or private IP
+- **Data is preserved** — all data on the VM is retained during resize
+- **Billing changes immediately** — the new `price_per_hour` applies as soon as the resize completes
+
+## Next Steps
+
+- [Manage VMs](/products/build/virtual-machines/how-to-manage) — Start, stop, and reboot
+- [API Reference: Resize VM](/api-reference/endpoint/resize-vm) — Full API specification

@@ -1,0 +1,79 @@
+---
+title: "Quickstart: Projects"
+description: Create your first project and organize resources on Raff Cloud
+---
+
+Projects help you organize your Raff Cloud resources into logical groups. This guide gets you started in 2 minutes.
+
+## Prerequisites
+
+- A Raff Cloud Platform account
+- An API key ([how to get one](/authentication))
+
+```bash
+export RAFF_API_KEY="YOUR_API_KEY"
+```
+
+## Step 1: Create a Project
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/projects \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "production",
+    "description": "Production environment resources"
+  }'
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "production",
+    "description": "Production environment resources",
+    "created_at": "2026-03-12T10:00:00Z"
+  }
+}
+```
+
+## Step 2: Use the Project
+
+Pass the project ID in the `X-Project-ID` header when creating or managing resources:
+
+```bash
+export RAFF_PROJECT_ID="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+# Create a VM in this project
+curl -X POST https://api.rafftechnologies.com/api/v1/vms \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "prod-web-server",
+    "template_id": "<template-uuid>",
+    "pricing_id": 3,
+    "region": "us-east"
+  }'
+```
+
+## Step 3: List Your Projects
+
+```bash
+curl -H "X-API-Key: $RAFF_API_KEY" \
+  https://api.rafftechnologies.com/api/v1/projects
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Move Resources" icon="arrows-rotate" href="/products/management/projects/how-to-move-resources">
+    Reorganize resources between projects.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/projects/list-projects">
+    Full API reference for project endpoints.
+  </Card>
+</CardGroup>

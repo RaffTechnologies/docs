@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Raff Cloud Platform",
   "colors": {
-    "primary": "#6366F1",
-    "light": "#818CF8",
-    "dark": "#4F46E5"
+    "primary": "#F97316",
+    "light": "#FB923C",
+    "dark": "#EA580C"
   },
   "favicon": "/favicon.ico",
   "logo": {
@@ -22,11 +22,41 @@
       "mode": "simple"
     }
   },
+  "mcp": {
+    "enabled": true
+  },
   "openapi": ["/api-reference/openapi.yaml"],
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Products",
+        "groups": [
+          {
+            "group": "Build",
+            "pages": ["products/build/virtual-machines/index"]
+          },
+          {
+            "group": "Management",
+            "pages": ["products/management/projects/index"]
+          },
+          {
+            "group": "Storage",
+            "pages": [
+              "products/storage/volumes/index",
+              "products/storage/snapshots/index",
+              "products/storage/backups/index"
+            ]
+          },
+          {
+            "group": "Networking",
+            "pages": [
+              "products/networking/vpc/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
         "groups": [
           {
             "group": "Getting Started",
@@ -41,60 +71,47 @@
             "pages": [
               "guides/create-your-first-vm"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Reference",
-        "groups": [
+          },
           {
             "group": "Overview",
             "pages": [
-              "reference/introduction"
+              "api-reference/introduction"
             ]
           },
           {
-            "group": "APIs",
+            "group": "Projects",
             "pages": [
-              "api-reference/introduction",
-              {
-                "group": "Virtual Machines",
-                "pages": [
-                  "api-reference/endpoint/list-vms",
-                  "api-reference/endpoint/create-vm",
-                  "api-reference/endpoint/get-vm",
-                  "api-reference/endpoint/delete-vm",
-                  "api-reference/endpoint/start-vm",
-                  "api-reference/endpoint/stop-vm",
-                  "api-reference/endpoint/reboot-vm",
-                  "api-reference/endpoint/resize-vm"
-                ]
-              },
-              {
-                "group": "Volumes",
-                "pages": ["api-reference/volumes/introduction"]
-              },
-              {
-                "group": "Snapshots",
-                "pages": ["api-reference/snapshots/introduction"]
-              },
-              {
-                "group": "Backups",
-                "pages": ["api-reference/backups/introduction"]
-              }
+              "api-reference/projects/list-projects",
+              "api-reference/projects/create-project",
+              "api-reference/projects/get-project",
+              "api-reference/projects/update-project",
+              "api-reference/projects/delete-project"
             ]
           },
           {
-            "group": "CLI",
+            "group": "Virtual Machines",
             "pages": [
-              "reference/cli/introduction"
+              "api-reference/endpoint/list-vms",
+              "api-reference/endpoint/create-vm",
+              "api-reference/endpoint/get-vm",
+              "api-reference/endpoint/delete-vm",
+              "api-reference/endpoint/start-vm",
+              "api-reference/endpoint/stop-vm",
+              "api-reference/endpoint/reboot-vm",
+              "api-reference/endpoint/resize-vm"
             ]
           },
           {
-            "group": "Terraform",
-            "pages": [
-              "reference/terraform/introduction"
-            ]
+            "group": "Volumes",
+            "pages": ["api-reference/volumes/introduction"]
+          },
+          {
+            "group": "Snapshots",
+            "pages": ["api-reference/snapshots/introduction"]
+          },
+          {
+            "group": "Backups",
+            "pages": ["api-reference/backups/introduction"]
           }
         ]
       }
@@ -128,10 +145,48 @@
     }
   },
   "footer": {
+    "links": [
+      {
+        "header": "Company",
+        "items": [
+          { "label": "About", "href": "https://rafftechnologies.com/about" },
+          { "label": "Blog", "href": "https://rafftechnologies.com/blog" },
+          { "label": "Pricing", "href": "https://rafftechnologies.com/pricing" },
+          { "label": "Status", "href": "https://status.rafftechnologies.com" }
+        ]
+      },
+      {
+        "header": "Docs",
+        "items": [
+          { "label": "Docs Home", "href": "/introduction" },
+          { "label": "API Reference", "href": "/api-reference/introduction" },
+          { "label": "Quickstart", "href": "/quickstart" },
+          { "label": "Products", "href": "/products/build/virtual-machines/index" }
+        ]
+      },
+      {
+        "header": "Support",
+        "items": [
+          { "label": "Help Center", "href": "mailto:support@rafftechnologies.com" },
+          { "label": "Contact", "href": "mailto:support@rafftechnologies.com" },
+          { "label": "FAQ", "href": "https://rafftechnologies.com/faq" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "Terms of Service", "href": "https://rafftechnologies.com/terms" },
+          { "label": "Privacy Policy", "href": "https://rafftechnologies.com/privacy" },
+          { "label": "SLA", "href": "https://rafftechnologies.com/sla" }
+        ]
+      }
+    ],
     "socials": {
       "x": "https://x.com/rafftechnologies",
-      "github": "https://github.com/rafftechnologies",
-      "linkedin": "https://linkedin.com/company/rafftechnologies"
+      "instagram": "https://instagram.com/rafftechnologies",
+      "linkedin": "https://linkedin.com/company/rafftechnologies",
+      "reddit": "https://reddit.com/r/rafftechnologies",
+      "github": "https://github.com/rafftechnologies"
     }
   }
 }
