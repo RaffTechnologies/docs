@@ -33,22 +33,54 @@
         "groups": [
           {
             "group": "Build",
-            "pages": ["products/build/virtual-machines/index"]
+            "icon": "server",
+            "pages": [
+              {
+                "group": "Virtual Machines",
+                "icon": "server",
+                "pages": [
+                  "products/build/virtual-machines/index",
+                  "products/build/virtual-machines/quickstart",
+                  "products/build/virtual-machines/how-to-create",
+                  "products/build/virtual-machines/how-to-manage",
+                  "products/build/virtual-machines/how-to-resize",
+                  "products/build/virtual-machines/how-to-delete",
+                  "products/build/virtual-machines/details"
+                ]
+              }
+            ]
           },
           {
             "group": "Management",
-            "pages": ["products/management/projects/index"]
+            "icon": "folder",
+            "pages": [
+              {
+                "group": "Projects",
+                "icon": "folder",
+                "pages": [
+                  "products/management/projects/index",
+                  "products/management/projects/quickstart",
+                  "products/management/projects/how-to-create",
+                  "products/management/projects/how-to-move-resources",
+                  "products/management/projects/how-to-delete",
+                  "products/management/projects/details"
+                ]
+              }
+            ]
           },
           {
             "group": "Storage",
+            "icon": "hard-drive",
             "pages": [
               "products/storage/volumes/index",
+              "products/storage/object-storage/index",
               "products/storage/snapshots/index",
               "products/storage/backups/index"
             ]
           },
           {
             "group": "Networking",
+            "icon": "network-wired",
             "pages": [
               "products/networking/vpc/index"
             ]
@@ -73,45 +105,74 @@
             ]
           },
           {
-            "group": "Overview",
+            "group": "API Reference",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/introduction",
+              {
+                "group": "Catalog",
+                "pages": [
+                  "api-reference/catalog/list-regions",
+                  "api-reference/catalog/list-templates",
+                  "api-reference/catalog/list-vm-pricing",
+                  "api-reference/catalog/list-volume-pricing",
+                  "api-reference/catalog/list-snapshot-pricing",
+                  "api-reference/catalog/list-backup-pricing",
+                  "api-reference/catalog/list-ip-pricing"
+                ]
+              },
+              {
+                "group": "Projects",
+                "pages": [
+                  "api-reference/projects/list-projects",
+                  "api-reference/projects/create-project",
+                  "api-reference/projects/get-project",
+                  "api-reference/projects/update-project",
+                  "api-reference/projects/delete-project"
+                ]
+              },
+              {
+                "group": "Virtual Machines",
+                "pages": [
+                  "api-reference/endpoint/list-vms",
+                  "api-reference/endpoint/create-vm",
+                  "api-reference/endpoint/get-vm",
+                  "api-reference/endpoint/delete-vm",
+                  "api-reference/endpoint/bulk-delete-vms",
+                  "api-reference/endpoint/start-vm",
+                  "api-reference/endpoint/stop-vm",
+                  "api-reference/endpoint/reboot-vm",
+                  "api-reference/endpoint/rename-vm",
+                  "api-reference/endpoint/reset-vm-password",
+                  "api-reference/endpoint/reinstall-vm",
+                  "api-reference/endpoint/factory-reset-vm",
+                  "api-reference/endpoint/resize-vm",
+                  "api-reference/endpoint/resize-vm-disk"
+                ]
+              },
+              {
+                "group": "Volumes",
+                "pages": [
+                  "api-reference/volumes/introduction",
+                  "api-reference/volumes/resize-volume"
+                ]
+              },
+              {
+                "group": "Snapshots",
+                "pages": ["api-reference/snapshots/introduction"]
+              },
+              {
+                "group": "Backups",
+                "pages": ["api-reference/backups/introduction"]
+              }
             ]
           },
           {
-            "group": "Projects",
-            "pages": [
-              "api-reference/projects/list-projects",
-              "api-reference/projects/create-project",
-              "api-reference/projects/get-project",
-              "api-reference/projects/update-project",
-              "api-reference/projects/delete-project"
-            ]
+            "group": "CLI",
+            "pages": ["reference/cli/introduction"]
           },
           {
-            "group": "Virtual Machines",
-            "pages": [
-              "api-reference/endpoint/list-vms",
-              "api-reference/endpoint/create-vm",
-              "api-reference/endpoint/get-vm",
-              "api-reference/endpoint/delete-vm",
-              "api-reference/endpoint/start-vm",
-              "api-reference/endpoint/stop-vm",
-              "api-reference/endpoint/reboot-vm",
-              "api-reference/endpoint/resize-vm"
-            ]
-          },
-          {
-            "group": "Volumes",
-            "pages": ["api-reference/volumes/introduction"]
-          },
-          {
-            "group": "Snapshots",
-            "pages": ["api-reference/snapshots/introduction"]
-          },
-          {
-            "group": "Backups",
-            "pages": ["api-reference/backups/introduction"]
+            "group": "Terraform",
+            "pages": ["reference/terraform/introduction"]
           }
         ]
       }

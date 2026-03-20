@@ -5,22 +5,23 @@ info:
     REST API for managing cloud infrastructure on the Raff Cloud Platform.
 
     ## Authentication
-    All endpoints require authentication via API key.
+    Most endpoints require authentication via API key. Catalog endpoints under `/api/v1/public/` are open and require no authentication.
 
     ### API Key Authentication
-    Use the `X-API-Key` header with your API key:
-
     Include your API key in the `X-API-Key` header:
       ```
       curl -H "X-API-Key: YOUR_API_KEY" https://api.rafftechnologies.com/api/v1/vms
       ```
 
-    ## Regions
-    Available data center regions:
-
-    | Region | Location |
-    |--------|----------|
-    | `us-east` | US East |
+    ## Catalog
+    Use the public catalog endpoints to discover available regions, OS templates, and pricing plans before creating resources:
+    - `GET /api/v1/public/regions` — list available regions
+    - `GET /api/v1/public/templates` — list OS templates (use the `id` as `template_id` when creating a VM)
+    - `GET /api/v1/public/pricing/vm` — list VM pricing plans (use the `id` as `pricing_id` when creating a VM)
+    - `GET /api/v1/public/pricing/volume` — volume storage pricing
+    - `GET /api/v1/public/pricing/snapshot` — snapshot storage pricing
+    - `GET /api/v1/public/pricing/backup` — backup storage pricing
+    - `GET /api/v1/public/pricing/ip` — IP address pricing
 
   version: 1.0.0
   contact:
@@ -37,6 +38,8 @@ security:
   - ApiKeyAuth: []
 
 tags:
+  - name: Catalog
+    description: Discover available regions, OS templates, and pricing plans. No authentication required.
   - name: Health
     description: Health check endpoints
   - name: Projects
@@ -64,6 +67,237 @@ paths:
                   status:
                     type: string
                     example: healthy
+
+  /api/v1/public/regions:
+    get:
+      tags:
+        - Catalog
+      summary: List regions
+      description: Returns all active data center regions.
+      operationId: listRegions
+      security: []
+      responses:
+        '200':
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  regions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Region'
+
+  /api/v1/public/templates:
+    get:
+      tags:
+        - Catalog
+      summary: List OS templates
+      description: |
+        Returns all public OS templates available for VM creation.
+        Windows templates are only available for premium VM types.
+      operationId: listTemplates
+      security: []
+      parameters:
+        - name: category
+          in: query
+          description: Filter by template category
+          schema:
+            type: string
+            enum: [os, marketplace]
+        - name: vm_type
+          in: query
+          description: Filter by VM type. When `standard`, Windows templates are excluded.
+          schema:
+            type: string
+            enum: [standard, premium]
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Template'
+                  total:
+                    type: integer
+                    description: Total number of templates returned
+                    example: 12
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/public/pricing/vm:
+    get:
+      tags:
+        - Catalog
+      summary: List VM pricing plans
+      description: Returns VM pricing plans. Use the plan `id` as `pricing_id` when creating a VM.
+      operationId: listVMPricing
+      security: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by VM type
+          schema:
+            type: string
+            enum: [standard, premium]
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+      responses:
+        '200':
+          description: List of VM pricing plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VMPricingPlan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/public/pricing/volume:
+    get:
+      tags:
+        - Catalog
+      summary: Get volume pricing
+      description: Returns block storage volume pricing per GB.
+      operationId: listVolumePricing
+      security: []
+      parameters:
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+      responses:
+        '200':
+          description: Volume pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    $ref: '#/components/schemas/StoragePricing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/pricing/snapshot:
+    get:
+      tags:
+        - Catalog
+      summary: Get snapshot pricing
+      description: Returns snapshot storage pricing per GB.
+      operationId: listSnapshotPricing
+      security: []
+      parameters:
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+      responses:
+        '200':
+          description: Snapshot pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    $ref: '#/components/schemas/StoragePricing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/pricing/backup:
+    get:
+      tags:
+        - Catalog
+      summary: Get backup pricing
+      description: Returns backup storage pricing per GB.
+      operationId: listBackupPricing
+      security: []
+      parameters:
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+      responses:
+        '200':
+          description: Backup pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    $ref: '#/components/schemas/StoragePricing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/pricing/ip:
+    get:
+      tags:
+        - Catalog
+      summary: Get IP address pricing
+      description: Returns pricing for IPv4 and IPv6 addresses.
+      operationId: listIPPricing
+      security: []
+      responses:
+        '200':
+          description: IP pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    $ref: '#/components/schemas/IPPricing'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/projects:
     get:
@@ -235,7 +469,8 @@ paths:
             enum: [us-east]
         - name: status
           in: query
-          description: Filter by VM status
+          description: |
+            Filter by VM status. Values: `initiating` (queued/setup), `provisioning` (being created), `booting` (starting), `active` (running), `passive` (stopped), `finalizing` (shutting down), `failure` (failed).
           schema:
             type: string
             enum: [active, passive, provisioning, booting, initiating, finalizing, failure]
@@ -259,6 +494,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    description: Whether the request was successful
                   data:
                     type: array
                     items:
@@ -274,24 +512,40 @@ paths:
         - Virtual Machines
       summary: Create VM
       description: |
-        Create a new virtual machine with automatic VPC network setup.
+        Create a new virtual machine with a chosen OS template, compute plan, and region. The VM is automatically assigned to a VPC for private networking.
 
-        ## VPC Network Options
+        ## Authentication
 
-        Each VM is automatically attached to a VPC for secure private networking.
-        You can control which VPC the VM joins using these options (in priority order):
+        How your VM is accessed depends on the OS:
 
-        1. **Use existing VPC** (`vpc_id`): Attach to an existing VPC
-        2. **Create custom VPC** (`vpc_name` + `vpc_cidr`): Create a new VPC with your preferred name and CIDR
-        3. **Auto-create VPC** (default): Creates a VPC named `vpc-{vm-name}` with auto-assigned /24 CIDR
+        - **Linux** — provide `ssh_keys`, `password`, or both. At least one is required.
+        - **Windows** — `password` is required. SSH keys are not supported.
+
+        ## Extra Storage
+
+        Set `extra_storage` (GB) to attach an additional block volume. On Linux, choose the filesystem with `extra_storage_type` (defaults to `ext4`). Windows volumes are automatically formatted as NTFS.
+
+        ## Backups
+
+        - **Daily** — set `backup_type` to `daily`. Runs every day at `backup_time` (defaults to `8am`).
+        - **Weekly** — set `backup_type` to `weekly` with a `backup_date` (e.g. `Saturday`). Runs at `backup_time`.
+
+        Omit `backup_type` or set it to `none` to skip backups.
+
+        ## VPC Network
+
+        Each VM is attached to a VPC for private networking:
+
+        1. **Use existing** — set `vpc_id` to join an existing VPC.
+        2. **Create new** — set `vpc_name` and `vpc_cidr` to create a custom VPC.
+        3. **Auto-create** (default) — leave all VPC fields empty. A VPC named `vpc-{vm-name}` is created automatically.
 
         ## Billing Checks
 
-        Before creating a VM, the following validations are performed:
+        Before provisioning, the API validates:
+
         - Account billing status (not banned, no failed payments)
         - Active payment method exists
-        - Activation deposit paid (if trial completed)
-        - Account VM/RAM limits not exceeded
       operationId: createVM
       parameters:
         - $ref: '#/components/parameters/ProjectIDHeader'
@@ -350,11 +604,33 @@ paths:
       tags:
         - Virtual Machines
       summary: Delete VM
-      description: Permanently delete a virtual machine and release all associated resources.
+      description: |
+        Permanently delete a virtual machine and release its resources.
+
+        ## Attached Volumes
+
+        Control what happens to volumes attached to the VM with `volume_action`:
+
+        - **`detach`** (default) — volumes are detached and kept. They remain billable and can be re-attached to another VM.
+        - **`delete`** — volumes are permanently deleted along with the VM.
+
+        ## VPC Cleanup
+
+        Set `delete_vpc` to `true` to also delete the VM's associated VPC. The VPC is only deleted if no other VMs are using it.
+
+        ## Billing
+
+        If the VM has an active subscription, the remaining prepaid balance is refunded pro-rata (hourly precision) to your account balance.
       operationId: deleteVM
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
         - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteVMRequest'
       responses:
         '200':
           description: VM deleted successfully
@@ -366,6 +642,49 @@ paths:
           $ref: '#/components/responses/MissingProjectID'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/bulk:
+    delete:
+      tags:
+        - Virtual Machines
+      summary: Bulk Delete VMs
+      description: |
+        Delete up to 50 virtual machines in a single request.
+
+        Each VM is processed independently — if some deletions fail, others still succeed. The response includes per-VM results so you can identify and retry failures.
+
+        ## Attached Volumes
+
+        Control what happens to volumes attached to the VMs with `volume_action`:
+
+        - **`delete`** (default) — volumes are permanently deleted along with the VM.
+        - **`detach`** — volumes are detached and kept. They remain billable and can be re-attached to another VM.
+
+        ## VPC Cleanup
+
+        Set `delete_vpc` to `true` (default) to also delete each VM's associated VPC. A VPC is only deleted if no other VMs are using it.
+
+        ## Billing
+
+        For VMs with active subscriptions, the remaining prepaid balance is refunded pro-rata (hourly precision) to your account balance.
+      operationId: deleteVMsBulk
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteVMsBulkRequest'
+      responses:
+        '200':
+          description: Bulk deletion results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteVMsBulkResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
 
   /api/v1/vms/{id}/start:
     post:
@@ -439,13 +758,140 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/vms/{id}/rename:
+    patch:
+      tags:
+        - Virtual Machines
+      summary: Rename VM
+      description: Rename a virtual machine.
+      operationId: renameVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: New name for the virtual machine
+      responses:
+        '200':
+          description: VM renamed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/reset-password:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Reset VM password
+      description: Reset the root/admin password of a virtual machine. The new password will be emailed to the account owner.
+      operationId: resetVMPassword
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Password reset initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/reinstall:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Reinstall VM
+      description: Reinstall a virtual machine with a new OS template. This will destroy all data on the VM.
+      operationId: reinstallVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReinstallVMRequest'
+      responses:
+        '200':
+          description: VM reinstall initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/factory-reset:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Factory reset VM
+      description: Factory reset a virtual machine to its original state. This will destroy all data on the VM and restore it to the original template.
+      operationId: factoryResetVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Factory reset initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/vms/{id}/resize:
     post:
       tags:
         - Virtual Machines
       summary: Resize VM
-      description: Resize a virtual machine's CPU and RAM allocation. The VM must be stopped before resizing.
       operationId: resizeVM
+      description: |
+        Resize a virtual machine's CPU and RAM by selecting a new pricing plan.
+        The VM must be stopped before resizing.
+
+        ## Billing
+
+        For subscription VMs, the price difference is calculated pro-rata for the
+        remaining billing period:
+
+        - **Upgrade** — the difference is deducted from credits, then account balance.
+          If your balance is insufficient, the request fails with `402`.
+        - **Downgrade** — the pro-rata credit is added to your account balance.
+
+        The new subscription price takes effect immediately.
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
         - $ref: '#/components/parameters/ProjectIDHeader'
@@ -461,11 +907,98 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: '#/components/schemas/ResizeResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Insufficient balance for upgrade
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/disk/resize:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Resize VM Disk
+      operationId: resizeVMDisk
+      description: |
+        Increase the primary disk of a virtual machine.
+        The VM must be stopped. Disk size can only be increased.
+
+        ## Billing
+
+        For subscription VMs, the storage cost difference is calculated pro-rata
+        and deducted from credits, then account balance. Returns `402` if
+        insufficient balance.
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResizeVMDiskRequest'
+      responses:
+        '200':
+          description: VM disk resized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResizeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Insufficient balance for upgrade
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/volumes/{id}:
+    patch:
+      tags:
+        - Volumes
+      summary: Resize Volume
+      operationId: resizeVolume
+      description: |
+        Increase the size of a block storage volume.
+        Volume size can only be increased, never decreased.
+
+        ## Billing
+
+        For subscription volumes, the storage cost difference is calculated
+        pro-rata and deducted from credits, then account balance.
+        Returns `402` if insufficient balance.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Volume ID
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResizeVolumeRequest'
+      responses:
+        '200':
+          description: Volume resized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResizeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Insufficient balance for upgrade
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -503,6 +1036,84 @@ components:
         format: uuid
 
   schemas:
+    DeleteVMRequest:
+      type: object
+      properties:
+        volume_action:
+          type: string
+          enum:
+            - detach
+            - delete
+          default: delete
+          description: What to do with attached volumes. `detach` keeps them (still billable), `delete` removes them permanently.
+        delete_vpc:
+          type: boolean
+          default: true
+          description: Whether to delete the associated VPC. Only succeeds if no other VMs are using it.
+
+    DeleteVMsBulkRequest:
+      type: object
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 50
+          description: VM IDs to delete (1–50).
+        volume_action:
+          type: string
+          enum:
+            - detach
+            - delete
+          default: delete
+          description: What to do with attached volumes. `detach` keeps them (still billable), `delete` removes them permanently.
+        delete_vpc:
+          type: boolean
+          default: true
+          description: Whether to delete associated VPCs. Only succeeds if no other VMs are using them.
+
+    DeleteVMsBulkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: "`true` if at least one VM was deleted successfully."
+        message:
+          type: string
+        total_count:
+          type: integer
+          description: Number of VMs requested for deletion.
+        success_count:
+          type: integer
+          description: Number of VMs successfully deleted.
+        failed_count:
+          type: integer
+          description: Number of VMs that failed to delete.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeleteVMBulkResult'
+          description: Per-VM deletion results.
+
+    DeleteVMBulkResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VM ID.
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+          description: Error detail if deletion failed.
+
     SuccessResponse:
       type: object
       properties:
@@ -539,13 +1150,8 @@ components:
             - banned
             - failed
             - no_payment_method
-            - activation_required
             - vm_limit_exceeded
             - resources_unavailable
-        amount_needed:
-          type: number
-          description: Amount needed for activation (only present when reason is activation_required)
-          example: 10.00
 
     VM:
       type: object
@@ -561,7 +1167,22 @@ components:
         status:
           type: string
           enum: [active, passive, provisioning, booting, initiating, finalizing, failure]
-          description: Current VM status
+          description: |
+            Current VM status. Lifecycle transitions:
+            - Creation: `initiating` → `provisioning` → `booting` → `active`
+            - Stop: `active` → `finalizing` → `passive`
+            - Start: `passive` → `booting` → `active`
+            - Reboot: `active` → `booting` → `active`
+
+            | Status | Meaning | Billable |
+            |--------|---------|----------|
+            | `initiating` | Queued, initial setup before provisioning | Yes |
+            | `provisioning` | VM being created in the hypervisor | Yes |
+            | `booting` | VM starting up | Yes |
+            | `active` | Running and accessible | Yes |
+            | `passive` | Stopped, resources still reserved | Yes |
+            | `finalizing` | Shutting down | Yes |
+            | `failure` | Creation or operation failed | No |
         cpu:
           type: integer
           description: Number of vCPU cores
@@ -634,10 +1255,6 @@ components:
           type: string
           format: uuid
           description: Project this VM belongs to
-        reserved_ip:
-          type: string
-          description: Reserved IP address
-          nullable: true
         public_ipv4_address:
           type: string
           description: Public IPv4 address
@@ -657,7 +1274,21 @@ components:
         tags:
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              id:
+                type: string
+                description: Unique tag identifier
+              name:
+                type: string
+                description: Tag name
+              priority:
+                type: integer
+                description: Tag priority (ordering)
+              created_at:
+                type: string
+                format: date-time
+                description: When the tag was created
           description: Custom tags
         active:
           type: boolean
@@ -683,20 +1314,16 @@ components:
           maxLength: 64
           description: VM display name
           example: my-ubuntu-server
-        project_id:
-          type: string
-          format: uuid
-          description: Project to assign VM to
         template_id:
           type: string
           format: uuid
-          description: OS template ID
+          description: "OS template ID. Use `GET /api/v1/public/templates` to list available templates."
           example: "5ac21891-32e6-41ce-8a93-b5d6ab708b0d"
         pricing_id:
           type: integer
           minimum: 1
           maximum: 13
-          description: Pricing plan ID (1-13) that determines vCPU, RAM, storage, and bandwidth
+          description: "Pricing plan ID that determines vCPU, RAM, storage, and bandwidth. Use `GET /api/v1/public/pricing/vm` to list available plans."
           example: 3
         region:
           type: string
@@ -707,32 +1334,37 @@ components:
           type: array
           items:
             type: string
-          description: SSH public keys for VM access
+          description: SSH public keys for VM access. Required for Linux VMs if no password is provided. Ignored for Windows VMs.
         password:
           type: string
-          description: Optional root password
+          minLength: 12
+          description: >-
+            Root password for the VM. Required for Windows VMs. For Linux VMs, required if no SSH keys are provided. Both SSH keys and password can be set on Linux.
+            Must be at least 12 characters with:
+            2+ uppercase letters, 2+ digits, 1+ special character (@+-_.,!).
+            Only alphanumeric characters and @+-_.,! are allowed.
         extra_storage:
           type: integer
           minimum: 0
-          description: Additional storage in GB
+          description: Additional block storage volume in GB (0–10,000). Attached as a separate disk to the VM.
           example: 100
         extra_storage_type:
           type: string
           enum: [ext4, xfs, btrfs]
-          description: Filesystem type for extra storage
+          description: Filesystem type for extra storage. Required for Linux VMs with extra storage (defaults to ext4 if omitted). For Windows VMs, storage is automatically formatted as NTFS — this field is ignored.
           example: ext4
         backup_type:
           type: string
-          enum: [none, daily, weekly, monthly]
-          description: Backup schedule type
+          enum: [none, daily, weekly]
+          description: "Set `daily` for daily backups or `weekly` for weekly backups. Use `none` or omit for no backups."
           example: weekly
         backup_time:
           type: string
-          description: Backup time (e.g., "8am")
+          description: "Time of day to run backups (e.g. `8am`). Defaults to `8am` if not specified."
           example: "8am"
         backup_date:
           type: string
-          description: Backup day for weekly/monthly schedules
+          description: "Day of the week for weekly backups (e.g. `Saturday`). Required when `backup_type` is `weekly`, ignored for daily backups. Valid values: Monday–Sunday."
           example: Saturday
         tags:
           type: array
@@ -742,32 +1374,310 @@ components:
         vpc_id:
           type: string
           format: uuid
-          description: Attach to an existing VPC
+          description: "Attach VM to an existing VPC by its ID. If omitted along with `vpc_name`, a VPC is auto-created."
         vpc_name:
           type: string
           minLength: 1
           maxLength: 64
-          description: Create a new VPC with this name (requires vpc_cidr)
+          description: "Create a new VPC with this name. Must be used together with `vpc_cidr`."
           example: my-custom-vpc
         vpc_cidr:
           type: string
-          description: CIDR block for new VPC (requires vpc_name)
+          description: "CIDR block for the new VPC (e.g. `10.0.1.0/24`). Must be used together with `vpc_name`."
           pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
           example: "10.0.1.0/24"
 
+    ReinstallVMRequest:
+      type: object
+      required:
+        - template_id
+      properties:
+        template_id:
+          type: string
+          format: uuid
+          description: ID of the OS template to reinstall with
+        password:
+          type: string
+          description: New root/admin password. Either password or auto_generate_password should be provided.
+        ssh_keys:
+          type: array
+          items:
+            type: string
+          description: SSH public keys for authentication
+        auto_generate_password:
+          type: boolean
+          description: Auto-generate a password and email it to the account owner
+
     ResizeVMRequest:
       type: object
+      required:
+        - pricing_id
       properties:
+        pricing_id:
+          type: integer
+          minimum: 1
+          description: "Target pricing plan ID. Determines CPU, RAM, and included storage. Use `GET /api/v1/public/pricing/vm` to list available plans."
+
+    ResizeVMDiskRequest:
+      type: object
+      required:
+        - new_size
+      properties:
+        new_size:
+          type: integer
+          minimum: 1
+          description: New disk size in GB. Must be larger than current size.
+
+    ResizeVolumeRequest:
+      type: object
+      required:
+        - new_size
+      properties:
+        new_size:
+          type: integer
+          minimum: 1
+          description: New volume size in GB. Must be larger than current size.
+
+    ResizeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        id:
+          type: string
+          description: Resource ID.
+        billing:
+          $ref: '#/components/schemas/ResizeBillingDetails'
+
+    ResizeBillingDetails:
+      type: object
+      description: Present only for subscription-based resources.
+      properties:
+        type:
+          type: string
+          enum: [upgrade, downgrade, none]
+        pro_rata_amount:
+          type: number
+          description: Amount charged (positive) or credited (negative).
+        credits_applied:
+          type: number
+        balance_applied:
+          type: number
+        new_monthly_price:
+          type: number
+        new_price_per_hour:
+          type: string
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Region identifier
+          example: 1
+        code:
+          type: string
+          description: Region code used in API requests
+          example: us-east
+        name:
+          type: string
+          description: Human-readable region name
+          example: US East
+        country_code:
+          type: string
+          description: ISO country code
+          example: US
+        flag:
+          type: string
+          description: Country flag emoji
+          example: "\U0001F1FA\U0001F1F8"
+        display_order:
+          type: integer
+          description: Sort order for display
+          example: 1
+        is_default:
+          type: boolean
+          description: Whether this is the default region
+          example: true
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID — use as `template_id` when creating a VM
+          example: "5ac21891-32e6-41ce-8a93-b5d6ab708b0d"
+        name:
+          type: string
+          description: OS name
+          example: Ubuntu
+        version:
+          type: string
+          description: OS version
+          example: "24.10x64"
         cpu:
           type: integer
-          minimum: 1
-          maximum: 64
-          description: New number of vCPU cores
+          description: Minimum vCPU cores required
+          example: 1
         ram:
           type: integer
-          minimum: 1
-          maximum: 512
-          description: New RAM allocation in GB
+          description: Minimum RAM in GB required
+          example: 1
+        storage:
+          type: integer
+          description: Minimum storage in GB required
+          example: 25
+        is_windows:
+          type: boolean
+          description: Whether this is a Windows template (only available for premium VMs)
+          example: false
+        os_type:
+          type: string
+          description: Operating system type
+          example: linux
+        category:
+          type: string
+          enum: [os, marketplace]
+          description: Template category
+          example: os
+        description:
+          type: string
+          description: Template description
+          example: ""
+        region:
+          type: string
+          enum: [us-east]
+          description: Region where this template is available
+          example: us-east
+
+    VMPricingPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Plan ID — use as `pricing_id` when creating a VM
+          example: 3
+        vcpu:
+          type: integer
+          description: Number of vCPU cores
+          example: 2
+        memory_gib:
+          type: integer
+          description: RAM in GiB
+          example: 4
+        ssd_gib:
+          type: integer
+          description: SSD storage in GiB
+          example: 80
+        transfer_gib:
+          type: integer
+          description: Monthly data transfer in GiB
+          example: 4000
+        price_per_hour:
+          type: number
+          description: Hourly price in USD (pay-as-you-go)
+          example: 0.027764
+        monthly_price:
+          type: number
+          description: Monthly price in USD
+          example: 20.00
+        yearly_price:
+          type: number
+          description: Yearly commitment price in USD (total for 12 months)
+          example: 200.00
+        twenty_four_month_price:
+          type: number
+          description: 24-month commitment price in USD (total for 24 months)
+          example: 400.00
+        vm_type:
+          type: string
+          enum: [standard, premium]
+          description: VM type
+          example: standard
+        region:
+          type: string
+          enum: [us-east]
+          description: Region this plan is available in
+          example: us-east
+
+    StoragePricing:
+      type: object
+      description: Per-GB storage pricing
+      properties:
+        id:
+          type: integer
+          description: Pricing record ID (present for volume pricing)
+          example: 1
+        price_per_gb_hour:
+          type: number
+          description: Price per GB per hour in USD
+          example: 0.000068
+        price_per_gb_month:
+          type: number
+          description: Price per GB per month in USD
+          example: 0.05
+        yearly_price_per_gb:
+          type: number
+          description: Yearly commitment price per GB in USD
+          example: 0.50
+        twenty_four_month_price_per_gb:
+          type: number
+          description: 24-month commitment price per GB in USD
+          example: 1.00
+        region:
+          type: string
+          enum: [us-east]
+          description: Region this pricing applies to
+          example: us-east
+
+    IPPricing:
+      type: object
+      description: IP address pricing grouped by type
+      properties:
+        ipv4:
+          type: object
+          description: IPv4 pricing
+          properties:
+            price_per_hour:
+              type: number
+              description: Hourly price in USD
+              example: 0.005
+            monthly_price:
+              type: number
+              description: Monthly price in USD
+              example: 3.50
+            yearly_price:
+              type: number
+              description: Yearly commitment price in USD
+              example: 35.00
+            twenty_four_month_price:
+              type: number
+              description: 24-month commitment price in USD
+              example: 70.00
+        ipv6:
+          type: object
+          description: IPv6 pricing
+          properties:
+            price_per_hour:
+              type: number
+              description: Hourly price in USD
+              example: 0.0
+            monthly_price:
+              type: number
+              description: Monthly price in USD
+              example: 0.0
+            yearly_price:
+              type: number
+              description: Yearly commitment price in USD
+              example: 0.0
+            twenty_four_month_price:
+              type: number
+              description: 24-month commitment price in USD
+              example: 0.0
 
     Project:
       type: object

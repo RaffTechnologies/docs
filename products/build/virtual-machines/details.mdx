@@ -48,7 +48,7 @@ description: VM features, availability, OS templates, pricing, and platform limi
 ## VM Status Lifecycle
 
 ```
-Creation: provisioning → booting → initiating → active
+Creation: initiating → provisioning → booting → active
 Stop:     active → finalizing → passive
 Start:    passive → booting → active
 Reboot:   active → booting → active
@@ -58,11 +58,11 @@ Failure:  any state → failure (non-billable)
 
 | Status | Description | Billable |
 |--------|-------------|----------|
+| `initiating` | Queued, initial setup before provisioning | Yes |
+| `provisioning` | VM being created in the hypervisor | Yes |
+| `booting` | Starting up | Yes |
 | `active` | Running and accessible via SSH | Yes |
 | `passive` | Stopped, resources reserved | Yes |
-| `provisioning` | Being created | Yes |
-| `booting` | Starting up | Yes |
-| `initiating` | Initial setup running | Yes |
 | `finalizing` | Shutting down | Yes |
 | `failure` | Creation or operation failed | No |
 | `unknown` | Unhandled state | No |
