@@ -185,6 +185,11 @@
           "icon": "gauge"
         },
         {
+          "anchor": "Changelog",
+          "href": "/api-reference/changelog",
+          "icon": "clock-rotate-left"
+        },
+        {
           "anchor": "Support",
           "href": "mailto:support@rafftechnologies.com",
           "icon": "envelope"

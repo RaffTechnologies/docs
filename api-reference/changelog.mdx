@@ -1,0 +1,59 @@
+---
+title: "API Changelog"
+description: "Track all changes to the Raff Cloud API"
+---
+
+# API Changelog
+
+All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progress).
+
+🟢 Added · 🔵 Updated · 🟡 Deprecated · 🔴 Removed · 🟣 Fixed
+
+---
+
+## v1.0.0 (In Progress)
+
+### March 25, 2026
+
+**General**
+- 🟢 **Added** — Changelog tracking started
+
+### March 15, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — **Resize VM disk storage** without recreating — `POST /api/v1/vms/{id}/resize-disk`
+- 🟢 **Added** — **Bulk delete VMs** in a single request — `POST /api/v1/vms/bulk-delete`
+- 🔵 **Updated** — **Create VM** now accepts `enable_ipv6` parameter for IPv6 support — `POST /api/v1/vms`
+
+### March 10, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — **Reinstall OS** on a running VM, keep your IP — `POST /api/v1/vms/{id}/reinstall`
+- 🟢 **Added** — **Factory reset** VM to original state — `POST /api/v1/vms/{id}/factory-reset`
+- 🟢 **Added** — **Reset root password** via API — `POST /api/v1/vms/{id}/reset-password`
+- 🟢 **Added** — **Rename VMs** after creation — `POST /api/v1/vms/{id}/rename`
+
+### March 5, 2026
+
+**Volumes — API**
+- 🟢 **Added** — **Resize block storage volumes** attached to VMs — `PATCH /api/v1/volumes/{id}`
+
+### March 3, 2026
+
+**Projects — API**
+- 🟢 **Added** — **Organize resources into projects** — full CRUD via API
+  - `GET /api/v1/projects` · `POST /api/v1/projects` · `GET /api/v1/projects/{id}` · `PUT /api/v1/projects/{id}` · `DELETE /api/v1/projects/{id}`
+
+### March 1, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — **Full VM lifecycle** — create, list, get details, delete
+  - `GET /api/v1/vms` · `POST /api/v1/vms` · `GET /api/v1/vms/{id}` · `DELETE /api/v1/vms/{id}`
+- 🟢 **Added** — **VM power control** — start, stop, reboot
+  - `POST /api/v1/vms/{id}/start` · `POST /api/v1/vms/{id}/stop` · `POST /api/v1/vms/{id}/reboot`
+- 🟢 **Added** — **Scale resources** — resize CPU and RAM on demand — `POST /api/v1/vms/{id}/resize`
+
+**Catalog — API**
+- 🟢 **Added** — **Browse available resources** — regions, OS templates, pricing (no auth required)
+  - `GET /api/v1/public/regions` · `GET /api/v1/public/templates`
+  - `GET /api/v1/public/pricing/vm` · `/volume` · `/snapshot` · `/backup` · `/ip`
