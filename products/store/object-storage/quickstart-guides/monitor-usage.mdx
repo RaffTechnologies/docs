@@ -1,0 +1,86 @@
+---
+title: Monitor bucket usage
+description: Read the live Metrics tab — storage size, object count, GET/PUT/DELETE counts, and ingress/egress data transfer for the current month
+---
+
+Every bucket has a **Metrics** tab that shows live usage and the numbers your bill is based on. It's the first place to look when you're verifying storage growth, watching request volume after a launch, or sanity-checking egress before the month-end settlement.
+
+## Open the Metrics tab
+
+In **Object Storage → Buckets**, click into a bucket. The bucket detail page has five tabs across the top — **Objects**, **Properties**, **Permissions**, **Metrics**, **Management**. Click **Metrics**.
+
+<Frame>
+  ![Bucket Metrics tab showing Storage Metrics (object count, total size), Request Metrics (GET, PUT, DELETE, Total Operations) for May 2026, and Data Transfer (Egress, Ingress) for May 2026](/images/products/store/object-storage/buckets-metrics.png)
+</Frame>
+
+The page is organized into three sections — **Storage Metrics**, **Request Metrics**, and **Data Transfer** — each pulled live from the Ceph RGW usage API.
+
+## Storage Metrics
+
+Current state of the bucket — these are point-in-time figures, not month-to-date.
+
+| Metric | What it is |
+|---|---|
+| **Object Count** | Total number of objects in the bucket right now (versions count separately if versioning is on) |
+| **Total Size** | Sum of all object sizes — what storage billing is calculated against |
+
+Total Size is the headline number for [storage billing](/products/store/object-storage/details/features-and-limits#pricing). The first 100 GB across all your buckets is covered by the \$7/month subscription; anything above accrues at \$0.07/GB/month.
+
+## Request Metrics
+
+GET, PUT, and DELETE operation counts for the current calendar month. Resets on the 1st.
+
+| Metric | What it counts |
+|---|---|
+| **GET Requests** | Object reads — `GetObject`, `HeadObject`, `ListObjects`, presigned-URL downloads |
+| **PUT Requests** | Object writes — `PutObject`, `UploadPart`, `CompleteMultipartUpload`, `CopyObject` |
+| **DELETE Requests** | Object deletions — `DeleteObject`, `DeleteObjects` |
+| **Total Operations** | Every S3 API call against the bucket this month, including bucket-level ops (`HeadBucket`, `GetBucketAcl`, etc.) — that's why this is larger than GET + PUT + DELETE alone |
+
+Request counts are **not billed today** — Raff doesn't charge per-request. The numbers are here for visibility: spotting a runaway script, verifying CDN cache-hit ratios, or sizing capacity before a launch.
+
+## Data Transfer
+
+Inbound and outbound bytes for the current month, also resetting on the 1st.
+
+| Metric | What it is | Billed? |
+|---|---|---|
+| **Egress (Download)** | Bytes leaving the bucket to clients — `GetObject` responses, presigned URL downloads | First **1 TB / month free**, then **\$0.01/GB** |
+| **Ingress (Upload)** | Bytes coming into the bucket — `PutObject`, multipart parts | **Free, never metered** |
+
+Egress is the only data-transfer line item that ever charges. Same-region traffic between Raff VMs / Kubernetes and Object Storage doesn't go over the public internet, so it doesn't show up in this counter and doesn't bill — see [Bandwidth](/products/store/object-storage/details/features-and-limits#bandwidth).
+
+When you're approaching 1 TB of public egress in a month, this is the page that shows it.
+
+## How fresh are the numbers?
+
+Metrics are read from the Ceph RGW usage API and refreshed when you load the tab. Storage figures update within a few seconds of an upload or delete. Request and data-transfer counters lag by a short interval (usually under a minute) — they're aggregated server-side, not streamed.
+
+Reload the tab to pull the latest values; nothing is cached on the dashboard side.
+
+## Per-account vs per-bucket
+
+The Metrics tab is **per bucket**. To see usage rolled up across every bucket in your account — total storage, total egress, what you'll be billed for at month-end — open **Object Storage → Overview**.
+
+## When the numbers don't match what you expect
+
+A few common gotchas before you open a support ticket:
+
+- **Storage size jumped after a delete** — versioning is on, so the deleted object became a non-current version (still counted). Empty old versions from the Objects tab → Versions view.
+- **Egress higher than your traffic** — public-bucket workloads (asset hosting, static sites) count every public read; if a CDN is in front, check whether it's actually caching.
+- **Request count keeps climbing while idle** — something has access keys and is polling. Rotate the keys and watch Request Metrics drop.
+- **Total Operations far higher than GET + PUT + DELETE** — bucket-level calls (`HeadBucket`, `GetBucketAcl`, `GetBucketCors`, etc.) count toward Total Operations but aren't broken out individually. SDKs do these on every connection setup.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Features & limits" icon="circle-info" href="/products/store/object-storage/details/features-and-limits">
+    Storage pricing and the 1 TB free egress tier.
+  </Card>
+  <Card title="Set public or private" icon="globe" href="/products/store/object-storage/quickstart-guides/set-public-private">
+    Public-read buckets are usually what drives egress.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/object-storage/troubleshooting">
+    Common issues and fixes.
+  </Card>
+</CardGroup>

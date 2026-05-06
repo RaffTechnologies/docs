@@ -1,0 +1,139 @@
+---
+title: Create a volume
+description: Provision a new block volume — pick size, billing term, target VM, and how it should be formatted
+---
+
+A **volume** is block storage you attach to a VM as additional disk capacity beyond its base disk. Volumes live in the same region as the VM they attach to, can be detached and reattached to a different VM in that region, and survive the VM if it's deleted.
+
+This page walks the dashboard create flow. For the in-guest formatting / mounting / resizing steps, see [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm).
+
+## Before you start
+
+- A Raff account
+- (Optional) A target VM in `active` or `passive` state — you can also create the volume unattached and attach later
+- An idea of how much space you need (volumes range from **10 - 1000 GiB**)
+
+## 1. Open the Add Volume dialog
+
+From the **Compute Resources** page, switch to the **Volumes** tab and click **+ Add Volume**.
+
+<Frame>
+  ![Compute Resources Volumes tab with the empty state and the Add Volume button](/images/products/store/volumes/create-a-volume-01-volumes-tab.png)
+</Frame>
+
+The Add Volume dialog opens with all the fields you'll fill on this one form.
+
+<Frame>
+  ![Add a volume dialog showing Select Volume Size, Billing Period, Select VM to Attach to, and Name Volume fields](/images/products/store/volumes/create-a-volume-02-add-dialog.png)
+</Frame>
+
+## 2. Select volume size
+
+Type a size in GiB. Range is **10 - 1000 GiB**.
+
+You can [grow the volume later](/products/store/volumes/quickstart-guides/resize-volume), but you can't shrink it — pick conservatively if you're unsure.
+
+## 3. Pick a billing period
+
+Volumes are **subscription-based by default**, paid in advance from your account balance. Pay-as-you-go is available for enterprise and SMB customers on request — same effective \$0.05/GiB/month rate, billed hourly at cycle close.
+
+| Term | Rate |
+|---|---|
+| **Monthly** | \$0.05 / GiB / month |
+| **Yearly** | \$0.60 / GiB / year |
+| **2 Years** | \$1.20 / GiB / 2 years |
+
+The volume cost is reserved at creation. If you delete the volume mid-term, the unused days and hours are credited back to your account balance — same model as VMs. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+## 4. Select VM to attach to (optional)
+
+| Choice | Effect |
+|---|---|
+| **Specific VM** | Volume is attached on creation; visible inside the VM as a new block device |
+| **None (No VM attachment)** | Volume is created standalone in your selected region; attach later via the Volumes tab |
+
+The VM must be in `active` or `passive` state to attach. **Volumes inherit the VM's region and project** — they can only be reattached to other VMs in the same region.
+
+If you pick **None**, the volume is created in the dashboard's currently-selected region.
+
+## 5. Name the volume
+
+A free-form label. Pick something descriptive — `db-backups`, `customer-uploads`, `acme-data` — so it's easy to spot in the Volumes list.
+
+## 6. Choose configuration options
+
+This step **changes based on the selected VM's OS**. Linux and Windows behave differently.
+
+### Linux VMs (or no VM selected)
+
+Two options:
+
+<Frame>
+  ![Configuration options for Linux: Automatically Format selected with Ext4/XFS choice, plus Manually Format & Mount alternative](/images/products/store/volumes/create-a-volume-03-config-linux.png)
+</Frame>
+
+| Option | What it does | When to use |
+|---|---|---|
+| **Automatically Format** | Raff formats the volume with your chosen filesystem before attaching. You still have to **mount it manually** inside the VM after creation. | Default for most workloads — saves a step |
+| **Manually Format & Mount** | Volume is attached raw. You handle `mkfs`, `mount`, and `/etc/fstab` yourself. | When you need a specific filesystem version, mount options, or LVM/RAID setup |
+
+**Filesystem (Auto-format only):**
+
+| Filesystem | Best for |
+|---|---|
+| **Ext4** | Default Linux choice — broadly compatible, well-understood, fine for nearly any workload |
+| **XFS** | Large volumes (multi-hundred-GB+), parallel I/O, databases with many concurrent writes |
+
+Either way, you'll need to mount the volume in the OS after creation. See [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) for the `lsblk` → `mount` → `/etc/fstab` flow.
+
+### Windows VMs
+
+Auto-format is **not supported on Windows**. The dashboard surfaces this with an inline note and only offers manual format & mount:
+
+<Frame>
+  ![Configuration options when a Windows VM is selected: warning that auto-format is not supported, with Manually Format & Mount as the only option](/images/products/store/volumes/create-a-volume-04-config-windows.png)
+</Frame>
+
+The volume attaches as a raw disk. After creation, format it from inside Windows:
+
+1. **Server Manager → Tools → Computer Management → Disk Management**
+2. New disk shows as **Offline** and **Not Initialized** → right-click → **Online** → **Initialize Disk** (pick **GPT**)
+3. Right-click the unallocated space → **New Simple Volume** → walk the wizard, format **NTFS**, assign a drive letter
+
+This is also covered in the [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm#6-format-and-mount-on-windows) walkthrough.
+
+## 7. Proceed to checkout
+
+Click **Proceed to Checkout**. The order summary applies your account balance first, then charges your saved card for the difference (same flow as VMs). Confirm to provision.
+
+The volume is created in seconds. If you picked a target VM, it appears as a new block device almost immediately — re-scan with `lsblk` (Linux) or **Disk Management** (Windows).
+
+## After creation
+
+- **Linux, auto-formatted** — disk has a filesystem; mount it (`mount /dev/vdX /mnt/data`) and add a `/etc/fstab` entry. See [Attach to a VM → step 4 onward](/products/store/volumes/quickstart-guides/attach-to-vm#4-mount-it-linux).
+- **Linux, manual** — same as above, plus `mkfs.ext4` or `mkfs.xfs` first.
+- **Windows** — Disk Management as described above.
+
+## Pricing summary
+
+| Item | Rate |
+|---|---|
+| Per-GiB storage | \$0.05 / GiB / month (same per-GiB cost on all subscription terms) |
+| Charges accrue | Continuously while the volume exists |
+| Settlement | Month-end on the 1st against your account balance |
+
+Bandwidth between a VM and its attached volume is **free and not metered** — the volume bills only for stored capacity.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Attach to a VM" icon="link" href="/products/store/volumes/quickstart-guides/attach-to-vm">
+    Format, mount, and persist the volume inside the VM.
+  </Card>
+  <Card title="Resize a volume" icon="up-right-and-down-left-from-center" href="/products/store/volumes/quickstart-guides/resize-volume">
+    Grow capacity later (one-way).
+  </Card>
+  <Card title="Volume types" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    Performance and persistence model.
+  </Card>
+</CardGroup>

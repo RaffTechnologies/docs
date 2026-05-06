@@ -1,0 +1,73 @@
+---
+title: Factory reset
+description: Reinstall the same OS on a VM with a clean disk while keeping volumes, snapshots, and backups
+---
+
+Factory Reset wipes the VM's OS disk and reinstalls **the same** OS template fresh. Everything outside the OS disk — attached volumes, backups, volume snapshots, and IP addresses — is preserved.
+
+Use it when you want a clean OS state without changing OS templates or losing your protective copies.
+
+## Factory Reset vs Reinstall
+
+| | Factory Reset | Reinstall (Change OS) |
+|---|---|---|
+| OS template | Same as before | Pick a new one (or same) |
+| OS disk | Wiped | Wiped |
+| Attached volumes | Preserved | Preserved |
+| Backups | **Preserved** | **Deleted** |
+| Volume snapshots | **Preserved** | **Deleted** |
+| VM (OS-disk) snapshots | Deleted | Deleted |
+| Network and IPs | Preserved | Preserved |
+| VM specs (CPU/RAM/disk) | Preserved | Preserved |
+| Steps in dialog | 1 (single confirm) | 3 (OS → auth → confirm) |
+| Downtime | 15 seconds — 3 minutes | 1 — 5 minutes |
+
+If you want to keep your backups and volume snapshots, **use Factory Reset** instead of Reinstall.
+
+## Where to find it
+
+Factory Reset lives only on the VM detail page (it's not in the row's 3-dot menu — Reinstall OS is the only OS action there).
+
+Open the VM detail page → **Actions** tab → scroll to **System Operations** → on the **Factory Reset** card, click **Factory Reset**.
+
+## The dialog
+
+A single confirmation dialog opens. There's no OS picker and no auth step — it reuses what's already on the VM.
+
+<Frame>
+  ![Factory Reset dialog showing what's preserved and reset, the unavailability warning, and the acknowledgement checkbox](/images/products/build/virtual-machines/factory-reset-01-dialog.png)
+</Frame>
+
+**What's preserved:**
+- All attached volumes and data
+- Backups and volume snapshots
+- Network configuration and IPs
+
+**What's reset:**
+- Operating system disk
+- VM snapshots (OS-disk snapshots only)
+- Installed software and configurations
+
+Tick the acknowledgement and click **Factory Reset**. Expect 15 seconds to 3 minutes of downtime. See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the full picture of what survives this and other lifecycle events.
+
+## What about VM snapshots?
+
+Factory Reset deletes **VM snapshots** (point-in-time copies of the OS disk) because they reference the disk being wiped. **Volume snapshots** and **backups** survive — they live independently. If you have a VM-level snapshot you want to keep, restore from it before factory-resetting, or save it as an image first via [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image).
+
+## After
+
+- The VM transitions `provisioning` → `booting` → `active`, typically under 3 minutes.
+- Public IPv4 unchanged — DNS records still point to the right place.
+- Login is back to the regenerated root / Administrator password (emailed) or your existing SSH key, depending on what was set on the VM before the reset.
+- Attached volumes are still attached but may need re-mounting in the new OS — `/etc/fstab` is gone.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Reinstall a VM" icon="arrow-rotate-left" href="/products/build/virtual-machines/quickstart-guides/reinstall">
+    Switch OS templates instead.
+  </Card>
+  <Card title="Snapshots vs Backups" icon="lightbulb" href="/products/build/virtual-machines/concepts/snapshots-vs-backups">
+    What's protected by which.
+  </Card>
+</CardGroup>

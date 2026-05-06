@@ -1,0 +1,63 @@
+---
+title: Lifecycle states
+description: How a VM moves through provisioning, running, stopped, and terminal states
+---
+
+Every VM has a `status` field that reflects where it is in its lifecycle. Most actions you take in the dashboard or via the API are state transitions.
+
+## State diagram
+
+```
+Creation: initiating → provisioning → booting → active
+Stop:     active     → finalizing   → passive
+Start:    passive    → booting      → active
+Reboot:   active     → booting      → active
+Delete:   any        → terminated
+Failure:  any        → failure      (non-billable)
+```
+
+## State reference
+
+| Status | Description | Billable |
+|---|---|---|
+| `initiating` | Queued, initial setup before provisioning | Yes |
+| `provisioning` | VM being created in the hypervisor | Yes |
+| `booting` | Starting up | Yes |
+| `active` | Running and accessible | Yes |
+| `passive` | Stopped, resources reserved | Yes |
+| `finalizing` | Shutting down | Yes |
+| `failure` | Creation or operation failed | No |
+| `unknown` | Unhandled state | No |
+
+## Why `passive` is billable
+
+A stopped VM still holds CPU, RAM, disk, and IP allocations on the hypervisor. Those reservations are billed at the same per-hour plan rate even when the OS isn't running. To stop billing, **delete** the VM (and its volumes, snapshots, and backups, if no longer needed). See [Billing model](/products/build/virtual-machines/concepts/billing-model) for how subscription credits work when you delete mid-term.
+
+## `provisioning` during snapshots and backups
+
+While a snapshot or scheduled/instant backup is running on a VM, the dashboard temporarily shows the VM in **`provisioning`** state — even though the VM was already up and serving traffic.
+
+This is **normal and not a problem**:
+
+- The VM continues running. Network traffic, SSH/RDP sessions, and applications keep working.
+- The state flips back to `active` automatically when the capture completes (typically 1-5 minutes).
+- It's the same `provisioning` label used during creation; the dashboard reuses the state because the hypervisor is doing capture work in the background.
+
+If you see `provisioning` and you didn't trigger anything, check the **Snapshots** or **Backups** tab on the VM detail page — there's almost certainly a scheduled job running. No action needed; just wait for it to finish.
+
+| What you see | What it actually means |
+|---|---|
+| `provisioning` right after **Create** | Real provisioning — VM being built |
+| `provisioning` on an existing VM | Snapshot or backup in progress; VM is still serving |
+| `provisioning` stuck for 10+ minutes | Possible issue — see [Troubleshooting](/products/build/virtual-machines/troubleshooting) |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Trigger state transitions.
+  </Card>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    What each state costs.
+  </Card>
+</CardGroup>

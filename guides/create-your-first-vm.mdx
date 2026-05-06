@@ -153,15 +153,15 @@ curl -X DELETE -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID"
 
 ## VPC Networking
 
-Every VM is automatically placed in a VPC for private networking. You can control this behavior:
+VPC membership is **optional**. A VM with no VPC is still fully reachable via its public IP — you only join a VPC when two or more VMs need to talk to each other privately.
 
-### Auto-created VPC (Default)
+### No VPC (Default)
 
-If you don't specify any VPC options, a new VPC is created automatically named `vpc-{vm-name}`.
+If you don't pass any VPC options, the VM is created **without a VPC**. It has its public IP only; it can't reach other VMs over a private subnet.
 
 ### Shared VPC
 
-To place multiple VMs on the same private network, create the first VM (which auto-creates a VPC), then pass that `vpc_id` to subsequent VMs:
+To place multiple VMs on the same private network, [create a VPC first](/products/network/vpc/quickstart-guides/create-vpc), then pass its `vpc_id` to every VM that should join:
 
 ```bash
 # Second VM joins the same VPC
@@ -178,9 +178,9 @@ curl -X POST https://api.rafftechnologies.com/api/v1/vms \
   }'
 ```
 
-### Custom VPC
+### Inline VPC creation
 
-Create a VPC with a specific name and CIDR:
+Create the VPC and the first VM in a single call by passing `vpc_name` and `vpc_cidr` instead of an existing `vpc_id`:
 
 ```bash
 curl -X POST https://api.rafftechnologies.com/api/v1/vms \

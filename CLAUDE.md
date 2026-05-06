@@ -20,15 +20,17 @@ Customer-facing docs and API reference. Hosted via Mintlify. These standards are
 - **Code examples** — curl for API, yaml for Terraform, bash for CLI
 - **Short paragraphs** — 2-3 sentences. If longer, break it up.
 
-## 5 Product Pillars
+## 4 Product Pillars
 
 | Pillar | Products |
 |--------|----------|
-| **Build** | Virtual Machines, Kubernetes, Raff Apps |
-| **Store** | Volumes, Snapshots, Backups, Object Storage |
-| **Network** | VPC, Reserved IPs, Security Groups |
-| **Manage** | Projects, IAM (Members, Roles, API Keys) |
+| **Build** | Virtual Machines (incl. Snapshots, Backups as VM operations), Kubernetes, Raff Apps |
+| **Store** | Volumes, Object Storage |
+| **Network** | VPC, Floating IPs, Security Groups |
+| **Manage** | Projects, Team & Access (Members, Roles, API Keys) |
 | *Future* | *Automate, AI* |
+
+Snapshots and Backups are point-in-time artifacts of a VM (and eventually a Volume), not standalone storage products — they live under Virtual Machines.
 
 ## Reference (3 sections)
 
@@ -40,35 +42,51 @@ Customer-facing docs and API reference. Hosted via Mintlify. These standards are
 
 ## Product Page Template
 
-Each product follows this structure:
+Each product follows the same 5-section taxonomy: **Overview / Quickstart & guides / Concepts / Details / Troubleshooting**. New users follow Overview top-down; lookup users hit Details or Troubleshooting via search. Identical on every product so it stops being a design decision.
 
-### Index Page (`index.mdx`)
+**Canonical copyable templates live at:**
+- `docs/products/_template.mdx` — Overview page
+- `docs/products/_template-quickstart.mdx` — task how-to
+- `docs/products/_template-concept.mdx` — explainer
+- `docs/products/_template-details.mdx` — spec sheet
+- `docs/products/_template-troubleshooting.mdx` — issue list
+
+### Sidebar rule — nested sub-groups, no products dropdown
+
+The Products tab uses **nested sub-groups** in `docs.json`: pillar group → product group → section group → pages. Sub-pages are reachable directly from the sidebar, not just via cards on the Overview page. See `feedback_no_products_switcher.md` — we deliberately do NOT use Mintlify's `navigation.products` dropdown switcher.
+
+### Overview page (`index.mdx`)
 ```
-1. Updated date
-2. 2-3 sentence description (direct, what it does, key specs)
-3. Image or diagram
-4. Most Viewed Articles (card grid — 4 cards)
-   - Quickstart
-   - Create [resource]
-   - Manage [resource]
-   - [Most common operation]
-5. Getting Started | How-Tos | Reference (3-card layout)
-6. Details link
-7. Changelog card — link to global `/api-reference/changelog` (do NOT list updates here)
+1. Frontmatter — title is always "Overview"; the sidebar shows the product name as the group header above it.
+2. Updated date — <sub>Updated MONTH DAY, YEAR</sub>
+3. One paragraph — what it is, key specs, who it's for. Direct, no marketing.
+4. Hero <Frame> — /images/products/<pillar>/<product>/hero.png; alt text prefixed with "TODO:" until the real screenshot is dropped in.
+5. ## Most viewed — 2x2 CardGroup linking to the 4 dashboard tasks users come for.
+6. ## Browse — 2x3 CardGroup linking to the 5 sections (Quickstart & guides, Concepts, Details, Troubleshooting) plus API Reference and Changelog.
 ```
 
-### Standard Pages Per Product
+The sidebar nested groups + the global `Products` anchor handle navigation back; no inline back-link needed.
+
+**Screenshot convention.** Every product Overview has a hero `<Frame>` and may add inline `<Frame>` blocks in quickstart/guide pages. Use the path `/images/products/<pillar>/<product>/<name>.png` and prefix the alt text with `TODO:` until the file exists. This makes outstanding screenshot work greppable.
+
+### Standard files per product
 ```
 products/{pillar}/{product}/
-├── index.mdx           # Main page (template above)
-├── quickstart.mdx      # Get started in 5 minutes
-├── how-to-create.mdx   # Create the resource
-├── how-to-manage.mdx   # Common operations (start/stop/list/etc.)
-├── how-to-resize.mdx   # Resize/scale (if applicable)
-├── how-to-delete.mdx   # Delete/cleanup
-└── details.mdx         # Features, limits, regions, pricing, lifecycle
+├── index.mdx                    # Overview (the per-product hub)
+├── quickstart-guides/           # Dashboard task how-tos (one MDX per task)
+│   ├── create-...mdx
+│   ├── ...
+│   └── delete-...mdx
+├── concepts/                    # Explainers (what + why, not how-to)
+│   └── ...mdx
+├── details/                     # Spec sheets (features, limits, pricing, SLA)
+│   ├── features-and-limits.mdx
+│   └── pricing.mdx
+└── troubleshooting.mdx          # Common issues + recovery (single file)
 # NO per-product changelog — use global /api-reference/changelog
 ```
+
+When a section has only 1 page, it can be a flat `.mdx` (e.g. `troubleshooting.mdx`); when it has multiple, it's a folder. Both render the same in the sidebar group.
 
 ### Changelog (single global page at `/api-reference/changelog`)
 

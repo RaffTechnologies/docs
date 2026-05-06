@@ -1,0 +1,165 @@
+---
+title: S3 compatibility
+description: What S3-compatibility means in practice — the API surface that works on Raff, the AWS-only features that don't, and the gotchas that catch every new integration
+---
+
+Raff Object Storage is **S3-compatible**: any AWS S3 SDK or tool can talk to it once you point the SDK at Raff's endpoint with valid Raff access keys. You don't need a Raff-specific client library — the same `boto3`, `aws-cli`, `aws-sdk-go-v2`, `aws-sdk-js`, `rclone`, `s3cmd`, `mc`, Cyberduck, etc. that work against AWS S3 work against Raff.
+
+Under the hood, Raff Object Storage runs on **Ceph RGW** (the RADOS Gateway), the same battle-tested S3 implementation behind many production object stores at scale. Ceph RGW implements the S3 API directly, which is why the compatibility surface is broad — the constraints below mirror the standard S3 spec, not Raff-specific quirks.
+
+This page covers what that actually means in practice. It's not just "we accept S3 API calls" — there are practical compatibility lines that matter when you're porting code from AWS or building against Raff for the first time.
+
+## What "S3-compatible" guarantees
+
+The S3 API surface that's effectively universal across compatible providers (AWS, DigitalOcean Spaces, Cloudflare R2, Backblaze B2, Wasabi, MinIO, Vultr, Raff):
+
+| Operation | What it does | Supported on Raff |
+|---|---|---|
+| `CreateBucket` / `DeleteBucket` | Bucket lifecycle | ✅ |
+| `ListBuckets` | List the buckets you own | ✅ |
+| `ListObjects` / `ListObjectsV2` | List a bucket's contents | ✅ |
+| `PutObject` / `GetObject` / `HeadObject` / `DeleteObject` | Object CRUD | ✅ |
+| `CopyObject` | Server-side copy | ✅ |
+| `CreateMultipartUpload` / `UploadPart` / `CompleteMultipartUpload` / `AbortMultipartUpload` | Multipart upload protocol | ✅ |
+| `PutObjectAcl` / `GetObjectAcl` | Per-object ACL | ✅ |
+| `PutBucketAcl` / `GetBucketAcl` | Bucket ACL | ✅ |
+| `PutBucketPolicy` / `GetBucketPolicy` / `DeleteBucketPolicy` | JSON policy management | ✅ — see the [policy templates](/products/store/object-storage/quickstart-guides/set-public-private#the-seven-policy-templates) |
+| `PutBucketCors` / `GetBucketCors` | CORS configuration | ✅ |
+| Presigned URL generation (SigV4) | Time-limited signed download/upload links | ✅ |
+| Bucket versioning | Keep multiple versions of an object | ✅ — see the [Properties tab](/products/store/object-storage/quickstart-guides/upload-files#bucket-properties-versioning-encryption-tags) |
+
+Anything in this table works the same as it does on AWS. If your code uses these, it ports without changes beyond the endpoint and credentials swap.
+
+## What's AWS-only — won't work on Raff (or any S3-compatible provider)
+
+These are AWS-specific extensions; they're not part of the S3 API "spec" that compatible providers implement.
+
+| AWS-only feature | What it is | Use instead |
+|---|---|---|
+| **S3 Select** / **Glacier Select** | Run SQL-style queries against object contents server-side | Read the object, query client-side; or use a database |
+| **Object Lambda** | Transform objects on-read with AWS Lambda | Do transforms in your application layer |
+| **Storage Classes** beyond Standard (Glacier, Intelligent-Tiering, IA, Deep Archive) | AWS's tiered storage with lifecycle transitions | Single-class today; an HDD class is on Raff's roadmap for cold data |
+| **S3 Transfer Acceleration** | AWS edge-network upload speedup | Standard upload to the regional endpoint; multipart parallelism is your performance lever |
+| **S3 Access Points** / **Multi-Region Access Points** | Named alternative endpoints with their own policies | Use bucket policies directly |
+| **S3 Object Lock** (full WORM compliance) | Write-once-read-many with regulatory retention modes | Use `Deny Delete` policies for similar effect; full compliance modes not available |
+| **S3 Replication** (CRR / SRR / RTC) | Cross-region or same-region async replication | App-level replication, or copy + cron |
+| **Requester Pays** | Charge the requester not the bucket owner for egress | Not available on Raff — egress is billed to the bucket owner (first 1 TB/month free, then \$0.01/GB) |
+| **IAM principals in bucket policies** | `"Principal": "arn:aws:iam::..."` | Use access-key-based permissions; for fine-grained access, use [Limited access keys](/products/store/object-storage/quickstart-guides/generate-access-keys#limited) |
+| **SSE-KMS with customer-managed keys** | Server-side encryption tied to a specific KMS key | Encryption-at-rest is on by default; per-object KMS configuration not exposed |
+| **S3 Tables** / **S3 Tables Buckets** | New AWS Iceberg-table primitive | Use a database / data-lake layer above the bucket |
+
+If your code calls any of these explicitly, you'll need to remove or replace the call before targeting Raff.
+
+## Endpoint URL — virtual-host vs path style
+
+AWS S3 (and Raff) primarily uses **virtual-hosted style** URLs:
+
+```
+https://<bucket>.s3.raffusercloud.com/<key>
+```
+
+That's the URL the dashboard shows in the **Object overview** card and the format the SDK uses by default once you configure the endpoint. Most SDKs build it from a base endpoint plus the bucket name automatically.
+
+**Path style** is the older form:
+
+```
+https://s3.raffusercloud.com/<bucket>/<key>
+```
+
+Some SDKs (boto3 in particular) need an explicit `addressing_style="path"` (or `s3ForcePathStyle: true` / `usePathStyle: true` in JS / Go SDK v2) when:
+
+- Bucket names contain dots (the wildcard TLS cert doesn't cover nested dots)
+- You're testing against a local S3-compatible server without DNS wildcards
+- You hit `SSL: certificate verify failed` errors that look TLS-related
+
+When in doubt, **try virtual-host first**; switch to path style only if you hit the cert issue.
+
+## Authentication — SigV4 and the region trap
+
+Raff signs requests with **AWS SigV4**. The SDK handles the signing automatically once you give it the access key + secret. The thing to get right is **region**.
+
+```
+Region: us-east
+```
+
+It's `us-east` — not `us-east-1` (AWS naming). This bites every new integration. Symptoms:
+
+- `SignatureDoesNotMatch` errors
+- `The authorization header is malformed; the region '<x>' is wrong`
+- Requests work intermittently, then break when the SDK tries a different code path
+
+Fix: set the region explicitly in your SDK config:
+
+| SDK | Setting |
+|---|---|
+| boto3 (Python) | `region_name="us-east"` in `boto3.client(...)` |
+| aws-cli | `aws --region us-east s3 ls` (or `AWS_REGION=us-east` env var, or `~/.aws/config`) |
+| AWS SDK v3 (JS) | `region: "us-east"` in client constructor |
+| AWS SDK v2 (Go) | `config.WithRegion("us-east")` |
+| rclone | `region = us-east` in the remote config |
+| s3cmd | `bucket_location = us-east` in `~/.s3cfg` |
+
+Don't rely on the SDK's default of `us-east-1` — it's similar enough to silently mostly-work and then fail mysteriously.
+
+## Tooling — what works out of the box
+
+Anything that speaks S3 with a configurable endpoint:
+
+**Official AWS SDKs**
+- Python — `boto3` / `aiobotocore`
+- JavaScript / TypeScript — AWS SDK v2 and v3
+- Go — `aws-sdk-go-v2`
+- Java — AWS SDK for Java
+- .NET — AWS SDK for .NET
+- Rust — `aws-sdk-s3`
+- Ruby — `aws-sdk-s3`
+- PHP — AWS SDK for PHP
+
+**Command-line tools**
+- `aws-cli` — `aws s3` and `aws s3api` commands
+- `s3cmd` — long-standing Python CLI
+- `mc` (MinIO Client) — fast, multi-cloud, scriptable
+- `rclone` — best for syncs, mirrors, mass-copy operations
+- `s5cmd` — high-performance bulk transfers
+
+**GUI clients**
+- **Cyberduck** — macOS / Windows
+- **Transmit** — macOS
+- **WinSCP** — Windows
+- **S3 Browser** — Windows
+- **Cloudberry Explorer** — Windows / macOS
+
+All of these need only an access key, secret, and the Raff endpoint to work.
+
+## How "compatible" is "fully compatible"?
+
+S3 has many edge cases. Compatibility across providers is excellent for the operations you'll actually use day-to-day, and degrades for the AWS-only extensions listed above. A practical rule:
+
+- **If a tutorial uses only the basic API (`PutObject`, `GetObject`, presigned URLs, ACLs, multipart)** → it works on Raff with the endpoint + region change.
+- **If it uses `s3:Select*`, `iam:`-prefixed permissions, AWS-specific Storage Classes, or KMS-managed keys** → it won't, and you'll need to redesign that portion.
+
+For the most common workloads — static asset hosting, application backups, ML artifact storage, log archival, customer file uploads — Raff Object Storage is a drop-in replacement.
+
+## Common pitfalls — read this once
+
+These are the things that break first-time integrations:
+
+1. **Forgetting `endpoint_url`** — the SDK silently calls `*.amazonaws.com` and you get authentication errors that look weird. Every SDK call must point at the Raff endpoint.
+2. **Region not set to `us-east`** — SDKs default to `us-east-1`; SigV4 signs with the wrong region; requests fail with `SignatureDoesNotMatch`.
+3. **Virtual-host vs path style mismatch** — buckets with dots in the name, or SDKs that don't auto-detect, need `addressing_style="path"`.
+4. **Public-bucket assumptions don't port** — AWS needs both ACL and Block Public Access disabled; R2 needs a public binding; Raff needs the bucket ACL or a policy. "Just make it public" isn't portable code.
+5. **Multipart parts smaller than 5 MiB** (except the last part) — providers reject `CompleteMultipartUpload` with `EntityTooSmall`; the upload silently bills storage until you abort it. Most SDKs default to ≥ 5 MiB parts; if you hand-roll multipart, respect the floor.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Use the S3 SDK" icon="code" href="/products/store/object-storage/quickstart-guides/s3-sdk-access">
+    Code samples for boto3, aws-cli, JS, Go, rclone.
+  </Card>
+  <Card title="Generate access keys" icon="key" href="/products/store/object-storage/quickstart-guides/generate-access-keys">
+    Get the credentials you'll need.
+  </Card>
+  <Card title="Set public or private" icon="globe" href="/products/store/object-storage/quickstart-guides/set-public-private">
+    Bucket-level and object-level ACL plus 7 ready-made policies.
+  </Card>
+</CardGroup>

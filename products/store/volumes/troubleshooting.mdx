@@ -1,0 +1,220 @@
+---
+title: Troubleshooting
+description: Common volume issues — attach, mount, resize, detach, delete — and how to fix them
+---
+
+The most-seen failures with Raff volumes and the fix that works in each case. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+
+## Attach and visibility
+
+<AccordionGroup>
+  <Accordion title="Volume attached in dashboard but `lsblk` doesn't show it">
+    **What's happening:** the dashboard says the volume is attached, but inside the VM there's no new device.
+
+    **Likely causes & fixes:**
+    1. **Kernel hasn't picked up the new device yet.** Force a re-scan:
+       ```bash
+       echo "- - -" | sudo tee /sys/class/scsi_host/host0/scan
+       sudo udevadm trigger
+       ```
+    2. **Wrong VM.** Volumes attach to one VM at a time — confirm the dashboard shows it attached to *this* VM.
+    3. **Looking at the wrong device path.** On Raff, volumes always appear as `/dev/vd*` (virtio-blk). The OS disk is `/dev/vda`; the first attached volume is `/dev/vdb`. If you're looking for `/dev/sd*` or `/dev/nvme*`, you won't find them — those paths don't exist on Raff.
+    4. **VM in `provisioning`.** A snapshot or backup running on the VM can delay attach. Wait for `active`/`passive` and retry.
+  </Accordion>
+
+  <Accordion title="Cannot attach — `volume in different region`">
+    **What's happening:** the dashboard rejects attach to your chosen VM.
+
+    **Why:** volumes are region-locked. A `us-east` volume can only attach to VMs in `us-east`.
+
+    **Fix:** to "move" a volume across regions: take a snapshot, restore in the target region, then delete the original. There is no in-place region migration.
+  </Accordion>
+
+  <Accordion title="Cannot attach — `VM not in active or passive state`">
+    **What's happening:** attach blocks with a VM-state error.
+
+    **Why:** the VM is in `provisioning`, `booting`, `failure`, or another non-attachable state. Most often caused by a snapshot or backup running.
+
+    **Fix:** wait for the VM to return to `active` or `passive`, then retry. If stuck for more than 10 minutes, see [Troubleshooting → VM stuck in provisioning](/products/build/virtual-machines/troubleshooting#lifecycle-and-state).
+  </Accordion>
+
+  <Accordion title="Volume already attached to another VM">
+    **What's happening:** you tried to attach a volume that the dashboard says is already in use.
+
+    **Why:** Raff volumes are **single-attach** — one VM at a time. There's no multi-attach mode.
+
+    **Fix:** [detach](/products/store/volumes/quickstart-guides/detach-from-vm) from the current VM, then attach to the new one. For multi-VM shared access, use [Object Storage](/products/store/object-storage) instead.
+  </Accordion>
+</AccordionGroup>
+
+## Mount and filesystem
+
+<AccordionGroup>
+  <Accordion title="`mount` fails with `wrong fs type, bad option, bad superblock`">
+    **What's happening:** the device exists but `mount` rejects it.
+
+    **Why:** the volume isn't formatted yet. New volumes (or volumes you chose **Manually Format & Mount** for at create time) come up raw.
+
+    **Fix:** format first:
+    ```bash
+    sudo mkfs.ext4 /dev/vdb     # default Linux
+    # or
+    sudo mkfs.xfs /dev/vdb      # better for large/parallel volumes
+    ```
+    Then mount and add to `/etc/fstab`. See [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) for the full flow.
+  </Accordion>
+
+  <Accordion title="Boot drops to emergency shell after adding a volume to `/etc/fstab`">
+    **What's happening:** the VM rebooted and now hangs at "A start job is running for…" or drops to emergency mode.
+
+    **Why:** the `/etc/fstab` entry references a volume that isn't present at boot — typo, wrong UUID, or volume detached.
+
+    **Fix path:** see [Recover a locked-out VM → Single-user mode via GRUB](/products/build/virtual-machines/quickstart-guides/recover-locked-vm#3-single-user-mode-via-grub-when-the-vm-wont-even-boot-to-login). Boot in single-user, mount root read-write, fix the bad fstab line, reboot.
+
+    **Prevention:** always include `nofail` and `x-systemd.device-timeout=10` in the fstab options — boot won't hang on a missing volume:
+    ```
+    UUID=…  /mnt/data  ext4  defaults,nofail,x-systemd.device-timeout=10  0  2
+    ```
+  </Accordion>
+
+  <Accordion title="Wrong device name in `/etc/fstab` after a reboot">
+    **What's happening:** you used `/dev/vdb` in fstab, the volume now appears as `/dev/vdc` (or vice versa), and the mount fails.
+
+    **Why:** device letters can shift if multiple volumes are attached and the order changes.
+
+    **Fix:** always reference volumes in `/etc/fstab` by **UUID** instead of `/dev/vd*`:
+    ```bash
+    sudo blkid /dev/vdb
+    # /dev/vdb: UUID="b1234…" TYPE="ext4"
+    ```
+    Then in fstab: `UUID=b1234…  /mnt/data  ext4  defaults,nofail  0  2`.
+  </Accordion>
+
+  <Accordion title="Permission denied writing to a freshly-mounted volume">
+    **What's happening:** `mount` succeeds but the user can't write to the mount point.
+
+    **Why:** newly-formatted ext4 / xfs volumes are owned by `root:root` with `0755` permissions. Your application's user can't write.
+
+    **Fix:** chown after mount:
+    ```bash
+    sudo chown -R appuser:appuser /mnt/data
+    sudo chmod 0755 /mnt/data
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Resize
+
+<AccordionGroup>
+  <Accordion title="Increased size in dashboard but `df -h` shows old size">
+    **What's happening:** the volume is bigger at the block-device level (`lsblk` confirms) but the filesystem doesn't see it.
+
+    **Why:** dashboard resize grows the *block device*. The filesystem inside the VM is unchanged until you tell it to grow.
+
+    **Fix (Linux):**
+    ```bash
+    sudo partprobe /dev/vdb       # re-read disk size
+    sudo growpart /dev/vdb 1      # only if you partitioned
+    sudo resize2fs /dev/vdb1      # ext4 — pass the partition or device
+    # or
+    sudo xfs_growfs /mnt/data     # xfs — pass the mountpoint
+    ```
+
+    **Fix (Windows):** **Computer Management → Disk Management** → right-click the volume → **Extend Volume**.
+  </Accordion>
+
+  <Accordion title="`Increase size` action is greyed out / missing">
+    **What's happening:** the volume row's actions menu doesn't show **Increase size**.
+
+    **Why:** size increases are only available while the volume is **attached** to a VM.
+
+    **Fix:** [attach](/products/store/volumes/quickstart-guides/attach-to-vm) the volume to a VM first, then resize.
+  </Accordion>
+
+  <Accordion title="Need to make a volume smaller">
+    **Not supported.** Volume resize is **one-way** — grow only.
+
+    **Workaround:** create a new smaller volume, copy what you need over, swap mount points / fstab entries, delete the old volume.
+  </Accordion>
+</AccordionGroup>
+
+## Detach and delete
+
+<AccordionGroup>
+  <Accordion title="`Please wait! VM is not ready to detach volume`">
+    **What's happening:** the dashboard blocks detach with a top-of-page warning.
+
+    **Why:** the VM is in a non-detachable state — usually `provisioning` because a snapshot or backup is running.
+
+    **Fix:** wait for the VM to return to `active` or `passive`, then retry. See [Detach from a VM → If the VM is in `provisioning`](/products/store/volumes/quickstart-guides/detach-from-vm#if-the-vm-is-in-provisioning).
+  </Accordion>
+
+  <Accordion title="`umount` fails with `target is busy`">
+    **What's happening:** trying to unmount a volume but a process is holding files open.
+
+    **Fix:**
+    ```bash
+    sudo lsof +D /mnt/data       # list what's open
+    sudo fuser -m /mnt/data      # list processes
+    # Stop the offending services / processes, then:
+    sudo umount /mnt/data
+    ```
+
+    Worst case, if you can't stop the process, **lazy unmount** then power-cycle the VM:
+    ```bash
+    sudo umount -l /mnt/data
+    ```
+  </Accordion>
+
+  <Accordion title="Volume still being billed after I deleted my VM">
+    **What's happening:** you destroyed a VM but the volume is still in your account, accruing charges.
+
+    **Why:** deleting a VM **detaches** any attached volumes; it does not delete them. Volumes survive VM destroy by design.
+
+    **Fix:** [delete the volume](/products/store/volumes/quickstart-guides/delete-volume) from the **Volumes** tab. The unused subscription time is credited back to your account balance.
+  </Accordion>
+
+  <Accordion title="Deleted a volume by accident — can I recover?">
+    **What's happening:** clicked Delete on a volume you actually needed.
+
+    **Reality:** delete is permanent. Once confirmed, the data is gone. You can't undelete from the dashboard.
+
+    **Recovery options:**
+    1. **From a volume snapshot** taken before delete — create a new volume from the snapshot.
+    2. **From a copy elsewhere** (Object Storage, off-platform backup, database dump).
+    3. If neither — the data is unrecoverable. This is why production volumes should run on a snapshot schedule.
+  </Accordion>
+</AccordionGroup>
+
+## State and identity
+
+<AccordionGroup>
+  <Accordion title="Two volumes have the same name">
+    **What's happening:** the volume list shows two rows with the same display name.
+
+    **Why:** Raff doesn't enforce unique names across volumes — names are display labels, not identifiers.
+
+    **Fix:** rename one (use the configure action) or identify them by their UUIDs in API responses. For long-term clarity, adopt a naming convention like `<env>-<purpose>-<n>` (e.g. `prod-db-data-01`).
+  </Accordion>
+
+  <Accordion title="Volume status is `provisioning` for a long time">
+    **What's happening:** a freshly-created or freshly-attached volume sits in `Provisioning` for several minutes.
+
+    **Likely causes:**
+    1. **Large size** — initial provisioning takes longer for large volumes.
+    2. **Hypervisor pressure** — the underlying node is busy.
+    3. **Auto-format running** — formatting a 1000 GiB volume takes a few minutes.
+
+    **Fix:** wait 5-10 minutes. If still stuck, contact [support](mailto:support@rafftechnologies.com) with the volume ID and the VM ID.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The **volume ID** (from the volumes list URL or `Get volume` API response)
+- The **attached VM ID** (if applicable)
+- The exact error message and timestamp
+- Steps already tried
+- Relevant logs from inside the VM (`journalctl -xe`, `dmesg | tail -50`)

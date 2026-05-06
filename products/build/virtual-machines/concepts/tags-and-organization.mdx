@@ -1,0 +1,97 @@
+---
+title: Tags & organization
+description: How VM tags, priorities, and Group by Tag let you organize many VMs without losing your mind
+---
+
+A tag is a free-form label you attach to a VM. Once you have more than a handful of VMs, tags become the primary tool for finding, filtering, and grouping them in the dashboard.
+
+## What a tag is
+
+| Field | Description |
+|---|---|
+| **Name** | Free-form text — `prod`, `customer-acme`, `db`, `web-tier` |
+| **Priority** | Integer 1-9 (or none) — controls display order in the Tags column and in **Group by Tag** view |
+| **Scope** | Account-wide — the same tag name on multiple VMs is the **same tag**, not a copy |
+
+## Add a tag
+
+Click the **+** in the Tags column on any VM row. The Add New Tag dialog opens:
+
+<Frame>
+  ![Add New Tag dialog with Tag Name field and Priority selector showing values 1-9 and a clear option](/images/products/build/virtual-machines/tags-01-add-tag-dialog.png)
+</Frame>
+
+| Field | Notes |
+|---|---|
+| **Tag Name** | Required. Free-form. Reusing an existing name attaches the same account-wide tag, not a duplicate. |
+| **Priority** | Optional. Pick `1` - `9`, or click the **×** to leave it unset. Lower numbers display first. |
+
+## Priority — what it controls
+
+Priority shapes two parts of the UI:
+
+1. **Tags column on the VM list** — when a VM has many tags, only a couple fit inline. The lowest-priority numbers (1, 2, 3, …) show first; tags without a priority show last.
+2. **Group order in Group by Tag view** — described below.
+
+A common convention: use priority `1` for the most important "what is this?" tag (e.g. `prod`), priority `2` for ownership (`team-payments`), no priority for everything else.
+
+## Group by Tag view
+
+Toggle the **View: List / Group by Tag** control at the top right of the Instances list. The list reorganizes into groups, one per tag.
+
+<Frame>
+  ![Instances list with Group by Tag toggle on the top right and a "raff-app-stack (1) (5 VMs)" group header](/images/products/build/virtual-machines/tags-02-group-by-tag.png)
+</Frame>
+
+**Ordering of groups:**
+
+1. By **priority value** — groups with priority `1` come before priority `2`, etc.
+2. By **tag name** alphabetically — when two groups share the same priority, the tie breaks by name.
+3. **Untagged VMs** appear separately at the top, before any grouped VMs.
+
+The number in brackets on the group header is the priority (`[1] raff-app-stack`); the second number is the count of VMs in the group (`(5 VMs)`).
+
+**Sub-grouping:** up to **2 levels** deep. A VM that carries two tags shows up under the higher-priority group at level 1, with the second tag forming a sub-group inside it. Beyond 2 levels, additional tags appear inline on the VM row but don't form further nesting.
+
+## Renaming a tag globally
+
+When you rename a tag, the change applies to **every** VM that carries it — there is no other tag with the same name elsewhere; the tag is one record account-wide.
+
+This makes mass-renaming safe (one rename = consistent everywhere), but typos propagate. Pick names with care, or fix them globally as soon as you spot one.
+
+## Hostnames vs tags
+
+Hostnames and tags answer different questions:
+
+| | Tag | Hostname |
+|---|---|---|
+| Scope | Account-wide label | Per-VM identifier |
+| Purpose | Grouping, filtering | Naming the VM in dashboard, API, OS |
+| Multiplicity | Many tags per VM | One hostname per VM |
+| Allowed chars | Free-form | `A-Z`, `a-z`, `0-9`, hyphen — 3-63 chars |
+
+Hostnames auto-generate as `<os>-<cpu>-<ram>-NN` at creation (e.g. `ubuntu-1cpu-2gb-01`). Edit per-VM at creation, or [rename](/products/build/virtual-machines/quickstart-guides/rename) later. The OS-internal hostname (what the kernel reports) is separate — set it inside the VM with `hostnamectl set-hostname` (Linux) or System Properties (Windows).
+
+## Naming patterns that work
+
+Pick a convention before you have 20 VMs, not after:
+
+| Pattern | Example | Use when |
+|---|---|---|
+| `<env>-<role>-<n>` | `prod-web-01`, `staging-db-02` | Single-team, environment-scoped infra |
+| `<customer>-<role>` | `acme-app`, `acme-db` | Multi-tenant or customer-isolated |
+| `<service>-<region>-<n>` | `api-us-east-01` | Multi-region deployments |
+| `<stack>-<role>` | `raff-app-stack-web` | Logical stacks of related VMs |
+
+Keep tags orthogonal to hostnames: hostname says *what this server is*, tags say *which subset is this part of*.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Rename a VM" icon="pen" href="/products/build/virtual-machines/quickstart-guides/rename">
+    Change a VM's display name.
+  </Card>
+  <Card title="VM notes" icon="note-sticky" href="/products/build/virtual-machines/concepts/vm-notes">
+    Free-form notes that complement tags.
+  </Card>
+</CardGroup>

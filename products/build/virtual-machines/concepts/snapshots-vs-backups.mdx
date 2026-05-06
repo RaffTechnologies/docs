@@ -1,0 +1,42 @@
+---
+title: Snapshots vs Backups
+description: When to use snapshots versus scheduled backups
+---
+
+Snapshots and backups both capture a VM's disk state, but they answer different needs.
+
+## Side by side
+
+| | Snapshot | Backup |
+|---|---|---|
+| **When taken** | On-demand, manually | Automated, on a schedule |
+| **Schedule** | None | `daily`, `weekly`, `monthly` |
+| **Retention** | Until you delete it | Per the schedule's retention policy |
+| **Use case** | Restore point before a risky change; clone a VM | Routine protection without manual effort |
+| **Pricing** | Per-GB stored | Per-GB stored, plus the schedule |
+
+## When to use a snapshot
+
+- Before upgrading kernel, OS, or critical packages
+- Before a reinstall or factory reset
+- To clone a VM into a new VM (via image)
+- For a one-time "known good" state that doesn't need recurring captures
+
+## When to enable backups
+
+- Production VMs where you can't rely on remembering manual snapshots
+- Compliance / RPO requirements that mandate scheduled protection
+- Any VM where data loss between manual snapshots would matter
+
+You can use both — many production VMs have a daily backup schedule **and** ad-hoc snapshots before risky changes.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create a snapshot" icon="camera" href="/products/build/virtual-machines/quickstart-guides/create-snapshot">
+    Capture state on demand.
+  </Card>
+  <Card title="Enable backups" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    Configure a schedule.
+  </Card>
+</CardGroup>

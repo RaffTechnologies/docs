@@ -1,0 +1,88 @@
+---
+title: Custom images
+description: Save a VM's disk as a reusable template, then create new VMs from it
+---
+
+A **custom image** is a snapshot of a VM's OS disk preserved as a reusable template. Save one from any VM, then pick it from the create flow to launch identical VMs — same kernel, same packages, same configuration, fresh disks.
+
+Custom images sit alongside Raff's stock OS templates (Ubuntu, Debian, Windows Server, …). The create-VM dialog lists both: stock templates under the **OS** tab, your custom images alongside Marketplace images.
+
+## Why use custom images
+
+| Goal | Custom image solves it |
+|---|---|
+| Promote a VM from one region to another | Save as image → create new VM in target region |
+| Standardize a base config across many VMs | Build once, image, deploy from image N times |
+| Roll back to a known-good state | Save before changes, recreate from image if needed |
+| Cut provisioning time for repeat workloads | Skip cloud-init / Ansible runs after every create |
+
+Snapshots are good for *one* VM's restore points; custom images are good for *N* VMs sharing a starting state.
+
+## Custom images vs related concepts
+
+| | Custom image | Snapshot | Backup | OS template |
+|---|---|---|---|---|
+| Source | Your VM | Your VM | Your VM | Raff-provided |
+| Reusable to create new VMs | **Yes** | No (restore-only) | No (restore-only) | Yes |
+| Lifecycle | Until you delete | Until you delete | Per retention policy | Until Raff retires |
+| Survives source-VM delete | **Yes** | No (deleted with VM) | Yes (per retention) | n/a |
+| Best for | "Golden image" pattern | Pre-change checkpoint | Routine protection | Vanilla starting point |
+
+The big practical difference: snapshots are deleted when the source VM is deleted; **custom images outlive the VM**. If you want a starting point that persists, save the snapshot as an image first.
+
+## How to create one
+
+Two paths reach the same outcome:
+
+1. **From an existing VM** — use [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image) (API today; dashboard exposure planned). The VM's current OS disk is captured as an image.
+2. **From a snapshot** — convert an existing snapshot into a permanent image *before* deleting the source VM, so the image survives.
+
+Both produce a custom image that appears in the create-VM template picker.
+
+## How to use one
+
+Open the **Create VM** flow and pick the OS template step. The picker lists:
+
+- **OS tab** — Raff stock templates (vanilla distros, Windows Server)
+- **Marketplace tab** — pre-built application stacks
+- **Your custom images** — what you've saved
+
+Select your image, choose region/plan/auth, and create as normal. The new VM boots with your saved disk as its OS disk.
+
+## What gets baked in
+
+A custom image captures **everything on the OS disk at the moment of capture**:
+
+- Installed packages, configs, kernel, drivers
+- Application code in your usual paths
+- Set hostnames *inside* the OS, fixed IPs in `/etc/netplan` or similar (these will conflict — clear them before imaging)
+- Cron jobs, systemd units, mounted state
+- Any secrets or credentials sitting on disk — sanitize first
+
+It does **not** capture:
+
+- Attached volumes (separate volumes, separate snapshots)
+- The dashboard hostname, tags, notes (those belong to the VM record)
+- Network configuration assigned by the platform — new VMs get fresh IPs
+
+## Best practices for golden images
+
+- Run a **sanitization pass** before imaging: clear shell history, remove machine-specific keys (`ssh-keygen -A` or `cloud-init clean`), zero out sensitive disk areas.
+- Pin package versions so the image is reproducible, or document the apt/yum state.
+- Version your images by name — `web-base-2026-04`, `web-base-2026-05` — so you know what's current.
+- Delete old image versions you no longer use to stop storage charges.
+
+## Pricing
+
+Custom images bill per GB-stored, similar to backups and snapshots. The exact rate is in [Pricing](/products/build/virtual-machines/details/pricing). Delete images you no longer need.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="OS templates" icon="lightbulb" href="/products/build/virtual-machines/concepts/os-templates">
+    Stock images Raff provides.
+  </Card>
+  <Card title="Snapshots vs Backups" icon="lightbulb" href="/products/build/virtual-machines/concepts/snapshots-vs-backups">
+    Decision framework for protective copies.
+  </Card>
+</CardGroup>

@@ -1,0 +1,119 @@
+---
+title: Generate access keys
+description: Create S3-compatible access key pairs for programmatic access — Full Access or Limited (per-bucket) scope
+---
+
+An **access key** is an S3-style credential pair (access key ID + secret) that lets SDKs, the AWS CLI, and other S3 tools authenticate to your Raff Object Storage. Every key has a **scope** — either every bucket on the account, or specific buckets — and the choice you make at creation determines how the key behaves over its lifetime.
+
+## Before you start
+
+- An [Object Storage bucket](/products/store/object-storage/quickstart-guides/create-bucket) (you can create the key first, but the typical flow is bucket-then-key).
+- Decide which **access type** you need — see the side-by-side below.
+
+## 1. Open the Create Access Key dialog
+
+From **Object Storage → Access Keys**, click **+ Create Access Key**. The Access Keys list shows every key on your account with its **Scope** (e.g. "1 bucket" or "0 buckets") and creation date.
+
+<Frame>
+  ![Create Access Key dialog with Name field and Access Type dropdown set to "Full Access — all buckets, all operations", over the Access Keys list](/images/products/store/object-storage/access-key-01-create-dialog.png)
+</Frame>
+
+## 2. Name the key
+
+Pick something descriptive — the dashboard placeholder is `e.g. CI/CD Pipeline`. Good names tell you *where* the key is used so you can rotate or revoke later:
+
+- `gh-actions-prod-deploy`
+- `backup-cron-vm-finance`
+- `marketing-site-uploads`
+
+Names don't have to be unique across the account, but for revocation hygiene treat them as identifiers.
+
+## 3. Pick the access type
+
+The Access Type dropdown has two options. **This choice is the most important part of access-key creation.**
+
+### Full Access
+
+| | Full Access |
+|---|---|
+| Scope | Every bucket on the account, every operation |
+| Bucket policy | None — the key is granted blanket permission |
+| Risk if customer edits a bucket policy | None — Full Access is independent of bucket policies |
+| Use when | Trusted automation, account-admin workflows, dev environments |
+
+### Limited
+
+When you pick **Limited**, the dialog asks you to select **which bucket(s)** the key should access. Raff then **automatically generates a bucket policy** specifically for this access key, granting it operations on the selected buckets only.
+
+| | Limited |
+|---|---|
+| Scope | Only the buckets you select at creation |
+| Bucket policy | Raff generates one tying the key's permissions to those buckets |
+| Risk if customer edits a bucket policy | **The key can break.** If you (or someone on your team) edits a bucket's policy directly via the S3 API or another tool, the Raff-generated grant for this key may be removed or overridden. Limited keys depend on the policy staying intact. |
+| Use when | Third-party integrations, customer-side automation, anything you'd want to revoke or scope-shrink later |
+
+<Warning>
+  **Limited access keys depend on Raff-managed bucket policies.** If you edit a bucket's policy directly (via `s3:PutBucketPolicy` or another tool), you can accidentally remove the grant Raff added for a Limited key, breaking that key. Full Access keys are not affected by bucket policy edits.
+</Warning>
+
+### Choosing between them
+
+| Question | Answer | Pick |
+|---|---|---|
+| Is this key for one specific app or pipeline? | Yes | **Limited** (least privilege) |
+| Will the key live in code shared with third parties? | Yes | **Limited** |
+| Is this for cluster-wide automation that touches many buckets? | Yes | **Full Access** |
+| Are you scripting against Raff Object Storage from your own CI? | Either — start with **Limited** scoped to needed buckets |
+| Will any team member ever edit a bucket policy by hand? | If yes → still pick the right scope, but be aware the Limited key could break |
+
+## 4. Create and copy the secret
+
+Click **Create Access Key**.
+
+<Warning>
+  **The secret key is shown only once.** The dialog displays the access key ID *and* the secret. Copy the secret to your password manager / secrets store **immediately**. After you close the dialog, Raff cannot show it again — only re-issue.
+</Warning>
+
+You'll get back two strings:
+
+| Field | Use as |
+|---|---|
+| **Access Key ID** | `AWS_ACCESS_KEY_ID` (or equivalent in your SDK config) |
+| **Secret Access Key** | `AWS_SECRET_ACCESS_KEY` (or equivalent) |
+
+Pair them with the Raff S3 endpoint when configuring an SDK — see [Use the S3 SDK](/products/store/object-storage/quickstart-guides/s3-sdk-access).
+
+## After creation
+
+The new key appears in the **Access Keys** list. The **Scope** column tells you what the key can reach (`Full` / `1 bucket` / `N buckets`); the **Created** column has the date.
+
+You can:
+
+- **Disable** the key — temporarily block all requests it makes
+- **Delete** the key — permanent revocation
+- **(Limited keys)** Re-scope the key — add or remove buckets it can access; Raff updates the auto-managed policy
+- **Rotate** — generate a new key, deploy it to your application, then delete the old one (zero-downtime if you run both briefly in parallel)
+
+You **cannot** retrieve the secret after creation — to rotate or recover, create a new key.
+
+## Storing keys safely
+
+- Treat keys like passwords — they're full credentials to your data
+- Don't commit them to version control
+- Use a secrets manager (1Password, Vault, AWS Secrets Manager, Doppler, etc.) or environment variables injected at runtime
+- Rotate when a key leaks, when an employee leaves, or on a schedule
+- Use **Limited** scope to reduce blast radius — if a Limited key leaks, only its buckets are exposed, not the whole account
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Use the S3 SDK" icon="code" href="/products/store/object-storage/quickstart-guides/s3-sdk-access">
+    Configure boto3 / aws-cli / Go / JS SDKs.
+  </Card>
+  <Card title="Set public or private" icon="globe" href="/products/store/object-storage/quickstart-guides/set-public-private">
+    Bucket-level visibility for unauthenticated readers.
+  </Card>
+  <Card title="S3 compatibility" icon="lightbulb" href="/products/store/object-storage/concepts/s3-compatibility">
+    What S3 features work and which AWS-only extensions don't.
+  </Card>
+</CardGroup>

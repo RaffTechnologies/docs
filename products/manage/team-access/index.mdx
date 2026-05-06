@@ -1,0 +1,130 @@
+---
+title: Overview
+description: Team & Access on Raff — invite members, organize resources into projects, scope access at the account or per-project level, and assign roles
+icon: users
+---
+
+<sub>Updated May 5, 2026</sub>
+
+**Team & Access** is where you decide who has access to what on your Raff account. It has three pieces, each on its own tab:
+
+| Tab | What it controls |
+|---|---|
+| **Members** | The people who can sign in to your account — invite, set their access scope, remove |
+| **Projects** | Groupings of resources (VMs, volumes, IPs, VPCs, etc.) used for access control and organization. Every account has a `Default` project you can never delete |
+| **Roles** | The named permission sets you can assign to members at the account or project level |
+
+<Frame>
+  ![Team & Access page Members tab showing two members — serdar@... with Owner badge and "All projects", batuhan@... with Project-only badge and "1 project" — and an Invite Member button](/images/products/manage/team-access/team-access-members.png)
+</Frame>
+
+## Two separate permission systems — Account and Project
+
+Raff splits permissions into **two independent systems**. They look similar in the UI but they cover **completely different things**, and granting one does **not** grant the other.
+
+| System | Controls | Example permissions |
+|---|---|---|
+| **Account permissions** | Account-wide features — invite members, manage billing, view audit logs, manage account settings, manage account-wide API keys, list of projects, the role catalog itself | `account.members.invite`, `account.billing.manage`, `account.audit.view`, `account.apikeys.create` |
+| **Project permissions** | Resources that live inside a project — VMs, VPCs, public IPs, snapshots, the project's members, the project's settings | `vm.create`, `vm.power`, `vpc.manage`, `project.members.invite` |
+
+A member's grants are tracked separately in each system:
+
+- **Account roles** are assigned once per member at the account level — they apply across the whole account
+- **Project roles** are assigned per project — the same member can have `Project Admin` on `customer1` and `Viewer` on `staging`, or no project role at all
+
+**An account role does not grant access to any project's resources.** A member with the `Admin` account role and no project roles can invite members, manage billing, see the list of projects' names — but they cannot list VMs, see VPCs, or open any project's resources. Project access has to be granted explicitly, per project.
+
+The **Owner** is the only exception: granted automatically at signup with full access in both systems on every project, current and future. Every other member you invite is scoped narrower than that.
+
+The Members list shows where each member sits with badges:
+
+| Badge | Meaning |
+|---|---|
+| **Owner** | Full account permissions + full project permissions on every project. Granted automatically at signup. One per account |
+| **Account** | Has an account role (Admin / Billing / Member). May or may not also have project roles — those are added separately |
+| **Project-only** | No account role at all — only has project roles on specific projects. Useful for customers, contractors, anyone who shouldn't see account-wide info |
+
+## Projects — the unit of access control
+
+Every resource on Raff lives in a **project**. VMs, volumes, public IPs, VPCs, Object Storage buckets — all of them are scoped to one project at creation time. Projects are how access control gets fine-grained.
+
+<Frame>
+  ![Team & Access Projects tab showing two projects — Default (with Default badge, 0 members, created 1/22/2026) and customer1 (1 member, created 3/23/2026) — and a + Create Project button](/images/products/manage/team-access/team-access-projects.png)
+</Frame>
+
+A few things every account should know:
+
+- **Every new account starts with a `Default` project.** It's pre-created at signup and used for any resource you create without picking a project explicitly. The Default project cannot be deleted — it's the always-available fallback.
+- **You can create more projects.** `+ Create Project` from the Projects tab. Use them to isolate customers, environments (`prod` / `staging`), teams, billing entities, anything where access should be partitioned.
+- **Single project is fine.** If you don't need access partitioning, leave the Default project as your only project and forget about it. The account works the same way.
+- **Resources never leave their project.** A VM created in `customer1` stays in `customer1`. Today there's no "move to another project" action — recreate elsewhere if you need to relocate.
+
+## How users switch projects
+
+The top bar of the dashboard has a **project picker** next to the account name. Members with access to multiple projects use this to scope the dashboard to one project at a time.
+
+<Frame>
+  ![Project switcher dropdown opened from the top bar showing Raff Technologies header with Default (checked) and customer1 listed below](/images/products/manage/team-access/project-switcher.png)
+</Frame>
+
+Whatever project is selected here, **every list page in the dashboard filters to that project's resources** — Compute, Networking, Object Storage, all of it. Switch projects and the dashboard re-scopes immediately. The dropdown only lists projects the member actually has a project role on (the Owner sees all of them).
+
+The selected project also determines where new resources land — clicking **+ Create** at the top right while `customer1` is selected creates the new VM / volume / IP inside `customer1`.
+
+## What you can do
+
+| Task | Where |
+|---|---|
+| Invite a new member | **Members** tab → **Invite Member** |
+| Change a member's scope or projects | **Members** tab → row's `⋮` |
+| Remove a member | **Members** tab → row's `⋮` → Remove |
+| Create a new project | **Projects** tab → **+ Create Project** |
+| Rename or delete a project | **Projects** tab → row's `⋮` |
+| Switch the dashboard's view to another project | Top bar → project picker |
+| Generate an API key | **API Keys** in the left sidebar |
+
+API keys are managed in a separate left-sidebar item, **API Keys**, not on the Team & Access page. They're tied to your account and inherit the scope you give them at creation.
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Invite a member" icon="user-plus" href="/products/manage/team-access/quickstart-guides/invite-member">
+    Add a teammate at account or project scope.
+  </Card>
+  <Card title="Create a project" icon="folder-plus" href="/products/manage/team-access/quickstart-guides/create-a-project">
+    Group resources into a new project.
+  </Card>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-access/concepts/roles-and-api-keys">
+    The Account vs Project permission model.
+  </Card>
+  <Card title="Generate an API key" icon="key" href="/products/manage/team-access/quickstart-guides/generate-api-key">
+    Create a key for programmatic access.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/manage/team-access/quickstart-guides/invite-member">
+    Members, roles, API keys.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/manage/team-access/concepts/roles-and-api-keys">
+    Account vs project scope, roles, API key scope.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/manage/team-access/details/permissions-matrix">
+    Permission matrix and limits.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/manage/team-access/troubleshooting">
+    Common access issues.
+  </Card>
+  <Card title="Authentication" icon="code" href="/authentication">
+    API key authentication reference.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

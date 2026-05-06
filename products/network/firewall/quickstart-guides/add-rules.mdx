@@ -1,0 +1,149 @@
+---
+title: Add rules — port and IP formats by example
+description: The exact formats Raff accepts for the Ports and Source IP fields, with copy-pasteable examples for the most common rules
+---
+
+This page is the format reference for the **Ports** and **Source IP** fields you fill on every rule row. The model itself — what inbound vs outbound means, how rules combine, what the system Default blocks — is on [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound). This page is the cheat sheet.
+
+## Port format
+
+The Ports field accepts four shapes:
+
+| Format | Means | Examples |
+|---|---|---|
+| **Single port** | One TCP/UDP port | `22`, `443`, `3306` |
+| **Comma-separated list** | A list of discrete ports | `80,443`, `22,80,443`, `5060,5061,8080` |
+| **Colon-separated range** | An inclusive range | `3000:4000`, `8000:9000`, `1024:65535` |
+| **Empty** | All ports for the protocol | (leave blank when Protocol is `ALL`) |
+
+Mixing list and range is allowed: `80,443,3000:4000` is a valid single Ports value.
+
+A quick note on syntax: AWS Security Groups use a hyphen for ranges (`3000-4000`) — Raff uses a **colon** (`3000:4000`), matching OpenNebula's underlying format. If you copy a rule spec from AWS docs, swap the hyphen for a colon.
+
+## Common port values
+
+| Service | Protocol / Port |
+|---|---|
+| SSH | TCP `22` |
+| HTTP | TCP `80` |
+| HTTPS | TCP `443` |
+| HTTP + HTTPS combined | TCP `80,443` |
+| RDP (Windows) | TCP `3389` |
+| WinRM over HTTPS | *(blocked by Default — see below)* |
+| MySQL | TCP `3306` |
+| PostgreSQL | TCP `5432` |
+| MySQL + Postgres combined | TCP `3306,5432` |
+| Redis | TCP `6379` |
+| MongoDB | TCP `27017` |
+| DNS | UDP `53` (and TCP `53` for zone transfer) |
+| NTP | UDP `123` |
+| WireGuard | UDP `51820` |
+| OpenVPN | UDP `1194` |
+| Game servers (Source) | UDP `27015` |
+| Minecraft | TCP `25565` |
+| Application port range | TCP `8000:9000` |
+| Ephemeral / dynamic | TCP `49152:65535` |
+
+## Ports the Default Firewall blocks
+
+These are **always denied** regardless of what you write — the system Default is layered on top of every public interface and Raff actively strips these ports out of any range you submit:
+
+| Protocol | Port(s) | Service |
+|---|---|---|
+| TCP | `135` | MS-RPC |
+| TCP | `139` | NetBIOS Session |
+| TCP | `445` | SMB |
+| TCP | `5985:5986` | WinRM |
+| UDP | `137:138` | NetBIOS |
+
+If you write `Range = 130:200` for inbound TCP, Raff saves it as `130:134,136:138,140:200` (carving out 135 and 139). The saved rule is honest about what's actually allowed.
+
+If you genuinely need WinRM or SMB, run them inside a VPC and reach them via a Firewall Appliance (OPNsense) — not via a public-facing Firewall Group.
+
+## Source / destination IP format
+
+The third box on each rule row is **CIDR**. For inbound it's "from where can traffic come"; for outbound it's "to where can traffic go".
+
+| Format | Allows | Use case |
+|---|---|---|
+| `0.0.0.0/0` *(default, labeled `Any`)* | Anywhere on the IPv4 internet | Public services |
+| `192.168.1.100/32` | One specific IPv4 address | Whitelist your office IP for SSH |
+| `203.0.113.0/24` | A whole /24 (256 addresses) | A partner's egress range |
+| `10.0.0.0/8` | A whole /8 (16M addresses) | RFC 1918 private space |
+| `2001:db8::/32` | An IPv6 prefix | IPv6 allowlists |
+| `::/0` | Any IPv6 address | IPv6 equivalent of `0.0.0.0/0` |
+
+The `/32` (single IPv4) and `/128` (single IPv6) are how you allowlist exactly one address. The dialog accepts CIDR with or without explicit prefix on `/32`, but type the `/32` for clarity.
+
+## Common rule recipes
+
+Each row below is *one rule row* in the create dialog. Add multiple rows for combinations.
+
+**Public web server:**
+
+| Direction | Protocol | Ports | Source IP |
+|---|---|---|---|
+| Inbound | TCP | `80,443` | `0.0.0.0/0` |
+| Inbound | TCP | `22` | *(your office IP)*`/32` |
+| Inbound | ICMP | *(blank)* | `0.0.0.0/0` |
+| Outbound | ALL | *(blank)* | `0.0.0.0/0` |
+
+**Bastion host (SSH only, locked-down outbound):**
+
+| Direction | Protocol | Ports | Source IP |
+|---|---|---|---|
+| Inbound | TCP | `22` | *(allowed admin IPs)* |
+| Outbound | UDP | `53` | `0.0.0.0/0` |
+| Outbound | TCP | `22` | `10.0.0.0/8` (target VPC range) |
+| Outbound | UDP | `123` | `0.0.0.0/0` |
+
+**Database VM (only reachable from VPC):**
+
+| Direction | Protocol | Ports | Source IP |
+|---|---|---|---|
+| Inbound | TCP | `5432` | `10.7.0.0/24` (your VPC's CIDR) |
+| Inbound | TCP | `22` | *(your office IP)*`/32` |
+| Outbound | ALL | *(blank)* | `0.0.0.0/0` |
+
+**Game server (UDP-heavy):**
+
+| Direction | Protocol | Ports | Source IP |
+|---|---|---|---|
+| Inbound | UDP | `27015,27020:27050` | `0.0.0.0/0` |
+| Inbound | TCP | `22` | *(your office IP)*`/32` |
+| Outbound | ALL | *(blank)* | `0.0.0.0/0` |
+
+## Limits per group
+
+| Item | Limit |
+|---|---|
+| **Inbound rules** | **40 per group** |
+| **Outbound rules** | **40 per group** |
+| **Source IPs per rule** | One CIDR — to allow multiple distinct IPs, use multiple rule rows |
+| **Comma-separated ports per rule** | No fixed limit; reasonable practice is ~10 |
+
+If 40 isn't enough, split into multiple groups and attach them all to the IP — the union of allow lists applies.
+
+## How saving / editing works
+
+- **Save creates the group as a unit** — all rule rows submit together. Validation runs on the whole set; if one row is invalid (bad port format, invalid CIDR), the dialog shows the error inline and nothing saves.
+- **Edits update the platform record immediately** — but the guest VM does **not** pick up the new rules until you reboot it (see the warning below).
+- **Default-block sanitization** runs at save time — if you write `135`, that exact rule is dropped from the saved set with no error. If you write `130:140`, the saved rule excludes 135 and 139.
+
+<Warning>
+**A VM reboot is required after any firewall change.** Attaching a group, detaching a group, or editing rules in an attached group all need a reboot of every affected VM to take effect inside the guest. Until you reboot, the VM keeps running with its previous firewall state.
+</Warning>
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model these rules slot into.
+  </Card>
+  <Card title="Create a Firewall Group" icon="plus" href="/products/network/firewall/quickstart-guides/create-firewall-group">
+    Walk the create dialog end-to-end.
+  </Card>
+  <Card title="Update rules" icon="pen" href="/products/network/firewall/quickstart-guides/update-rules">
+    Edit a live group without detaching.
+  </Card>
+</CardGroup>

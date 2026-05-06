@@ -1,0 +1,36 @@
+---
+title: Regions
+description: Where Raff Cloud VMs run
+---
+
+A **region** is a geographic location where Raff Cloud operates compute. The region you pick at VM creation determines where the VM's CPU, RAM, and disk physically live, and which IP ranges it gets.
+
+## Available regions
+
+| Region | Location | Status |
+|---|---|---|
+| `us-east` | United States (East) | Available |
+
+<Note>
+  Additional regions are planned. The [List Regions](/api-reference/catalog/list-regions) endpoint always returns the current set.
+</Note>
+
+## How region choice affects your VM
+
+- **Latency** — pick the region closest to your users.
+- **Pricing** — per-plan rates are region-dependent (see [Pricing](/products/build/virtual-machines/details/pricing)).
+- **VPC scope** — a VPC and the VMs inside it must share a region.
+- **IP allocation** — public IPv4 addresses are drawn from region-specific pools.
+
+A VM cannot move between regions after creation. To migrate, snapshot the source VM, save the disk as a custom image, and create a new VM in the target region from that image.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Plans & sizing" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
+    What a plan includes per region.
+  </Card>
+  <Card title="VPC" icon="network-wired" href="/products/network/vpc">
+    Private networking within a region.
+  </Card>
+</CardGroup>

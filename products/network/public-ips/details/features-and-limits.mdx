@@ -1,0 +1,91 @@
+---
+title: Features & limits
+description: Public IP features, IPv4/IPv6 support, pricing for auto-assigned and reserved IPs, regional pools, and per-VM and per-account limits
+---
+
+## Features
+
+### Address families
+- **IPv4** — standard public IPv4, available in every region. Reserved at **\$3 / month**
+- **IPv6** — single public IPv6, available in every region. Reserved at **\$1 / month** (cheaper than IPv4 — IPv6 address space isn't scarce)
+- **Dual-stack** supported — a VM can have one IPv4 and one IPv6 simultaneously
+
+### Two lifecycles
+- **Auto-assigned** — free pool IP, returns to pool on detach. Free while attached
+- **Reserved** — IPv4 \$3/month, IPv6 \$1/month, persists through VM rebuilds and detaches, movable between VMs
+
+See [Auto-assigned vs reserved](/products/network/public-ips/concepts/reserved-vs-ephemeral) for the full lifecycle model.
+
+### Where they're managed
+- **Networking → Public IPs tab** — account-wide list, reserve, auto-assign, attach, detach, release
+- **VM detail → Network tab** — per-VM view, add/remove IPs, attach Firewall to a specific IP
+- **Networking → Diagram** — visual map, click the IP chip floating above a VM for Copy IP / Detach actions
+
+### Firewall integration
+- Each public IP can have **one Firewall attached** to filter inbound traffic
+- Attach via the IP card on a VM's Network tab (`Firewall: None / Attach`)
+- See [Firewall](/products/network/firewall) for rule-set creation
+
+### Movability (reserved only)
+- Detach from one VM, attach to another in the same region — the address stays the same
+- Standard pattern for blue/green deploys, manual failover, partner-whitelist preservation
+- Auto-assigned IPs are **not** movable — detach returns them to the pool
+
+## Pricing
+
+| Type | Rate |
+|---|---|
+| **Auto-assigned IPv4 / IPv6** (attached) | **Free** |
+| **Auto-assigned, detached** | N/A — auto-assigned IPs are never detached without being released |
+| **Reserved IPv4** (attached or unattached) | **\$3.00 / month** (\$0.0069/hr) |
+| **Reserved IPv6** (attached or unattached) | **\$1.00 / month** (\$0.0023/hr) |
+| **Yearly lock-in** | \$36/yr (IPv4) / \$12/yr (IPv6) — same per-month rate |
+| **24-month lock-in** | \$72/2yr (IPv4) / \$24/2yr (IPv6) — same per-month rate |
+| **Additional IPs beyond the dashboard limit** (support-only) | Same per-IP rate by family — IPv4 \$3/mo, IPv6 \$1/mo |
+| **Gateway IPs** (Platform Router, Firewall Appliance WAN) | Free with Platform Router; rolled into Firewall Appliance VM price |
+
+Reserved IPs accrue continuously whether attached or not. If you delete a reserved IP mid-cycle, the unused days are credited back to your account balance — same prorated-on-delete model as VMs and volumes. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+There is **no charge for outbound traffic on a public IP** at the IP layer — you're billed for VM bandwidth (which is free on Raff today) and for Object Storage public-internet egress when applicable. The IP itself just costs the reservation fee.
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **Public IPv4 per VM (dashboard)** | **1** — one IPv4 from the dashboard |
+| **Public IPv6 per VM (dashboard)** | **1** — one IPv6 from the dashboard |
+| **Public IPs per VM (with support)** | More on request — \$3/month per additional IP |
+| **Reserved IPs per account** | No hard cap published; subject to overall account capacity |
+| **Region scope** | Each IP is bound to **one region** — non-portable across regions |
+| **IP-type swap on a VM** | A VM can't simultaneously hold two IPv4s from the dashboard, or two IPv6s — remove the existing one first |
+| **Time to attach/detach** | Seconds — propagates through cloud-init / DHCP within a few seconds |
+
+## Regional availability
+
+| Region | Status |
+|---|---|
+| **US East** | Available today — both IPv4 and IPv6 |
+| Other regions | Coming with the rest of the multi-region rollout |
+
+The auto-assign pool is **per region** — you can only auto-assign IPs in regions where the VM lives. Available pool sizes are surfaced as the **Available in pool** stat at the top of the Public IPs tab; if it's zero for a region, auto-assign returns an error and you'll need to either wait for capacity or reserve an IP instead.
+
+## What's not available today
+
+- **Anycast IPs** — single IP that's announced from multiple regions
+- **BYOIP / IP import** — bringing your own AS-prefixed IP block
+- **Floating Virtual IP (VRRP-style)** between VMs without a manual detach/attach — the move-IP pattern is the closest equivalent
+- **Per-IP tagging or notes** — coming with the broader resource-tags rollout
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Auto-assigned vs reserved" icon="lightbulb" href="/products/network/public-ips/concepts/reserved-vs-ephemeral">
+    The lifecycle model behind these limits.
+  </Card>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Walkthrough for the $3/month flow.
+  </Card>
+  <Card title="Billing model" icon="circle-info" href="/products/build/virtual-machines/concepts/billing-model">
+    How IP charges flow through your balance.
+  </Card>
+</CardGroup>

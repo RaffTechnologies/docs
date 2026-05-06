@@ -1,0 +1,80 @@
+---
+title: Overview
+description: Public IPv4 and IPv6 addresses on Raff — auto-assigned from a free pool by default, or reserved as static IPs that persist across VM rebuilds for $3/month (IPv4) or $1/month (IPv6)
+icon: globe
+---
+
+<sub>Updated May 5, 2026</sub>
+
+A **Public IP** on Raff is a routable IPv4 or IPv6 address attached to a VM (or to a VPC's Internet Gateway) so it can be reached from the public internet. Every VM you create comes with one auto-assigned IPv4 from the regional pool — free for as long as it's attached. You can also **reserve** a static IP that stays yours across VM rebuilds and detaches, billed at **\$3/month for IPv4** or **\$1/month for IPv6**.
+
+There are two distinct lifecycles for a public IP on Raff, and the difference matters:
+
+| | **Auto-assigned** | **Reserved** |
+|---|---|---|
+| **Cost** | Free while attached | \$3/month (IPv4) or \$1/month (IPv6), billed continuously |
+| **What happens when detached** | Returns to the regional pool — anyone may get it next | Stays yours, unattached, ready to re-attach to any VM |
+| **What happens when the VM is deleted** | Released to the pool | Survives, stays yours |
+| **Use it for** | Default VM internet access | Stable address you reference in DNS / firewall rules / partner whitelists |
+
+If your VM was rebuilt every Tuesday, an auto-assigned IP would change every Tuesday. A reserved IP would stay the same forever.
+
+<Frame>
+  ![Public IPs tab on the Networking page showing 9 IPs grouped under their VPCs, with Auto-assign IP and + Reserve IP buttons in the top right](/images/products/network/public-ips/public-ips-list.png)
+</Frame>
+
+The dashboard surfaces public IPs in two places: the **Public IPs** tab on the Networking page (account-wide list, where you reserve and auto-assign) and the **Network** tab inside each VM's detail page (where you add, remove, or firewall that specific VM's IPs).
+
+## What you can do
+
+| Task | Where |
+|---|---|
+| Give an existing VM a public IP from the free pool | Networking → Public IPs → **Auto-assign IP** |
+| Reserve a static IP you'll keep across VMs | Networking → Public IPs → **+ Reserve IP** |
+| Add or remove a public IPv4 / IPv6 on one VM | VM detail → **Network** tab |
+| Move a reserved IP between VMs | Detach from VM A → attach to VM B |
+| Add a Firewall to a public IP | VM detail → **Network** tab → IP card → **Attach** firewall |
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Auto-assign a public IP" icon="wand-magic-sparkles" href="/products/network/public-ips/quickstart-guides/auto-assign">
+    Give a VM a free pool IP in seconds.
+  </Card>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Hold an IPv4 across VM rebuilds for $3/mo.
+  </Card>
+  <Card title="Manage from a VM" icon="server" href="/products/network/public-ips/quickstart-guides/manage-from-vm">
+    Add, remove, or firewall IPs from the VM detail page.
+  </Card>
+  <Card title="Move between VMs" icon="arrow-right-arrow-left" href="/products/network/public-ips/quickstart-guides/move-between-vms">
+    Detach from one VM, attach to another.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/network/public-ips/quickstart-guides/auto-assign">
+    Auto-assign, reserve, attach, move, release.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/network/public-ips/concepts/reserved-vs-ephemeral">
+    Auto-assigned vs reserved.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/network/public-ips/details/features-and-limits">
+    Pricing, limits, regional pools.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/network/public-ips/troubleshooting">
+    Common public-IP issues.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/list-ips">
+    Public IP endpoints.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

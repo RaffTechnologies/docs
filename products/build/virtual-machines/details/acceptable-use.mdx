@@ -1,0 +1,113 @@
+---
+title: Acceptable use
+description: What you can and can't run on a Raff VM, abuse handling, and how to report violations
+---
+
+This page summarizes the Raff Acceptable Use Policy (AUP) as it applies to Virtual Machines. The full, legally binding AUP — which governs every Raff service and prevails over this summary — is published at:
+
+<Card title="Acceptable Use Policy (legal)" icon="file-contract" href="https://app.rafftechnologies.com/legal#acceptable-use-policy">
+  app.rafftechnologies.com/legal#acceptable-use-policy
+</Card>
+
+## What is acceptable
+
+- **Normal business use** — websites, applications, internal tools, dev/test environments, batch jobs, data processing, machine learning training and inference (your own models, your own data), gaming servers, build farms, CI runners, and similar workloads.
+- **Heavy resource use that's legitimate** — Raff does not throttle CPU; sustained 100% CPU is fine if your workload is genuine. See the note in [Monitoring & metrics](/products/build/virtual-machines/concepts/monitoring-and-metrics).
+- **All applicable laws** — what's legal in your jurisdiction *and* in the regions where you operate the VM.
+
+If your usage is excessive in a way that affects shared infrastructure, Raff may reach out to discuss capacity planning, additional fees, or limits — never silent throttling.
+
+## What is prohibited
+
+The categories below are not allowed on Raff VMs. The legal AUP has the exhaustive list and definitions; this is a practical summary.
+
+### Cryptocurrency mining — fully banned
+
+Cryptocurrency mining is prohibited on Raff infrastructure, **any algorithm, any coin** — proof-of-work, proof-of-stake, or any other consensus mechanism. Detection results in immediate suspension.
+
+### Spam and unsolicited messaging
+
+- No unsolicited bulk or commercial email
+- No unconfirmed mailing lists (every recipient must have opted in)
+- No spoofed `From`, reply-to, or domain headers
+- All commercial email must include a working unsubscribe mechanism
+- Compliance with CAN-SPAM (US), CASL (Canada), and the EU ePrivacy Directive is required
+- Applies to messages sent from the VM and to networks that refer recipients to a Raff-hosted destination
+
+### Malware, botnets, and security abuse
+
+- No hosting, distributing, or commanding **malware** or **botnets** (C2 servers, bots, droppers)
+- No **phishing** sites, fake login pages, or credential harvesting tools
+- No **DDoS** attacks, packet flooding, mail bombing, or deliberate overload of any system
+- No **IP spoofing**, packet header forgery, or transmission of falsified source addresses
+- No **DNS hijacking** or operating malicious DNS services
+- No **unauthorized network scanning, vulnerability testing, or pentesting** of third-party systems
+- No **interception or capture** of data in transit without authorization
+
+### Network abuse
+
+- No **Tor exit nodes**, open proxies, or open mail relays
+- No anonymizing services that enable abuse of third-party systems
+- No **DDoS mitigation services for third parties** running on Raff infrastructure
+- No **IP hijacking, parking, squatting**, unauthorized BGP announcements, or activity that gets Raff IPs blacklisted
+- No interfering with other customers' use of the network
+
+### Account abuse
+
+- One account per person or organization for promotional offerings and quota increases
+- No creating multiple accounts to dodge usage limits or billing — including via VPNs, proxies, or device spoofing
+- No sharing or transferring credentials to bypass service limitations
+- No payment evasion or fraudulent billing practices
+
+Automated detection runs continuously; related accounts can be suspended without prior notice.
+
+### Illegal content and serious harms
+
+- No child sexual abuse material — zero tolerance, reported to authorities
+- No content that incites violence, threatens safety, or constitutes illegal harassment
+- No coordinated inauthentic behavior, fake accounts, or manipulation campaigns
+- No **doxxing** — publishing private personal information without consent
+- No malicious AI-generated content (deep fakes for fraud, impersonation, or deception)
+
+### Copyright and IP
+
+- No transmitting or hosting material that infringes copyright, trademark, trade secret, or other IP
+- DMCA-style takedown procedure: send a notice to [abuse@rafftechnologies.com](mailto:abuse@rafftechnologies.com) with the items required by the legal AUP
+- Repeat infringers will have their accounts terminated
+
+### Financial crimes and regulatory
+
+- No money laundering, financial fraud, Ponzi or pyramid schemes
+- No activity violating US sanctions, export controls, or international trade restrictions
+
+## Reporting abuse
+
+If you observe abuse — from a Raff customer or against your VM — email **[abuse@rafftechnologies.com](mailto:abuse@rafftechnologies.com)** with:
+
+- The IP address or VM identifier involved
+- Logs, headers, screenshots, or evidence
+- The date and time (with timezone) of the incident
+
+Raff investigates and acts when warranted.
+
+## Enforcement
+
+Violations escalate through:
+
+1. Warning notice and a request for corrective action
+2. Temporary suspension of the affected service
+3. Permanent termination and account closure
+4. Legal action where appropriate
+
+Appeals go to [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with the relevant context.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="SLA" icon="circle-info" href="/products/build/virtual-machines/details/sla">
+    Uptime commitment and credits.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/build/virtual-machines/details/features-and-limits">
+    What's included on every VM.
+  </Card>
+</CardGroup>

@@ -1,0 +1,87 @@
+---
+title: Delete a VPC
+description: Delete is blocked while VMs are attached — detach or delete the VMs first, then delete the VPC from the row menu or the detail page
+---
+
+Deleting a VPC permanently removes the private network and frees its VXLAN VNI for reuse. It does not delete the VMs that were inside it — but it does require that you detach (or delete) every VM first. The dashboard enforces this with a hard block.
+
+## The rule: a VPC with VMs cannot be deleted
+
+If any VM is still attached to the VPC, the **Delete** action is **disabled** and labelled `Delete (has VMs)`. This applies in every place the action surfaces:
+
+- **VPCs list — row menu** → bottom item shows `Delete (has VMs)` in red but is unclickable
+- **VPC detail page header** → the top-right `Delete VPC` link is greyed and unclickable
+- **API** — the `DeleteVPC` call returns a 409 with the same reason
+
+<Frame>
+  ![VPCs list with the row context menu open, showing Manage VPC, Copy CIDR, Add VM, Rename, Edit DNS, and a disabled Delete (has VMs) at the bottom](/images/products/network/vpc/vpc-row-menu-with-delete.png)
+</Frame>
+
+This protects you from a common mistake — deleting a VPC out from under running VMs would leave them with a dangling NIC and probably break their networking. So the dashboard makes you do the detaches first, deliberately.
+
+## 1. Remove every VM from the VPC
+
+You have two ways to clear the VMs. **Detach** is the right choice if the VMs should keep running on other interfaces; **Delete VM** is the right choice if you're tearing the whole stack down.
+
+### Detach (keep the VMs)
+
+From the VPC's detail page → **VMs** tab → **Detach** on every row. Each detach is instant and only affects that one VPC's NIC.
+
+The detach is blocked for any VM that **would have zero interfaces left** — i.e. if a VM has only this VPC and no public IP and no other VPC, you can't detach it without first attaching it somewhere else (or deleting it). Move it to another VPC or attach a Public IP first, then come back and detach.
+
+### Delete the VMs (and let them clean up the VPC for you)
+
+The simpler path if the VMs aren't useful anymore. Delete each VM from the **Compute** page. The VM-delete dialog has an option to **also delete attached VPCs** — when used on the last VM in a shared VPC, this single action deletes the VPC for you, and you can skip step 2.
+
+Shared-VPC safety: if multiple VMs share the VPC and you tick "Delete VPCs" while deleting only one of them, Raff **preserves the VPC** because other VMs still depend on it. The VPC is only deleted when the last attached VM goes. See [Delete a VM → VPC handling](/products/build/virtual-machines/quickstart-guides/delete-vm) for the full rules.
+
+## 2. Confirm the VMs column shows 0
+
+Back in **Networking → VPCs**, the VPC's row should now show `0 VMs` and the **Delete** menu items lose the `(has VMs)` suffix.
+
+## 3. Delete the VPC
+
+Two equivalent actions, pick whichever is closer:
+
+| From | How |
+|---|---|
+| **VPCs list** | Row's `⋮` → **Delete** |
+| **VPC detail page** | Top-right **Delete VPC** link |
+
+Both open a confirmation dialog. Confirm to delete.
+
+## What gets cleaned up
+
+When the VPC delete completes:
+
+- The **VXLAN VNI** is released and may be reused for a future VPC
+- The **CIDR** becomes available for another VPC (CIDRs aren't unique anyway, but the platform's auto-suggester won't avoid this range now)
+- Any **Internet Gateway** for the VPC (Platform Router VM, or Firewall Appliance VM) is **deleted along with the VPC** — these gateway VMs only ever serve their parent VPC
+- **Port forwarding rules** are deleted with the gateway
+- **Public IPs** that were attached to gateway VMs return to your account as unassigned (you can reassign them later or release them)
+
+The VPC's name doesn't get reserved — you can immediately create another VPC with the same name.
+
+## Common reasons delete still fails after the VMs are detached
+
+Rare, but worth knowing:
+
+- **A pending Internet Gateway provision** — if you clicked **Enable** on Platform Router or **Deploy** on Firewall Appliance and the VM is still being created, wait for it to finish (or fail), then retry the delete
+- **A locked operation** — if some other action on the VPC is in flight (rename, DNS update), the delete is briefly blocked. Refresh and try again
+- **API only** — if the API rejects with a 409 even though the dashboard shows zero VMs, refresh — the dashboard cache may be stale
+
+If you hit a stubborn one, contact [support](mailto:support@rafftechnologies.com).
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Detail page tour — VMs, gateway, port forwarding.
+  </Card>
+  <Card title="Delete a VM" icon="trash" href="/products/build/virtual-machines/quickstart-guides/delete-vm">
+    The two-step VM delete with VPC keep-or-delete options.
+  </Card>
+  <Card title="Create a VPC" icon="plus" href="/products/network/vpc/quickstart-guides/create-vpc">
+    Set up a fresh VPC.
+  </Card>
+</CardGroup>

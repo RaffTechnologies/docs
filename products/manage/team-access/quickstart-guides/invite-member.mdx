@@ -1,0 +1,124 @@
+---
+title: Invite a member
+description: Send an email invitation to add a new member at the Account or Project access level — and grant additional access from the member's row after they accept, without sending another invite
+---
+
+This page walks the **Invite Team Member** flow on the Team & Access page, plus the **after-acceptance** flow for adding more access (more projects, or account-level access) to a member who's already on the team — without resending an invite.
+
+## Who can invite
+
+Anyone with the **`account.members.invite`** permission can send invitations. The Owner has it automatically; the **Admin** account role has it; **Billing** and **Member** account roles do **not** have it. Project-only members cannot invite anyone.
+
+If you don't see the **+ Invite Member** button on the Members tab, your role doesn't include `account.members.invite` — ask the Owner or an Admin to either send the invite or grant you the permission via a Custom role.
+
+## 1. Open the Members tab
+
+In **Team & Access → Members**, click the orange **+ Invite Member** button in the top right.
+
+<Frame>
+  ![Team & Access Members tab header with Members section title, "Manage who has access to your account and projects" subtitle, and an Invite Member button on the right](/images/products/manage/team-access/invite-member-button.png)
+</Frame>
+
+The Invite Team Member dialog opens.
+
+## 2. Email Address
+
+Type the recipient's email. They'll receive an email with a link to accept; clicking it walks them through password setup (or login if they already have a Raff account on the same email) and lands them in your account scoped to whatever access you assigned.
+
+## 3. Pick the Access Level — Account or Project
+
+This is the most important choice in the dialog. The two options are mutually exclusive at invite time, and they map to the same two-system permission model from [Roles, scopes, and the Owner](/products/manage/team-access/concepts/roles-and-api-keys#two-domains-account-vs-project).
+
+### Account access level
+
+<Frame>
+  ![Invite Team Member dialog with Access Level set to Account (orange border, building icon, "Billing, settings, all projects" subtitle), Project alternative shown next to it, and a Role dropdown ("Select a role") below](/images/products/manage/team-access/invite-dialog-account.png)
+</Frame>
+
+Pick **Account** when the new member should have account-wide responsibilities — billing, settings, audit log, members management, the project list, account-wide API keys.
+
+The dialog labels this *"Billing, settings, all projects"* — that copy is a shorthand. Concretely, an Account-level invite grants the chosen Account role's permissions, which always sit in the **`account.*`** domain. **It does NOT automatically grant access to resources inside projects.** A member invited at Account level with the `Admin` role can manage account settings and the project list — but can't see VMs, VPCs, or any project-internal resources unless you also add project-level access (covered later on this page).
+
+After picking Account, the **Role** dropdown shows the **Account roles** available — the System ones (`Admin`, `Billing`, `Member`) plus any Account-scoped Custom roles you've created. Pick the role and click **Send Invitation**.
+
+### Project access level
+
+<Frame>
+  ![Invite Team Member dialog with Access Level set to Project (orange border, folder icon, "VMs & resources only" subtitle). A new Project dropdown labeled "Select a project" is visible below, opened to show Default and customer1 options. Below that, a Role dropdown labeled "Select a role"](/images/products/manage/team-access/invite-dialog-project.png)
+</Frame>
+
+Pick **Project** when the new member should only access resources inside specific projects. The dialog labels this *"VMs & resources only"* — that's the accurate summary: project-level invites grant only resource access inside the chosen project.
+
+When you pick Project, two extra fields appear:
+
+| Field | What goes here |
+|---|---|
+| **Project** | Dropdown of every project in the account. Pick **one** — you grant access to one project at this stage. To add the member to more projects after they accept, use the row expansion flow further down on this page |
+| **Role** | The **Project roles** available — System ones (`Project Admin`, `Operator`, `Project Member`, `Viewer`) plus any Project-scoped Custom roles |
+
+Click **Send Invitation**. The invitee gets an email; once they accept, they show up on the Members list with the **Project-only** badge.
+
+## 4. Send Invitation
+
+Either path ends with the orange **Send Invitation** button. The email goes out, and the invitee appears on your Members list immediately as `Pending` until they accept. They have a few days to act on the link; resend from the row's `⋮` menu if it expires.
+
+## After they accept — adding more access
+
+Once a member has accepted **even one** invite (Account or Project), they're a member of your account. From that point on, **you don't need to send another email invite to expand their access.** The Members list lets you grant additional Account access or additional Project access directly from the row.
+
+Click the chevron on the left of any member's row to expand it.
+
+<Frame>
+  ![Expanded member row for batuhan with Project-only badge, showing two sections: Account Access (with "No account-level access. This user can only access specific projects below." message and an "Add to Account" button) and Project Access (with one project — customer1 — and a Project-operator role badge plus "+ Add to Project" button on the right of the section header)](/images/products/manage/team-access/member-expanded-access.png)
+</Frame>
+
+The expanded row has two sections, each independently manageable:
+
+### Account Access
+
+The top section shows the member's **account role**. If they don't have one (the screenshot shows `No account-level access. This user can only access specific projects below.`), the section just lists an **Add to Account** button.
+
+- **Add to Account** — opens a dialog with the same Account role picker from the invite flow. Grants the member an account role on top of any project roles they already have. No email, no acceptance step — they have it immediately on next page load.
+- If they already have an account role, this section shows the role with a row menu to change it (`Change Role`) or remove it.
+
+### Project Access
+
+The bottom section lists every project the member has a role on, with the role shown as a badge on each row (`Project-operator`, `Project Admin`, etc.). Each row has a `⋮` menu to change or remove the role.
+
+- **+ Add to Project** — adds the member to another project with a Project role you pick. The member gains access to that project's resources immediately.
+
+This is how you build the typical "started with one project, now needs another" growth pattern — invite once, add projects as the member's responsibilities grow.
+
+## What "Project-only" really means
+
+The **Project-only** badge on the Members list is shorthand for *"this member has at least one project role, but no account role at all."* In access terms:
+
+- They can sign in and use the dashboard
+- They see only the projects they've been added to (the project picker in the top bar lists those projects only)
+- Inside each of their projects they can do whatever the project role allows
+- They cannot see members of other projects, account settings, billing, audit logs, or the role catalog
+- They cannot create or manage account-wide API keys
+
+This is the right scope for **external customers** (one project per customer), **contractors** (one project for the engagement), or **per-team isolation** (each team gets its own project). They have what they need for their workload, nothing else.
+
+To promote a Project-only member to also have account access, expand the row → **Add to Account** → pick an Account role. To demote, do the reverse: open Account Access → row menu → Remove.
+
+## Email and acceptance
+
+The invitation email comes from a no-reply Raff address with the subject *"You've been invited to..."* — accepted invites land the member in your account on next sign-in. If the recipient already has a Raff login on the same email, they don't create a new password; they just see your account in their account switcher.
+
+If you typed the wrong email, cancel the invite from the pending row's `⋮` menu and send a new one. Pending invites do not consume a member slot.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-access/concepts/roles-and-api-keys">
+    The model behind Account vs Project access.
+  </Card>
+  <Card title="Change a role" icon="user-pen" href="/products/manage/team-access/quickstart-guides/change-role">
+    Re-scope a member already on the team.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-access/details/permissions-matrix">
+    What each Account and Project role grants.
+  </Card>
+</CardGroup>

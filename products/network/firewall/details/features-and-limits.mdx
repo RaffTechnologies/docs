@@ -1,0 +1,114 @@
+---
+title: Features & limits
+description: Raff Firewall features, the system Default Firewall blocked-port list, custom Firewall Group rule formats, per-group limits, the 5 templates, and pricing
+---
+
+## Features
+
+### Two layers, both always on
+- **Raff Default Firewall (system)** — applied automatically to every public network interface, blocks 7 dangerous ports, allows everything else. Cannot be disabled
+- **Your Firewall Groups (custom)** — optional rule sets you create and attach to specific VM public IPs. Both layers must allow a packet for it to pass
+
+See [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound) for the model.
+
+### Stateful filtering
+- Connection-tracking is built in — when an inbound rule allows a connection, replies on the same connection are auto-allowed without an explicit outbound rule
+- Same applies in reverse for outbound-initiated connections
+- Most workloads only need to define inbound rules
+
+### Public-interface only
+- Firewall Groups apply **only** to public IP traffic — IPv4 and IPv6
+- VPC traffic is **not** filtered by Firewall Groups; isolate at the VPC layer or with guest-OS firewalls instead
+- A VM with no public IP cannot have a Firewall Group attached (nothing to attach to)
+
+### Rule format
+- Per rule: protocol (`TCP`/`UDP`/`ICMP`/`ALL`), direction (`INBOUND`/`OUTBOUND`), optional port spec, optional source/destination CIDR, optional VPC scope, optional ICMP type
+- Port format: single (`22`), comma list (`80,443`), colon range (`3000:4000`), or empty for "all ports"
+- IP format: CIDR (`0.0.0.0/0` for any, `192.168.1.100/32` for a single host, etc.)
+- Database template can scope DB-port rules to a specific VPC ID
+
+### Templates
+Five pre-built rule sets in the create dialog's **Start from template** dropdown:
+
+| Template | Inbound | Outbound | Source-IP scope |
+|---|---|---|---|
+| **Web Server** | TCP 22, TCP 80,443, ICMP | ALL | Any |
+| **Database Server** | TCP 22 (any), TCP 3306,5432 | ALL | DB ports VPC-scoped |
+| **SSH Only** | TCP 22 | ALL | Any |
+| **Allow All** | ALL | ALL | Any *(not for production)* |
+| **Deny All** | (none) | (none) | n/a *(lockdown)* |
+
+Pick a template and tweak before saving, or start from **Custom Rules** for a blank slate.
+
+### Apply, edit, attach, detach
+- Edits propagate to the platform's record **immediately** — but the guest VM picks them up only on reboot (see the warning under Limits)
+- A group can be attached / detached at any time
+- Multiple Firewall Groups can be attached to the same public IP — their allow lists union
+- Default-block sanitization runs at save: any rule covering TCP 135 / 139 / 445 / 5985–5986 or UDP 137–138 has those ports stripped before save
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **Inbound rules per group** | **40** |
+| **Outbound rules per group** | **40** |
+| **Firewall Groups per account** | No hard cap published; subject to overall account capacity |
+| **Firewall Groups per public IP** | Unlimited in practice; one per IP is the common pattern |
+| **Source / destination per rule** | One CIDR — for multiple distinct ranges, use multiple rule rows |
+| **Comma-separated ports per rule** | No fixed limit; reasonable practice ~10 |
+| **Port range syntax** | Colon — `3000:4000` (not AWS-style hyphen) |
+| **Group name** | Free-form, must be unique per account, immutable after create |
+| **Description** | Optional, free-form |
+| **Group rename** | **Not supported today** — pick the name carefully |
+
+<Warning>
+**A VM reboot is required after any firewall change.** Attaching a group, detaching a group, or editing rules in an attached group all need a reboot of every affected VM for the new rules to take effect inside the guest. The platform record updates immediately; the guest network stack picks up the change only at boot.
+</Warning>
+
+## Default Firewall — always-blocked ports
+
+These ports are blocked by the system Default Firewall on every public interface, and Raff strips them from any user-rule range that covers them:
+
+| Protocol | Port(s) | Service | Why it's blocked |
+|---|---|---|---|
+| TCP | `135` | MS-RPC | Remote code execution risk |
+| TCP | `139` | NetBIOS Session | Network file-sharing exploit vector |
+| TCP | `445` | SMB | Ransomware vector (WannaCry / EternalBlue) |
+| TCP | `5985:5986` | WinRM | Remote management exploit vector |
+| UDP | `137:138` | NetBIOS | Network discovery exploit |
+
+Everything else inbound is allowed by default. ICMP (ping) is allowed inbound. All outbound is unrestricted by the Default.
+
+If you genuinely need one of these ports, expose the service over a VPC instead and put a [Firewall Appliance](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) (OPNsense) in front. The public Default Firewall isn't bypassable by design.
+
+## Pricing
+
+| Item | Cost |
+|---|---|
+| **Raff Default Firewall** | **Free** — applied automatically to every public interface |
+| **Your Firewall Groups** | **Free** — no per-group, per-rule, or per-VM fees |
+| **Group attached to a VM** | **Free** |
+
+There's no charge for using the firewall. The only related billable resources are the public IPs the group filters and any Firewall Appliance VM you deploy as a VPC gateway.
+
+## What's not available today
+
+- **Group rename** — names are immutable; create a new group + re-attach to rename in practice
+- **Hot-apply without reboot** — a guest reboot is required for any rule change
+- **Explicit deny rules** — only allow rules; deny is the default for anything not matched
+- **Rule comments / tags per rule** — group-level Description only
+- **Rule audit log per group** — system-wide audit log captures changes, but not surfaced per group in the dashboard
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model behind these limits.
+  </Card>
+  <Card title="Add rules" icon="list" href="/products/network/firewall/quickstart-guides/add-rules">
+    Port and IP formats with copy-pasteable examples.
+  </Card>
+  <Card title="Create a Firewall Group" icon="plus" href="/products/network/firewall/quickstart-guides/create-firewall-group">
+    Walk the create dialog.
+  </Card>
+</CardGroup>

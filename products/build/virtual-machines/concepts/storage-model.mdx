@@ -1,0 +1,137 @@
+---
+title: Storage model
+description: How base disks, volumes, snapshots, backups, and custom images relate — and what survives what
+---
+
+A Raff VM has up to **five storage objects** in its orbit, and the source of most "where did my data go?" support tickets is mixing them up. This page is the map.
+
+## The three categories
+
+| Category | Purpose | Lives where |
+|---|---|---|
+| **Active storage** | The disks the running OS reads and writes | Attached to a single VM at a time |
+| **Protective copies** | Point-in-time captures for restore | Stored in the platform, separate from the VM |
+| **Reusable templates** | Configurations you can boot new VMs from | Stored at the account level |
+
+Every storage object on a Raff VM falls into exactly one of these.
+
+## Active storage
+
+These are what the OS sees as block devices.
+
+### Base disk
+
+The boot disk that comes with every VM. Sized by the plan you pick (e.g. 50 GB on the \$9.99/mo plan). Holds the OS, installed software, and anything you didn't put on a volume.
+
+- Size grows via [resize](/products/build/virtual-machines/quickstart-guides/resize) → Storage tab. **One-way** — disks can grow but cannot shrink.
+- The base disk and the VM are inseparable: deleting the VM destroys the base disk.
+
+### Block volumes
+
+Additional storage you attach on top of the base disk — see [Volumes](/products/store/volumes).
+
+- Live in the same region as the VM; can be detached and reattached to a different VM in that region.
+- Survive the VM. Delete the VM → the volume detaches but is **not** deleted; it keeps billing until you delete it explicitly.
+- Format and mount inside the OS — see [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm).
+
+## Protective copies
+
+Captures of disk state for restore. Different lifecycle, different retention, different price.
+
+### Snapshots
+
+Manual, on-demand point-in-time copies of a VM disk or a volume.
+
+- Created when you click **Snapshot** — see [Create a snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot).
+- Stored until you delete them, or until the source VM is destroyed (VM-disk snapshots are deleted with the VM; volume snapshots survive).
+- Billed per **GB-hour** — accrues continuously, settled at month-end on the 1st.
+- Best for restore points before risky changes.
+
+### Backups
+
+Scheduled or on-demand copies, governed by a retention policy.
+
+- Configured per-VM with a Daily / Weekly schedule and a retention window (1-365 days). See [Enable backups](/products/build/virtual-machines/quickstart-guides/enable-backups).
+- The first 3 backups per VM are **free, rolling** — when a 4th appears, the oldest of the 3 auto-deletes.
+- Beyond the free 3: \$0.05/GB/month.
+- Crucially: **backups survive VM delete** as long as the retention is still active. This is the only mechanism for true post-delete recovery.
+
+For when to use which, see [Snapshots vs Backups](/products/build/virtual-machines/concepts/snapshots-vs-backups).
+
+## Reusable templates
+
+Configurations from which you can deploy *new* VMs.
+
+### Stock OS templates
+
+Raff-maintained images: Ubuntu, Debian, Fedora, CentOS, AlmaLinux, Rocky, openSUSE, Alpine, FreeBSD, Windows Server. See [OS templates](/products/build/virtual-machines/concepts/os-templates).
+
+### Custom images
+
+A snapshot of a VM's OS disk preserved as a reusable template you can launch new VMs from. See [Custom images](/products/build/virtual-machines/concepts/custom-images).
+
+- Outlive the source VM (unlike snapshots).
+- Appear in the create-VM dialog alongside stock templates.
+- Best for golden-image workflows: build once, deploy N times.
+
+## Survival matrix — the key reference
+
+What survives each lifecycle event:
+
+| | Base disk | Attached volumes | Volume snapshots | VM snapshots | Backups | Custom images |
+|---|---|---|---|---|---|---|
+| **Stop / start** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Reboot** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Resize compute** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Resize disk (grow)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Reset password** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Reinstall (Change OS)** | ❌ wiped | ✅ | ✅ | ❌ deleted | ❌ deleted | ✅ |
+| **Factory reset** | ❌ wiped | ✅ | ✅ | ❌ deleted | ✅ | ✅ |
+| **Delete VM** | ❌ destroyed | ✅ detached, kept | ✅ | ❌ deleted | ✅ kept per retention | ✅ |
+
+Reading the matrix:
+- **Backups are the only thing that survives delete-VM.** If you might want to recover the OS disk after destroying the VM, you must have a backup — not a snapshot.
+- **Reinstall is more destructive than factory reset.** Reinstall deletes both snapshots *and* backups; factory reset preserves backups.
+- **Volumes always survive** any VM-level operation; only volume-level delete removes them.
+
+## Pricing summary
+
+| Object | How it's billed |
+|---|---|
+| Base disk | Bundled in the plan price |
+| Block volumes | Per GB stored — subscription term or hourly |
+| Snapshots | Per GB-hour |
+| Backups | Per GB-month (after free 3 per VM) |
+| Custom images | Per GB stored |
+| Object Storage (orthogonal — for files, not disks) | Per GB stored |
+
+All charges accrue continuously, settle on the 1st of the month, and deduct from your account balance first before charging the saved card. See [Pricing](/products/build/virtual-machines/details/pricing) for the full picture.
+
+## "I need to…" — decision flowchart
+
+| Goal | Use |
+|---|---|
+| Add more disk to one VM | Resize the base disk **or** attach a [volume](/products/store/volumes) |
+| Capture state before a risky change | [Snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot) |
+| Routine, scheduled protection | [Backups](/products/build/virtual-machines/quickstart-guides/enable-backups) |
+| Move a VM to a different region | Snapshot → Save as image → create new VM in target region from image |
+| Stand up N identical VMs from a config | Build one → save as [custom image](/products/build/virtual-machines/concepts/custom-images) → create N from image |
+| Recover a destroyed VM's OS disk | Only possible from a backup — contact support |
+| Keep data when the VM is destroyed | Put it on a [volume](/products/store/volumes) (volumes survive); the OS disk doesn't |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Snapshots vs Backups" icon="lightbulb" href="/products/build/virtual-machines/concepts/snapshots-vs-backups">
+    Decision framework for protective copies.
+  </Card>
+  <Card title="Custom images" icon="lightbulb" href="/products/build/virtual-machines/concepts/custom-images">
+    Save and reuse a VM's OS disk.
+  </Card>
+  <Card title="Volumes" icon="hard-drive" href="/products/store/volumes">
+    Block storage that outlives the VM.
+  </Card>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Per-storage-object cost details.
+  </Card>
+</CardGroup>

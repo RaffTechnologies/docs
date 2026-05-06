@@ -1,0 +1,89 @@
+---
+title: Attach a VM
+description: Add a VM to an existing VPC — three entry points in the dashboard, all open the same Add VM dialog with auto-assign or specific-IP options
+---
+
+Attaching a VM to a VPC adds a private network interface inside that VPC's CIDR. The VM gets an IP from the VPC's range and can immediately reach every other VM on the same VPC at near-line-rate over the private network. The VM keeps any other interfaces it already has (other VPCs, public IPs) — the new interface is added, not swapped.
+
+## Three places to start the flow
+
+All three entry points open the **same Add VM dialog** — pick whichever is closest to where you are.
+
+| From | How |
+|---|---|
+| **Networking Diagram** | Click the `⋮` on a VPC card → **Add VM** |
+| **VPCs list — row menu** | Click the `⋮` on a row → **Add VM** |
+| **VPC detail page** | Open the VPC → **VMs** tab → **+ Attach VM** |
+
+You can also attach at VM-creation time — pick the VPC under the network section of the create-VM flow. That path covers the brand-new-VM case; this page covers attaching an **existing** VM.
+
+## Open the Add VM dialog
+
+This walkthrough uses the VPC detail page. From **Networking → VPCs**, click into a VPC, switch to the **VMs** tab, and click **+ Attach VM**.
+
+<Frame>
+  ![Add VM to VPC dialog showing a Virtual Machine dropdown, the target VPC name, and an IP Assignment section with Auto-assign (selected) and Specific IP options, plus the available IP range 10.7.0.1 - 10.7.0.253](/images/products/network/vpc/add-vm-dialog.png)
+</Frame>
+
+The dialog has two fields that matter — the VM, and how its IP gets assigned.
+
+## 1. Pick the Virtual Machine
+
+The **Select a VM** dropdown lists every VM in the same region as this VPC that isn't already attached to it. Pick one. A VM can be in multiple VPCs at once — being in another VPC doesn't remove it from this list.
+
+The VPC name is shown right below the dropdown so you can confirm where the VM is going.
+
+VMs in **other regions** never appear here — VPCs are region-scoped, so cross-region attach is impossible. To put a VM on this VPC, it has to live in the same region (`us-east` today).
+
+## 2. Choose IP Assignment
+
+| Option | What happens | When to use |
+|---|---|---|
+| **Auto-assign** *(default)* | Raff picks the next available IP in the VPC's range and assigns it | **Default** — the right choice unless you have a reason not to |
+| **Specific IP** | You enter an exact address inside the VPC's available range | When the VM needs a fixed, well-known IP — DNS server, internal load balancer, anything other VMs reference by IP |
+
+The dialog shows the current **Available range** (e.g. `10.7.0.1 - 10.7.0.253`) — the gateway `.1` is reserved but is shown in the range; the validator will reject it. `.0` (network) and `.255` (broadcast for `/24` and larger) are also reserved and rejected.
+
+For Specific IP, the validator also checks the address isn't already in use by another VM in the same VPC. If it is, the dialog shows the conflict before you submit.
+
+## 3. Click Connect
+
+The interface is created and attached in seconds. The VPC's **VMs** tab refreshes with the new row showing:
+
+- **VM** name (with a green dot if active)
+- **Private IP** — the address you got from the VPC
+- **Public IP** — unchanged from before
+- **Specs** — vCPU and RAM
+- **Detach** action for later removal
+
+The VM also picks up the VPC's **DNS** setting on its next DHCP renewal. You usually don't need to do anything inside the guest — virtio-net + DHCP handle it. If you set a Specific IP and the guest doesn't pick it up immediately, force a DHCP renewal (`dhclient -r && dhclient` on Linux, `ipconfig /renew` on Windows) or reboot.
+
+## What this changes inside the VM
+
+- A new virtual NIC appears as `enp1s0` / `eth1` / `vtnet1` (or whatever the next index is on your image — check `ip a` or `Get-NetAdapter`)
+- The new interface has the VPC IP and is reachable from every other VM in the VPC over private IP
+- The default route stays whatever it was before — a VPC interface alone doesn't create a default gateway. To send the VM's outbound traffic through this VPC's Platform Router or Firewall Appliance, change the in-guest default route or remove the VM's other interfaces
+
+## Multiple VPC interfaces, briefly
+
+A single VM can be in two or three VPCs at once. Each VPC gives it a separate NIC with its own private IP. This is how you build hub-and-spoke networks today — a "router VM" with one NIC in each spoke VPC, manually configured to forward traffic between them.
+
+When the VM appears in the Networking Diagram, you'll see its card duplicated inside each VPC box, each instance showing the IP from that VPC's range. The same VM is one VM — only the visualization repeats it.
+
+## Detach later
+
+Use the **Detach** action on the row when you no longer want the VM in this VPC. Detach is blocked if it would leave the VM with **zero network interfaces** — keep at least one VPC or one public IP. See [Manage a VPC → VMs tab](/products/network/vpc/quickstart-guides/manage-vpc#vms-tab--attach-and-detach) for the full rules.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Detail page — internet gateway, port forwarding, DNS.
+  </Card>
+  <Card title="Use the Networking diagram" icon="diagram-project" href="/products/network/vpc/quickstart-guides/use-networking-diagram">
+    Add VMs visually from the VPC `⋮` menu.
+  </Card>
+  <Card title="VXLAN, CIDR, and isolation" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    Why VPC IPs can overlap across networks.
+  </Card>
+</CardGroup>

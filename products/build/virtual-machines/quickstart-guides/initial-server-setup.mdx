@@ -1,0 +1,226 @@
+---
+title: Initial server setup (Linux)
+description: Harden a fresh Linux VM in 10 minutes — non-root user, key-only SSH, firewall, automatic security updates
+---
+
+A fresh Raff Linux VM ships ready-to-run, but you should harden it before exposing services. This guide takes a brand-new VM from create to a state safe for production, in about 10 minutes. Steps are written for Ubuntu / Debian; equivalents for RHEL family (CentOS / AlmaLinux / Rocky) are noted inline.
+
+For Windows VMs, the equivalent hardening is built into Windows Server defaults; the work is in the dashboard side ([Reset password](/products/build/virtual-machines/quickstart-guides/reset-password), Firewall).
+
+## Before you start
+
+- VM is `active` — see [Create a VM](/products/build/virtual-machines/quickstart-guides/create-a-vm)
+- You can SSH in as `root` (or you've added an SSH key in the create flow)
+- An SSH public key on your local machine for the new user
+
+## 1. Connect as root
+
+```bash
+ssh root@<public-ipv4>
+```
+
+If this is your first time on the VM, accept the host key fingerprint.
+
+## 2. Update the system
+
+Get the latest security patches before doing anything else.
+
+**Ubuntu / Debian:**
+```bash
+apt update && apt upgrade -y
+```
+
+**RHEL family:**
+```bash
+dnf upgrade -y
+```
+
+If the kernel updated, plan a reboot at the end of the steps.
+
+## 3. Create a non-root user with sudo
+
+Running as `root` over SSH is a known-bad practice. Create a real user and give it `sudo`.
+
+**Ubuntu / Debian:**
+```bash
+adduser raff                       # prompts for password
+usermod -aG sudo raff
+```
+
+**RHEL family:**
+```bash
+adduser raff
+passwd raff
+usermod -aG wheel raff
+```
+
+## 4. Copy your SSH public key to the new user
+
+From your **local** machine (not the VM):
+
+```bash
+ssh-copy-id raff@<public-ipv4>
+```
+
+If `ssh-copy-id` isn't available, do it manually on the VM:
+
+```bash
+mkdir -p /home/raff/.ssh
+cat >> /home/raff/.ssh/authorized_keys <<EOF
+ssh-ed25519 AAAA...your_public_key... user@local
+EOF
+chown -R raff:raff /home/raff/.ssh
+chmod 700 /home/raff/.ssh
+chmod 600 /home/raff/.ssh/authorized_keys
+```
+
+Test the key login from a **new terminal**:
+
+```bash
+ssh raff@<public-ipv4>
+sudo -i             # confirm sudo works
+```
+
+Don't close the original root session until the test succeeds.
+
+## 5. Lock down SSH
+
+Edit `/etc/ssh/sshd_config`:
+
+```bash
+sudo vi /etc/ssh/sshd_config
+```
+
+Set or change:
+
+```
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+```
+
+Reload SSH (use `systemctl restart` if `reload` doesn't pick up changes):
+
+```bash
+sudo systemctl reload ssh           # Ubuntu / Debian
+sudo systemctl reload sshd          # RHEL family
+```
+
+<Warning>
+  Confirm the new user can still log in *before* closing your existing session. If you mis-edit `sshd_config` and lock yourself out, recover with the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback) — you can log in there as `root` with the password from the [Credentials panel](/products/build/virtual-machines/quickstart-guides/reset-password).
+</Warning>
+
+## 6. Set up a firewall
+
+Define a default-deny inbound policy and explicitly allow what you need.
+
+**Ubuntu / Debian — UFW:**
+```bash
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH                # opens 22/tcp
+# Add per-app rules:
+# sudo ufw allow http
+# sudo ufw allow https
+sudo ufw enable
+sudo ufw status
+```
+
+**RHEL family — firewalld:**
+```bash
+sudo firewall-cmd --permanent --add-service=ssh
+# sudo firewall-cmd --permanent --add-service=http
+# sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
+```
+
+The Raff [Firewall Group](/products/network/firewall) on the network interface and the inside-the-VM firewall stack independently — you need both to allow a port for traffic to reach the service. Most users keep the SG broad and use the OS firewall for fine-grained control, or the reverse. Don't open ports in both layers without thinking through what's exposed.
+
+## 7. Enable automatic security updates
+
+Set the VM to apply security patches without you remembering to.
+
+**Ubuntu / Debian:**
+```bash
+sudo apt install -y unattended-upgrades
+sudo dpkg-reconfigure -plow unattended-upgrades
+```
+
+Confirm `/etc/apt/apt.conf.d/50unattended-upgrades` includes the security source.
+
+**RHEL family:**
+```bash
+sudo dnf install -y dnf-automatic
+sudo systemctl enable --now dnf-automatic.timer
+```
+
+Edit `/etc/dnf/automatic.conf` to set `apply_updates = yes` if you want full installs (default is download-only).
+
+## 8. (Optional) fail2ban
+
+`fail2ban` watches auth logs and bans IPs that fail repeatedly — cheap insurance for any VM with public SSH.
+
+**Ubuntu / Debian:**
+```bash
+sudo apt install -y fail2ban
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client status sshd
+```
+
+**RHEL family:**
+```bash
+sudo dnf install -y fail2ban fail2ban-firewalld
+sudo systemctl enable --now fail2ban
+```
+
+Defaults are sensible. Tune `/etc/fail2ban/jail.local` if you want longer ban times.
+
+## 9. Set the timezone (optional)
+
+```bash
+sudo timedatectl set-timezone Europe/Istanbul     # or UTC, America/New_York, etc.
+timedatectl
+```
+
+UTC is the safe default for servers. Pick a local zone only if you really need it for cron schedules or log readability.
+
+## 10. Reboot
+
+If the kernel updated in step 2 (or if you're paranoid about pending changes):
+
+```bash
+sudo reboot
+```
+
+After reboot, reconnect as `raff` and confirm everything's still working.
+
+## You're done — checklist
+
+- [x] System fully patched
+- [x] Non-root user with sudo and SSH key login
+- [x] Root SSH login disabled
+- [x] Password SSH login disabled
+- [x] Firewall enabled with default-deny inbound
+- [x] Automatic security updates running
+- [x] (Optional) fail2ban running
+- [x] (Optional) sensible timezone
+
+Your VM is now in roughly the same shape as a freshly-provisioned production host at any cloud you'd come from.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Firewall" icon="shield-halved" href="/products/network/firewall">
+    Tighten the platform-level firewall to match your OS firewall.
+  </Card>
+  <Card title="Enable backups" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    Schedule daily or weekly backups before going live.
+  </Card>
+  <Card title="Monitoring & metrics" icon="lightbulb" href="/products/build/virtual-machines/concepts/monitoring-and-metrics">
+    Read your VM's CPU/RAM/network from the dashboard.
+  </Card>
+  <Card title="Recover a locked-out VM" icon="life-ring" href="/products/build/virtual-machines/quickstart-guides/recover-locked-vm">
+    What to do if the firewall or SSH config locks you out.
+  </Card>
+</CardGroup>

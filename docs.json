@@ -32,6 +32,12 @@
         "tab": "Products",
         "groups": [
           {
+            "group": "Products Home",
+            "pages": [
+              "products/index"
+            ]
+          },
+          {
             "group": "Build",
             "icon": "server",
             "pages": [
@@ -40,49 +46,259 @@
                 "icon": "server",
                 "pages": [
                   "products/build/virtual-machines/index",
-                  "products/build/virtual-machines/quickstart",
-                  "products/build/virtual-machines/how-to-create",
-                  "products/build/virtual-machines/how-to-manage",
-                  "products/build/virtual-machines/how-to-resize",
-                  "products/build/virtual-machines/how-to-delete",
-                  "products/build/virtual-machines/details"
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/build/virtual-machines/quickstart-guides/create-a-vm",
+                      "products/build/virtual-machines/quickstart-guides/initial-server-setup",
+                      "products/build/virtual-machines/quickstart-guides/connect-via-ssh",
+                      "products/build/virtual-machines/quickstart-guides/connect-via-rdp",
+                      "products/build/virtual-machines/quickstart-guides/manage-power",
+                      "products/build/virtual-machines/quickstart-guides/rename",
+                      "products/build/virtual-machines/quickstart-guides/resize",
+                      "products/build/virtual-machines/quickstart-guides/reset-password",
+                      "products/build/virtual-machines/quickstart-guides/reinstall",
+                      "products/build/virtual-machines/quickstart-guides/factory-reset",
+                      "products/build/virtual-machines/quickstart-guides/create-snapshot",
+                      "products/build/virtual-machines/quickstart-guides/enable-backups",
+                      "products/build/virtual-machines/quickstart-guides/recover-locked-vm",
+                      "products/build/virtual-machines/quickstart-guides/delete-vm"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/build/virtual-machines/concepts/plans-and-sizing",
+                      "products/build/virtual-machines/concepts/regions",
+                      "products/build/virtual-machines/concepts/os-templates",
+                      "products/build/virtual-machines/concepts/custom-images",
+                      "products/build/virtual-machines/concepts/storage-model",
+                      "products/build/virtual-machines/concepts/snapshots-vs-backups",
+                      "products/build/virtual-machines/concepts/lifecycle-states",
+                      "products/build/virtual-machines/concepts/authentication",
+                      "products/build/virtual-machines/concepts/monitoring-and-metrics",
+                      "products/build/virtual-machines/concepts/tags-and-organization",
+                      "products/build/virtual-machines/concepts/vm-notes",
+                      "products/build/virtual-machines/concepts/account-limits",
+                      "products/build/virtual-machines/concepts/billing-model"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/build/virtual-machines/details/features-and-limits",
+                      "products/build/virtual-machines/details/pricing",
+                      "products/build/virtual-machines/details/sla",
+                      "products/build/virtual-machines/details/acceptable-use",
+                      "products/build/virtual-machines/details/support"
+                    ]
+                  },
+                  "products/build/virtual-machines/troubleshooting"
                 ]
               }
             ]
           },
           {
-            "group": "Management",
+            "group": "Store",
+            "icon": "hard-drive",
+            "pages": [
+              {
+                "group": "Volumes",
+                "icon": "hard-drive",
+                "pages": [
+                  "products/store/volumes/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/store/volumes/quickstart-guides/create-a-volume",
+                      "products/store/volumes/quickstart-guides/attach-to-vm",
+                      "products/store/volumes/quickstart-guides/resize-volume",
+                      "products/store/volumes/quickstart-guides/detach-from-vm",
+                      "products/store/volumes/quickstart-guides/delete-volume"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/store/volumes/concepts/volume-types"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/store/volumes/details/features-and-limits"
+                    ]
+                  },
+                  "products/store/volumes/troubleshooting"
+                ]
+              },
+              {
+                "group": "Object Storage",
+                "icon": "bucket",
+                "pages": [
+                  "products/store/object-storage/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/store/object-storage/quickstart-guides/create-bucket",
+                      "products/store/object-storage/quickstart-guides/upload-files",
+                      "products/store/object-storage/quickstart-guides/generate-access-keys",
+                      "products/store/object-storage/quickstart-guides/set-public-private",
+                      "products/store/object-storage/quickstart-guides/s3-sdk-access",
+                      "products/store/object-storage/quickstart-guides/monitor-usage"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/store/object-storage/concepts/s3-compatibility"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/store/object-storage/details/features-and-limits"
+                    ]
+                  },
+                  "products/store/object-storage/troubleshooting"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Network",
+            "icon": "network-wired",
+            "pages": [
+              {
+                "group": "VPC",
+                "icon": "network-wired",
+                "pages": [
+                  "products/network/vpc/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/network/vpc/quickstart-guides/use-networking-diagram",
+                      "products/network/vpc/quickstart-guides/create-vpc",
+                      "products/network/vpc/quickstart-guides/manage-vpc",
+                      "products/network/vpc/quickstart-guides/attach-vm",
+                      "products/network/vpc/quickstart-guides/delete-vpc"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/network/vpc/concepts/cidr-and-isolation"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/network/vpc/details/features-and-limits"
+                    ]
+                  },
+                  "products/network/vpc/troubleshooting"
+                ]
+              },
+              {
+                "group": "Public IPs",
+                "icon": "globe",
+                "pages": [
+                  "products/network/public-ips/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/network/public-ips/quickstart-guides/auto-assign",
+                      "products/network/public-ips/quickstart-guides/reserve-ip",
+                      "products/network/public-ips/quickstart-guides/manage-from-vm",
+                      "products/network/public-ips/quickstart-guides/move-between-vms",
+                      "products/network/public-ips/quickstart-guides/release-ip"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/network/public-ips/concepts/reserved-vs-ephemeral"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/network/public-ips/details/features-and-limits"
+                    ]
+                  },
+                  "products/network/public-ips/troubleshooting"
+                ]
+              },
+              {
+                "group": "Firewall",
+                "icon": "shield-halved",
+                "pages": [
+                  "products/network/firewall/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/network/firewall/quickstart-guides/create-firewall-group",
+                      "products/network/firewall/quickstart-guides/add-rules",
+                      "products/network/firewall/quickstart-guides/attach-to-vm",
+                      "products/network/firewall/quickstart-guides/update-rules",
+                      "products/network/firewall/quickstart-guides/delete-firewall-group"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/network/firewall/concepts/inbound-vs-outbound"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/network/firewall/details/features-and-limits"
+                    ]
+                  },
+                  "products/network/firewall/troubleshooting"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Manage",
             "icon": "folder",
             "pages": [
               {
-                "group": "Projects",
-                "icon": "folder",
+                "group": "Team & Access",
+                "icon": "users",
                 "pages": [
-                  "products/management/projects/index",
-                  "products/management/projects/quickstart",
-                  "products/management/projects/how-to-create",
-                  "products/management/projects/how-to-move-resources",
-                  "products/management/projects/how-to-delete",
-                  "products/management/projects/details"
+                  "products/manage/team-access/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/manage/team-access/quickstart-guides/invite-member",
+                      "products/manage/team-access/quickstart-guides/change-role",
+                      "products/manage/team-access/quickstart-guides/remove-member",
+                      "products/manage/team-access/quickstart-guides/create-a-project",
+                      "products/manage/team-access/quickstart-guides/delete-a-project",
+                      "products/manage/team-access/quickstart-guides/generate-api-key",
+                      "products/manage/team-access/quickstart-guides/rotate-api-key"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/manage/team-access/concepts/roles-and-api-keys",
+                      "products/manage/team-access/concepts/projects-and-scoping",
+                      "products/manage/team-access/concepts/api-keys"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/manage/team-access/details/permissions-matrix"
+                    ]
+                  },
+                  "products/manage/team-access/troubleshooting"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Storage",
-            "icon": "hard-drive",
-            "pages": [
-              "products/storage/volumes/index",
-              "products/storage/object-storage/index",
-              "products/storage/snapshots/index",
-              "products/storage/backups/index"
-            ]
-          },
-          {
-            "group": "Networking",
-            "icon": "network-wired",
-            "pages": [
-              "products/networking/vpc/index"
             ]
           }
         ]
@@ -133,20 +349,103 @@
               {
                 "group": "Virtual Machines",
                 "pages": [
-                  "api-reference/endpoint/list-vms",
-                  "api-reference/endpoint/create-vm",
-                  "api-reference/endpoint/get-vm",
-                  "api-reference/endpoint/delete-vm",
-                  "api-reference/endpoint/bulk-delete-vms",
-                  "api-reference/endpoint/start-vm",
-                  "api-reference/endpoint/stop-vm",
-                  "api-reference/endpoint/reboot-vm",
-                  "api-reference/endpoint/rename-vm",
-                  "api-reference/endpoint/reset-vm-password",
-                  "api-reference/endpoint/reinstall-vm",
-                  "api-reference/endpoint/factory-reset-vm",
-                  "api-reference/endpoint/resize-vm",
-                  "api-reference/endpoint/resize-vm-disk"
+                  {
+                    "group": "Lifecycle",
+                    "pages": [
+                      "api-reference/endpoint/list-vms",
+                      "api-reference/endpoint/create-vm",
+                      "api-reference/endpoint/get-vm",
+                      "api-reference/endpoint/delete-vm",
+                      "api-reference/endpoint/bulk-delete-vms"
+                    ]
+                  },
+                  {
+                    "group": "Power & state",
+                    "pages": [
+                      "api-reference/endpoint/start-vm",
+                      "api-reference/endpoint/stop-vm",
+                      "api-reference/endpoint/reboot-vm",
+                      "api-reference/endpoint/hard-reboot-vm",
+                      "api-reference/endpoint/rename-vm",
+                      "api-reference/endpoint/reset-vm-password",
+                      "api-reference/endpoint/reinstall-vm",
+                      "api-reference/endpoint/factory-reset-vm"
+                    ]
+                  },
+                  {
+                    "group": "Resize & images",
+                    "pages": [
+                      "api-reference/endpoint/resize-vm",
+                      "api-reference/endpoint/resize-vm-disk",
+                      "api-reference/endpoint/save-vm-disk-as-image"
+                    ]
+                  },
+                  {
+                    "group": "Tags",
+                    "pages": [
+                      "api-reference/endpoint/add-vm-tag",
+                      "api-reference/endpoint/update-vm-tag",
+                      "api-reference/endpoint/remove-vm-tag"
+                    ]
+                  },
+                  {
+                    "group": "Notes",
+                    "pages": [
+                      "api-reference/endpoint/get-vm-notes",
+                      "api-reference/endpoint/upsert-vm-note",
+                      "api-reference/endpoint/update-vm-note",
+                      "api-reference/endpoint/append-vm-note"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Networking",
+                "pages": [
+                  {
+                    "group": "VPCs",
+                    "pages": [
+                      "api-reference/endpoint/list-vpcs",
+                      "api-reference/endpoint/create-vpc",
+                      "api-reference/endpoint/get-vpc",
+                      "api-reference/endpoint/update-vpc",
+                      "api-reference/endpoint/delete-vpc",
+                      "api-reference/endpoint/list-vpc-cidr-suggestions"
+                    ]
+                  },
+                  {
+                    "group": "Public IPs",
+                    "pages": [
+                      "api-reference/endpoint/list-ips",
+                      "api-reference/endpoint/reserve-ip",
+                      "api-reference/endpoint/get-ip",
+                      "api-reference/endpoint/release-ip",
+                      "api-reference/endpoint/change-ip"
+                    ]
+                  },
+                  {
+                    "group": "Security groups",
+                    "pages": [
+                      "api-reference/endpoint/list-firewall",
+                      "api-reference/endpoint/create-firewall-group",
+                      "api-reference/endpoint/list-security-group-templates",
+                      "api-reference/endpoint/get-security-group",
+                      "api-reference/endpoint/update-security-group",
+                      "api-reference/endpoint/delete-firewall-group"
+                    ]
+                  },
+                  {
+                    "group": "VM network attachments",
+                    "pages": [
+                      "api-reference/endpoint/list-vm-networks",
+                      "api-reference/endpoint/attach-vm-to-vpc",
+                      "api-reference/endpoint/detach-vm-from-vpc",
+                      "api-reference/endpoint/attach-vm-ip",
+                      "api-reference/endpoint/detach-vm-ip",
+                      "api-reference/endpoint/attach-vm-security-group",
+                      "api-reference/endpoint/detach-vm-security-group"
+                    ]
+                  }
                 ]
               },
               {
@@ -179,6 +478,11 @@
     ],
     "global": {
       "anchors": [
+        {
+          "anchor": "Products",
+          "href": "/products",
+          "icon": "arrow-left-long"
+        },
         {
           "anchor": "Dashboard",
           "href": "https://app.rafftechnologies.com",
@@ -227,7 +531,7 @@
           { "label": "Docs Home", "href": "/introduction" },
           { "label": "API Reference", "href": "/api-reference/introduction" },
           { "label": "Quickstart", "href": "/quickstart" },
-          { "label": "Products", "href": "/products/build/virtual-machines/index" }
+          { "label": "Products", "href": "/products" }
         ]
       },
       {

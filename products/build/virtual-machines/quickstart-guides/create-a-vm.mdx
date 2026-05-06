@@ -1,0 +1,204 @@
+---
+title: Create a VM
+description: Launch a new virtual machine from the Raff Platform dashboard
+---
+
+Create a new VM by picking a region, an OS template, a plan, and authentication. Optional steps add storage, backups, tags, and let you launch up to 20 VMs at once.
+
+## Before you start
+
+- A Raff Platform account
+- A project to deploy into (the dashboard's project picker is at the top-left, next to the **Raff Technologies** badge)
+- A payment method — Google Pay or a credit card (Visa, Mastercard, Amex, Diners). Applied at checkout; you don't need to pre-fund a balance.
+- An SSH public key on your machine, **or** a password you'll set during creation
+
+## 1. Open the create flow
+
+From any page, click the orange **+ Create** button at the top right and choose **Instance**. The new-VM page opens with sensible defaults pre-selected.
+
+## 2. Pick a region
+
+Pick the location closest to your users. The footer summary updates with the selected region.
+
+<Frame>
+  ![Region picker on the new-VM page](/images/products/build/virtual-machines/create-a-vm-01-region-and-os.png)
+</Frame>
+
+A VM cannot move regions after creation; pick carefully if latency matters. See [Regions](/products/build/virtual-machines/concepts/regions) for the full availability list and how region choice affects pricing and VPCs.
+
+## 3. Pick an OS template
+
+Pick the operating system, then the version.
+
+<Frame>
+  ![OS Template grid with the Version picker showing 3 versions available](/images/products/build/virtual-machines/create-a-vm-02-os-template.png)
+</Frame>
+
+**Two source tabs:**
+- **OS** — vanilla operating systems (no preinstalled apps)
+- **Marketplace** — pre-built application images (databases, web stacks, dev tools)
+
+**OS lineup:**
+
+| Linux | BSD | Windows |
+|---|---|---|
+| Ubuntu | FreeBSD | Windows Server |
+| Debian | | |
+| Fedora | | |
+| CentOS | | |
+| AlmaLinux | | |
+| Rocky Linux | | |
+| Alpine Linux | | |
+| openSUSE | | |
+
+**Version picker** — once you select an OS, the **Version** dropdown shows every supported version. Pick the version your application targets; defaults to the newest stable release.
+
+For Linux, multiple LTS releases per distribution are available (e.g. Ubuntu 22.04 / 24.04). For **Windows Server**, the available SKUs are:
+
+| Edition | Versions |
+|---|---|
+| **Standard** | 2019, 2022, 2025 |
+| **Datacenter** | 2022, 2025 |
+
+The footer summary shows the final selection (e.g. `Ubuntu 24.04×64`).
+
+## 4. Choose size
+
+Pick the billing term, plan family, and plan.
+
+<Frame>
+  ![Choose Size: Monthly/Yearly/2-Year tabs, General Purpose vs CPU-Optimized, plan grid](/images/products/build/virtual-machines/create-a-vm-03-choose-size.png)
+</Frame>
+
+**Billing term** (top tabs):
+| Term | Discount |
+|---|---|
+| **Monthly** | — |
+| **Yearly** | -17% |
+| **2 Years** | -17% |
+
+**Plan family**:
+- **General Purpose** — flexible compute for websites, dev environments, and everyday workloads.
+- **CPU-Optimized** — dedicated vCPU resources for production apps, databases, and consistent performance.
+
+**Plan card** — each card shows vCPU, RAM, and base NVMe SSD. Bandwidth is **unlimited** on every plan and is not part of the choice. Pick the smallest plan that fits the workload; you can [resize](/products/build/virtual-machines/quickstart-guides/resize) up later. See [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing) for what each plan family includes and how to choose.
+
+The footer summary updates immediately with the picked plan and price.
+
+## 5. Networking
+
+The defaults work for most VMs.
+
+<Frame>
+  ![Networking section: private network, public IPv4, IPv6 — and Authentication block below](/images/products/build/virtual-machines/create-a-vm-04-networking-and-auth.png)
+</Frame>
+
+| Field | Default | When to change |
+|---|---|---|
+| **Private Network** | None | Optional. Pick an existing VPC if you want this VM to share a private network with other VMs in the same region. Skipping this leaves the VM reachable only via its public IP — fine for single-server workloads |
+| **Public IPv4** | Auto — Random IPv4 | Switch to a [reserved Public IP](/products/network/public-ips) for a stable address across rebuilds |
+| **IPv6 Address** | Off | Toggle on for dual-stack networking |
+
+## 6. Authentication (required)
+
+Pick how you'll log in to the VM. The form blocks checkout until this is set.
+
+- **SSH Key** — recommended. Pick an existing key from your account or paste a new public key.
+- **Password** — username and password. Easier for one-off VMs, but less secure for production.
+
+You can change auth later, but the initial choice determines how you connect for the first time.
+
+## 7. Additional storage (optional)
+
+Add a block volume that attaches at boot, beyond the plan's base disk.
+
+<Frame>
+  ![Additional Storage section: 50/100/150 GiB presets and custom slider, Backup section preview](/images/products/build/virtual-machines/create-a-vm-05-storage-and-backup.png)
+</Frame>
+
+- **Presets** — None, 50, 100, 150 GiB
+- **Custom** — type a value or drag the slider, up to 1000 GiB
+- The total storage line shows base + additional and the per-month cost
+
+Skip this step if you only need the plan's base NVMe SSD. You can [attach a volume later](/products/store/volumes/quickstart-guides/attach-to-vm) without recreating the VM.
+
+## 8. Backup (optional)
+
+Enable a recurring backup schedule.
+
+<Frame>
+  ![Backup plan: Daily or Weekly, with billing rules and free tier](/images/products/build/virtual-machines/create-a-vm-06-backup-plan.png)
+</Frame>
+
+- **3 backups always free, rolling.** When a new backup runs, the oldest of the 3 is auto-deleted, so you always keep the 3 most recent at no charge. Same behaviour for Daily and Weekly schedules.
+- **\$0.05/GB/mo** for any backup you choose to keep beyond the free 3.
+- **Daily and Weekly cost the same per GB** — pricing is by storage, not by frequency. Pick by your RPO: Daily = up to 24h of data loss in a worst case, Weekly = up to 7 days.
+
+## 9. Quantity, tags, hostnames
+
+Launch up to 20 VMs at once and label them for filtering.
+
+<Frame>
+  ![VM Quantity, Tags, and Hostnames section](/images/products/build/virtual-machines/create-a-vm-07-quantity-and-tags.png)
+</Frame>
+
+- **VM Quantity** — 1 to 20 VMs from this configuration. Each becomes its own VM with its own IP.
+- **Tags** — free-form labels for filtering in the VM list (`prod`, `web`, `customer-acme`). Press Enter, Space, or Comma to add.
+- **Hostnames** — auto-generated as `<os>-<cpu>-<ram>-NN`; edit per-VM if you want specific names. Allowed: `A-Z`, `a-z`, `0-9`, hyphen. 3-63 characters.
+
+## 10. Proceed to checkout and pay
+
+Click **Proceed to Checkout** in the footer summary bar. The checkout page opens with the order summary on the right and the payment form on the left.
+
+<Frame>
+  ![Checkout page: payment method on left, order summary on right](/images/products/build/virtual-machines/create-a-vm-08-checkout.png)
+</Frame>
+
+**Order Summary** (right side) shows what you're buying and how it's paid:
+
+| Line | What it means |
+|---|---|
+| **Plan + OS** | The plan, region, and OS you picked |
+| **Monthly / Yearly / 2 Years** | The billing term |
+| **Subtotal** | Full price for the term |
+| **Account Balance** | How much of your existing balance is applied — `\$0.00` if none |
+| **Card Charge** | The remainder charged to the card on this checkout |
+
+**Payment Method** (left side) — pick one:
+- **Subscribe with G Pay** — one-click Google Pay
+- **Use saved cards** — any card you've used before; auto-charges with the saved CVC
+- **Add new** — enter card number, expiry, CVC, and name. The card is saved to your account for future payments; remove it any time from **Settings → Payment Methods**.
+
+Click **Proceed** to confirm. By confirming, you authorise Raff Technologies LLC to charge the card for this and future renewals.
+
+The VM starts provisioning immediately. Returns are covered by the **14-day money-back guarantee** shown on the checkout page.
+
+## After launch
+
+The VM transitions through these states before it's reachable:
+
+| Status | Description |
+|---|---|
+| `provisioning` | Resources being allocated |
+| `booting` | VM is booting up |
+| `initiating` | Initial setup running |
+| `active` | Ready to use |
+
+Provisioning typically takes 30-90 seconds depending on template and region. Once `active`, the VM detail page shows the public IPv4 you'll use to connect.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    Open a shell on a Linux VM.
+  </Card>
+  <Card title="Connect via RDP" icon="desktop" href="/products/build/virtual-machines/quickstart-guides/connect-via-rdp">
+    Open a Remote Desktop session to a Windows VM.
+  </Card>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Start, stop, reboot.
+  </Card>
+  <Card title="Enable backups later" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    Skip backups now? Turn them on after the fact.
+  </Card>
+</CardGroup>

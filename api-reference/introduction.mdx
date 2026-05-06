@@ -94,53 +94,29 @@ curl -H "X-API-Key: YOUR_API_KEY" \
 
 ## Available Endpoints
 
+The full reference is browseable in the left navigation. A summary of what's currently in the public API:
+
+### Catalog (no auth)
+
+`GET /api/v1/public/regions`, `GET /api/v1/public/templates`, and pricing under `GET /api/v1/public/pricing/{vm,volume,snapshot,backup,ip}`.
+
+### Projects
+
+CRUD via `/api/v1/projects` and `/api/v1/projects/{id}`.
+
 ### Virtual Machines
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/vms` | [List VMs](/api-reference/endpoint/list-vms) |
-| `POST` | `/api/v1/vms` | [Create VM](/api-reference/endpoint/create-vm) |
-| `GET` | `/api/v1/vms/{id}` | [Get VM](/api-reference/endpoint/get-vm) |
-| `DELETE` | `/api/v1/vms/{id}` | [Delete VM](/api-reference/endpoint/delete-vm) |
-| `POST` | `/api/v1/vms/{id}/start` | [Start VM](/api-reference/endpoint/start-vm) |
-| `POST` | `/api/v1/vms/{id}/stop` | [Stop VM](/api-reference/endpoint/stop-vm) |
-| `POST` | `/api/v1/vms/{id}/reboot` | [Reboot VM](/api-reference/endpoint/reboot-vm) |
-| `POST` | `/api/v1/vms/{id}/resize` | [Resize VM](/api-reference/endpoint/resize-vm) |
+| Group | Endpoints |
+|---|---|
+| Lifecycle | `POST /api/v1/vms`, `GET /api/v1/vms`, `GET /api/v1/vms/{id}`, `DELETE /api/v1/vms/{id}`, `DELETE /api/v1/vms/bulk` |
+| Power | `POST /api/v1/vms/{id}/{start\|stop\|reboot\|reboot-hard}` |
+| Lifecycle ops | `PATCH /api/v1/vms/{id}/rename`, `POST /api/v1/vms/{id}/{reset-password\|reinstall\|factory-reset}` |
+| Resize | `POST /api/v1/vms/{id}/resize`, `POST /api/v1/vms/{id}/disk/resize` |
+| Imaging | `POST /api/v1/vms/{id}/save-image` |
+| Networking | `GET /api/v1/vms/{id}/networks`, `POST/DELETE /api/v1/vms/{id}/{vpc,ip,firewall}` |
+| Tags | `POST/PATCH/DELETE /api/v1/vms/{id}/tags[/{tagId}]` |
+| Notes | `GET /api/v1/vms/{id}/notes`, `PUT /api/v1/vms/{id}/notes/{type}` |
 
 ### Volumes
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/volumes` | List volumes |
-| `POST` | `/api/v1/volumes` | Create a volume |
-| `GET` | `/api/v1/volumes/{id}` | Get volume details |
-| `DELETE` | `/api/v1/volumes/{id}` | Delete a volume |
-| `PATCH` | `/api/v1/volumes/{id}` | Resize a volume |
-| `POST` | `/api/v1/volumes/{id}/attach` | Attach to a VM |
-| `POST` | `/api/v1/volumes/{id}/detach` | Detach from a VM |
-
-### Snapshots
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/snapshots` | List snapshots |
-| `POST` | `/api/v1/snapshots` | Create a snapshot |
-| `GET` | `/api/v1/snapshots/{id}` | Get snapshot details |
-| `DELETE` | `/api/v1/snapshots/{id}` | Delete a snapshot |
-| `POST` | `/api/v1/snapshots/{id}/restore` | Restore a snapshot |
-| `PATCH` | `/api/v1/snapshots/{id}/rename` | Rename a snapshot |
-
-### Backups
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/backups` | List backups |
-| `POST` | `/api/v1/backups` | Create a backup |
-| `GET` | `/api/v1/backups/{id}` | Get backup details |
-| `DELETE` | `/api/v1/backups/{id}` | Delete a backup |
-| `POST` | `/api/v1/backups/{id}/restore` | Restore a backup |
-| `GET` | `/api/v1/backup-schedules` | List backup schedules |
-| `POST` | `/api/v1/backup-schedules` | Create a schedule |
-| `GET` | `/api/v1/backup-schedules/{id}` | Get schedule details |
-| `DELETE` | `/api/v1/backup-schedules/{id}` | Delete a schedule |
-| `PATCH` | `/api/v1/backup-schedules/{id}` | Update a schedule |
+`PATCH /api/v1/volumes/{id}` (resize). Full CRUD, attach/detach, and snapshot/backup endpoints are coming in the next releases.

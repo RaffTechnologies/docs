@@ -1,0 +1,107 @@
+---
+title: Resize a volume
+description: Grow an attached volume's capacity in the dashboard, then expand the filesystem inside the VM
+---
+
+You can grow a volume any time you need more space — up to the **1000 GiB** maximum. Resize is **one-way**: volumes can grow but cannot shrink. Pick conservatively if you're unsure.
+
+Resize happens in two halves: increase the size in the dashboard, then expand the filesystem inside the VM so the OS sees the new space.
+
+## Before you start
+
+- The volume must be **attached to a VM** — `Increase size` is only available in the actions menu while the volume is attached.
+- The new size must be larger than the current size.
+- Have a way to run commands inside the VM (SSH or VNC for Linux; RDP for Windows).
+- For production volumes, take a [snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot) before resizing — `growpart` and `resize2fs` are well-tested but a snapshot is cheap insurance.
+
+<Warning>
+  Storage resize is **one-way**. You can grow a volume but you cannot shrink it.
+</Warning>
+
+## 1. Increase the size in the dashboard
+
+In the **Volumes** list, open the volume's row **⋮** Actions menu and pick **Increase size**.
+
+<Frame>
+  ![Volume row Actions menu while attached, showing Increase size and Take snapshot enabled](/images/products/store/volumes/volume-row-actions-attached.png)
+</Frame>
+
+Enter the new size. The block device grows in seconds — the underlying disk is bigger, but the filesystem inside the VM still thinks it's the old size until you tell it otherwise.
+
+Subscription billing adjusts immediately:
+
+- The prorated cost of the additional GiB is reserved against the current term and applied at the next billing settlement.
+- Your renewal date and term are unchanged — the existing subscription absorbs the increase.
+
+## 2. Expand the filesystem inside the VM
+
+The dashboard side only grew the block device. The OS still reports the old size until the partition (if any) and filesystem are extended.
+
+### Linux — partitioned volume
+
+```bash
+# Re-read the new device size from the kernel
+sudo partprobe /dev/vdb
+
+# Grow the partition (only if you partitioned the volume; skip if you formatted the raw device)
+sudo growpart /dev/vdb 1
+
+# Extend the filesystem
+sudo resize2fs /dev/vdb1     # ext4
+# or
+sudo xfs_growfs /mnt/data    # xfs — pass the mountpoint, not the device
+```
+
+### Linux — whole-device filesystem (no partition)
+
+If you `mkfs`-ed the device directly with no partition table, skip `growpart`:
+
+```bash
+sudo resize2fs /dev/vdb     # ext4
+sudo xfs_growfs /mnt/data   # xfs
+```
+
+### Windows
+
+1. Open **Server Manager → Tools → Computer Management → Disk Management**.
+2. Right-click the volume → **Refresh** if the new space isn't visible yet.
+3. Right-click the volume → **Extend Volume** and walk the wizard.
+
+The OS now reports the new size. Verify with `df -h` (Linux) or **Computer Management → Disk Management** (Windows).
+
+## What's unaffected
+
+| Item | After resize |
+|---|---|
+| Volume contents | Untouched — all data preserved |
+| Mount point | Unchanged |
+| `/etc/fstab` entry | Still works (UUID-based or device-based) |
+| VM uptime | The VM keeps running through the resize |
+| Filesystem type | Unchanged |
+
+## When to resize vs add another volume
+
+| Goal | Use |
+|---|---|
+| Need more contiguous space on the same mount | **Resize** the existing volume |
+| Want a separate logical store (e.g. database vs logs) | **Add another volume** with [Create a volume](/products/store/volumes/quickstart-guides/create-a-volume) |
+| Need to *reduce* volume size | Not supported — create a new smaller volume, copy what you need, swap, delete the old |
+| Multiple VMs need shared access | Volumes attach to one VM at a time — use [Object Storage](/products/store/object-storage) for shared access |
+
+## Pricing
+
+Resize charges the prorated difference for the added GiB at the standard \$0.05/GiB/month rate, applied to your account balance first then your saved card if needed. Settles at month-end on the 1st along with the rest of your subscription. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Attach to a VM" icon="link" href="/products/store/volumes/quickstart-guides/attach-to-vm">
+    Full mount and `/etc/fstab` flow.
+  </Card>
+  <Card title="Create a volume" icon="plus" href="/products/store/volumes/quickstart-guides/create-a-volume">
+    Add a new volume instead of growing this one.
+  </Card>
+  <Card title="Volume types" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    Performance and persistence model.
+  </Card>
+</CardGroup>

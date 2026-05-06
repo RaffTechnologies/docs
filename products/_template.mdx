@@ -1,0 +1,70 @@
+---
+title: Overview
+description: PRODUCT_DESCRIPTION
+icon: PRODUCT_ICON
+---
+
+{/*
+  CANONICAL PRODUCT OVERVIEW TEMPLATE — copy this file to start a new product page.
+  Not listed in docs.json; Mintlify will not surface it.
+  Placeholders are ALL_CAPS_TOKENS (not <angle_brackets>) since <...> is JSX in MDX.
+
+  Conventions:
+    - title is "Overview" — the sidebar already shows the product name as the group header.
+    - <sub> = the date you last touched the page (MONTH DAY, YEAR).
+    - Hero <Frame> path: /images/products/PILLAR/PRODUCT/hero.png. Alt prefix "TODO:" until real screenshot lands.
+    - Card icons use Mintlify icon names (https://mintlify.com/docs/api-playground/openapi/icons).
+    - "Most viewed" lists the 4 dashboard tasks users come for. "Browse" is the 5-section taxonomy + Reference + Changelog.
+*/}
+
+<sub>Updated MONTH DAY, YEAR</sub>
+
+ONE_PARAGRAPH_DESCRIPTION — what the product is, key specs, who it's for. Direct, no marketing.
+
+<Frame>
+  ![TODO: hero screenshot of PRODUCT in dashboard](/images/products/PILLAR/PRODUCT/hero.png)
+</Frame>
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="TOP_TASK_1" icon="ICON" href="PATH">
+    ONE_LINE_DESCRIPTION
+  </Card>
+  <Card title="TOP_TASK_2" icon="ICON" href="PATH">
+    ONE_LINE_DESCRIPTION
+  </Card>
+  <Card title="TOP_TASK_3" icon="ICON" href="PATH">
+    ONE_LINE_DESCRIPTION
+  </Card>
+  <Card title="TOP_TASK_4" icon="ICON" href="PATH">
+    ONE_LINE_DESCRIPTION
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="QUICKSTART_PATH">
+    Step-by-step dashboard tasks.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="CONCEPTS_PATH">
+    How PRODUCT works under the hood.
+  </Card>
+  <Card title="Details" icon="circle-info" href="DETAILS_PATH">
+    Features, limits, pricing, SLA.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="TROUBLESHOOTING_PATH">
+    Common issues and recovery.
+  </Card>
+  <Card title="API Reference" icon="code" href="API_REF_PATH">
+    Endpoints for PRODUCT.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

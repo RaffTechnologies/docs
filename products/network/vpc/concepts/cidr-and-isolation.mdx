@@ -1,0 +1,121 @@
+---
+title: VXLAN, CIDR, and isolation
+description: How Raff VPCs are isolated — every VPC is its own VXLAN segment with a unique VNI, which is why two VPCs can use the same CIDR and still never see each other
+---
+
+A Raff VPC is a **VXLAN segment**. That's the one fact that explains everything else on this page — the CIDR rules, the overlap behavior, the MTU, the per-region scope. Read this once and the rest of the product makes sense.
+
+## What VXLAN is
+
+**VXLAN** (Virtual Extensible LAN, [RFC 7348](https://datatracker.ietf.org/doc/html/rfc7348)) is the standard way modern clouds build private networks on top of shared physical infrastructure. It works by encapsulating each tenant's Ethernet frames in UDP packets and tagging every packet with a 24-bit identifier — the **VNI** (VXLAN Network Identifier).
+
+Two VMs on the same physical host, two VMs on different hosts, two VMs in different racks — all of them only see traffic carrying their VPC's VNI. The hypervisor drops everything else before it ever reaches the guest.
+
+That 24-bit VNI gives you ~16 million distinct private networks per region. No two VPCs on Raff share a VNI, ever.
+
+## Why this matters: CIDR overlap is a non-issue
+
+Most cloud users come in expecting the AWS rule: "VPC CIDRs must not overlap if you ever want to peer them." On Raff, that rule doesn't apply.
+
+| You can have | And it works |
+|---|---|
+| `vpc-a` with CIDR `10.0.0.0/24` | A VM in it, IP `10.0.0.5` |
+| `vpc-b` with CIDR `10.0.0.0/24` | A different VM in it, also IP `10.0.0.5` |
+
+Both VMs hold the same private IP, in different VPCs, on the same hardware. They cannot reach each other — not because of routing tables, not because of firewall rules, but because their packets are tagged with **different VNIs**. The encapsulation layer never delivers one VPC's frames to another VPC's VM.
+
+This is by design. You can name your VPCs `prod`, `staging`, `dev` and use `10.0.0.0/24` for all three without thinking about it. **VPC names** must be unique inside your account; **CIDRs** don't have to be.
+
+## What is reserved inside the CIDR
+
+Every VPC reserves three addresses in its range:
+
+| Address | Use |
+|---|---|
+| `.0` | Network address (the CIDR itself) |
+| `.1` | Gateway — every VM gets this as its default gateway for the VPC subnet |
+| `.255` | Broadcast (for `/24` and larger; smaller subnets follow standard IPv4 broadcast rules) |
+
+So a `/24` VPC has **253 usable IPs** (256 − 3). The dashboard shows this directly: `1/253 IPs us-east` on each VPC card means one IP is in use out of 253 available.
+
+## CIDR sizes Raff allows
+
+You pick a prefix between **/16 and /28** at create time:
+
+| Prefix | Usable IPs | When to pick it |
+|---|---|---|
+| `/28` | 13 | Tiny — bastion + one or two app VMs |
+| `/24` | 253 | **Default — fits almost every workload** |
+| `/22` | 1,021 | Mid-size cluster |
+| `/20` | 4,093 | Large fleet |
+| `/16` | 65,533 | The maximum — entire address-space of one private block |
+
+The dashboard surfaces three named sizes — **small (/24)**, **medium (/20)**, **large (/16)** — when you click "List CIDRs" while creating a VPC. Use them or type a custom CIDR; both go through the same validator.
+
+You **cannot resize a VPC after creation**. If you outgrow your range, create a new VPC and migrate VMs into it.
+
+## Allowed private ranges
+
+CIDRs must fall inside a private IPv4 block (RFC 1918) or the carrier-grade NAT block (RFC 6598):
+
+- `10.0.0.0/8`
+- `172.16.0.0/12`
+- `192.168.0.0/16`
+- `100.64.0.0/10` (rare; useful when you've already exhausted RFC 1918)
+
+Public IP ranges are rejected at create time. The validator also enforces that the CIDR is correctly aligned — `192.168.1.50/20` is invalid because `/20` starts on a 16-bit boundary; the correct form is `192.168.0.0/20`.
+
+## Region scope and the gateway
+
+A VPC lives in **exactly one region**. VMs from another region cannot join it; the VXLAN layer is bounded by the regional underlay.
+
+Every VPC has an internal **gateway** (the `.1` address) that every member VM uses as its default route for the VPC subnet. Inter-VM traffic inside the VPC is **L2** — frames go directly between hypervisors over the VXLAN multicast group, no routing hop. Traffic leaving the VPC (to the public internet, to another VPC, etc.) goes through the gateway and out via the host's NAT or a public IP if the VM has one attached.
+
+This is why **same-region VM-to-VM traffic inside a VPC is free and high-throughput** — it never leaves the underlay.
+
+## MTU — the one practical caveat
+
+VXLAN encapsulation adds **50 bytes of overhead** to every packet. Raff's VPC interfaces use **MTU 8950** (jumbo frames, 9000 minus 50 for VXLAN headers).
+
+For most workloads — TCP between Linux/Windows guests, HTTP/gRPC between services, Postgres replication — this is invisible. The OS negotiates it via Path MTU Discovery and you never see it. Where it occasionally surfaces:
+
+- **Custom kernels or appliances** that hard-code `MTU 1500` may fragment or drop oversized frames. Set the VM's interface MTU to `8950` (or `1500` if you want classic-Ethernet behavior — slightly slower but always safe).
+- **Containers and overlays inside the VM** (Docker, Kubernetes CNI) often default to 1500. They work, but won't benefit from jumbo frames unless you raise their MTU too.
+- **Tunneling on top of the VPC** (WireGuard, IPsec) adds yet another header. Subtract that tunnel's overhead from 8950 when you size the inner MTU.
+
+If you're seeing strange "works on small payloads, breaks on large" behavior between VMs in the same VPC, MTU is the first thing to check.
+
+## What VPCs do *not* give you (yet)
+
+To set expectations against AWS-style features:
+
+| Feature | On Raff? |
+|---|---|
+| **VPC peering** between two VPCs | **Coming soon** — the Peering tab is in the dashboard but disabled. Today, route cross-VPC traffic through public IPs or a shared gateway VM |
+| **Load balancer / VPN gateway as a service** | **Coming soon** — placeholder under the **Services** tab |
+| **Cross-region VPC** | No — each VPC is regional |
+| **Transit gateway** | Not available; build a hub VM if you need a star topology |
+| **Custom route tables** | Not exposed; the gateway handles default routing |
+| **VPC endpoints / PrivateLink** | Not today; same-region traffic to Object Storage and Kubernetes is already on the private network |
+
+For outbound internet access without exposing a public IP, see the **Internet Gateway** options on each VPC — the Platform Router gives you managed NAT for free, and the Firewall Appliance (OPNsense) gives you full firewall control as a paid VM.
+
+## VPC membership is opt-in
+
+A VM created without a VPC has **no private network interface** — it's reachable only via its public IP, and it can't talk privately to any other VM. That's a perfectly normal configuration for a single web server, a one-off worker, or any VM that doesn't need peer-to-peer private traffic.
+
+When you do want **multiple VMs to share a private network**, create a VPC first and then attach VMs to it from the create-VM flow (Networking → Private Network) or from the Networking Diagram (`⋮` → Add VM on the VPC card). Shared VPCs survive any single VM's deletion — see the [VM delete dialog](/products/build/virtual-machines/quickstart-guides/delete-vm) for the safety rules.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Create a VPC" icon="plus" href="/products/network/vpc/quickstart-guides/create-vpc">
+    Pick a CIDR and region.
+  </Card>
+  <Card title="Attach a VM" icon="link" href="/products/network/vpc/quickstart-guides/attach-vm">
+    Add an existing VM to a shared VPC.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/network/vpc/details/features-and-limits">
+    CIDR ranges, MTU, per-account limits.
+  </Card>
+</CardGroup>

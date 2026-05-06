@@ -1,0 +1,106 @@
+---
+title: Connect via RDP
+description: Open a session to a Windows VM — in-browser VNC console or direct RDP from a desktop client
+---
+
+Once a Windows VM is `active`, you have two ways to connect:
+
+| Method | Where it runs | Best for |
+|---|---|---|
+| **In-app console (VNC)** | In the dashboard | Quick checks, recovery, no client install |
+| **Direct RDP** | A desktop RDP client | Daily use, file/clipboard sharing, multiple monitors, full performance |
+
+The dashboard's **Console** button always opens **VNC** for Windows VMs (in-browser RDP is not offered). For real RDP, use a desktop client against the VM's public IPv4.
+
+## Before you start
+
+- The VM is `active` and has a public IPv4 (visible on the detail page)
+- The Administrator password — find it in the **Credentials** card on the detail page (use **Send to Email** if it isn't visible)
+- The attached security group allows inbound TCP/3389 from your IP (default Windows templates allow it; tighten to your office IP for production)
+
+## 1. In-app console (VNC)
+
+Open it the same way as for Linux VMs — **Console** button on the detail page, or the row's 3-dot menu → **Open Terminal**. The in-app console for Windows uses VNC and gives you the full graphical desktop in the browser.
+
+<Frame>
+  ![In-browser VNC console connected to a Windows Server VM at the lock screen](/images/products/build/virtual-machines/connect-via-rdp-01-vnc-console.png)
+</Frame>
+
+**Toolbar (top of the console):**
+
+| Control | Use |
+|---|---|
+| **CONNECTED** | Live session indicator |
+| **Hostname** | The VM's hostname (e.g. `windows-server-2cpu-4gb-01`) |
+| **Expires** | Countdown until the VNC session is forced-disconnected — open a fresh session to extend |
+| **Ctrl+Alt+Del** | Sends the Secure Attention Sequence to Windows (browsers swallow the real chord) |
+| **Keys** | Send other special keys (Win, Esc, F-keys) |
+| **Fullscreen** | Hide browser chrome |
+| **Disconnect** | End the session |
+
+**Use VNC when:**
+- The VM has no public IPv4
+- TCP/3389 is blocked by the security group
+- RDP isn't running yet (e.g. first boot, recovery)
+- You misconfigured the network or got locked out
+
+For everyday work, switch to direct RDP — it's faster, supports clipboard and file transfer, and doesn't have a session timer.
+
+## 2. Direct RDP (desktop client)
+
+Connect from any RDP client. The connection details are the same everywhere:
+
+| Field | Value |
+|---|---|
+| **Host** | VM's public IPv4 |
+| **Port** | `3389` |
+| **Username** | `Administrator` |
+| **Password** | The one set during creation |
+
+### Windows
+
+Pick any of:
+
+- **Remote Desktop Connection** (`mstsc`) — built into every Windows install. Press `Win + R`, type `mstsc`, paste the public IPv4, click **Connect**.
+- **Windows App** — Microsoft's modern client (replaces "Microsoft Remote Desktop" on the Microsoft Store). Adds saved-PC management and gateway support.
+- **Royal TS** — paid, optional. Good if you manage many servers; supports tabbed sessions, credential vaults, multi-protocol (RDP/SSH/VNC).
+
+### macOS
+
+Pick any of:
+
+- **Windows App** — Microsoft's official RDP client on the [Mac App Store](https://apps.apple.com/app/windows-app/id1295203466) (replaces the older "Microsoft Remote Desktop"). Free, recommended.
+- **Royal TSX** — paid, multi-protocol with tabs and credential vault. Good for managing many servers.
+- **Jump Desktop** — paid, App Store. Polished UX, supports Fluid Remote Desktop in addition to RDP.
+
+### Linux
+
+Pick any of:
+
+- **Remmina** — most common GTK client. `sudo apt install remmina remmina-plugin-rdp` on Debian/Ubuntu. Run `remmina`, click **+**, set protocol to **RDP**, fill in host and credentials.
+- **FreeRDP** — command line, robust. Run:
+  ```bash
+  xfreerdp /v:<public-ipv4> /u:Administrator /p:'<password>' /size:1920x1080 /cert:ignore
+  ```
+- **KRDC** — KDE's bundled client; same workflow as Remmina.
+
+## Troubleshooting
+
+- **Connection refused / timeout** — the security group must allow inbound TCP/3389 from your IP. Use the [VNC console](#1-in-app-console-vnc) to verify Windows itself is up.
+- **Authentication failed** — confirm the password from the **Credentials** card on the VM detail page; reset it via the **Password** action if needed.
+- **Black screen after login** — usually a stuck session. Send **Ctrl+Alt+Del** from the VNC console and choose **Sign out**, then reconnect.
+- **No public IP** — use the VNC console; direct RDP needs a public IPv4 (or a [Public IP](/products/network/public-ips)).
+- **Certificate warning** — expected; the VM uses a self-signed RDP cert. Click **Connect anyway** in your client.
+
+See [Troubleshooting](/products/build/virtual-machines/troubleshooting) for more.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Recover access if the Administrator password is lost.
+  </Card>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Start, stop, reboot.
+  </Card>
+</CardGroup>

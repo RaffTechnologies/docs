@@ -1,0 +1,60 @@
+---
+title: Rename a VM
+description: Change a virtual machine's display name
+---
+
+Rename a VM to update its label in the dashboard, API responses, and billing usage logs. The VM's ID, public IPv4, and disk contents are all unchanged — it's a display-name change only.
+
+## Two ways to open the rename dialog
+
+### a. Detail page — pencil icon
+
+On the VM detail page, click the **pencil icon** next to the name.
+
+<Frame>
+  ![VM detail page with the pencil edit icon next to the VM name](/images/products/build/virtual-machines/rename-01-pencil-icon.png)
+</Frame>
+
+### b. Instance list — row Actions menu
+
+In the **Instances** list, open the row's **⋮** menu and choose **Rename**.
+
+<Frame>
+  ![Instance list row Actions menu showing the Rename option](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+</Frame>
+
+## Rename dialog
+
+Both paths open the same dialog. Type the new name and click **Rename**.
+
+<Frame>
+  ![Rename VM dialog with the Name field and a 64-character counter](/images/products/build/virtual-machines/rename-02-dialog.png)
+</Frame>
+
+**Rules:**
+
+| Rule | Value |
+|---|---|
+| Maximum length | 64 characters |
+| Uniqueness | Must be unique within your account |
+| Restart required | No — change is immediate |
+
+## What changes vs what stays
+
+| Changes | Stays the same |
+|---|---|
+| Display name in the dashboard | VM ID (UUID) |
+| `name` field in API responses | Public IPv4 / IPv6 |
+| Label on the billing usage log | Private IP / VPC |
+| Hostname *inside* the OS — set it manually with `hostnamectl set-hostname <new>` (Linux) or via System Properties (Windows) | Disk contents, snapshots, backups, attached volumes, security groups, tags |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Start, stop, reboot.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/rename-vm">
+    Rename a VM via API.
+  </Card>
+</CardGroup>

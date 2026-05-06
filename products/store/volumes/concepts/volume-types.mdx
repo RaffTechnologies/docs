@@ -1,0 +1,109 @@
+---
+title: Volume types
+description: What a Raff volume is, how it persists, how it attaches, and what currently varies between volumes
+---
+
+A Raff volume is a single block device that you attach to a VM. Every volume on the platform today shares the same characteristics — Raff offers **one volume class** at the moment, so the choice you actually make at create time is *size* and *billing term*, not a performance tier.
+
+This page describes the model so you know what behaviour to expect, where volumes sit relative to your other storage options, and which properties are fixed vs which the platform may expand later.
+
+## What every Raff volume is
+
+| Property | Value |
+|---|---|
+| **Class** | Single tier — **NVMe SSD** block storage (HDD tier coming) |
+| **Block driver** | virtio-blk (devices appear as `/dev/vda`, `/dev/vdb`, …) |
+| **Size range** | 10 - 1000 GiB |
+| **Resize** | One-way grow only — no shrinking |
+| **Attach model** | Single-attach — one VM at a time |
+| **Region scope** | Volumes are bound to the region of the VM they attach to |
+| **Project scope** | Volumes inherit the project of their attached VM |
+| **Lifecycle** | Independent of any VM — survive VM delete |
+| **Filesystem** | You choose at create time (Linux: ext4 / xfs; Windows: NTFS via Disk Management) |
+
+There are no performance tiers, IOPS classes, or "general purpose vs optimized" variants today. Future tiers may be added; this page will list them when they exist.
+
+## Persistence model
+
+A volume is **independent of the VM it attaches to**. Conceptually, a volume sits next to the VM, not inside it.
+
+| VM event | Volume result |
+|---|---|
+| VM stop / start | Stays attached, contents intact |
+| VM reboot | Stays attached, contents intact |
+| VM resize (compute) | Stays attached, contents intact |
+| VM reinstall (Change OS) | Stays attached — survives the OS-disk wipe |
+| VM factory reset | Stays attached — preserved |
+| VM destroy | **Detached, not deleted** — keeps existing in your account, billing for storage, until you delete the volume separately |
+
+This is the practical reason to put data you can't lose **on a volume**, not on the VM's base disk. The base disk is destroyed with the VM; volumes outlive it.
+
+See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the full survival matrix across all storage objects.
+
+## Single-attach scope
+
+A volume can be attached to **one VM at a time**. This is a hard constraint — Raff doesn't support multi-attach (where two VMs see the same volume simultaneously).
+
+| Goal | Use volumes? | Use what instead |
+|---|---|---|
+| Add disk to one VM | **Yes** | — |
+| Move data between VMs serially | **Yes** — detach from VM A, attach to VM B | — |
+| Two VMs reading the same files at once | **No** | [Object Storage](/products/store/object-storage) |
+| Shared filesystem across many VMs | **No** | Object Storage, or a self-hosted NFS/Ceph on a dedicated VM |
+| High-availability replicated storage | **No** at the volume layer | Application-level replication (database replicas, etc.) |
+
+If you find yourself wanting two VMs to see the same volume contents, you almost certainly want Object Storage or an application-level approach.
+
+## Region and project binding
+
+A volume's region and project come from the VM it's attached to. Three rules follow:
+
+1. **A volume can only be reattached within its original region.** You can't take a `us-east` volume and attach it to a VM in another region.
+2. **Volumes follow their VM's project.** Attach to a VM in project `prod` and the volume sits in `prod`.
+3. **Standalone (unattached) volumes** sit in the dashboard's currently-selected region until you attach them. Pick the region carefully when creating an unattached volume — same one-way constraint applies.
+
+To "move" a volume across regions: snapshot it, restore the snapshot in the new region, then delete the original. (Cross-region snapshot restore depends on platform support — see [Create a snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot).)
+
+## Volume vs other storage
+
+Five storage products on the platform serve different jobs. Volumes are the right answer for **persistent block storage attached to one VM**.
+
+| Need | Use |
+|---|---|
+| Boot the OS / system disk | VM **base disk** (comes with the plan) |
+| Extra block storage on one VM | **Volume** |
+| Shared bucket for many readers / writers | [Object Storage](/products/store/object-storage) |
+| Restore point before a risky change | [Snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot) (snapshots can target volumes too) |
+| Routine scheduled protection | [Backups](/products/build/virtual-machines/quickstart-guides/enable-backups) (backups apply to VMs today) |
+| Reusable golden image to deploy from | [Custom images](/products/build/virtual-machines/concepts/custom-images) |
+
+## What's billed
+
+| Item | Rate |
+|---|---|
+| Storage capacity | \$0.05 / GiB / month — flat rate on every subscription term **and** on PAYG (when enabled by support for enterprise/SMB) |
+| Data transfer between VM and attached volume | Free, never metered |
+| Snapshots of a volume | Per GB-hour — see snapshot pricing |
+
+See [Pricing](/products/build/virtual-machines/details/pricing) for how volume billing fits into the wider subscription / balance / credit model.
+
+## What's coming, what's not
+
+- **Performance tiers** — not available today; if added, they'll appear in the create dialog and be documented here.
+- **Multi-attach** — not on the roadmap; for shared access, use Object Storage.
+- **Encryption-at-rest configuration** — volumes are encrypted by default at the platform level; per-volume key management is not exposed today.
+- **Cross-region replication** — not at the volume layer; do it at the application layer or via snapshot/image.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Create a volume" icon="plus" href="/products/store/volumes/quickstart-guides/create-a-volume">
+    Pick size, billing term, format, and target VM.
+  </Card>
+  <Card title="Storage model" icon="layer-group" href="/products/build/virtual-machines/concepts/storage-model">
+    How volumes fit alongside snapshots, backups, and images.
+  </Card>
+  <Card title="Object Storage" icon="bucket" href="/products/store/object-storage">
+    The right answer when you need shared, multi-reader storage.
+  </Card>
+</CardGroup>

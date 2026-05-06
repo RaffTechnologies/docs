@@ -1,0 +1,158 @@
+---
+title: Recover a locked-out VM
+description: Get back into a VM when SSH, RDP, or the OS itself has stopped letting you in
+---
+
+You'll lock yourself out eventually — a misedited `sshd_config`, a too-aggressive UFW rule, a broken `/etc/fstab`, a forgotten password. Raff gives you five recovery paths, ordered from least to most destructive. **Try them in order.**
+
+## 1. Power off, then power on — try this first
+
+Before doing anything else, fully power-cycle the VM. This is the cheapest, fastest fix and clears every kind of *transient* in-memory state:
+
+- Hung processes holding ports the SSH daemon needs
+- A `iptables` / `nftables` ruleset loaded into memory that wasn't persisted to disk (and won't come back after boot)
+- An OOM event that left the system in a degraded state
+- Stuck routing or DNS state
+- A frozen kernel or hypervisor-side stall
+
+A full power cycle is more thorough than a reboot — the VM truly stops between, so any volatile state in the running OS is gone.
+
+**How to do it:**
+
+1. Open the VM detail page.
+2. Use the **Running** toggle (top right) — flip it off, wait until status is `passive`, flip it back on. Or use the **Power** tab → **Turn Off VM**, then **Turn On VM**.
+3. Wait for `active`. Try SSH or RDP again.
+
+<Note>
+  Power cycling fixes problems that **didn't survive a reboot in the first place** — transient runtime state. It does **not** fix on-disk misconfigurations like a broken `sshd_config`, a persisted firewall rule, or a bad `/etc/fstab`. If those are the cause, the VM will return to the same locked-out state after boot — move on to the next step.
+</Note>
+
+If the VM was previously responsive and is now flaky for no obvious reason, this step has the highest hit rate and lowest cost. Always try it first.
+
+## 2. VNC console — the universal recovery path
+
+The in-app **VNC console** connects through the hypervisor instead of the network. Open it from the VM detail page → **Console** button (or row Actions menu → **Open Terminal**). When SSH isn't reachable, the dashboard automatically opens VNC instead.
+
+This is your way in for *any* in-OS misconfiguration that didn't break the boot itself.
+
+### Common scenarios fixed via VNC
+
+<AccordionGroup>
+  <Accordion title="SSH config locked you out (`PermitRootLogin no` with no other user, broken sshd, etc.)">
+    1. Open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback). Log in as `root` (use the password from the **Credentials** card → **Send to Email**, or [reset](/products/build/virtual-machines/quickstart-guides/reset-password) it).
+    2. Edit `/etc/ssh/sshd_config` — fix the offending line.
+    3. Validate the syntax: `sshd -t` (silence = OK).
+    4. Restart SSH: `systemctl restart ssh` (Ubuntu / Debian) or `systemctl restart sshd` (RHEL family).
+    5. Test from your local terminal.
+  </Accordion>
+
+  <Accordion title="Firewall locked you out (UFW / iptables / firewalld blocking 22)">
+    1. VNC in, log in.
+    2. **Ubuntu / Debian:** `ufw status`, then `ufw allow OpenSSH` or `ufw disable` while you fix it.
+    3. **RHEL family:** `firewall-cmd --add-service=ssh --permanent && firewall-cmd --reload`, or `systemctl stop firewalld` while debugging.
+    4. Test SSH from outside.
+  </Accordion>
+
+  <Accordion title="Disk full — can't run any command after login">
+    1. VNC in.
+    2. Free space: `du -h --max-depth=1 / 2>/dev/null | sort -rh | head -20` to find big paths.
+    3. Quick wins: `apt clean`, `journalctl --vacuum-size=200M`, `rm /tmp/*`, `docker system prune -a`.
+    4. If you still can't free enough, [resize the disk](/products/build/virtual-machines/quickstart-guides/resize) up (one-way grow), then expand the filesystem inside the VM.
+  </Accordion>
+
+  <Accordion title="Forgot or lost the OS password">
+    Use [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) from the dashboard. The new password is emailed to your account address; use the VNC console to log in once it arrives.
+  </Accordion>
+</AccordionGroup>
+
+## 3. Single-user mode via GRUB — when the VM won't even boot to login
+
+If the boot fails before you can log in (broken `/etc/fstab`, missing kernel module, runaway init), boot into single-user mode by editing the GRUB cmdline.
+
+### Steps (Linux)
+
+1. Open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback). [Hard reboot](/products/build/virtual-machines/quickstart-guides/manage-power) the VM if it's hung.
+2. The GRUB menu appears for ~3 seconds. Hit any key to pause it.
+3. Highlight the default kernel entry and press `e` to edit.
+4. Find the line beginning `linux …` (it's long). Move to the end with `End` or `Ctrl-E`.
+5. Append one of:
+   - **Ubuntu / Debian:** ` single`
+   - **Most distros — emergency root shell:** ` init=/bin/bash`
+6. Press `Ctrl-X` (or `F10`) to boot.
+
+You land at a root shell with the root filesystem mounted **read-only**. To make changes:
+
+```bash
+mount -o remount,rw /
+```
+
+Now fix the underlying problem:
+
+| Problem | Fix |
+|---|---|
+| Bad `/etc/fstab` line | `vi /etc/fstab` — fix or comment out the bad line |
+| Missing kernel module on boot | Reinstall the module package, or pin the previous kernel via GRUB |
+| Bad systemd unit | `systemctl mask <unit>` or remove the unit file |
+| Forgotten root password | `passwd root`, then reboot (works only on distros that allow this — modern systemd may require additional steps) |
+
+When done:
+
+```bash
+sync
+reboot -f
+```
+
+The VM should boot normally.
+
+## 4. Factory reset — when you can't fix the OS in place
+
+[Factory reset](/products/build/virtual-machines/quickstart-guides/factory-reset) wipes the OS disk and reinstalls the **same** OS template fresh. Crucially, **factory reset preserves**:
+
+- Attached volumes and their data
+- Backups and volume snapshots
+- Network configuration and IP addresses
+- VM specs (CPU/RAM/disk)
+
+If your important data lives on attached volumes — not the OS disk — factory reset is fast and clean. If your data is on the OS disk, **don't** factory reset until you've tried path 4.
+
+## 5. Restore from backup via support
+
+If the OS disk is unrecoverable and your data was on it:
+
+1. Check whether you have a [backup](/products/build/virtual-machines/quickstart-guides/enable-backups) of the VM. **Compute Resources → Backups** lists them.
+2. If yes — email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with the VM ID and the backup name. Support can spin up a new VM from the backup with the disk contents and installed software intact.
+3. If no — your only options are factory reset (loses OS disk) or destroy and recreate. The OS-disk contents are gone.
+
+This is why production VMs should always run a backup schedule. See [Enable backups](/products/build/virtual-machines/quickstart-guides/enable-backups).
+
+## What Raff doesn't have
+
+- **No bootable rescue ISO** — recovery happens through GRUB single-user mode or factory reset, not by booting a separate rescue environment.
+- **No standalone "rescue mode" toggle** in the dashboard — the VNC console is the rescue path; combined with GRUB editing, it covers the same cases.
+
+## Prevention checklist
+
+To make recovery rare in the first place:
+
+- [Initial server setup](/products/build/virtual-machines/quickstart-guides/initial-server-setup) — non-root user with sudo, key-only SSH, but always **keep a working password as fallback**
+- Test SSH config changes with `sshd -t` before restarting the daemon
+- Don't enable a firewall without first allowing 22 (or your SSH port)
+- Run an [enable backups](/products/build/virtual-machines/quickstart-guides/enable-backups) schedule on any VM with data you can't lose
+- Take a [snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot) before risky changes; convert to image if you'd want to keep it across a delete
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Get a fresh password emailed.
+  </Card>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    SSH terminal, direct SSH, and VNC console — all the access methods.
+  </Card>
+  <Card title="Factory reset" icon="arrow-rotate-left" href="/products/build/virtual-machines/quickstart-guides/factory-reset">
+    Clean OS reinstall while keeping volumes and backups.
+  </Card>
+  <Card title="Enable backups" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    The single best protection against unrecoverable VMs.
+  </Card>
+</CardGroup>

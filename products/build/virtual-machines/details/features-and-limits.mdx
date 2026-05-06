@@ -1,0 +1,143 @@
+---
+title: Features & limits
+description: Full feature list for Virtual Machines on the Raff Platform, plus account, VM, and platform limits
+---
+
+## Features
+
+### Compute
+- **Flexible sizing** — General Purpose and CPU-Optimized plan families across CPU, RAM, and base disk
+- **On-demand resize** — change CPU and RAM by switching plans (VM must be stopped); the difference settles to your account balance
+- **Disk resize (one-way)** — grow the OS disk without rebuilding (VM must be stopped)
+- **No CPU throttling** — Raff never throttles your VM; sustain 100% CPU as long as your usage is legitimate
+- **Custom images** — save a VM's OS disk as a reusable image and create new VMs from it
+
+### OS templates
+- **Linux** — Ubuntu, Debian, Fedora, CentOS, AlmaLinux, Rocky Linux, Alpine Linux, openSUSE
+- **BSD** — FreeBSD
+- **Windows** — Windows Server Standard (2019, 2022, 2025) and Datacenter (2022, 2025)
+- **Marketplace** — pre-built application images
+- **Custom** — any image you've saved from one of your VMs
+
+### Networking
+- **Public IPv4** — every VM gets a public IPv4 address by default
+- **IPv6 support** — optional dual-stack networking
+- **Optional VPC membership** — opt in by picking a VPC at create time, or join one later. A VM doesn't need a VPC to be useful
+- **Shared VPCs** — multiple VMs in the same region can share one VPC for private peer-to-peer traffic
+- **Reserved Public IPs** — keep a stable public address across VM rebuilds (separate product)
+- **Unlimited bandwidth** — outbound traffic is unmetered and included on every plan; no per-GB egress charge
+
+### Storage
+- **Base disk** — SSD, included with the plan
+- **Block storage volumes** — attach additional storage that can outlive the VM
+- **Snapshots** — point-in-time copies of an OS disk or volume; per-GB-hour pricing
+- **Backups** — automated Daily or Weekly schedules with configurable retention; first 3 free per VM (rolling)
+- **Multiple backup schedules per VM** — run Daily and Weekly side by side
+
+### Security and access
+- **SSH key authentication** — upload keys at creation, reuse on reinstall
+- **Password authentication** — alternative; emailed to the account address on reset
+- **Security groups** — stateful firewall rule sets attached to VM network interfaces
+- **Reset password** — generate a new password and have it emailed to your account
+- **Browser SSH terminal** — in-app SSH for Linux VMs without a local client
+- **VNC console fallback** — graphical console for Windows VMs and recovery scenarios
+- **Direct SSH and RDP** — connect from any client (`ssh`, PuTTY, Windows App, FreeRDP, Remmina, …)
+
+### Lifecycle and recovery
+- **Reinstall (Change OS)** — switch to a new OS template; preserves IP and attached volumes, deletes snapshots and backups
+- **Factory reset** — fresh OS install on the same template; preserves snapshots, backups, and volumes
+- **Hard reboot** — force-restart for unresponsive VMs
+- **Bulk operations** — select multiple VMs in the list and stop or delete them in one action
+- **Custom images for backup-based recovery** — Raff support can build a new VM from any retained backup if the original is destroyed
+
+### Organization
+- **Tags** — free-form labels with optional priority (1-9), account-wide
+- **Group by Tag** — list view grouped by tag, ordered by priority then name (up to 2 levels of sub-grouping)
+- **My Notes / Team Notes** — per-VM private and team-visible notes
+- **Hostnames** — per-VM display name editable any time
+
+### Observability
+- **Performance graphs** — CPU, Memory (Used / Free), Network Traffic (RX / TX per interface), Disk Throughput, Total Outbound Data Transfer
+- **Time ranges** — 30m / 1h / 2h / 6h / 24h / 7d / 1m / All
+- **VM Information side panel** — live summary of pricing, status, credentials, resources, network, storage, and backup/snapshot counts
+
+### Billing
+- **Subscription by default** — pay in advance from your account balance for the term (Monthly / Yearly / 2-Year)
+- **Term discounts** — Yearly and 2-Year save 17% vs Monthly
+- **Credit on delete or downsize** — unused days and hours go back to your account balance (not your card)
+- **Pay-as-you-go on request** — available for enterprise and SMB customers
+- **Stopped VMs are billed** — `passive` VMs retain reservations and continue under their subscription term
+- **14-day money-back guarantee** — on subscription purchases via the dashboard checkout
+- **Multiple payment methods** — Google Pay, Visa, Mastercard, American Express, Diners Club; cards are saved for future renewals
+- **Account balance applied first** — checkout deducts from your balance before charging the card
+
+## Account limits
+
+| Limit | Default for new accounts | Notes |
+|---|---|---|
+| VMs per account | **30** (across `active` + `passive`) | Increases automatically with usage history; raised on request |
+| vCPU per account | Plan-driven | |
+| RAM per account | Plan-driven | |
+| VM creation in one batch | 20 VMs | Set in the create flow's Quantity field |
+
+See [Account limits](/products/build/virtual-machines/concepts/account-limits) for how limit increases work, including urgent requests via support.
+
+## Per-VM limits
+
+| Resource | Limit |
+|---|---|
+| Max CPU | Determined by the plan picked (up to 16 vCPU on standard plans) |
+| Max RAM | Determined by the plan (up to 64 GB on standard plans) |
+| OS disk size | Determined by the plan; can grow via disk resize, cannot shrink |
+| Additional storage at creation | Up to 1000 GiB |
+| Snapshots per VM | No hard limit |
+| Backup schedules per VM | Multiple — run Daily and Weekly together |
+| Backup retention range | 1 - 365 days per schedule |
+| Free backup retention | 3 most recent per VM, rolling |
+| Hostname length | 3 - 63 characters (`A-Z`, `a-z`, `0-9`, `-`) |
+| VM display name | Up to 64 characters |
+| Tag priority | 1 - 9, or none |
+| Group by Tag depth | 2 levels |
+
+## Connection details
+
+| Method | Where it runs | Auto / On demand |
+|---|---|---|
+| Browser SSH terminal | In-app | Auto-selected when public IPv4 + SSH enabled |
+| VNC console | In-app | Auto-selected when SSH unavailable; required for Windows in-app access |
+| Direct SSH | Your machine | On demand |
+| Direct RDP | Your machine | On demand |
+
+## API endpoints
+
+| Operation | Method | Endpoint |
+|---|---|---|
+| [List VMs](/api-reference/endpoint/list-vms) | GET | `/api/v1/vms` |
+| [Create VM](/api-reference/endpoint/create-vm) | POST | `/api/v1/vms` |
+| [Get VM](/api-reference/endpoint/get-vm) | GET | `/api/v1/vms/{id}` |
+| [Delete VM](/api-reference/endpoint/delete-vm) | DELETE | `/api/v1/vms/{id}` |
+| [Bulk delete VMs](/api-reference/endpoint/bulk-delete-vms) | POST | `/api/v1/vms/bulk-delete` |
+| [Start VM](/api-reference/endpoint/start-vm) | POST | `/api/v1/vms/{id}/start` |
+| [Stop VM](/api-reference/endpoint/stop-vm) | POST | `/api/v1/vms/{id}/stop` |
+| [Reboot VM](/api-reference/endpoint/reboot-vm) | POST | `/api/v1/vms/{id}/reboot` |
+| [Hard reboot VM](/api-reference/endpoint/hard-reboot-vm) | POST | `/api/v1/vms/{id}/hard-reboot` |
+| [Resize VM](/api-reference/endpoint/resize-vm) | POST | `/api/v1/vms/{id}/resize` |
+| [Resize VM disk](/api-reference/endpoint/resize-vm-disk) | POST | `/api/v1/vms/{id}/resize-disk` |
+| [Reset VM password](/api-reference/endpoint/reset-vm-password) | POST | `/api/v1/vms/{id}/reset-password` |
+| [Reinstall VM](/api-reference/endpoint/reinstall-vm) | POST | `/api/v1/vms/{id}/reinstall` |
+| [Factory reset VM](/api-reference/endpoint/factory-reset-vm) | POST | `/api/v1/vms/{id}/factory-reset` |
+| [Rename VM](/api-reference/endpoint/rename-vm) | POST | `/api/v1/vms/{id}/rename` |
+| [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image) | POST | `/api/v1/vms/{id}/save-as-image` |
+| [VM tags](/api-reference/endpoint/add-vm-tag) | POST / PATCH / DELETE | `/api/v1/vms/{id}/tags` |
+| [VM notes](/api-reference/endpoint/get-vm-notes) | GET / PATCH | `/api/v1/vms/{id}/notes` |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Subscription terms, balance, and per-line item rates.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/list-vms">
+    Full VM API.
+  </Card>
+</CardGroup>

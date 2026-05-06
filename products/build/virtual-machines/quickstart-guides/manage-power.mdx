@@ -1,0 +1,97 @@
+---
+title: Manage power
+description: Stop, start, and reboot virtual machines from the dashboard
+---
+
+You can change a VM's power state from three places:
+
+1. **VM detail page** — the top-right **Running** toggle, or the **Power** tab
+2. **Instance list row** — the 3-dot Actions menu
+3. **Bulk selection** — tick checkboxes and use the toolbar to act on many VMs at once
+
+## 1. From the VM detail page
+
+The detail page has two power controls:
+
+- **Running toggle** (top right) — flip it off to power down, on to power up. Quickest path.
+- **Power** tab — full panel with the explanatory copy and a single big **Turn Off VM** / **Turn On VM** button.
+
+<Frame>
+  ![VM detail page on the Power tab, with the Running toggle top right and the Turn Off VM button](/images/products/build/virtual-machines/manage-power-01-power-tab.png)
+</Frame>
+
+The top action bar also has a **Restart** button — a soft reboot (graceful when possible).
+
+## 2. From the row Actions menu
+
+In the **Instances** list, click the **⋮** at the right end of any VM row. The menu includes **Stop**, **Restart**, and the other per-VM actions.
+
+<Frame>
+  ![Instance list with the row Actions menu open showing Stop and Restart options](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+</Frame>
+
+This is the fastest path to stop or restart a single VM without leaving the list.
+
+## 3. Bulk — multiple VMs at once
+
+Tick the checkbox on several rows. A toolbar appears at the top of the list with bulk options:
+
+- **Stop N** — stop every selected VM
+- **Delete Selected** — destroy every selected VM (irreversible)
+- **Clear** — deselect all
+
+<Frame>
+  ![Instance list with two VMs checked and the bulk toolbar showing Stop 2 and Delete Selected](/images/products/build/virtual-machines/manage-power-02-bulk-select.png)
+</Frame>
+
+Use this for batch maintenance — e.g. stopping a whole stack of VMs at the start of a maintenance window.
+
+## How shutdown actually works
+
+Stopping from the control panel triggers a **graceful shutdown first**. If the OS doesn't acknowledge in time, the platform falls back to a **forced shutdown** — which can corrupt open files or in-flight database writes.
+
+For production VMs, prefer issuing the shutdown from inside the VM:
+
+- **Linux:** `sudo poweroff` (or `sudo shutdown -h now`)
+- **Windows:** `Shutdown /s /t 0` from PowerShell, or **Start → Power → Shut down**
+
+Once the OS finishes its clean shutdown, the platform marks the VM `passive`.
+
+## What's preserved while stopped
+
+| Resource | State while `passive` |
+|---|---|
+| Disk contents | Retained |
+| Public IPv4 | Held, not released |
+| CPU, RAM, disk slot | Reserved on the hypervisor |
+| Bandwidth | Unlimited outbound on every plan, regardless of state |
+
+## Billing while stopped
+
+Stopped VMs (`passive`) are **still billed** under their subscription — stopping does not prorate or pause charges. To stop charges, [delete the VM](/products/build/virtual-machines/quickstart-guides/delete-vm); unused subscription days and hours are credited back to your account balance.
+
+## Status reference
+
+| Status | Description | Billable |
+|---|---|---|
+| `active` | Running and accessible | Yes |
+| `passive` | Stopped, resources reserved | Yes |
+| `provisioning` | Being created | Yes |
+| `booting` | Starting up | Yes |
+| `initiating` | Initial setup | Yes |
+| `finalizing` | Shutting down | Yes |
+| `failure` | Failed operation | No |
+| `unknown` | Unhandled state | No |
+
+See [Lifecycle states](/products/build/virtual-machines/concepts/lifecycle-states) for the full transition diagram.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Resize a VM" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
+    Change CPU and RAM (requires stop).
+  </Card>
+  <Card title="Delete a VM" icon="trash" href="/products/build/virtual-machines/quickstart-guides/delete-vm">
+    Permanently remove a VM.
+  </Card>
+</CardGroup>

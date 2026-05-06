@@ -1,0 +1,70 @@
+---
+title: Overview
+description: Virtual Private Cloud networking on Raff — VXLAN-isolated private networks for VMs in the same region
+icon: network-wired
+---
+
+<sub>Updated May 4, 2026</sub>
+
+A **Virtual Private Cloud (VPC)** on Raff is an isolated private network for VMs in the same region. VPCs are **opt-in** — create one when you want two or more VMs to talk to each other privately at near-line-rate without going over the public internet, or to put a fleet behind a single internet gateway. A VM that doesn't join a VPC is still fully usable; it just reaches the internet through its public IP and has no private peer network. Under the hood, every VPC is a **VXLAN segment** with its own 24-bit VNI — that's what makes them isolated, and why two VPCs can use the same CIDR and still never see each other.
+
+<Frame>
+  ![Networking page on the Diagram tab showing eight VPC cards in a row, each as a green dashed box with a VM and a public IP chip. The four tabs across the top are Diagram, VPCs (8), Public IPs (8), and Firewall (1).](/images/products/network/vpc/hero.png)
+</Frame>
+
+The dashboard's **Networking** page opens to this live diagram of every VPC, every VM in one, and every public IP attached to a VM. The four tabs across the top — **Diagram / VPCs / Public IPs / Firewall** — are how you move between the visual map, the flat lists, and the firewall rules. Most network management starts and ends here.
+
+## What you can do
+
+| Task | Where |
+|---|---|
+| See your whole network at once | **Diagram** tab — interactive, click anything for actions |
+| Create a VPC with a custom CIDR | **VPCs** tab → **+ Create** |
+| Reserve a public IPv4 / IPv6 | **Public IPs** tab |
+| Build firewall rules and attach them to VMs | **Firewall** tab — see [Firewall](/products/network/firewall) |
+| Add a VM to a shared VPC | Diagram → VPC `⋮` menu → **Add VM** |
+| Detach a public IP from a VM | Diagram → click the blue IP chip → **Detach from VM** |
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Use the Networking diagram" icon="diagram-project" href="/products/network/vpc/quickstart-guides/use-networking-diagram">
+    Visualize every VPC and IP, manage them inline.
+  </Card>
+  <Card title="Create a VPC" icon="plus" href="/products/network/vpc/quickstart-guides/create-vpc">
+    Pick a CIDR, attach VMs, share privately.
+  </Card>
+  <Card title="Attach a VM" icon="link" href="/products/network/vpc/quickstart-guides/attach-vm">
+    Move a VM into an existing VPC.
+  </Card>
+  <Card title="VXLAN, CIDR, and isolation" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    Why CIDR overlap is allowed and what's reserved.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/network/vpc/quickstart-guides/use-networking-diagram">
+    Diagram, create, attach, list CIDRs, delete.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    VXLAN, CIDR, isolation, MTU.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/network/vpc/details/features-and-limits">
+    Limits, prefix sizes, region scope.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/network/vpc/troubleshooting">
+    Common VPC issues and fixes.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/list-vpcs">
+    VPC endpoints.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

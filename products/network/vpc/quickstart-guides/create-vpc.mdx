@@ -1,0 +1,102 @@
+---
+title: Create a VPC
+description: Open the VPCs tab, click Create VPC, pick a network size (Recommended / Small / Large / Custom), and confirm
+---
+
+A VPC is a private network you can attach multiple VMs to so they can talk to each other directly. Every VM created without a VPC selection gets its own private VPC; you create a **shared VPC** here when you want two or more VMs on the same private subnet.
+
+This page walks the dashboard create flow. The full concept of why CIDRs can overlap, what VXLAN does, and how isolation is enforced is on [VXLAN, CIDR, and isolation](/products/network/vpc/concepts/cidr-and-isolation).
+
+## Before you start
+
+- A Raff account
+- A clear idea of how many VMs this VPC will hold (the size you pick today is fixed — no resize)
+
+## 1. Open the VPCs tab
+
+In the left sidebar, click **Networking** → switch to the **VPCs** tab. The list shows every VPC in your account with its CIDR, IP usage, gateway state, DNS, and attached VM count.
+
+<Frame>
+  ![VPCs tab showing 8 VPCs in a flat list with columns for Name, Network (CIDR + IP usage), Gateway, DNS, and VMs count, and a + Create VPC button](/images/products/network/vpc/vpcs-list.png)
+</Frame>
+
+Click **+ Create VPC** in the top-right. The Create VPC dialog opens.
+
+## 2. Name the VPC
+
+<Frame>
+  ![Create VPC dialog showing a Name input, four Network Size options (Recommended /20, Small /24, Large /16, Custom CIDR), and a live summary at the bottom showing Network 10.0.0.0/20, Gateway 10.0.0.1, IPs 4,093](/images/products/network/vpc/create-vpc-dialog.png)
+</Frame>
+
+Pick a label that's descriptive — `prod-services`, `staging`, `analytics` — so the VPC is easy to spot in the diagram and the list. Names must be unique across your account.
+
+## 3. Pick a network size
+
+Four choices, each pre-fills a CIDR you can keep or override:
+
+| Option | CIDR | Usable IPs | When to use |
+|---|---|---|---|
+| **Recommended** | `10.0.0.0/20` | ~4,093 | **Default** — fits most workloads with room to grow |
+| **Small** | `10.0.0.0/24` | ~253 | Tight scope — bastion + a handful of app VMs |
+| **Large** | `10.0.0.0/16` | ~65,533 | Big fleet, many subnets, future expansion |
+| **Custom CIDR** | You type it | Depends on prefix | Use when the auto-suggested ranges conflict with your on-prem network or you want a specific RFC 1918 block |
+
+The dialog updates the summary line live as you change the choice — **Network**, **Gateway** (always `.1`), and **IPs** (usable count, after subtracting `.0` / `.1` / `.255`).
+
+A few rules the validator enforces if you pick **Custom CIDR**:
+
+- Prefix between **`/16` and `/28`**
+- Must fall inside a private range — `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, or `100.64.0.0/10`
+- Must be **CIDR-aligned** — `192.168.1.50/20` is rejected; the correct form is `192.168.0.0/20`
+
+You **don't** need to avoid CIDRs already used by your other VPCs. Two VPCs in the same account can use the same range — they're isolated by their VXLAN VNI, not by IP. See [VXLAN, CIDR, and isolation](/products/network/vpc/concepts/cidr-and-isolation#why-this-matters-cidr-overlap-is-a-non-issue).
+
+## 4. Click Create VPC
+
+The VPC is created in seconds and appears in the list. The new row shows:
+
+| Column | Value |
+|---|---|
+| **Name** | What you typed, plus the region (`us-east`) underneath |
+| **Network** | The chosen CIDR with `0/<usable> IPs` (no VMs yet) |
+| **Gateway** | `No Gateway` until you enable an internet gateway — see [Manage a VPC](/products/network/vpc/quickstart-guides/manage-vpc#internet-gateway) |
+| **DNS** | `8.8.8.8` (Google Public DNS, default) |
+| **VMs** | `0 VMs` until you attach one |
+
+## 5. Attach VMs
+
+A VPC with zero VMs doesn't do anything yet. Two ways to add members:
+
+- **From the row's `⋮` menu → Add VM** — opens the VM-attach flow scoped to this VPC
+- **From the VPC detail page → VMs tab → + Attach VM** — same flow, different entry point
+- **From the create-VM flow** — when launching a new VM, pick this VPC under the network section
+
+See [Attach a VM](/products/network/vpc/quickstart-guides/attach-vm) for the full flow.
+
+## What you cannot change after creation
+
+| Setting | Mutable? |
+|---|---|
+| **Name** | ✅ Yes — rename anytime via the row menu or the pencil icon on the detail page |
+| **DNS** | ✅ Yes — change via row menu → Edit DNS, or detail page → Update DNS |
+| **CIDR** | ❌ No — fixed at create. To change, create a new VPC and migrate VMs |
+| **Region** | ❌ No — locked to the dashboard's selected region |
+| **VXLAN VNI** | ❌ No — auto-assigned; never visible in the UI |
+
+## Pricing
+
+The VPC itself is **free**. You pay only for VMs and any optional **Firewall Appliance** gateway (a paid OPNsense VM). The default **Platform Router** gateway, the Public IPs you attach to VMs, and any same-region private traffic between VMs in the VPC are all free. See [Features & limits](/products/network/vpc/details/features-and-limits) for the full pricing table.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Detail page tour — internet gateway, port forwarding, DNS.
+  </Card>
+  <Card title="Attach a VM" icon="link" href="/products/network/vpc/quickstart-guides/attach-vm">
+    Add an existing VM to this VPC.
+  </Card>
+  <Card title="Use the Networking diagram" icon="diagram-project" href="/products/network/vpc/quickstart-guides/use-networking-diagram">
+    Visualize and act on the whole network at once.
+  </Card>
+</CardGroup>

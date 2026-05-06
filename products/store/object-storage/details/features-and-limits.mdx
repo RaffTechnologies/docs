@@ -1,0 +1,123 @@
+---
+title: Features & limits
+description: Object Storage features, S3 endpoint, pricing tiers, storage class, and platform limits
+---
+
+## Features
+
+### Storage class
+- **Single class today: NVMe SSD** — every bucket is backed by NVMe SSDs, tuned for high-performance access (low latency, high IOPS, parallel reads/writes)
+- **HDD class coming** — a cost-effective tier for cold or archival workloads is on the roadmap; pricing and SDK semantics will land here when it ships
+
+### S3 compatibility
+- **Endpoint:** `https://<bucket-name>.s3.raffusercloud.com` (virtual-hosted style)
+- **Signature version:** AWS SigV4
+- **SDK support:** any AWS S3 SDK — boto3 (Python), AWS SDK for Go / Java / JavaScript / .NET, the `aws-cli`, and tools like `mc` / `rclone` / `s3cmd` / Cyberduck
+- See [S3 compatibility](/products/store/object-storage/concepts/s3-compatibility) for the full feature matrix
+
+### Bucket and object operations
+- Bucket CRUD, list, ACL (private / public-read)
+- Object PUT / GET / DELETE / HEAD
+- Multipart upload (automatic for files ≥ 10 MB via dashboard)
+- Presigned URLs (SigV4)
+- CORS configuration
+- Custom metadata on objects
+
+### Encryption
+- **Encryption at rest** — enabled by default at the platform level
+
+### Bandwidth
+- **Free** between Raff VMs / Kubernetes and Object Storage in the same region (private network)
+- **Inbound (uploads)** is free, never metered
+- **Public internet egress** — first **1 TB / month free**, then **\$0.01/GB** (measured by the Ceph RGW usage API and settled month-end)
+
+## Pricing
+
+Object Storage uses the **same dual-mode billing** as VMs and volumes: subscription by default, PAYG on request — both at the same effective per-GB rate.
+
+### Subscription (default)
+
+A starter package covers most workloads:
+
+| Item | Rate |
+|---|---|
+| **First 100 GB** | \$7 / month flat (included in the base subscription) |
+| **Above 100 GB** | \$0.07 / GB / month (pro-rated) |
+
+The first \$7/month covers up to 100 GB across all your buckets in the account. As your usage grows past 100 GB, the additional storage is billed at \$0.07/GB/month, accruing continuously and settled month-end on the 1st against your account balance.
+
+### Pay-as-you-go (enterprise / SMB on request)
+
+PAYG is available for enterprise and SMB customers — contact [support](mailto:support@rafftechnologies.com) to enable.
+
+| Item | Rate |
+|---|---|
+| Per-GB storage | \$0.07 / GB / month |
+| Settlement | Month-end on the 1st against your account balance |
+
+PAYG has **no monthly minimum** — you only pay for what you store, billed at the same per-GB rate as the subscription overage.
+
+### Subscription vs PAYG
+
+| | Subscription | PAYG |
+|---|---|---|
+| Default for new accounts | ✅ | Enable on request |
+| Monthly minimum | \$7 (covers first 100 GB) | None |
+| Rate above 100 GB | \$0.07 / GB / month | \$0.07 / GB / month |
+| Rate at 0 - 100 GB | Included in the \$7 base | \$0.07 / GB / month (no flat package) |
+| When you pay | Up front, monthly | At cycle close, month-end |
+
+If you reliably store 100+ GB, **subscription is cheaper** (the first 100 GB costs \$7 instead of \$7/month at the PAYG per-GB rate, which works out the same — but subscription locks the price). If you store much less than 100 GB on average, **PAYG is cheaper** (you skip the flat \$7).
+
+For the wider money flow (balance, cards, credit-on-delete, billing date rotation), see [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **Multipart upload threshold (dashboard)** | **10 MB** — files at or above this size automatically use multipart upload |
+| **Default multipart part size (dashboard)** | **16 MB** (AWS SDK v3 default) |
+| **Max parts per multipart upload** | **10,000** (Ceph RGW / S3 standard) |
+| **Max object size** | **5 TiB** (Ceph RGW limit) |
+| **Max upload via dashboard** | Up to **5 TiB** in theory — the dashboard auto-scales chunk size as `fileSize / 10000` to stay under the 10,000-part cap; practical browser memory limits will hit before this |
+| **Max single PUT (under the multipart threshold)** | ~10 MB — anything larger is automatically chunked |
+| **Concurrent file uploads (dashboard)** | 3 files at a time |
+| **Concurrent chunks per file (dashboard)** | 10 in parallel |
+| **Buckets per account** | No hard cap published; subject to overall account capacity |
+| **Bucket name length** | **3 - 54 characters** (lowercase letters / digits / `-` / `.`; must start and end with a letter or digit; **globally unique** across all Raff accounts) |
+| **Region scope** | Each bucket lives in one region — **`us-east` is the only region today** |
+| **Access keys** | Two scopes: **Full Access** (every bucket) or **Limited** (specific buckets via auto-generated bucket policy) — see [Generate access keys](/products/store/object-storage/quickstart-guides/generate-access-keys) |
+
+The dashboard upload dialog says "Large files (100 MB+) use multipart upload automatically" — that's a simplification. The actual switch happens at **10 MB**. Anything above that is multipart; anything below is a single signed PUT.
+
+For SDK access (boto3, aws-cli, etc.), the [standard S3 multipart limits](/products/store/object-storage/concepts/s3-compatibility) apply — minimum 5 MiB per part except the last, maximum 5 GiB per part, up to 10,000 parts per upload.
+
+## Bandwidth
+
+| Item | Cost |
+|---|---|
+| **Inbound (uploads)** | **Free** — never metered |
+| **VM ↔ Object Storage** (same region, private) | **Free** |
+| **Kubernetes ↔ Object Storage** (same region, private) | **Free** |
+| **Public internet egress** — first **1 TB / month** | **Free** (included tier) |
+| **Public internet egress** — above 1 TB | **\$0.01 / GB** |
+
+The first **1 TB of public-internet egress per month is included free**. Beyond 1 TB, egress is billed at **\$0.01/GB** and measured by the Ceph RGW usage API. Inbound and same-region private traffic (between Raff VMs / Kubernetes and Object Storage) are always free.
+
+For most workloads — application backups, ML artifacts, internal data lakes — same-region traffic dominates and the public-egress meter never moves. Public-bucket workloads (static sites, CDN origins, asset distribution) consume the 1 TB free tier first, then start paying \$0.01/GB. At Raff's rate, that's a fraction of major-cloud egress charges; budget for it on heavy public traffic.
+
+Egress accrues continuously and settles month-end on the 1st against your account balance, the same way storage does.
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="S3 compatibility" icon="lightbulb" href="/products/store/object-storage/concepts/s3-compatibility">
+    What S3 features are supported and how to point an SDK.
+  </Card>
+  <Card title="Pricing (VM)" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Account balance, cards, credit-on-delete model.
+  </Card>
+  <Card title="Billing model" icon="lightbulb" href="/products/build/virtual-machines/concepts/billing-model">
+    How money moves across VMs, volumes, and Object Storage.
+  </Card>
+</CardGroup>

@@ -1,0 +1,38 @@
+---
+title: OS templates
+description: Operating system images available for new VMs
+---
+
+An **OS template** is a pre-built operating system image you select at VM creation. Templates determine the OS, kernel, and base packages on the VM's disk before any user data is written.
+
+## Stock templates
+
+Raff provides templates for major Linux distributions and Windows Server. The current set is returned by [List Templates](/api-reference/catalog/list-templates):
+
+- Ubuntu (LTS releases)
+- Debian
+- CentOS / Rocky / AlmaLinux
+- Windows Server
+
+Each template has a UUID — the value you pass as `template_id` when creating a VM.
+
+## Custom images
+
+You can save a configured VM's disk as a reusable custom image and create new VMs from it. This is the recommended way to:
+
+- Promote a VM from one region to another
+- Standardize a base configuration across many VMs
+- Roll back to a known-good state via reinstall
+
+See [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create a VM" icon="plus" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
+    Pick a template and launch.
+  </Card>
+  <Card title="Reinstall a VM" icon="arrow-rotate-left" href="/products/build/virtual-machines/quickstart-guides/reinstall">
+    Re-image a VM with a different template.
+  </Card>
+</CardGroup>

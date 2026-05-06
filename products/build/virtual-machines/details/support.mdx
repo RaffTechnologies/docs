@@ -1,0 +1,125 @@
+---
+title: Support
+description: How to reach Raff support, response times, working hours, languages, and what we help with
+---
+
+## How we approach support
+
+Raff has **no support tiers**. Every customer — a single \$4.99/mo VM or hundreds of VMs in production — gets the same channels, the same engineers, and the same response targets. Our goal is to give you the best support you've had from any cloud, and the way we do that is by not gating it.
+
+## Channels
+
+Two technical support channels — both reach the same queue, route to the same engineers, and have the same response targets. Use whichever you prefer.
+
+| Channel | Where | Best for |
+|---|---|---|
+| **Email** | [support@rafftechnologies.com](mailto:support@rafftechnologies.com) | Anything with logs, attachments, or long context |
+| **Live chat widget** | The envelope icon at the bottom-right of the dashboard | Quick questions, real-time troubleshooting |
+
+Phone is **sales support only** — for technical support, use email or chat.
+
+## Working hours and response targets
+
+**Official working hours:** Monday-Friday, **9 AM-6 PM US Eastern Time**.
+
+We try to cover incoming requests outside those hours too, but it's best-effort.
+
+| Window | Typical response time |
+|---|---|
+| Working hours | **~10 minutes** |
+| Outside working hours / weekends | Best-effort, sometimes **1-2 hours** |
+
+If your issue is **urgent** — a production outage, a billing block on launch day, a quota you need lifted before a load test — say so in the subject line. Mark requests like this `URGENT — <one-line summary>` and include your account ID in the body.
+
+## Languages
+
+| Language | Email | Chat | Phone |
+|---|---|---|---|
+| **English** | ✅ | ✅ | ✅ (sales only) |
+| **Spanish** | — | ✅ | — |
+
+Spanish-language support is currently chat-only. Voice and email default to English.
+
+## What we help with
+
+The core: anything that gets in the way of running your workload on Raff.
+
+| Topic | Coverage |
+|---|---|
+| Account, login, billing, balance, invoices | Yes |
+| Quota and limit increases | Yes — see [Account limits](/products/build/virtual-machines/concepts/account-limits#request-a-limit-increase) |
+| VM creation / configuration / networking issues | Yes |
+| Backup-based VM recovery (rebuild a VM from a retained backup) | Yes |
+| Image and snapshot questions | Yes |
+| API and CLI integration questions | Yes |
+| SLA credit claims | Yes — within 30 days of the incident |
+| Abuse and security reports | Use [abuse@rafftechnologies.com](mailto:abuse@rafftechnologies.com) |
+
+### Migration assistance
+
+If you're moving to Raff from another provider (DigitalOcean, Vultr, Hetzner, AWS, etc.) and want help, we'll do as much of the work as you want us to do — up to and including running the full migration on our side and handing you a working VM on Raff with your data and config in place.
+
+To start a migration:
+
+1. Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with subject line `Migration request — <source provider>`.
+2. Include the source platform, the size and shape of what you're moving (VMs, volumes, databases), and any constraints on cutover timing.
+3. We'll respond with a plan and the questions we need answered to do the work.
+
+There's no charge for migration help.
+
+## What to include in a support request
+
+For the fastest response, send these in your first message:
+
+- **Account ID** — find it in the dashboard URL or **Settings**
+- **Resource ID** — the VM, volume, snapshot, or backup ID, if the issue is resource-specific
+- **Region** (e.g. `us-east`)
+- **What you tried and what happened** — the exact error message, timestamp, and any logs
+- **What you expect to happen** — so we don't have to guess
+- **Urgency** — flag in the subject if production is affected
+
+Screenshots help; raw log output helps more.
+
+## All email channels
+
+Different mailboxes for different topics. They route to specialized teams; using the right one speeds up your reply.
+
+| Address | For |
+|---|---|
+| [support@rafftechnologies.com](mailto:support@rafftechnologies.com) | All technical support — same queue as the chat widget |
+| [abuse@rafftechnologies.com](mailto:abuse@rafftechnologies.com) | Abuse reports, DMCA-style takedowns, security incident reports about Raff customers |
+| [privacy@rafftechnologies.com](mailto:privacy@rafftechnologies.com) | GDPR, DPA, data subject requests, legal/privacy questions |
+| [info@rafftechnologies.com](mailto:info@rafftechnologies.com) | General inquiries, partnerships, press |
+
+Reach the team on the web at [rafftechnologies.com](https://rafftechnologies.com); platform status is at [status.rafftechnologies.com](https://status.rafftechnologies.com).
+
+## Self-serve resources first
+
+Many issues resolve faster from the docs than from a ticket. Check these first:
+
+| Symptom | Doc |
+|---|---|
+| Can't connect (SSH refused, RDP timeout, locked out) | [Recover a locked-out VM](/products/build/virtual-machines/quickstart-guides/recover-locked-vm) and [Troubleshooting](/products/build/virtual-machines/troubleshooting) |
+| Need to grow a disk, resize, or fix mount issues | [Resize a VM](/products/build/virtual-machines/quickstart-guides/resize), [Volumes → Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) |
+| Lost a password | [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) |
+| Need to recover deleted data | [Enable backups](/products/build/virtual-machines/quickstart-guides/enable-backups) — and contact support to restore from a retained backup |
+| Question about charges or credits | [Billing model](/products/build/virtual-machines/concepts/billing-model) and [Pricing](/products/build/virtual-machines/details/pricing) |
+
+If those don't fit, we're a message away.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="SLA" icon="circle-info" href="/products/build/virtual-machines/details/sla">
+    Uptime commitment and service credits.
+  </Card>
+  <Card title="Acceptable use" icon="file-contract" href="/products/build/virtual-machines/details/acceptable-use">
+    What can suspend an account.
+  </Card>
+  <Card title="Status" icon="signal-bars" href="https://rafftechnologies.com/status">
+    Live platform availability.
+  </Card>
+  <Card title="Account limits" icon="lightbulb" href="/products/build/virtual-machines/concepts/account-limits">
+    How to request a limit increase, including urgent.
+  </Card>
+</CardGroup>

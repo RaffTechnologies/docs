@@ -1,0 +1,85 @@
+---
+title: SLA
+description: Uptime commitment, service credit schedule, and how to claim for Virtual Machines on the Raff Platform
+---
+
+This page summarizes the Raff Service Level Agreement as it applies to Virtual Machines. The full, legally binding SLA is published at:
+
+<Card title="Service Level Agreement (legal)" icon="file-contract" href="https://app.rafftechnologies.com/legal#service-level-agreement">
+  app.rafftechnologies.com/legal#service-level-agreement
+</Card>
+
+Live availability for every covered service is recorded automatically at:
+
+<Card title="Status page" icon="signal-bars" href="https://rafftechnologies.com/status">
+  rafftechnologies.com/status
+</Card>
+
+## Uptime commitment
+
+Raff Technologies guarantees **99.90% monthly uptime** for Virtual Machines.
+
+The same 99.90% commitment applies to:
+
+| Service | Monthly uptime |
+|---|---|
+| Virtual Machines | 99.90% |
+| Block Storage (Volumes) | 99.90% |
+| Snapshots | 99.90% |
+| Backups | 99.90% |
+
+Uptime is calculated as `(total minutes in the month - unavailable minutes) / total minutes × 100%`.
+
+**Unavailability** means the service is completely inaccessible — returns errors or doesn't respond to API or console requests — for **more than 5 consecutive minutes**. The status page is the authoritative source for measurement.
+
+## Service credit schedule
+
+If monthly uptime falls below 99.90%, you become eligible for a service credit on the affected service:
+
+| Monthly uptime | Service credit |
+|---|---|
+| 99.90% — 99.0% | **10%** of that service's monthly charges |
+| 99.0% — 95.0% | **25%** of that service's monthly charges |
+| Below 95.0% | **100%** of that service's monthly charges |
+
+Notes on credits:
+
+- Capped at 100% of the affected service's monthly charges for the billing cycle.
+- **Not refundable to your card** — credits apply against future charges only.
+- **Expire after 12 months** from issuance, or on account termination, whichever comes first.
+- Service credits are the **sole and exclusive remedy** for any failure to meet the uptime commitment.
+
+## What's excluded
+
+The 99.90% commitment does not apply when unavailability is caused by:
+
+- **Scheduled maintenance** announced at least **24 hours** in advance by email or platform notification
+- **Emergency security patches or critical maintenance** requiring less than 10 minutes of downtime
+- Customer error or misuse of the service
+- Failures in customer-installed software, OS, or configuration
+- **DDoS attacks** against your VM or the platform
+- Force majeure (natural disasters, war, terrorism)
+- Internet outages or third-party service failures beyond Raff's reasonable control
+- Accounts with overdue payments, suspended accounts, or accounts in violation of the Terms of Service
+
+## How to claim a credit
+
+1. **Within 30 days** of the incident, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+2. Include:
+   - Date, time, and duration of the unavailability
+   - The specific service(s) affected (e.g. Virtual Machines)
+   - Your account ID
+3. After validation, the service credit appears on your account in the next billing cycle.
+
+The status page at [rafftechnologies.com/status](https://rafftechnologies.com/status) records every incident automatically — referencing the relevant entry in your request speeds up validation.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Features & limits" icon="circle-info" href="/products/build/virtual-machines/details/features-and-limits">
+    What's included on every VM.
+  </Card>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Monthly charges that drive the credit calculation.
+  </Card>
+</CardGroup>

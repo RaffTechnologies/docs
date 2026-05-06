@@ -1,0 +1,97 @@
+---
+title: Create a snapshot
+description: Capture a point-in-time copy of a VM's OS disk or a volume's contents
+---
+
+A snapshot is a point-in-time copy of a VM's OS disk or a volume's contents. Use snapshots as restore points before risky changes — kernel upgrades, OS package changes, schema migrations — or as the starting point for a clone.
+
+For automated, scheduled protection use [backups](/products/build/virtual-machines/quickstart-guides/enable-backups). See [Snapshots vs Backups](/products/build/virtual-machines/concepts/snapshots-vs-backups) for when to pick which.
+
+## Before you start
+
+<Note>
+  **VM snapshots require the VM to be `active` (running).** A stopped VM (`passive`) cannot be snapshotted. Volume snapshots work regardless of VM state.
+</Note>
+
+Snapshots taken while the VM is running are **crash-consistent**, not application-consistent — quiesce databases or freeze writes first if you need a clean capture (e.g. `mysql FLUSH TABLES WITH READ LOCK`, `pg_start_backup()`).
+
+## Three ways to start
+
+### a. Top-level Snapshots tab — pick any resource
+
+From the **Compute Resources** page, switch to the **Snapshots** tab and click **+ Create Snapshot**.
+
+<Frame>
+  ![Compute Resources Snapshots tab showing the empty state and Create Snapshot button](/images/products/build/virtual-machines/create-snapshot-01-snapshots-tab.png)
+</Frame>
+
+The dialog asks you to pick what kind and which resource:
+
+<Frame>
+  ![General Create Snapshot dialog with Type, Resource, and Name fields](/images/products/build/virtual-machines/create-snapshot-02-dialog-general.png)
+</Frame>
+
+| Field | What to set |
+|---|---|
+| **Type** | Virtual Machine or Volume |
+| **Resource** | The specific VM or volume (only `active` VMs are listed) |
+| **Name** | Optional — a default is generated from the resource if you leave it blank |
+
+### b. VM detail page → Snapshot quick button
+
+The top action bar of every VM detail page has a **Snapshot** button — the fastest path when you're already on the VM.
+
+### c. VM detail page → Snapshots tab
+
+Same VM detail page, the **Snapshots** tab lists every snapshot of this VM and has its own **+ Create Snapshot** button.
+
+<Frame>
+  ![VM detail page Snapshots tab with the Create Snapshot button on the right](/images/products/build/virtual-machines/create-snapshot-03-vm-detail-snapshots-tab.png)
+</Frame>
+
+Paths **b.** and **c.** open a **VM-scoped** dialog that's already pre-filled with the current VM and a generated name like `vm-<name>-MM-DD-YY`:
+
+<Frame>
+  ![VM-scoped Create Snapshot dialog pre-filled with the current VM and auto-generated name](/images/products/build/virtual-machines/create-snapshot-04-dialog-vm-scoped.png)
+</Frame>
+
+Tweak the name if you want, then click **Create Snapshot**.
+
+## What happens after you confirm
+
+| Status | Meaning |
+|---|---|
+| `creating` | Capture in progress (typically 1-5 minutes, depends on disk size) |
+| `ready` | Stored and restorable |
+| `failed` | Capture didn't complete; safe to delete |
+
+From the Snapshots list (top-level tab) or the VM's Snapshots tab, each snapshot row has actions for **Restore**, **Save as Image**, and **Delete**.
+
+## Pricing
+
+Snapshots are billed by **GB-hour** — the size of the snapshot in GB times the hours it's stored.
+
+- The meter starts the moment a snapshot reaches `ready` and runs continuously until you delete it.
+- The billing cycle closes at the **end of each calendar month**.
+- The previous month's snapshot bill is settled on the **1st of the next month**: it's deducted from your account balance, and any remainder is charged to your saved card.
+- A 50 GB snapshot kept all month costs the same as a 100 GB snapshot kept for half a month — same total GB-hours.
+
+Idle snapshots are the most common source of surprise charges. Delete the ones you no longer need, or **Save as Image** if you want a permanent template (images are billed differently).
+
+## Naming convention
+
+The auto-generated name pattern is `vm-<vm-name>-MM-DD-YY` (e.g. `vm-finance-05-03-26`). Replace it when you want context — e.g. `finance-pre-kernel-upgrade` or `finance-prod-2026-q2`. Names don't need to be unique across your account.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Snapshots vs Backups" icon="lightbulb" href="/products/build/virtual-machines/concepts/snapshots-vs-backups">
+    When to use which.
+  </Card>
+  <Card title="Enable backups" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    Schedule recurring captures instead.
+  </Card>
+  <Card title="Storage model" icon="layer-group" href="/products/build/virtual-machines/concepts/storage-model">
+    How snapshots fit into the wider storage stack.
+  </Card>
+</CardGroup>

@@ -1,0 +1,149 @@
+---
+title: Authentication & access
+description: How credentials and transports combine to let you reach a VM, and what to use when
+---
+
+Every way of getting into a Raff VM combines two layers:
+
+| Layer | What it does | Examples |
+|---|---|---|
+| **Credentials** | Prove who you are to the OS | SSH key, root/Administrator password |
+| **Transport** | Carry the session from your machine to the VM | Browser terminal, VNC console, direct SSH, direct RDP |
+
+Pick the credential at create-time; pick the transport whenever you connect. They're independent — you can switch transport without changing credentials and vice versa.
+
+## Credentials
+
+The two credential types Raff supports.
+
+### SSH keys (recommended for Linux)
+
+Public-key authentication. You upload the **public** key once at the account level — the dashboard's **SSH Keys** section in the left nav — and reference it whenever you create or reinstall a VM.
+
+- The private key never leaves your machine.
+- Multiple keys per account (one per laptop, per CI runner, per teammate).
+- Adding a key after VM creation: log in via VNC and append to `~/.ssh/authorized_keys`.
+- Keys are unaffected by [reset password](/products/build/virtual-machines/quickstart-guides/reset-password) — they keep working even after a password rotation.
+
+### Password (root / Administrator)
+
+Generated at create-time (or you set your own). The platform never displays the password in the dashboard — it's always emailed to your account address.
+
+- **Linux** — `root` user.
+- **Windows** — `Administrator`. Required for RDP; SSH key isn't an option for the in-built remote-desktop flow.
+- Recovery: **Send to Email** (sends the current password) or [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) (generates a new one).
+- Reset on a running VM triggers a hard reboot to apply; on a stopped VM it lands on next start.
+
+### When to use which
+
+| Scenario | Credential |
+|---|---|
+| Linux, daily work, multi-user | SSH keys (preferred) |
+| Linux, you locked yourself out | Password (recover via email) |
+| Windows, anything | Password (Administrator) |
+| Automated provisioning (Terraform, scripts) | SSH keys |
+
+You can have both on the same VM — keys for routine access, password as the recovery fallback. This is the recommended posture for production Linux VMs.
+
+## Transports
+
+Five ways to actually reach the VM.
+
+### 1. Browser SSH terminal — in-app
+
+Click **Console** on the VM detail page. Opens a web terminal that's already authenticated as `root`. No client install. Best for quick checks.
+
+Auto-selected by the dashboard when:
+- VM has a public IPv4 **and** SSH is enabled inside the OS.
+
+### 2. VNC console — in-app, graphical
+
+Same **Console** button, different rendering — the dashboard auto-switches to VNC when the SSH terminal can't work, OR when the VM is Windows. VNC connects through the **hypervisor**, not the network, so it works even if SSH is broken or the VM has no public IP.
+
+Auto-selected when:
+- The VM has no public IPv4 (private-only VPC), **or**
+- SSH is disabled or its daemon isn't running, **or**
+- The VM is Windows (in-app RDP isn't offered; VNC is the in-app option).
+
+VNC sessions have a visible **Expires** timer — re-open the console when it counts down to extend.
+
+### 3. Direct SSH — your terminal
+
+Run `ssh root@<public-ipv4>` (or `ssh -i <key> ...`) from your local terminal. Best for daily Linux use, scripts, file transfer (`scp` / `rsync`), port forwarding.
+
+- Requires public IPv4 + SSH enabled.
+- Tightly tied to the security group — port 22 must be allowed from your IP.
+- Use any SSH client: macOS/Linux native `ssh`, Windows OpenSSH (Win10+), PuTTY.
+
+See [Connect via SSH](/products/build/virtual-machines/quickstart-guides/connect-via-ssh).
+
+### 4. Direct RDP — your client
+
+For Windows VMs. Connect with `mstsc` (Windows), the **Windows App** (macOS / iOS / web), Royal TS / Royal TSX, Jump Desktop, FreeRDP (`xfreerdp`), or Remmina.
+
+- Requires public IPv4 + TCP/3389 allowed in the security group.
+- Username `Administrator`, password from the **Credentials** card.
+
+See [Connect via RDP](/products/build/virtual-machines/quickstart-guides/connect-via-rdp).
+
+### 5. Direct VNC — *not exposed*
+
+VNC is only available through the in-app console (transport #2). Raff doesn't expose VNC over the public network; there's no port to point a desktop VNC client at.
+
+## How the Console button decides
+
+When you click **Console** on the VM detail page:
+
+```
+┌─ VM is Linux?
+│   ├─ Public IPv4 + SSH enabled? ──→ Browser SSH terminal
+│   └─ Otherwise                  ──→ VNC console
+└─ VM is Windows?                 ──→ VNC console (always)
+```
+
+You don't pick — the dashboard chooses based on what's actually reachable. This makes the **Console** button safe as your "I just need to get in" path: it always works as long as the VM is up.
+
+## Credentials × transports — quick table
+
+| Credential ↓ / Transport → | Browser SSH | VNC | Direct SSH | Direct RDP |
+|---|---|---|---|---|
+| SSH key | ✅ (auto-login) | ❌ (VNC needs password) | ✅ | n/a |
+| Password (Linux) | ✅ (auto-login) | ✅ | ✅ | n/a |
+| Password (Windows) | n/a | ✅ | n/a | ✅ |
+
+A few non-obvious points:
+
+- **Browser SSH auto-logs in** as root using the VM's stored credentials, even if password auth is disabled at the SSH daemon level — it goes through a privileged path.
+- **VNC always requires the password**, even with SSH keys configured. For Linux, this means you should keep a password set as a recovery option, not just keys.
+- **Windows in-app access is VNC only** — direct RDP is the production-quality path; VNC is for recovery.
+
+## Recovery scenarios
+
+Walk through which combination to use when things go wrong.
+
+| Situation | First try | If that fails |
+|---|---|---|
+| Forgot SSH key, password works | Direct SSH with password (if enabled) | VNC + password |
+| Forgot password, key works | Direct SSH with key | VNC after **Reset password** |
+| Lost both | [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password), then VNC | [Factory reset](/products/build/virtual-machines/quickstart-guides/factory-reset) (preserves volumes/backups) |
+| SSH config locked you out | VNC, fix `sshd_config` | [Recover a locked-out VM](/products/build/virtual-machines/quickstart-guides/recover-locked-vm) |
+| Firewall rule locked you out | VNC, fix UFW/firewalld | (same) |
+| No public IPv4 | VNC | (only option) |
+| OS won't even boot | VNC + GRUB single-user | Factory reset |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    All three Linux transports in detail.
+  </Card>
+  <Card title="Connect via RDP" icon="desktop" href="/products/build/virtual-machines/quickstart-guides/connect-via-rdp">
+    Windows VNC + direct RDP clients.
+  </Card>
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Recover a lost root / Administrator password.
+  </Card>
+  <Card title="Recover a locked-out VM" icon="life-ring" href="/products/build/virtual-machines/quickstart-guides/recover-locked-vm">
+    Five-tier recovery ladder.
+  </Card>
+</CardGroup>

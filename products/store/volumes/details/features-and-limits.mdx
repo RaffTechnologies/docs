@@ -1,0 +1,128 @@
+---
+title: Features & limits
+description: Full feature list for Raff volumes plus capacity, attach, and lifecycle limits
+---
+
+## Features
+
+### Capacity and resize
+- **Single performance class** — every volume is **NVMe SSD**; no tiers to choose from today
+- **10 - 1000 GiB** size range at create time
+- **Online resize (grow)** — increase capacity any time while attached; OS-side filesystem extension required to see the new space
+- **One-way only** — volumes can grow but not shrink
+
+### Driver and device naming
+- **virtio-blk** block driver inside every guest
+- Device paths: `/dev/vda` (OS disk), `/dev/vdb`, `/dev/vdc`, … (attached volumes in attach order)
+- No `/dev/sd*` or `/dev/nvme*` paths — those don't exist on Raff
+
+### Filesystems
+- **Auto-format at create time (Linux only)** — pick **ext4** (default) or **xfs**
+- **Manual format** — supported on both Linux and Windows; you run `mkfs` (Linux) or initialize via Disk Management (Windows)
+- **Windows** — auto-format is not supported; format and mount via Disk Management as **NTFS**
+
+### Attach model
+- **Single-attach** — one VM at a time
+- **Region-locked** — volumes only attach to VMs in the same region they were created in
+- **Project-scoped** — volume inherits the project of the attached VM
+- **Active or passive VM required** — attach and detach work in either state; not while the VM is `provisioning`
+- **No live multi-attach** — for shared access, use [Object Storage](/products/store/object-storage)
+
+### Lifecycle independence
+- **Survives VM stop / start / reboot / resize** — always
+- **Survives VM reinstall and factory reset** — attached, contents intact
+- **Survives VM destroy** — automatically detached but **not** deleted; keeps billing until you delete it
+- **Volume snapshots survive volume delete** — see [Storage model](/products/build/virtual-machines/concepts/storage-model)
+
+### Encryption
+- **Encryption at rest** — enabled by default at the platform level; not configurable per volume
+
+### Bandwidth
+- **VM ↔ volume traffic is free and unmetered** — included regardless of plan
+
+## Capacity limits
+
+| Limit | Value |
+|---|---|
+| Minimum volume size | **10 GiB** |
+| Maximum volume size at create | **1000 GiB** |
+| Maximum after grow | **1000 GiB** (same cap; growable up to it) |
+| Volumes per VM | No hard limit — practical limit is `vd*` device naming (`vdb` to `vdz` per Linux) |
+| Volumes per account | No hard cap — billed by storage; subject to overall account capacity policies |
+
+For volumes near the upper end, **xfs** scales better than ext4 on parallel-I/O workloads — see [Volume types](/products/store/volumes/concepts/volume-types).
+
+## Filesystem support
+
+| OS | Supported filesystems | Auto-format on create | Mount tool |
+|---|---|---|---|
+| Linux | ext4 (default), xfs | ✅ | `mount` + `/etc/fstab` |
+| Windows | NTFS | ❌ | Disk Management (manual) |
+| Other (BSD, etc.) | Bring your own (`mkfs`-equivalent) | ❌ | Manual |
+
+## Pricing
+
+Same dual-mode model as VMs: **subscription** by default, **PAYG** available on request.
+
+### Subscription (default)
+
+| Term | Rate |
+|---|---|
+| Monthly | \$0.05 / GiB / month |
+| Yearly | \$0.60 / GiB / year |
+| 2 Years | \$1.20 / GiB / 2 years |
+
+The per-GiB rate is the same on every term — there's no term discount on volumes today (unlike VM plans, which have term discounts). Charges accrue continuously and settle month-end on the 1st against your account balance, with any remainder charged to your saved card. Resize-up adds prorated cost; delete or downsize credits unused time back to your balance.
+
+### Pay-as-you-go (enterprise / SMB on request)
+
+PAYG is available for enterprise and SMB customers — contact [support](mailto:support@rafftechnologies.com) to enable it on your account. The default for new accounts is subscription.
+
+| Mode | Rate | When you pay |
+|---|---|---|
+| Subscription | \$0.05 / GiB / month | Up front, full term |
+| PAYG | \$0.05 / GiB / month (accrued hourly) | At cycle close — settled month-end on the 1st |
+
+Both modes hit the **same \$0.05/GiB/month** effective rate. The only practical difference is *when* the money leaves your balance — same trade-off as VM subscription vs PAYG.
+
+See [Billing model](/products/build/virtual-machines/concepts/billing-model) for the wider money flow including the rotation rule.
+
+## Region and project binding
+
+| Property | Inherited from |
+|---|---|
+| Region | The VM the volume is attached to (or the dashboard region if standalone) |
+| Project | The VM the volume is attached to (or the active project if standalone) |
+| Cross-region attach | Not supported — same-region only |
+| Cross-project attach | Move the VM's project first, or detach and reattach |
+
+To "move" data across regions: take a snapshot in the source region, restore in the destination region, then delete the original.
+
+## Resize behaviour
+
+| Action | While attached | While detached |
+|---|---|---|
+| Increase size in dashboard | ✅ Supported | ❌ Not supported (the action is only enabled while attached) |
+| Decrease size | ❌ Not supported in any state | ❌ Not supported in any state |
+| In-guest grow (`growpart` + `resize2fs` / `xfs_growfs` / Windows Disk Management) | Required to actually use the new space | n/a — must be attached first |
+
+## API endpoints
+
+| Operation | Method | Endpoint |
+|---|---|---|
+| [Resize volume](/api-reference/volumes/resize-volume) | POST | `/api/v1/volumes/{id}/resize` |
+| (Other volume endpoints to follow as the public API expands) | | |
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Volume types" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    Persistence, attach, and binding model.
+  </Card>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Where volumes fit in the wider billing picture.
+  </Card>
+  <Card title="Storage model" icon="layer-group" href="/products/build/virtual-machines/concepts/storage-model">
+    Volumes vs base disk vs snapshots vs backups vs images.
+  </Card>
+</CardGroup>

@@ -1,0 +1,78 @@
+---
+title: Overview
+description: S3-compatible object storage on the Raff Platform — already running production workloads inside Raff itself
+icon: bucket
+---
+
+<sub>Updated May 4, 2026</sub>
+
+Object Storage is **S3-compatible** storage for unstructured data — media files, application backups, logs, static assets, machine-learning artifacts, anything you'd normally throw at an S3 bucket. Use any S3 SDK or tool against the Raff endpoint, organize objects into buckets, and serve them publicly or privately.
+
+Today there is **one storage class — NVMe SSD** — tuned for high-performance access. A cost-effective HDD class is **coming**.
+
+<Frame>
+  ![Buckets list in the Raff dashboard showing several real Raff buckets: marketplace-images, raff-images, raff-invoices, raff-image-builder, raff-security-logs](/images/products/store/object-storage/buckets-list.png)
+</Frame>
+
+## Battle-tested — Raff runs on its own Object Storage
+
+Object Storage isn't a new product we're selling and hoping holds up. It's the **same storage layer Raff itself runs on** in production. Every Raff service you interact with — the dashboard, the marketplace, image builds, audit logs, billing invoices — uses these buckets. The screenshot above shows real production buckets serving real Raff workloads.
+
+That's the whole platform philosophy: **Raff runs on Raff**. Kubernetes, Virtual Machines, and Object Storage power the dashboard you're reading docs about right now. We validate every feature against our own load before exposing it to customers.
+
+## S3 endpoint
+
+Every bucket is reachable via the Raff S3-compatible endpoint:
+
+```
+https://<bucket-name>.s3.raffusercloud.com
+```
+
+Point any AWS-S3 SDK at that endpoint with your access keys and you're connected — no Raff-specific client library needed.
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Create a bucket" icon="plus" href="/products/store/object-storage/quickstart-guides/create-bucket">
+    Create your first bucket from the dashboard.
+  </Card>
+  <Card title="Upload files" icon="cloud-arrow-up" href="/products/store/object-storage/quickstart-guides/upload-files">
+    Drag-and-drop upload via the dashboard.
+  </Card>
+  <Card title="Generate access keys" icon="key" href="/products/store/object-storage/quickstart-guides/generate-access-keys">
+    Get S3 credentials for SDK access.
+  </Card>
+  <Card title="Use the S3 SDK" icon="code" href="/products/store/object-storage/quickstart-guides/s3-sdk-access">
+    Connect from your application.
+  </Card>
+  <Card title="Monitor bucket usage" icon="chart-line" href="/products/store/object-storage/quickstart-guides/monitor-usage">
+    Storage, requests, and egress per bucket.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/store/object-storage/quickstart-guides/create-bucket">
+    Buckets, uploads, access keys, SDK use.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/store/object-storage/concepts/s3-compatibility">
+    What S3-compatibility means in practice.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/store/object-storage/details/features-and-limits">
+    Endpoint, limits, regions, pricing.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/object-storage/troubleshooting">
+    Common Object Storage issues.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Object Storage endpoints.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

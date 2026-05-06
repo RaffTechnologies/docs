@@ -1,0 +1,92 @@
+---
+title: Create a bucket
+description: Create an S3-compatible Object Storage bucket and get its endpoint URL
+---
+
+A **bucket** is the top-level container for objects in S3. Every Raff bucket is reachable at `https://<bucket-name>.s3.raffusercloud.com` and counts toward your account's stored-storage total. This page walks the dashboard create flow.
+
+## Before you start
+
+- A Raff Platform account
+- A bucket name that fits the [naming rules](#bucket-naming-rules) below — globally unique across all Raff accounts, since the name becomes part of a public DNS hostname
+
+<Note>
+  **Your first bucket triggers checkout.** When you create your first Object Storage bucket on the account, the dashboard takes you through the standard checkout flow to start the **\$7/month subscription** (covers the first 100 GB across all your buckets). After that's set up, every subsequent bucket on the same account is **created directly with no checkout step** — you're already subscribed.
+</Note>
+
+## 1. Open the Create Bucket page
+
+From **Object Storage → Buckets**, click **+ Create Bucket** at the top right. You land on a dedicated create page (not a modal).
+
+<Frame>
+  ![Create Bucket form with Bucket Name field, Region dropdown, and a Bucket Naming Rules sidebar](/images/products/store/object-storage/create-bucket-01-form.png)
+</Frame>
+
+The page has the form on the left and a **Bucket Naming Rules** card on the right that summarizes the constraints below.
+
+## 2. Pick a bucket name
+
+Type the name. The dashboard checks availability **as you type** and shows immediate feedback.
+
+<Frame>
+  ![Bucket Name field with "testt" entered, a green checkmark, "Name is available" text, and an Endpoint preview showing https://testt.s3.raffusercloud.com](/images/products/store/object-storage/create-bucket-02-name-available.png)
+</Frame>
+
+When the name is available, the dashboard previews the **S3 endpoint URL** the bucket will live at — `https://<your-name>.s3.raffusercloud.com` — so you can confirm before committing.
+
+### Bucket naming rules
+
+| Rule | Detail |
+|---|---|
+| Length | **3 - 54 characters** |
+| Case | Lowercase only |
+| Allowed characters | Letters, numbers, hyphens (`-`), periods (`.`) |
+| First and last character | Must be a letter or number |
+| Uniqueness | **Globally unique across all Raff accounts** — same as AWS S3, because the name is part of a public DNS hostname |
+| Used in | The bucket's S3 endpoint URL |
+
+If the name is taken, the inline check fails and you'll need to pick another. Common patterns: prefix with your company / project (`acme-images`, `acme-prod-logs`).
+
+<Note>
+  Periods (`.`) in the bucket name break the wildcard TLS certificate on the endpoint, since `bucket.with.dots.s3.raffusercloud.com` falls outside `*.s3.raffusercloud.com`. Stick to **letters, numbers, and hyphens** unless you specifically need path-style access.
+</Note>
+
+## 3. Pick a region
+
+| Region | Status |
+|---|---|
+| **US East** | Available (only region today) |
+
+More regions are on the roadmap. Until additional regions launch, the choice is fixed.
+
+## 4. Create
+
+Click **Create Bucket**.
+
+- **First bucket on the account** — the dashboard takes you through checkout to start the Object Storage subscription (or apply your account balance). See [Pricing](/products/build/virtual-machines/details/pricing) for the balance / card model.
+- **Subsequent buckets** — created instantly with no checkout; the new bucket joins your existing subscription, with stored bytes counted toward the same per-account total.
+
+The new bucket appears in the **Buckets** list with `private` ACL by default, 0 objects, and 0 B size.
+
+## After creation
+
+| Action | Where |
+|---|---|
+| Upload your first object | Open the bucket → **Objects** tab → **Upload** — see [Upload files](/products/store/object-storage/quickstart-guides/upload-files) |
+| Generate an access key | **Access Keys** tab → **+ Create Access Key** — see [Generate access keys](/products/store/object-storage/quickstart-guides/generate-access-keys) |
+| Make objects public | Bucket → **Permissions** tab — see [Set public or private](/products/store/object-storage/quickstart-guides/set-public-private) |
+| Connect via SDK | See [Use the S3 SDK](/products/store/object-storage/quickstart-guides/s3-sdk-access) — point the SDK at `https://<bucket>.s3.raffusercloud.com` |
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Upload files" icon="cloud-arrow-up" href="/products/store/object-storage/quickstart-guides/upload-files">
+    Drag-and-drop upload via the dashboard.
+  </Card>
+  <Card title="Generate access keys" icon="key" href="/products/store/object-storage/quickstart-guides/generate-access-keys">
+    Create S3 credentials for programmatic access.
+  </Card>
+  <Card title="Use the S3 SDK" icon="code" href="/products/store/object-storage/quickstart-guides/s3-sdk-access">
+    Connect from boto3 / aws-cli / SDKs.
+  </Card>
+</CardGroup>

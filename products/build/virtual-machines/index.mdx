@@ -1,55 +1,59 @@
 ---
-title: Virtual Machines
-description: Deploy and manage virtual machines on Raff Cloud Platform
+title: Overview
+description: On-demand Linux and Windows server instances on the Raff Platform
 icon: server
 ---
 
-<sub>Updated March 12, 2026</sub>
+<sub>Updated May 3, 2026</sub>
 
-Virtual Machines (VMs) on Raff Cloud provide on-demand compute instances with flexible CPU, RAM, and storage configurations. Deploy VMs in seconds across multiple regions, connect via SSH, and scale resources up or down as needed. All VMs include automatic VPC networking, hourly billing, and optional backup schedules.
+Virtual Machines are isolated Linux and Windows server instances you fully control. Pick CPU, RAM, and base disk from a plan; deploy in under a minute; connect over SSH or RDP with root or Administrator access. Resize, restart, reinstall, or destroy any time — the VM is yours.
+
+Every VM gets a public IPv4 address by default so it can serve internet traffic out of the box. Optionally, join a [VPC](/products/network/vpc) for private VM-to-VM communication, add an IPv6, or [reserve a static public IP](/products/network/public-ips/quickstart-guides/reserve-ip) for an address that survives rebuilds. Attach block volumes for extra storage, capture point-in-time snapshots before risky changes, and turn on scheduled backups for routine protection. Billing is **subscription-based** — paid in advance from your account balance, with unused days and hours credited back to your balance when you delete or downsize. Pay-as-you-go is available for enterprise and SMB customers on request.
+
+<Frame>
+  ![Virtual Machines list in the Raff Platform dashboard](/images/products/build/virtual-machines/raff_compute_dashboard.png)
+</Frame>
 
 ---
 
-## Most Viewed Virtual Machine Articles
+## Most viewed
 
 <CardGroup cols={2}>
-  <Card title="1. Create a Virtual Machine" icon="plus" href="/products/build/virtual-machines/how-to-create">
-    Launch a new VM with your chosen OS template, compute plan, and region.
+  <Card title="Create a VM" icon="plus" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
+    Launch your first VM from the dashboard.
   </Card>
-  <Card title="2. Start, Stop, and Reboot VMs" icon="power-off" href="/products/build/virtual-machines/how-to-manage">
-    Control VM lifecycle with start, stop, and reboot operations.
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    Open an SSH session to a Linux VM.
   </Card>
-  <Card title="3. Resize a Virtual Machine" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/how-to-resize">
-    Scale CPU and RAM resources on an existing VM.
+  <Card title="Resize a VM" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
+    Change CPU and RAM without rebuilding.
   </Card>
-  <Card title="4. VM Quickstart" icon="rocket" href="/products/build/virtual-machines/quickstart">
-    Go from zero to a running VM in 5 minutes.
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Recover access to a locked-out VM.
   </Card>
 </CardGroup>
 
 ---
 
+## Browse
+
 <CardGroup cols={3}>
-  <Card title="Getting Started" icon="flag-checkered" href="/products/build/virtual-machines/quickstart">
-    New to VMs? Start here. Create your first virtual machine and connect via SSH in minutes.
+  <Card title="Quickstart & guides" icon="rocket" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
+    Step-by-step dashboard tasks for VMs.
   </Card>
-  <Card title="How-Tos" icon="book-open">
-    Step-by-step guides for common VM operations:
-    - [Create VMs](/products/build/virtual-machines/how-to-create)
-    - [Manage VMs](/products/build/virtual-machines/how-to-manage)
-    - [Resize VMs](/products/build/virtual-machines/how-to-resize)
-    - [Delete VMs](/products/build/virtual-machines/how-to-delete)
+  <Card title="Concepts" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
+    Plans, regions, OS templates, lifecycle states.
   </Card>
-  <Card title="Reference" icon="code" href="/api-reference/endpoint/list-vms">
-    Complete API reference for VM endpoints — create, list, get, start, stop, reboot, resize, and delete.
+  <Card title="Details" icon="circle-info" href="/products/build/virtual-machines/details/features-and-limits">
+    Features, limits, pricing, SLA.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/virtual-machines/troubleshooting">
+    Common VM issues and recovery.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/list-vms">
+    All VM endpoints — create, list, power, resize, tags, notes, networking.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
   </Card>
 </CardGroup>
-
-<Card title="Details" icon="circle-info" href="/products/build/virtual-machines/details">
-  Learn about VM features, available regions, OS templates, pricing plans, status lifecycle, networking, and platform limits.
-</Card>
-
-
-<Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
-  See all API updates, new endpoints, and changes.
-</Card>

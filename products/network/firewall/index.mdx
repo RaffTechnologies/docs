@@ -1,0 +1,75 @@
+---
+title: Overview
+description: Stateful network firewall on Raff — every public interface gets the system Default Firewall automatically, and you can add your own Firewall Groups with custom inbound and outbound rules
+icon: shield-halved
+---
+
+<sub>Updated May 5, 2026</sub>
+
+Raff's **Firewall** is a stateful, port-based filter that applies to a VM's public network interface. It comes in two layers that always run together:
+
+1. **Raff Default Firewall** — system-managed, attached to every public interface automatically. Blocks five known dangerous ports (Windows file-sharing, MS-RPC, WinRM) and otherwise lets everything else inbound, all outbound. You don't toggle it; it's always on.
+2. **Your Firewall Groups** — custom rule sets you create and attach to specific VMs. Stack on top of the Default to allow or deny exactly the ports and source IPs you need.
+
+Both layers evaluate every packet on a public interface. **Traffic over a VPC's private network is not filtered** — a Firewall Group only affects packets entering or leaving via a public IP.
+
+<Frame>
+  ![Networking page on the Firewall tab showing the Raff Default Firewall card with a System badge applied to all public network interfaces, and Your Firewall Groups section with a Web Server custom group (2 in / 1 out, 14 days ago)](/images/products/network/firewall/firewall-tab.png)
+</Frame>
+
+The dashboard surfaces firewalls in the **Networking → Firewall** tab. Inside each VM's detail page, the **Network** tab shows which Firewall Group (if any) is attached to that VM's public IPs.
+
+## What you can do
+
+| Task | Where |
+|---|---|
+| See which ports the Default blocks | Networking → Firewall → **View Rules** on the Default card |
+| Build a custom rule set | Networking → Firewall → **+ Create Firewall Group** |
+| Start from a known-good template | Create dialog → **Start from template** dropdown |
+| Attach a group to a VM | VM detail → Network tab → IP card → **Attach** *(or)* group row's `⋮` → **Assign to VM** |
+| Edit rules in a live group | Group row's `⋮` → **Edit Rules** (same dialog used for create — no separate view) |
+| Delete a group | Group row's `⋮` → **Delete** (must detach VMs first) |
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Create a Firewall Group" icon="plus" href="/products/network/firewall/quickstart-guides/create-firewall-group">
+    Walk the create dialog with templates and rules.
+  </Card>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model — direction, protocols, port and IP formats.
+  </Card>
+  <Card title="Add rules" icon="list" href="/products/network/firewall/quickstart-guides/add-rules">
+    Port and source-IP formats explained.
+  </Card>
+  <Card title="Attach to a VM" icon="link" href="/products/network/firewall/quickstart-guides/attach-to-vm">
+    Apply a group to one VM's public IP.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/network/firewall/quickstart-guides/create-firewall-group">
+    Create, add rules, attach, update, delete.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    Direction, stateful firewall, layers, templates.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/network/firewall/details/features-and-limits">
+    Limits, blocked ports, rule formats.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/network/firewall/troubleshooting">
+    Common firewall issues.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/list-firewall">
+    Firewall endpoints.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

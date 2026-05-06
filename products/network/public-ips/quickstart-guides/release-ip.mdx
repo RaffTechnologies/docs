@@ -1,0 +1,71 @@
+---
+title: Release a public IP
+description: Stop billing on a reserved IP by releasing it back to the pool — irreversible, the IP becomes available for someone else to auto-assign or reserve
+---
+
+Releasing a reserved IP **stops the billing** and returns the address to the regional pool. After release, the IP is gone from your account; you can't get it back. Someone else may auto-assign or reserve the same address moments later.
+
+This page is for **reserved** IPs only. Auto-assigned IPs are released automatically when you remove them from a VM (or delete the VM) — there's nothing extra to do, and no separate "release" action exists for them.
+
+## Before you release
+
+Three things to confirm before clicking:
+
+1. **The IP is no longer attached to a VM.** Detach it first from the VM detail page or the row menu.
+2. **No DNS records or partner whitelists point at this IP.** Once released, anyone may end up holding this address; if you have a record pointing at it, traffic could land somewhere unexpected.
+3. **You don't expect to need this exact address again.** Release is irreversible. If you only want a brief pause, [detach](/products/network/public-ips/quickstart-guides/move-between-vms#1-detach-from-the-source-vm) and leave it reserved instead — \$3/month is the price of keeping the address yours.
+
+## 1. Open the Public IPs tab
+
+In **Networking → Public IPs**, find the IP. The Assigned To column should show `—` (unassigned) — if it shows a VM name, [detach it first](/products/network/public-ips/quickstart-guides/manage-from-vm#remove-a-public-ip).
+
+## 2. Click Release
+
+On the IP's row, click the `⋮` menu → **Release IP**. A confirmation dialog opens describing what's about to happen — the address goes back to the pool, billing stops, and the change is permanent.
+
+Type the IP address (or click confirm — depending on the dialog version) to proceed.
+
+## 3. Confirm and move on
+
+The release completes in seconds. The IP disappears from your Public IPs list. The **Reserved** stat at the top decrements. The **Available in pool** count increments by one for that region.
+
+Billing for the IP stops at the release timestamp. The unused days of the current month are credited back to your account balance — same prorated-on-delete model as VMs and volumes.
+
+## What if the IP is currently attached?
+
+The Release action is **disabled** while a VM holds the IP. The dashboard shows the row's status as `Active` and the menu's Release item is greyed.
+
+To release an attached IP, you have two paths:
+
+| If you want to | Do this |
+|---|---|
+| Stop billing AND keep the VM running | Detach the IP from the VM (Network tab → Remove Public IP), then Release |
+| Stop billing AND delete the VM | Delete the VM with "release attached IPs" — the VM-delete dialog handles both at once |
+
+For auto-assigned IPs the choice is moot — they release automatically on detach or VM delete with no separate action.
+
+## Difference from "detach"
+
+It's worth re-stating because it confuses every new Raff user:
+
+| Action | What happens |
+|---|---|
+| **Remove Public IP** (auto-assigned) | IP returns to pool. Billing stops (it was free anyway). No way to reclaim |
+| **Remove Public IP** (reserved) | IP detaches from VM, **stays in your account**. Billing continues at \$3/month. Re-attachable |
+| **Release IP** (reserved) | IP returns to pool. **Billing stops.** Cannot reclaim |
+
+If you might need the address again, **detach and keep reserved**. \$3/month is cheap insurance against the IP being grabbed by someone else.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    The reservation that release reverses.
+  </Card>
+  <Card title="Move between VMs" icon="arrow-right-arrow-left" href="/products/network/public-ips/quickstart-guides/move-between-vms">
+    Detach without releasing — keep the IP for later.
+  </Card>
+  <Card title="Auto-assigned vs reserved" icon="lightbulb" href="/products/network/public-ips/concepts/reserved-vs-ephemeral">
+    Why the lifecycles are different.
+  </Card>
+</CardGroup>

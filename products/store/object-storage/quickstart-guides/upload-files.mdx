@@ -1,0 +1,123 @@
+---
+title: Upload files
+description: Drag-and-drop files into a Raff Object Storage bucket via the dashboard, plus what to do with them after
+---
+
+The fastest way to put files into a bucket is the dashboard's drag-and-drop uploader. Files upload in the background — you can navigate around the dashboard while they finish — and large files automatically use multipart upload. For programmatic uploads, see [Use the S3 SDK](/products/store/object-storage/quickstart-guides/s3-sdk-access).
+
+## Before you start
+
+- A bucket — see [Create a bucket](/products/store/object-storage/quickstart-guides/create-bucket).
+- The files you want to upload, on the machine you're browsing the dashboard from.
+
+## 1. Open the bucket
+
+In **Object Storage → Buckets**, click the name of the bucket you want to upload into. The bucket detail page opens on the **Objects** tab by default.
+
+<Frame>
+  ![Bucket detail page on the Objects tab with a search field, Create Folder and Upload buttons, and a row showing a single object with its actions menu open](/images/products/store/object-storage/bucket-objects-actions-menu.png)
+</Frame>
+
+The Objects tab is where you'll spend most of your time:
+
+- Search objects by name
+- **Create Folder** — adds a key prefix (folder-style organization in S3)
+- **Upload** — opens the drag-and-drop dialog
+- Each object row has an **Actions** menu — covered in [Manage objects](#per-object-actions) below
+
+## 2. Click Upload
+
+Click the orange **Upload** button at the top right of the Objects tab. The Upload Files dialog opens.
+
+<Frame>
+  ![Upload Files dialog with a drag-and-drop zone, "Upload files to the root of your bucket", and "Large files (100 MB+) use multipart upload automatically"](/images/products/store/object-storage/upload-files-dialog.png)
+</Frame>
+
+The dialog tells you what's happening:
+
+- Files upload to the **current location** in the bucket (root, or whichever folder you're inside)
+- Uploads run **in the background** — you can navigate away
+- **Files at or above 10 MB use multipart upload automatically** — the dashboard chunks them into 16 MB parts, uploads up to 10 in parallel per file, and assembles on the server. The dialog text rounds this to "100 MB+" for friendliness; the actual threshold is 10 MB
+
+## 3. Drop or browse for files
+
+Two ways to add files to the dialog:
+
+- **Drag and drop** them onto the dashed zone
+- **Click** the zone to open a file picker
+
+You can drop multiple files at once. Each file gets its own progress bar.
+
+## 4. Confirm
+
+Click **Upload N Files**. The dialog stays open until uploads start, then you can close it — uploads continue in the background.
+
+When uploads finish, the new objects appear in the bucket's Objects tab with their size and timestamp.
+
+## Multipart upload, briefly
+
+For any single file **at or above 10 MB**, the dashboard switches to multipart upload automatically. There's nothing for you to configure — but it's worth knowing what it does:
+
+- Splits the file into **16 MB parts** by default
+- For very large files, **scales the chunk size up automatically** to stay under the 10,000-part S3 limit (`max(16 MB, fileSize / 10000)`)
+- Uploads up to **10 parts in parallel** per file; up to **3 files** in parallel from the queue
+- If a part fails, only that part retries (up to 3 times) — not the whole file
+- Assembles parts server-side once they all arrive
+- Theoretically supports files up to **5 TiB**; in practice browser memory caps hit first
+
+The same mechanic is what every S3 SDK uses on multi-MB-plus files; the dashboard just exposes it transparently.
+
+## Per-object actions
+
+Once a file is uploaded, opening the row's **⋮** Actions menu gives you everything you can do with one object:
+
+| Action | What it does |
+|---|---|
+| **Open** | Opens the object in a new browser tab. Works for browser-renderable types (images, PDFs, text); downloads otherwise. Requires the object to be public, or you'll need a presigned URL — see [Set public or private](/products/store/object-storage/quickstart-guides/set-public-private). |
+| **Details** | Goes to the object detail page — full overview with S3 URI, Object URL, ETag, region, key, size, ACL controls. See screenshot in [Set public or private](/products/store/object-storage/quickstart-guides/set-public-private). |
+| **Download** | Pulls the object to your local machine via the dashboard. |
+| **Copy S3 URI** | Copies `s3://<bucket>/<key>` — the canonical SDK reference. Use in code, config, or `aws s3 cp` commands. |
+| **Copy Object URL** | Copies `https://<bucket>.s3.raffusercloud.com/<key>` — the HTTP endpoint. Works from a browser only if the object's ACL is public. |
+| **Share** | Generates a presigned URL — a time-limited HTTPS link anyone can use, even on private objects. |
+| **Rename** | Changes the object's key. Note: in S3, rename is implemented as copy-then-delete, so very large files can take a moment. |
+| **Permissions** | Per-object ACL — make this single object public-read while leaving the bucket private. |
+| **Delete** | Permanently removes the object. No undelete unless versioning is on (see [Bucket Properties → Versioning](#bucket-properties-versioning-encryption-tags)). |
+
+## Folders, briefly
+
+S3 doesn't actually have folders — keys with `/` in them just *look* like a hierarchy in the dashboard. The **Create Folder** button writes a zero-byte placeholder object whose key ends with `/`, which makes the dashboard render the folder. Inside, all objects share that prefix.
+
+You can also create the hierarchy implicitly by uploading a file with a key like `2026/may/report.pdf` — the dashboard shows it inside `2026/may/`.
+
+## Bucket Properties: versioning, encryption, tags
+
+The **Properties** tab on each bucket controls bucket-wide settings:
+
+<Frame>
+  ![Bucket Properties tab showing Bucket Details summary (name, region, ACL, versioning), Versioning section with Disabled badge, Tags Coming Soon, Default Encryption Coming Soon](/images/products/store/object-storage/bucket-properties-tab.png)
+</Frame>
+
+| Setting | Status |
+|---|---|
+| **Bucket Details** | Read-only summary of name, region, ACL, versioning state |
+| **Versioning** | Toggle on/off — when on, every PUT to an existing key keeps the previous version, and Delete becomes a soft-delete (recoverable) |
+| **Tags** | Key-value labels on the bucket itself — **Coming soon** |
+| **Default Encryption** | Auto-encrypt every uploaded object with bucket-managed keys — **Coming soon** (objects are still encrypted at rest at the platform level by default) |
+
+Tags and Default Encryption are visible in the dashboard but disabled — they'll light up when the features ship. Versioning works today.
+
+The bucket also has a **Metrics** tab — live storage size, request counts, and ingress/egress for the current month. See [Monitor bucket usage](/products/store/object-storage/quickstart-guides/monitor-usage).
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Set public or private" icon="globe" href="/products/store/object-storage/quickstart-guides/set-public-private">
+    Bucket-level and object-level ACL.
+  </Card>
+  <Card title="Use the S3 SDK" icon="code" href="/products/store/object-storage/quickstart-guides/s3-sdk-access">
+    Programmatic uploads with multipart, presigned URLs, etc.
+  </Card>
+  <Card title="Generate access keys" icon="key" href="/products/store/object-storage/quickstart-guides/generate-access-keys">
+    Get S3 credentials for the SDK.
+  </Card>
+</CardGroup>

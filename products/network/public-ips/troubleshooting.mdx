@@ -1,0 +1,157 @@
+---
+title: Troubleshooting
+description: Common public-IP problems — auto-assign returning empty, IP not bound to interface, "billing keeps running" surprises, type mismatch, region pool exhausted — and the fix for each
+---
+
+The most-seen issues with Raff public IPs and the fix that resolves each. Most come from one of three categories: **the wrong lifecycle was picked** (reserved when auto-assign would do, or vice versa), **the regional pool is empty**, or **the in-guest network stack hasn't picked up the new IP yet**. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+
+## Auto-assign and reserve
+
+<AccordionGroup>
+  <Accordion title="Auto-assign returns "no IPs available in pool"">
+    **What's happening:** the regional pool's **Available in pool** stat is zero. The auto-assigner can't hand out an address it doesn't have.
+
+    **Fix:**
+    - **Wait** — pool capacity changes as IPs are released by other accounts. Check back in a few hours.
+    - **Reserve** an IP instead — reservations come from a separate allocation flow and aren't blocked by an empty auto-assign pool.
+    - **Try a different region** — if the workload can run elsewhere, switch the dashboard's region selector and try.
+
+    Pool exhaustion is rare and usually temporary. If it persists for more than a day, contact [support](mailto:support@rafftechnologies.com).
+  </Accordion>
+
+  <Accordion title="VM dropdown is empty in the Auto-assign dialog">
+    **What's happening:** the **Select VM** dropdown only lists VMs in the dashboard's selected region that don't already have a public IP of the chosen type.
+
+    **Possible reasons:**
+    1. **Every VM already has a public IP of that type** — if you're trying to auto-assign IPv4, all your VMs already have one. Switch to IPv6, or remove the existing IPv4 first.
+    2. **Wrong region selected** — switch the region in the top bar.
+    3. **VMs are in transient states** (`creating`, `deleting`) — wait, then refresh.
+  </Accordion>
+
+  <Accordion title="Reserved IP — billing keeps running after I detached it">
+    **What's happening:** detach removed the IP from the VM but didn't release it. Reserved IPs survive detach by design.
+
+    **Fix:** if you don't need the IP anymore, [release it](/products/network/public-ips/quickstart-guides/release-ip) from the Public IPs tab. Release stops the billing.
+
+    If you might need it again, **leave it reserved** — \$3/month is the cost of keeping the address yours. Detach and release are different actions for exactly this reason.
+  </Accordion>
+
+  <Accordion title="Released a reserved IP by mistake — how do I get it back?">
+    **What's happening:** release returned the IP to the pool. Once there, it's available to anyone — auto-assigned or reserved.
+
+    **Fix:** unfortunately, **you can't reclaim a specific released IP**. It may already be allocated to another account. Two recovery paths:
+    - **Reserve a new IP** — different address, but the same lifecycle. Update DNS / whitelists if you've published the old one.
+    - **Contact support** — if the IP is somehow still in the pool, support can occasionally re-reserve it for you. Best-effort, not guaranteed.
+
+    Going forward, **detach** instead of **release** when you're not 100% sure you're done with the address.
+  </Accordion>
+</AccordionGroup>
+
+## In-guest issues
+
+<AccordionGroup>
+  <Accordion title="VM not reachable on the new public IP after attach">
+    **What's happening:** the IP is shown as attached on the dashboard, but `ssh user@<ip>` times out from outside.
+
+    **Most likely causes, in order:**
+
+    1. **Cloud-init / DHCP hasn't picked up the new interface yet.** Wait ~30 seconds; if not, force renewal: `dhclient -r && dhclient` (Linux) or `ipconfig /renew` (Windows). For really stuck cases, reboot the VM.
+    2. **Guest firewall blocking the port.** `ufw status` (Ubuntu/Debian) or check Windows Firewall. Add a rule for port 22 (SSH) or 3389 (RDP) from your source IP.
+    3. **Raff Firewall attached and dropping traffic.** Look at the IP card on the VM's Network tab — if `Firewall:` shows a name (not `None`), check that firewall's inbound rules. Add the port you need from your source.
+    4. **VM service not bound on the public interface.** `ss -lnt | grep :22` — confirms the SSH daemon is listening. If it's bound only to `127.0.0.1` or a private IP, fix the service config.
+    5. **You're testing from inside a VPC** — internal traffic to the public IP takes a different path. Test from outside (your laptop, a different cloud).
+  </Accordion>
+
+  <Accordion title="VM has the IP but `ip addr` doesn't show it inside the guest">
+    **What's happening:** dashboard says attached, the OS doesn't see it.
+
+    **Fix:** force interface re-init — Raff hands the IP via DHCP, but if the VM was created with an older cloud-init, it may not pick up dynamic changes:
+    - **Linux** — `dhclient -r && dhclient` for the relevant interface (`eth0` for public). Or `systemctl restart systemd-networkd` / `NetworkManager`.
+    - **Windows** — Disk Management isn't right; use `ipconfig /release && ipconfig /renew`.
+    - **Reboot** — always works as a last resort.
+
+    The MAC address on the dashboard's IP card should match `ip link show` inside the guest. If it doesn't, the IP is bound to a different NIC than you're checking.
+  </Accordion>
+
+  <Accordion title="Outbound traffic from the VM has the wrong source IP">
+    **What's happening:** you have multiple public IPs on the VM (one IPv4 + one IPv6, or multiple IPv4s via support), and outbound packets use the wrong one.
+
+    **Why:** the OS picks an outbound source IP based on routing rules. By default, the VM uses its **Primary** IP (tagged in the dashboard) as the default-route source.
+
+    **Fix:**
+    - **For most workloads** — use the primary IP and don't fight it.
+    - **To use a non-primary IP for specific outbound** — bind the application to it: `curl --interface <ip>`, `--bind` flag in your service config, or `ip route` with `src` directives.
+    - **To swap which IP is primary** — contact support; the primary tag isn't toggleable from the dashboard today.
+  </Accordion>
+</AccordionGroup>
+
+## Move and attach
+
+<AccordionGroup>
+  <Accordion title="Reserved IP can't be attached — "VM already has IPv4"">
+    **What's happening:** the target VM already holds a public IP of the same family. Raff allows only one IPv4 and one IPv6 per VM from the dashboard.
+
+    **Fix:**
+    - **Remove the existing IP first** from the VM detail's Network tab → `Remove Public IP`. Then attach the moved one.
+    - **Auto-assigned existing IP** — removing it returns it to the pool (you can't get it back).
+    - **Reserved existing IP** — removing it leaves it in your account, billing continues. Decide whether to keep both or release one.
+    - **Need both attached?** Contact support — they can attach additional IPs at \$3/month per extra IP.
+  </Accordion>
+
+  <Accordion title="Trying to attach a reserved IP to a VM in another region">
+    **What's happening:** the IP and VM are in different regions; the dropdown / API rejects the attach.
+
+    **Why:** public IPs are region-locked. An IP allocated in `us-east` can only attach to `us-east` VMs.
+
+    **Fix:**
+    - **Move the workload** — recreate the VM in the IP's region (snapshot + restore in target region, when cross-region snapshot is enabled).
+    - **Reserve a new IP in the target region** — different address, but in the right place. Update DNS.
+    - **Release this IP** if you no longer need its specific address — it's gone, but you stop paying.
+  </Accordion>
+</AccordionGroup>
+
+## Pricing surprises
+
+<AccordionGroup>
+  <Accordion title="Bill shows charges for IPs even though all my VMs are deleted">
+    **What's happening:** you have **reserved IPs** that survived the VM deletion. Reserved IPs persist until explicitly released — that's the feature, not a bug.
+
+    **Fix:**
+    - Open **Networking → Public IPs** → look for IPs with `Assigned To: —` (unattached). Each one is \$3/month.
+    - **Release** the ones you don't need — billing stops, address goes back to the pool.
+    - **Keep** the ones you might want for future VMs.
+
+    The "Reserved" stat at the top of the Public IPs tab counts how many you have unattached and billing.
+  </Accordion>
+
+  <Accordion title="Yearly / 24-month lock-in — can I cancel mid-term?">
+    **Yes.** Release the IP at any time from the Public IPs tab. The unused days of the locked period are credited back to your account balance — same prorated-on-delete model as VMs and volumes.
+
+    The lock-in periods don't cost more or less than monthly per month — they exist as a convenience for capacity planning, not as a discount mechanism.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- **The IP address** and whether it's auto-assigned or reserved (check the Type column on the Public IPs tab)
+- **The VM ID** if attached
+- **The exact error message** and the time you saw it
+- **What you tried** from this page
+
+Same-day response in business hours; faster for production-impacting issues.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Auto-assigned vs reserved" icon="lightbulb" href="/products/network/public-ips/concepts/reserved-vs-ephemeral">
+    The model that resolves most "why is this happening" questions.
+  </Card>
+  <Card title="Manage from a VM" icon="server" href="/products/network/public-ips/quickstart-guides/manage-from-vm">
+    Per-VM Network tab walkthrough.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/network/public-ips/details/features-and-limits">
+    Concrete pricing and caps.
+  </Card>
+</CardGroup>

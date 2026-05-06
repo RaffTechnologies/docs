@@ -1,0 +1,99 @@
+---
+title: Overview
+description: NVMe SSD block storage you attach to a VM — survives VM destroy, grows on demand, billed per GiB
+icon: hard-drive
+---
+
+<sub>Updated May 4, 2026</sub>
+
+Volumes are **NVMe SSD** block storage you attach to a Raff VM as additional disk capacity. Use them when a VM needs more storage than its plan includes, or — more importantly — when you want **data to outlive the VM itself**. Volumes survive VM destroy, attach to a different VM, and bill independently.
+
+<Frame>
+  ![Storage Volumes list in the Raff dashboard showing an attached volume "test" mapped to the Finance VM with a Provisioning badge](/images/products/store/volumes/volume-list-attached.png)
+</Frame>
+
+## At a glance
+
+| Property | Value |
+|---|---|
+| **Storage class** | Single tier — **NVMe SSD** (no tiers to choose) |
+| **Size range** | 10 — 1000 GiB at create time |
+| **Resize** | One-way grow — capacity increases only |
+| **Attach** | One VM at a time; reattach to a different VM in the same region |
+| **Survives VM destroy** | Yes — detached, kept in the account, ready to reattach |
+| **Filesystems** | Linux: ext4 / xfs (auto-format option). Windows: NTFS (manual via Disk Management) |
+| **Device naming** | `/dev/vdb`, `/dev/vdc`, … (virtio-blk; never `sd*` or `nvme*`) |
+| **Billing** | Subscription default \$0.05/GiB/month (PAYG on request, same rate) |
+| **Bandwidth between VM and volume** | Free, never metered |
+
+## When to use a volume
+
+| Goal | Use a volume? | Use what instead |
+|---|---|---|
+| Add disk to one VM beyond the plan's base NVMe SSD | **Yes** | — |
+| Keep data when destroying a VM (databases, customer uploads, app state) | **Yes** | — |
+| Move data between VMs serially (detach → attach to another) | **Yes** | — |
+| Two VMs reading the same files at once | No — single-attach | [Object Storage](/products/store/object-storage) |
+| Files served to the public (static assets, downloads) | No | [Object Storage](/products/store/object-storage) |
+| One-off snapshot before risky changes | No (snapshots are a separate object) | [Snapshots](/products/build/virtual-machines/quickstart-guides/create-snapshot) |
+| Reusable disk image for many new VMs | No | [Custom images](/products/build/virtual-machines/concepts/custom-images) |
+
+If you're hesitating between volumes and Object Storage: **volumes are block devices** (a single VM mounts them like a disk); **Object Storage is HTTP-accessible** (many clients can read/write at once, scales beyond 1 TB, served over a URL).
+
+## How volumes fit in the storage stack
+
+A Raff VM has up to five storage objects in its orbit. Volumes are one of them:
+
+| Storage object | Lives | Survives VM destroy | Best for |
+|---|---|---|---|
+| **Base disk** (in the plan) | Inside the VM | No — destroyed with VM | OS, transient working files |
+| **Volumes** | Attached to one VM | **Yes — kept** | Data you can't afford to lose with the VM |
+| **Snapshots** | Independent of the VM | VM-disk snapshots: deleted with VM. Volume snapshots: survive | Restore points before risky changes |
+| **Backups** | Independent | Yes (per retention) | Routine scheduled VM protection |
+| **Custom images** | Account-wide | Yes | Golden images for new VMs |
+
+See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the full survival matrix and decision flowchart across every lifecycle event.
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Create a volume" icon="plus" href="/products/store/volumes/quickstart-guides/create-a-volume">
+    Pick size, billing term, target VM, and how it should be formatted.
+  </Card>
+  <Card title="Attach to a VM" icon="link" href="/products/store/volumes/quickstart-guides/attach-to-vm">
+    Dashboard attach + format and mount inside the VM.
+  </Card>
+  <Card title="Resize a volume" icon="up-right-and-down-left-from-center" href="/products/store/volumes/quickstart-guides/resize-volume">
+    Grow capacity, then expand the filesystem inside the guest.
+  </Card>
+  <Card title="Detach from a VM" icon="link-slash" href="/products/store/volumes/quickstart-guides/detach-from-vm">
+    Free a volume cleanly so you can reattach it elsewhere.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/store/volumes/quickstart-guides/create-a-volume">
+    Create, attach, resize, detach, delete.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    Persistence model and single-attach scope.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/store/volumes/details/features-and-limits">
+    Features, limits, pricing.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/volumes/troubleshooting">
+    Common volume issues — attach, mount, resize, detach.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/volumes/introduction">
+    Volume endpoints.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

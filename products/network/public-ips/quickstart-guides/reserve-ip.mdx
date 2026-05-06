@@ -1,0 +1,116 @@
+---
+title: Reserve a static IP
+description: Reserve a public IPv4 or IPv6 address that stays yours across VM rebuilds and detaches — $3/month, billed continuously, attach and detach freely
+---
+
+A **reserved IP** is a public address you hold onto independently of any specific VM. While an [auto-assigned IP](/products/network/public-ips/quickstart-guides/auto-assign) returns to the regional pool the moment you detach it, a reserved IP stays in your account until you explicitly release it. You can attach it to a VM today, detach tomorrow, attach to a different VM next week, and it remains the same address the whole time.
+
+Reserve when you need a stable address for **DNS records**, **partner / customer whitelists**, **TLS certificate pinning**, or **failover** patterns where traffic must continue hitting the same IP across VM rebuilds.
+
+## Open the Reserve IP dialog
+
+In **Networking → Public IPs**, click the orange **+ Reserve IP** button (top right).
+
+<Frame>
+  ![Reserve IP Address dialog showing Region (US East), IP Type (IPv4), three Billing Period options (Monthly $3.00/mo selected, Yearly $36.00/yr, 24 Month $72.00/2yr), Total $3.00/month, Hourly rate $0.0069/hr, and Cancel / Proceed to Checkout buttons](/images/products/network/public-ips/reserve-ip-dialog.png)
+</Frame>
+
+The dialog opens with three settings and a live total.
+
+## 1. Region
+
+The IP is reserved **in one region**. It can only be attached to VMs in that same region — IPs are never portable across regions.
+
+| Region | Status |
+|---|---|
+| **US East** | Available today |
+| Other regions | Coming with the rest of the multi-region rollout |
+
+Pick the region where the VMs that will use this IP live.
+
+## 2. IP Type
+
+| Option | Rate | Notes |
+|---|---|---|
+| **IPv4** | **\$3.00 / month** | Standard IPv4 address — the default. Available in all regions |
+| **IPv6** | **\$1.00 / month** | Single IPv6 address — cheaper than IPv4 because IPv6 space isn't scarce. Use for dual-stack workloads or if your VM is IPv6-only |
+
+The dialog updates the **Total** and **Hourly rate** lines live as you switch between IPv4 and IPv6 — the screenshot above is the IPv4 selection.
+
+## 3. Billing Period
+
+Three durations, all at the same effective per-month rate for the chosen IP type (no volume discount today; yearly and 24-month lock the price for the duration).
+
+**For IPv4 (\$3.00/month):**
+
+| Period | Price | Equivalent |
+|---|---|---|
+| **Monthly** *(default)* | \$3.00 / month | — |
+| **Yearly** | \$36.00 / year | \$3.00 / month |
+| **24 Month** | \$72.00 / 2 years | \$3.00 / month |
+
+**For IPv6 (\$1.00/month):**
+
+| Period | Price | Equivalent |
+|---|---|---|
+| **Monthly** *(default)* | \$1.00 / month | — |
+| **Yearly** | \$12.00 / year | \$1.00 / month |
+| **24 Month** | \$24.00 / 2 years | \$1.00 / month |
+
+The dialog shows the live **Total** and **Hourly rate** below the period picker. Charges accrue continuously while the IP is reserved, whether attached or not.
+
+If you're confident you'll need the IP for a year or two, lock in yearly or 24-month — same price, but you reserve cycles' worth of capacity up front. Monthly is the default and works for most cases.
+
+## 4. Click Proceed to Checkout
+
+The order summary applies your account balance first, then charges your saved card for the difference (same flow as VMs, volumes, Object Storage). Confirm to reserve.
+
+The IP appears in the Public IPs list immediately, with `Type: Reserved` and no VM attached. You can [attach it to a VM](/products/network/public-ips/quickstart-guides/manage-from-vm#add-a-public-ip) right away, or hold it unattached.
+
+## What "reserved until you cancel" means
+
+Once reserved, the IP is **yours alone** until you release it:
+
+- **No one else can be assigned this address.** It's not in the auto-assign pool. It's reserved for your account.
+- **It survives VM detaches** — detach the VM, the IP stays in your account, ready to re-attach.
+- **It survives VM deletion** — delete the attached VM, the IP doesn't go anywhere.
+- **It survives even when unattached** — that's the whole point. \$3/month buys you a permanent address.
+- **Billing continues whether attached or not.** The address is yours; the meter runs.
+
+To stop the billing, you must explicitly [release the IP](/products/network/public-ips/quickstart-guides/release-ip) from the Public IPs list. Until then, charges accrue continuously and settle month-end on the 1st against your account balance, just like every other Raff resource.
+
+## Convert an auto-assigned IP to reserved
+
+If you have an auto-assigned IP on a VM and want to convert it to a reserved IP without changing the address, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) — the conversion is staff-assisted today. From the dashboard, the only available paths are:
+
+- **Reserve a fresh IP** + attach to the VM + remove the auto-assigned one (the address will change)
+- Or keep auto-assigned (free) and accept the change-on-rebuild trade-off
+
+The support route preserves the existing address and is the right answer when you've already published it in DNS or a partner whitelist.
+
+## Pricing summary
+
+| Item | IPv4 | IPv6 |
+|---|---|---|
+| **Monthly** | \$3.00 / month | \$1.00 / month |
+| **Yearly** | \$36 / year | \$12 / year |
+| **24-month** | \$72 / 2 years | \$24 / 2 years |
+| **Hourly accrual** | \$0.0069 / hr | \$0.0023 / hr |
+
+Settlement is continuous and lands month-end on the 1st against your account balance — same model as VMs and volumes.
+
+If you delete the IP mid-cycle, the unused days are credited back to your balance — same model as VMs and volumes. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Auto-assign a public IP" icon="wand-magic-sparkles" href="/products/network/public-ips/quickstart-guides/auto-assign">
+    Free pool IP for non-stable addresses.
+  </Card>
+  <Card title="Move between VMs" icon="arrow-right-arrow-left" href="/products/network/public-ips/quickstart-guides/move-between-vms">
+    Detach reserved IP, re-attach to another VM.
+  </Card>
+  <Card title="Release an IP" icon="trash" href="/products/network/public-ips/quickstart-guides/release-ip">
+    Stop the billing — return to the pool.
+  </Card>
+</CardGroup>

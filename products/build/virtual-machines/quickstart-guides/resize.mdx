@@ -1,0 +1,93 @@
+---
+title: Resize a VM
+description: Change CPU, RAM, or disk size on a virtual machine
+---
+
+Resize lets you change a VM's plan (CPU + RAM) or grow its disk. Both run from the **Resize** tab on the VM detail page; both require the VM to be **powered off** first.
+
+## Open the Resize tab
+
+On the VM detail page, click **Resize** — top action bar, or the **Resize** tab in the secondary nav. You'll see the **Current Configuration** at the top and two sub-tabs: **Compute Resources** (CPU & RAM) and **Storage** (Disk Size).
+
+<Frame>
+  ![Resize tab showing current configuration and the Compute Resources / Storage sub-tabs, plus the Stop VM warning](/images/products/build/virtual-machines/resize-01-resize-tab.png)
+</Frame>
+
+## 1. Power off the VM
+
+Both compute and storage resize require the VM in `passive` state. Click **Stop VM** in the warning banner, or use the [Power tab](/products/build/virtual-machines/quickstart-guides/manage-power) on the detail page. Wait for status to flip to `passive` before continuing.
+
+<Warning>
+  Storage resize is **one-way** — disks can grow but cannot shrink. Decide carefully before increasing.
+</Warning>
+
+## 2a. Compute Resources — change CPU and RAM
+
+Not sure whether to resize? Check the [Monitoring & metrics](/products/build/virtual-machines/concepts/monitoring-and-metrics) graphs first — sustained 80%+ CPU or memory pressure is the signal that a resize will actually help.
+
+In the **Compute Resources** sub-tab:
+
+1. Pick a **VM TIER** — General Purpose or CPU-Optimized. You can switch tiers as part of the resize.
+2. Pick a new plan from the **SELECT NEW PLAN** grid. Your current plan is marked **Current** (green); your selection is highlighted **Selected** (orange).
+
+The footer summary updates with the price change and the prorated **Charge** for the upgrade — or balance credit if you downsize.
+
+<Frame>
+  ![Compute Resources plan grid with a new plan selected and the footer showing Current \$4.99/mo → New \$6.51/mo and Charge \$1.12](/images/products/build/virtual-machines/resize-02-compute-plan-and-charge.png)
+</Frame>
+
+## 2b. Storage — grow the disk
+
+In the **Storage** sub-tab:
+
+1. Drag the slider, or type a new size in the GB field — must be **larger** than the current size.
+2. The right side shows **New Size** in red until you pick a value above the current.
+
+<Frame>
+  ![Storage disk size with the one-way warning, slider, and validation message New size must be larger than current size](/images/products/build/virtual-machines/resize-03-storage-disk-size.png)
+</Frame>
+
+You can mix changes: pick a new compute plan **and** grow the disk, then check out once.
+
+## 3. Proceed to checkout
+
+Click **Proceed to Checkout**. The order summary shows the prorated charge.
+
+- **Account balance covers it** — click **Activate Subscription**. No card charge; balance is debited and the resize starts.
+- **Balance doesn't cover it** — the standard payment form appears (Google Pay, saved card, or new card), same as VM creation.
+
+<Frame>
+  ![Resize checkout: No Payment Needed when account balance covers the prorated charge of \$1.12](/images/products/build/virtual-machines/resize-04-checkout.png)
+</Frame>
+
+After confirmation:
+
+- **Compute resize** — the platform applies the new plan, then boots the VM. It returns to `active` on the same IP, with the new CPU/RAM.
+- **Storage resize** — the disk grows immediately. You may need to extend the partition and filesystem inside the OS (`growpart` + `resize2fs` on Linux; **Disk Management** on Windows).
+
+## Billing
+
+Resize is settled against your subscription term:
+
+- **Upsize** — the prorated difference between the old and new plan is charged (or applied from your balance) for the remainder of the term.
+- **Downsize** — the prorated difference is **credited back to your account balance**.
+
+The new rate then applies for the rest of the current term and renewals.
+
+## What's preserved
+
+- **IP addresses** — public and private IPs unchanged
+- **Disk contents** — all data retained
+- **Attached resources** — volumes, security groups, tags, snapshots, backups untouched
+- **Subscription term** — same renewal date
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Plans & sizing" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
+    What's bundled in each plan.
+  </Card>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Subscription billing and balance credits.
+  </Card>
+</CardGroup>

@@ -1,0 +1,233 @@
+---
+title: Attach to a VM
+description: Mount a Raff volume on a Linux or Windows VM, format it, persist it across reboots, and grow it after a resize
+---
+
+Attaching a volume happens in two halves: tell Raff which VM the volume is for (dashboard side), then format and mount it inside the OS (guest side). This page covers both.
+
+## Before you start
+
+- The VM and the volume are in the **same region** — you can't attach across regions
+- The VM is in `active` or `passive` state — attach works on both
+- For Linux: shell access (SSH, browser terminal, or VNC); for Windows: RDP access
+
+## 1. Attach in the dashboard
+
+From **Compute Resources → Volumes**, find the volume you want to attach. Open its row's **⋮** Actions menu and pick **Attach to VM**.
+
+<Frame>
+  ![Volume row Actions menu when unattached, showing Attach to VM, Configure volume, and Delete options](/images/products/store/volumes/volume-row-actions-unattached.png)
+</Frame>
+
+The Attach Volume to VM dialog asks for the target VM:
+
+<Frame>
+  ![Attach Volume to VM dialog with the volume name pre-filled and a Select VM dropdown plus the active/passive requirement note](/images/products/store/volumes/attach-to-vm-dialog.png)
+</Frame>
+
+Pick a VM and click **Attach**. The volume's status briefly shows **Provisioning** while the hypervisor wires it in (this is the normal `provisioning` state — the VM you attached to keeps running). Once it settles, the row shows the attached VM name:
+
+<Frame>
+  ![Volumes list showing the test volume now attached to the Finance VM with a Provisioning badge](/images/products/store/volumes/volume-list-attached.png)
+</Frame>
+
+<Frame>
+  ![Volume row Actions menu when attached, showing Detach from VM, Increase size, Take snapshot, Configure volume, Delete](/images/products/store/volumes/volume-row-actions-attached.png)
+</Frame>
+
+The actions menu changes when a volume is attached — **Detach from VM**, **Increase size**, and **Take snapshot** become available; **Attach to VM** disappears.
+
+The dashboard side is done. The volume now shows as a block device inside the VM, but it's **raw** — no partition, no filesystem. The rest of this page covers the in-guest steps; the dashboard also has a **Configure volume** helper that prints the same commands ready to copy — see below.
+
+## 1b. Use the Configure volume helper
+
+Instead of writing the commands by hand, you can open **Configure volume** from the volume's row actions menu. The dialog gives you OS-specific, copy-pasteable instructions tuned to your volume's size, name, and chosen filesystem.
+
+<Frame>
+  ![Mount Your Volume helper with Linux/Windows tabs, filesystem picker, and copy-pasteable ssh / lsblk / mkfs commands](/images/products/store/volumes/configure-volume-mount-helper.png)
+</Frame>
+
+Two tabs: **Linux** and **Windows**. Each gives you the exact steps in order:
+
+- **Step 1:** `ssh username@your-vm-ip-address`
+- **Step 2:** `lsblk` — find the new device (typically `vdb`, the next letter after the OS disk)
+- **Step 3:** `sudo mkfs.<fs> /dev/<device>` — format with the filesystem you picked at create time
+
+After step 3 the helper shows the mount and `/etc/fstab` commands. The Windows tab points you at Disk Management instead.
+
+If you formatted automatically at create time, only the mount step is shown — formatting is already done.
+
+The instructions below are the manual reference for the same flow if you'd rather understand each step.
+
+## 2. Find the new device (Linux)
+
+SSH in and list block devices:
+
+```bash
+lsblk
+```
+
+Look for an entry that doesn't already have a mount point. On Raff, volumes always use the **virtio-blk** driver, so device names follow the `/dev/vd*` pattern:
+
+| Position | Device path |
+|---|---|
+| OS disk | `/dev/vda` |
+| First attached volume | `/dev/vdb` |
+| Second attached volume | `/dev/vdc` |
+| …and so on | `/dev/vdd`, `/dev/vde`, … |
+
+You won't see `/dev/sd*` or `/dev/nvme*` paths on Raff — those are different hypervisor configurations. If `lsblk` shows something other than `vd*` for your new volume, double-check you're inside a Raff VM.
+
+If you don't see the new device, force a re-scan:
+
+```bash
+echo "- - -" | sudo tee /sys/class/scsi_host/host0/scan
+```
+
+## 3. Format the volume (Linux)
+
+<Warning>
+  `mkfs` destroys any existing data on the device. Run this only on **new, empty** volumes.
+</Warning>
+
+For most workloads, **ext4** is the safe default. **xfs** is preferred for very large volumes (multi-TB) or workloads with many parallel writes.
+
+```bash
+# ext4 (default choice)
+sudo mkfs.ext4 -L data /dev/vdb
+
+# xfs (large volumes, parallel I/O)
+sudo mkfs.xfs -L data /dev/vdb
+```
+
+The `-L data` sets a filesystem label you can refer to later.
+
+## 4. Mount it (Linux)
+
+Create a mount point and mount the volume:
+
+```bash
+sudo mkdir -p /mnt/data
+sudo mount /dev/vdb /mnt/data
+```
+
+Confirm:
+
+```bash
+df -h /mnt/data
+```
+
+## 5. Persist across reboots — `/etc/fstab` (Linux)
+
+A `mount` command doesn't survive reboot. Add an `/etc/fstab` entry.
+
+Get the volume's UUID:
+
+```bash
+sudo blkid /dev/vdb
+# /dev/vdb: LABEL="data" UUID="b1234567-89ab-cdef-0123-456789abcdef" TYPE="ext4"
+```
+
+Add to `/etc/fstab`:
+
+```
+UUID=b1234567-89ab-cdef-0123-456789abcdef  /mnt/data  ext4  defaults,nofail,x-systemd.device-timeout=10  0  2
+```
+
+Notes:
+- Use **UUID**, not `/dev/vdb` — device letters can change after a hot-attach reorder.
+- `nofail` and `x-systemd.device-timeout=10` make boot tolerant of a missing volume; without them, a detached or un-attached volume can trap the boot in emergency mode.
+- For xfs, replace `ext4` with `xfs`.
+
+Test the entry without rebooting:
+
+```bash
+sudo umount /mnt/data
+sudo mount -a
+df -h /mnt/data
+```
+
+If `mount -a` fails, fix the `/etc/fstab` line before rebooting — see [Recover a locked-out VM](/products/build/virtual-machines/quickstart-guides/recover-locked-vm) if it's already too late.
+
+## 6. Format and mount on Windows
+
+On a Windows Server VM, attach the volume in the dashboard, then:
+
+1. Open **Server Manager → Tools → Computer Management → Disk Management**.
+2. The new disk shows as **Offline** and **Not Initialized**. Right-click → **Online**.
+3. Right-click the disk again → **Initialize Disk**. Pick **GPT**.
+4. Right-click the unallocated space → **New Simple Volume**.
+5. Walk the wizard: assign a drive letter (e.g. `D:`), format as **NTFS**, give it a label.
+
+The volume now mounts automatically across reboots — no `fstab` equivalent needed.
+
+## 7. Grow a volume after resize
+
+When you [resize a volume](/products/store/volumes/quickstart-guides/resize-volume) up in the dashboard, the underlying block device grows immediately, but the filesystem doesn't know. You need to extend it inside the VM.
+
+### Linux — partitioned volume
+
+```bash
+# Re-read the device size
+sudo partprobe /dev/vdb
+
+# Grow the partition (only if you partitioned it)
+sudo growpart /dev/vdb 1
+
+# Extend the filesystem
+sudo resize2fs /dev/vdb1     # ext4
+# or
+sudo xfs_growfs /mnt/data    # xfs (mountpoint, not device)
+```
+
+### Linux — whole-device filesystem (no partition)
+
+If you `mkfs`-ed the device directly (no partition table), there's no `growpart` step:
+
+```bash
+sudo resize2fs /dev/vdb     # ext4
+sudo xfs_growfs /mnt/data   # xfs
+```
+
+### Windows
+
+In **Disk Management**, right-click the volume → **Extend Volume** and walk the wizard.
+
+## 8. Detach safely
+
+Before detaching, unmount cleanly so writes flush:
+
+**Linux:**
+```bash
+sudo umount /mnt/data
+# Remove the /etc/fstab entry too — otherwise next boot waits for a missing volume
+```
+
+**Windows:**
+- In Disk Management, right-click the volume → **Offline**.
+
+Then in the dashboard, [detach](/products/store/volumes/quickstart-guides/detach-from-vm) the volume.
+
+## Quick troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| `lsblk` doesn't show the new device | Re-scan SCSI host (step 2); confirm the volume attached to *this* VM |
+| `mount` fails with `wrong fs type` | You haven't formatted yet — see step 3 |
+| `df -h` shows old size after resize | Filesystem hasn't grown — run `resize2fs` / `xfs_growfs` (step 7) |
+| Boot drops to emergency shell after `/etc/fstab` edit | Bad fstab line — see [Recover a locked-out VM](/products/build/virtual-machines/quickstart-guides/recover-locked-vm) |
+| Volume seems detached after reboot | Forgot `nofail` or used `/dev/vdb` instead of UUID — fix the fstab line |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Resize a volume" icon="up-right-and-down-left-from-center" href="/products/store/volumes/quickstart-guides/resize-volume">
+    Grow a volume in the dashboard, then extend the filesystem.
+  </Card>
+  <Card title="Detach from a VM" icon="link-slash" href="/products/store/volumes/quickstart-guides/detach-from-vm">
+    Free a volume to reattach elsewhere.
+  </Card>
+  <Card title="Volume types" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    Performance tiers and persistence model.
+  </Card>
+</CardGroup>

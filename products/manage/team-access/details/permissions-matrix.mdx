@@ -1,0 +1,168 @@
+---
+title: Permissions matrix
+description: The full list of System roles on Raff — three account-level (Admin, Billing, Member) and four project-level (Project Admin, Operator, Project Member, Viewer) — with every permission each one grants
+---
+
+This page is the spec sheet for the **7 System roles** that ship with every Raff account. The model itself is on [Roles, scopes, and the Owner](/products/manage/team-access/concepts/roles-and-api-keys); read it first if you haven't.
+
+## Account roles (3)
+
+These apply to a member at the **account level**. Account roles control account-wide concerns: who's invited, billing, audit log, account-wide API keys, the list of projects.
+
+**They do not grant access to project resources.** A member with only an account role cannot see VMs, VPCs, IPs, or any other project resource until they're explicitly given a project role on that project.
+
+| Role | Description | Total permissions |
+|---|---|---|
+| **Admin** | Account admin without billing | 15 |
+| **Billing** | Billing access only | 2 |
+| **Member** | Basic account member | 3 |
+
+### Admin (15 permissions)
+
+The "do almost anything at the account level except destroy things or touch billing" role.
+
+| Category | Permission | Granted? |
+|---|---|---|
+| **Projects** | `account.projects.view` — View projects in the account | ✅ |
+| | `account.projects.create` — Create new projects | ✅ |
+| | `account.projects.manage` — Full project management access | ✅ |
+| | `account.projects.delete` — Delete projects | ❌ |
+| **Members** | `account.members.view` | ✅ |
+| | `account.members.invite` — Invite new members | ✅ |
+| | `account.members.manage` — Manage member roles | ✅ |
+| | `account.members.remove` — Remove members from account | ❌ |
+| **Roles** | `account.roles.view` | ✅ |
+| | `account.roles.create` — Create new roles | ✅ |
+| | `account.roles.manage` — Modify role permissions | ✅ |
+| | `account.roles.delete` — Delete roles | ❌ |
+| **API Keys** | `account.apikeys.view` | ✅ |
+| | `account.apikeys.create` — Create API keys | ✅ |
+| | `account.apikeys.manage` — Manage API key settings | ✅ |
+| | `account.apikeys.revoke` — Revoke API keys | ❌ |
+| **Billing** | `account.billing.view` — View billing information | ❌ |
+| | `account.billing.manage` — Manage billing and payments | ❌ |
+| **Account Settings** | `account.settings.view` | ✅ |
+| | `account.settings.manage` | ✅ |
+| **Audit Log** | `account.audit.view` — View audit logs and security events | ✅ |
+
+Use this role for ops people you want to run the account day-to-day but not pay invoices or remove the founders.
+
+### Billing (2 permissions)
+
+A purpose-built role for finance / accounting people who only need to see and pay invoices.
+
+| Category | Permission | Granted? |
+|---|---|---|
+| **Billing** | `account.billing.view` — View billing information | ✅ |
+| | `account.billing.manage` — Manage billing and payments | ✅ |
+
+Everything else is denied. The Billing role explicitly cannot see members, projects, audit logs, or any account settings — keeps the finance person scoped exactly to invoices and payment methods.
+
+### Member (3 permissions)
+
+The lightest account role. Read-only at the account level, useful as a base for someone who'll mostly work inside specific projects.
+
+| Category | Permission | Granted? |
+|---|---|---|
+| **Account Settings** | `account.settings.view` | ✅ |
+| **Members** | `account.members.view` | ✅ |
+| **Projects** | `account.projects.view` | ✅ |
+
+A typical pattern: invite a developer with `Member` at the account level (so they see who else is on the team and what projects exist), then grant them `Project Member` or `Project Admin` on the projects they actually work in.
+
+## Project roles (4)
+
+These apply to a member on a **specific project**. Each grant pairs a member, a project, and one role — the same member can hold different roles on different projects.
+
+| Role | Description | Total permissions |
+|---|---|---|
+| **Project Admin** | Full project access | 40 |
+| **Operator** | Manage resources without delete | ~29 |
+| **Project Member** | Basic project access | ~11 |
+| **Viewer** | Read-only project access | ~9 |
+
+The exact counts shift slightly as new resources land (Object Storage, Kubernetes, etc.); the dashboard's role-detail view is always authoritative. The categories below show the structure.
+
+### Project Admin (40 permissions)
+
+Everything inside the project. The project-domain equivalent of "Owner without account access."
+
+| Category | Permissions | Granted |
+|---|---|---|
+| **Project Members** | view / invite / manage / remove | 4 / 4 |
+| **Virtual Machines** | view / create / delete / power / manage / console | 6 / 6 |
+| **Networking (VPC)** | view / create / delete / manage | 4 / 4 |
+| **(Other resource categories)** | View / create / manage / delete on every project resource | All |
+
+Use Project Admin when you want a member to fully run a project — VMs, networking, members, settings — without giving them anything at the account level.
+
+### Operator (~29 permissions — manage without delete)
+
+Identical to Project Admin **except destructive operations** are removed: no `vm.delete`, no `vpc.delete`, no `project.members.remove`, etc. Operators can power, manage, and create — but not destroy.
+
+Useful for on-call rotations, deploy automation, and contractors who shouldn't be able to wipe things out by accident.
+
+### Project Member (~11 permissions — basic access)
+
+A normal "use the project" role:
+
+- `project.settings.view`, `project.members.view`
+- `vm.view`, `vm.power` (start/stop/reboot a VM)
+- A handful of read permissions on other resource types
+
+The default level for most engineers — they can see everything in the project and do day-to-day operational tasks (reboot a VM, view logs/metrics) but they can't create, delete, or modify configurations.
+
+### Viewer (~9 permissions — read-only)
+
+Pure read access. View VMs, view VPCs, view IPs, view members, view project settings — no power actions, no creates, no deletes, no console access.
+
+The right role for compliance / audit team members and read-only dashboards.
+
+## Cross-domain mix examples
+
+A few common patterns built from the table above:
+
+| Real-world role | Account role | Project role(s) |
+|---|---|---|
+| **Co-founder** | (Owner — automatic) | (full, on every project) |
+| **Operations engineer** | Admin | Project Admin on every project |
+| **DevOps contractor** | Member | Operator on the projects they work on |
+| **Backend developer** | Member | Project Member on `prod`, Project Admin on `staging` |
+| **Finance / bookkeeper** | Billing | (none — never sees workloads) |
+| **Auditor** | Member | Viewer on every project |
+| **External customer** | (none) | Project Admin on their own project, nothing else |
+
+The "External customer" pattern uses the **Project-only** scope you see on the Members list — no account role, project roles only. Useful for white-labeled hosting, multi-tenant isolation, or any case where the member shouldn't see anything outside their project.
+
+## What you can't change about System roles
+
+System roles are **read-only**. The role-detail dialog shows the toggles but doesn't accept changes. Specifically:
+
+- You can't add or remove a permission to/from a System role
+- You can't rename a System role
+- You can't delete a System role
+- You **can** copy a System role's permissions into a fresh **Custom role** and edit from there
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **System roles** | 7 (3 account + 4 project), fixed |
+| **Custom roles per account** | No hard cap published; subject to overall account capacity |
+| **Roles per member** | Exactly 1 account role + 1 role per project the member is on |
+| **Members per account** | No hard cap published |
+| **Permissions** | ~17 account + ~40 project = ~57 total today, growing as new resource types land |
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-access/concepts/roles-and-api-keys">
+    The model behind these roles.
+  </Card>
+  <Card title="Invite a member" icon="user-plus" href="/products/manage/team-access/quickstart-guides/invite-member">
+    How to assign roles at invite time.
+  </Card>
+  <Card title="Change a role" icon="user-pen" href="/products/manage/team-access/quickstart-guides/change-role">
+    Re-scope an existing member.
+  </Card>
+</CardGroup>

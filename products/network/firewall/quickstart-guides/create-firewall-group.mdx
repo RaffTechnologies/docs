@@ -1,0 +1,128 @@
+---
+title: Create a Firewall Group
+description: Walk the Create Firewall Group dialog — name, description, optional template, then build the inbound and outbound rule lists, save, and attach to a VM
+---
+
+A **Firewall Group** is a named bundle of inbound and outbound rules that you attach to a VM's public IP. This page walks the dashboard create flow. Read [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound) first if you haven't — it explains protocol/port/IP formats, the system Default Firewall layer, and which ports you can never open.
+
+## Open the Firewall tab
+
+In the left sidebar, click **Networking** → switch to the **Firewall** tab. The page shows the system **Raff Default Firewall** card at the top and **Your Firewall Groups** below.
+
+<Frame>
+  ![Firewall tab showing Raff Default Firewall (System) at the top with View Rules, and Your Firewall Groups section with a + Create Firewall Group button and one row "Web Server" 2 in / 1 out, 14 days ago](/images/products/network/firewall/firewall-tab.png)
+</Frame>
+
+Click the orange **+ Create Firewall Group** button on the right.
+
+## The Create dialog
+
+<Frame>
+  ![Create Firewall Group dialog with Name field, optional Description textarea, Start from template dropdown, an Inbound Rules section with one row (TCP / Ports e.g. 80,443 / Any 0.0.0.0/0) and + Add button, and an Outbound Rules section with one row (ALL / All ports / Any 0.0.0.0/0) and + Add button. Cancel and Create Firewall Group buttons at the bottom.](/images/products/network/firewall/create-firewall-group-dialog.png)
+</Frame>
+
+Five sections, top to bottom: Name, Description, Template, Inbound Rules, Outbound Rules.
+
+## 1. Name
+
+Pick a label that's easy to recognize when picking from a list — `prod-web`, `db-private`, `bastion-only`. The name must be unique inside your account. Names cannot be renamed today; pick deliberately.
+
+## 2. Description (optional)
+
+Free-form. Useful for explaining "why this group exists" — *"Public web servers behind Cloudflare"*, *"Internal Postgres — never expose 5432 outside VPC"*. Shows up in the Edit Rules dialog and helps teammates avoid misuse.
+
+## 3. Start from template (optional)
+
+A dropdown of five pre-built rule sets. Picking one fills both rule lists below; you can edit any row before saving. Leave on **Custom Rules** to start blank.
+
+<Frame>
+  ![Start from template dropdown opened, showing six options: Custom Rules, Web Server (SSH + HTTP/HTTPS from anywhere, all outbound), Database Server (SSH + MySQL/PostgreSQL from VPC only, all outbound), SSH Only (SSH access only, all outbound), Allow All (All traffic allowed — not recommended for production), Deny All (All traffic blocked — lockdown mode)](/images/products/network/firewall/template-dropdown.png)
+</Frame>
+
+
+| Template | Pre-fills |
+|---|---|
+| **Web Server** | Inbound: TCP 22 (SSH), TCP 80,443, ICMP. Outbound: ALL |
+| **Database Server** | Inbound: TCP 22 (SSH), TCP 3306,5432 *VPC-scoped*. Outbound: ALL |
+| **SSH Only** | Inbound: TCP 22. Outbound: ALL |
+| **Allow All** | Inbound: ALL. Outbound: ALL — **not recommended for production** |
+| **Deny All** | No inbound, no outbound — full lockdown |
+
+The Database Server template is unique in that its DB rules are scoped to a specific VPC at creation time — the dashboard prompts for which VPC, then writes the `network_id` field automatically. Other templates leave source IP at `0.0.0.0/0` (any) — tighten as needed.
+
+If you'd rather build from scratch, leave the dropdown at **Choose a template or start custom...** and use the empty rule rows below.
+
+## 4. Inbound Rules — Allow incoming connections to your VM
+
+Inbound rules define what the public internet can send *to* this VM. Each row has three controls:
+
+| Control | Values | Notes |
+|---|---|---|
+| **Protocol dropdown** | `TCP` *(default)*, `UDP`, `ICMP`, `ALL` | Choose the protocol family |
+| **Ports field** | `22`, `80,443`, `3000:4000`, blank for `ALL` | Format options in [Add rules](/products/network/firewall/quickstart-guides/add-rules#port-format) |
+| **Source IP field** | `0.0.0.0/0` (`Any`) *(default)*, `192.168.1.100/32`, etc. | CIDR notation |
+
+The **+ Add** button on the right of the Inbound Rules header inserts another row. The trash icon on each row removes that row. Up to **40 inbound rules** per group.
+
+**A few realistic examples:**
+
+| Goal | Protocol | Ports | Source IP |
+|---|---|---|---|
+| Web traffic from anywhere | TCP | `80,443` | `0.0.0.0/0` |
+| SSH from your office only | TCP | `22` | *(your office's public IP)*`/32` |
+| Game server | UDP | `27015` | `0.0.0.0/0` |
+| Postgres from one app server | TCP | `5432` | *(app server's IP)*`/32` |
+| Ping from anywhere | ICMP | *(blank)* | `0.0.0.0/0` |
+
+Remember the [system Default still blocks TCP 135 / 139 / 445 / 5985–5986 and UDP 137–138](/products/network/firewall/concepts/inbound-vs-outbound#what-the-default-firewall-blocks) regardless of what you write here.
+
+## 5. Outbound Rules — Allow connections from your VM to the internet
+
+Outbound rules define what the VM can connect *out to*. The default row in the dialog — `ALL / All ports / 0.0.0.0/0` — means "this VM can reach anything on any port" and matches the system Default's behavior. Most workloads keep this exact rule.
+
+You'd add **restrictive** outbound rules when:
+
+- You want to prevent a compromised VM from being used as an attack platform
+- You're running a VM that should only ever speak to specific destinations (a database that only talks to the application IP, a dev VM that should only reach package mirrors)
+- You're meeting a compliance requirement that mandates egress filtering
+
+If you remove the catch-all and add specific outbound rules, anything not matched by your allow list will be **dropped on the way out**. Keep DNS (`UDP 53` / `TCP 53` to `0.0.0.0/0`), NTP (`UDP 123` to `0.0.0.0/0`), and your package mirrors in the allowlist or the VM will become unmaintainable.
+
+Up to **40 outbound rules** per group.
+
+## 6. Click Create Firewall Group
+
+The dialog closes, the group appears in **Your Firewall Groups** with `Rules: <inbound count> in / <outbound count> out`, **VMs: None** until you attach one, and **Created: just now**.
+
+## 7. Attach to a VM
+
+The group does nothing on its own — you have to attach it to a VM's public IP for traffic to be filtered. Two paths:
+
+| From | How |
+|---|---|
+| **Firewall Groups list** | Group row's `⋮` → **Assign to VM** → pick a VM |
+| **VM detail → Network tab** | Click **Attach** next to `Firewall: None` on the IP card → pick this group |
+
+See [Attach a Firewall Group to a VM](/products/network/firewall/quickstart-guides/attach-to-vm) for both flows in detail.
+
+## Editing rules later
+
+You can add, remove, or modify rules **without detaching the group from VMs**. The rule set on the platform side updates immediately. See [Update rules](/products/network/firewall/quickstart-guides/update-rules) for the in-place edit flow.
+
+<Warning>
+**A VM reboot is required for firewall changes to take effect inside the guest.** Whenever you attach, detach, or edit a Firewall Group on a VM, reboot that VM — the guest's network stack picks up the new rules at boot. Skipping the reboot leaves the VM running with its previous rules.
+</Warning>
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model behind the dialog.
+  </Card>
+  <Card title="Add rules" icon="list" href="/products/network/firewall/quickstart-guides/add-rules">
+    Port and IP formats by example.
+  </Card>
+  <Card title="Attach to a VM" icon="link" href="/products/network/firewall/quickstart-guides/attach-to-vm">
+    Apply the new group to a VM's public IP.
+  </Card>
+</CardGroup>

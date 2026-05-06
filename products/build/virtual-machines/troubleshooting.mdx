@@ -1,0 +1,227 @@
+---
+title: Troubleshooting
+description: Common Virtual Machine issues and how to fix them
+---
+
+The most-seen failures with Raff VMs and the fix that works in each case. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+
+## Connection problems
+
+<AccordionGroup>
+  <Accordion title="SSH: connection refused">
+    **What's happening:** `ssh: connect to host x.x.x.x port 22: Connection refused`.
+
+    **Likely causes & fixes:**
+    1. **Security group blocks port 22** — open the VM's [Firewall](/products/network/firewall) and confirm an inbound TCP/22 rule exists for your IP.
+    2. **SSH daemon isn't running** — open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback), log in, run `systemctl status ssh` (Ubuntu/Debian) or `systemctl status sshd` (RHEL family). Start it with `systemctl start ssh` and persist with `systemctl enable ssh`.
+    3. **`sshd` is listening on a different port** — `cat /etc/ssh/sshd_config | grep -i ^Port`. Connect with `ssh -p <port> root@…` or change the rule.
+  </Accordion>
+
+  <Accordion title="SSH: connection timed out">
+    **What's happening:** `ssh: connect to host x.x.x.x port 22: Operation timed out`.
+
+    **Likely causes & fixes:**
+    1. **VM not `active`** — check the dashboard. If it's `passive`, [start it](/products/build/virtual-machines/quickstart-guides/manage-power). If `provisioning` while a snapshot/backup runs, wait for it to finish (see [Lifecycle states](/products/build/virtual-machines/concepts/lifecycle-states#provisioning-during-snapshots-and-backups)).
+    2. **Public IP changed** — confirm the IP shown in the dashboard matches what you're connecting to.
+    3. **Inside-the-VM firewall** — `ufw`/`iptables`/`firewalld` may be blocking 22. Use the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback) and disable or fix the rule (`ufw allow 22`, `firewall-cmd --add-service=ssh --permanent`).
+    4. **Network outage** — check [status.rafftechnologies.com](https://status.rafftechnologies.com).
+  </Accordion>
+
+  <Accordion title="SSH: Permission denied (publickey)">
+    **What's happening:** SSH reaches the daemon but rejects the key.
+
+    **Fixes:**
+    1. **Wrong key** — `ssh -i ~/.ssh/specific_key root@…` to point at the right private key.
+    2. **Key permissions too open** — `chmod 600 ~/.ssh/<key>` on macOS/Linux.
+    3. **Key not in `authorized_keys` on the VM** — open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback), log in, and append your public key to `~/.ssh/authorized_keys` (`chmod 600` and `chown user:user`).
+    4. **Password auth disabled, no key set** — [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) and connect over the VNC console once first to add a key.
+  </Accordion>
+
+  <Accordion title="RDP: black screen after login (Windows)">
+    **What's happening:** RDP authenticates but the desktop never appears.
+
+    **Fix:** Open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-rdp#1-in-app-console-vnc), send **Ctrl+Alt+Del**, choose **Sign out**, then reconnect over RDP.
+  </Accordion>
+
+  <Accordion title="RDP: certificate warning">
+    **What's happening:** Your client warns about a self-signed certificate.
+
+    **Fix:** Expected. Accept and continue, or install a public CA cert inside the VM and restart the RDP service.
+  </Accordion>
+</AccordionGroup>
+
+## Disk and filesystem
+
+<AccordionGroup>
+  <Accordion title="Disk full — can't even log in">
+    **What's happening:** SSH session ends immediately, or commands return `No space left on device`.
+
+    **Fix via VNC:**
+    1. Open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback).
+    2. Log in. Identify the largest paths: `du -h --max-depth=1 / 2>/dev/null | sort -rh | head -20`.
+    3. Common culprits: `/var/log` (rotate or truncate logs), `/var/cache/apt` (`apt clean`), `/tmp` (`rm -rf /tmp/*` if safe), Docker layers (`docker system prune -a`).
+    4. If still tight, [resize the disk](/products/build/virtual-machines/quickstart-guides/resize) (one-way grow), then expand the filesystem inside the VM.
+  </Accordion>
+
+  <Accordion title="VM won't boot — broken `/etc/fstab`">
+    **What's happening:** Boot drops to emergency shell or hangs after `Welcome to GRUB`.
+
+    **Fix via VNC + single-user mode:**
+    1. Open the VNC console and reboot the VM ([hard reboot](/products/build/virtual-machines/quickstart-guides/manage-power) if needed).
+    2. At the GRUB menu, press `e` on the highlighted entry.
+    3. Find the line beginning `linux …`. Append ` single` (or `init=/bin/bash`) at the end.
+    4. Press `Ctrl-X` to boot.
+    5. Remount root read-write: `mount -o remount,rw /`.
+    6. Edit `/etc/fstab` with `vi` and either fix or comment out the bad line.
+    7. Reboot normally.
+  </Accordion>
+
+  <Accordion title="Volume attached but not visible inside the VM">
+    **What's happening:** You attached a volume in the dashboard, but `lsblk` doesn't show it.
+
+    **Fix:**
+    1. **Re-scan SCSI** — `echo "- - -" > /sys/class/scsi_host/host0/scan` (Linux).
+    2. **Check it's the right VM** — volumes attach to a single VM at a time; make sure the dashboard shows the attachment to *this* VM.
+    3. **Expected device** — virtio devices appear as `/dev/vdX` on Linux. See [Volumes → Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) for the full mount flow.
+  </Accordion>
+</AccordionGroup>
+
+## Lifecycle and state
+
+<AccordionGroup>
+  <Accordion title="VM stuck in `provisioning` after creation">
+    **What's happening:** Status hasn't moved to `active` after several minutes.
+
+    **Fix:**
+    1. Wait 5-10 minutes — large templates and busy regions take longer.
+    2. If stuck > 10 minutes, contact [support](mailto:support@rafftechnologies.com) with the VM ID.
+    3. If status moves to `failure`, the VM is non-billable — delete and recreate. If it persists, support can investigate the underlying node.
+  </Accordion>
+
+  <Accordion title="VM stuck in `provisioning` while running fine">
+    **What's happening:** A previously `active` VM shows `provisioning` but SSH/RDP still works.
+
+    **Cause:** A snapshot or backup is running. The dashboard reuses the `provisioning` label while the hypervisor captures state. The VM continues serving traffic the whole time.
+
+    **Fix:** Wait — typically 1-5 minutes. See [Lifecycle states](/products/build/virtual-machines/concepts/lifecycle-states#provisioning-during-snapshots-and-backups).
+  </Accordion>
+
+  <Accordion title="Can't resize — `VM must be stopped`">
+    **What's happening:** Compute resize rejects the request.
+
+    **Fix:** Resize requires `passive` state. [Stop the VM](/products/build/virtual-machines/quickstart-guides/manage-power), wait for `passive`, resize, then start.
+  </Accordion>
+
+  <Accordion title="Resize completed but VM doesn't see new RAM/CPU">
+    **What's happening:** Dashboard shows the new plan; OS still reports the old.
+
+    **Fix:** Reboot the VM. RAM/CPU changes need a fresh boot to be picked up.
+  </Accordion>
+
+  <Accordion title="Disk grew in dashboard but `df -h` shows old size">
+    **What's happening:** The block device is bigger but the filesystem hasn't been told.
+
+    **Fix:** Inside the VM:
+    ```bash
+    growpart /dev/vda 1     # if partitioned (replace with your disk)
+    resize2fs /dev/vda1     # ext4
+    # or
+    xfs_growfs /             # xfs
+    ```
+    See [Volumes → Resize a volume](/products/store/volumes/quickstart-guides/resize-volume) for the volume case.
+  </Accordion>
+</AccordionGroup>
+
+## Networking
+
+<AccordionGroup>
+  <Accordion title="No outbound internet from the VM">
+    **What's happening:** `curl https://example.com` hangs or returns network unreachable.
+
+    **Fix:**
+    1. Confirm the VM has a public IPv4 in the dashboard.
+    2. Check inside-the-VM routing: `ip route` should show a default route through the gateway.
+    3. Restart networking: `systemctl restart systemd-networkd` (or `NetworkManager`).
+    4. Check inside-the-VM firewall (`ufw status`, `iptables -L`).
+  </Accordion>
+
+  <Accordion title="Public IP changed unexpectedly">
+    **What's happening:** Your VM's public IPv4 differs from the one you remembered.
+
+    **Cause:** Factory reset, reinstall (rarely), or the IP was a regular ephemeral one and the VM was deleted-and-recreated.
+
+    **Fix:** For a stable address across rebuilds, reserve a [Public IP](/products/network/public-ips) and assign it.
+  </Accordion>
+
+  <Accordion title="Can't reach another VM in the same VPC">
+    **What's happening:** Private-IP traffic between two of your VMs doesn't work.
+
+    **Fix:**
+    1. Confirm both VMs share the same VPC (VM detail page → Network section).
+    2. Check security groups on both VMs allow the protocol/port between private IPs.
+    3. Check inside-the-VM firewalls.
+    4. Use private IPs, not public, for VPC-internal traffic.
+  </Accordion>
+</AccordionGroup>
+
+## Backups and snapshots
+
+<AccordionGroup>
+  <Accordion title="Scheduled backups not running">
+    **What's happening:** Schedule exists but no new backups appear.
+
+    **Fix:**
+    1. Confirm the schedule is enabled on the VM detail page → Backups tab.
+    2. Time window — note the platform's timezone vs yours.
+    3. The VM must be `active` for backups to run; a stopped VM is skipped.
+  </Accordion>
+
+  <Accordion title="Snapshot creation fails">
+    **What's happening:** Snapshot returns an error or stays in `failed`.
+
+    **Fix:**
+    1. VM must be `active` — snapshots of `passive` VMs are not supported.
+    2. Delete the failed entry and retry.
+    3. If it keeps failing on the same VM, contact [support](mailto:support@rafftechnologies.com) with the VM ID.
+  </Accordion>
+</AccordionGroup>
+
+## Authentication and access
+
+<AccordionGroup>
+  <Accordion title="Forgot the root / Administrator password">
+    **What's happening:** Lost the password from the original create flow.
+
+    **Fix:** Open the VM detail page → **Credentials** card → **Send to Email** (sends the existing password). If that still doesn't work, [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) — generates a new one and emails it.
+  </Accordion>
+
+  <Accordion title="Locked out completely — no SSH, no password">
+    **What's happening:** SSH key lost, password unknown, can't log in via VNC.
+
+    **Fix:**
+    1. [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) — the new password lands by email; use the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback) once it arrives.
+    2. If reset doesn't work, [Factory reset](/products/build/virtual-machines/quickstart-guides/factory-reset) the VM (preserves attached volumes, snapshots, backups; wipes the OS disk).
+    3. If you need the OS disk's contents preserved, contact [support](mailto:support@rafftechnologies.com) with the VM ID — recovery from a [backup](/products/build/virtual-machines/quickstart-guides/enable-backups) may be possible if you have one. This is why production VMs should always run a backup schedule.
+  </Accordion>
+</AccordionGroup>
+
+## Billing
+
+<AccordionGroup>
+  <Accordion title="VM still being billed after I stopped it">
+    **Cause:** Stopped VMs (`passive`) keep their CPU, RAM, disk, and IP reservations and continue to be billed under their subscription term. To stop charges, [delete the VM](/products/build/virtual-machines/quickstart-guides/delete-vm) — unused subscription days are credited back to your account balance.
+  </Accordion>
+
+  <Accordion title="Resize charged me but I downsized">
+    **Cause:** Downsize resizes credit the prorated difference back to your **account balance**, not to the original card. Check [Billing → Account Balance](https://app.rafftechnologies.com).
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The VM ID (from the dashboard URL or `Get VM` response)
+- The exact error message and timestamp
+- Steps already tried
+- Relevant logs from inside the VM (`journalctl -xe`, `/var/log/syslog`)

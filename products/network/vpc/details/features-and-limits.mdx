@@ -1,0 +1,113 @@
+---
+title: Features & limits
+description: VPC features, supported CIDR sizes, MTU, internet gateway options, and platform limits
+---
+
+## Features
+
+### Network technology
+- **VXLAN-backed** — every VPC is its own VXLAN segment with a unique 24-bit VNI ([RFC 7348](https://datatracker.ietf.org/doc/html/rfc7348))
+- **Multicast mode** — VXLAN frames travel over the underlay's multicast group; no central router bottleneck
+- **L2 inside the VPC** — VM-to-VM traffic in the same VPC goes directly between hypervisors, not via a router hop
+- **Encrypted at rest, isolated by VNI** — two VPCs in the same account can use the same CIDR and never see each other
+
+### CIDR
+- **Prefix range:** `/16` to `/28` (chosen at create time, fixed for the life of the VPC)
+- **Allowed ranges:** RFC 1918 (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) and RFC 6598 (`100.64.0.0/10`)
+- **Reserved per VPC:** `.0` (network), `.1` (gateway), `.255` (broadcast for `/24` and larger)
+- **Overlap allowed** — two VPCs can share a CIDR; isolation is by VNI, not address space
+- **No resize** — to grow, create a new VPC and migrate
+
+### MTU
+- **VPC interface MTU: 8950** (jumbo frames, 9000 minus 50 bytes of VXLAN overhead)
+- Most workloads benefit transparently via Path MTU Discovery
+- Tunnels and overlays on top of the VPC must subtract their own headers from 8950
+
+### DNS
+- **Primary DNS:** required, defaults to `8.8.8.8` (Google Public DNS)
+- **Secondary DNS:** optional fallback — leave blank if you don't need one
+- Editable per VPC at any time — point at Cloudflare (`1.1.1.1`), Quad9 (`9.9.9.9`), an internal resolver inside the VPC, etc.
+- Applied via DHCP — new VMs pick it up at boot, existing VMs on lease renewal (or via `dhclient` / `ipconfig /renew` inside the guest)
+
+### Internet Gateway (optional, per VPC)
+Two mutually exclusive options to give VMs in the VPC outbound internet access without each VM holding a Public IP:
+
+| Gateway | What it is | Cost |
+|---|---|---|
+| **Platform Router** | Managed gateway VM run by Raff — NAT, internal DNS suffix `vpc.local`, DHCP, port forwarding | **Free** |
+| **Firewall Appliance — Small** | OPNsense 26.1 — 2 vCPU / 4 GB RAM / 50 GB disk, WAN + LAN NICs, full firewall control via web UI or VNC console | **\$4.99 / month** |
+| **Firewall Appliance — Large** | OPNsense 26.1 — 4 vCPU / 8 GB RAM / 120 GB disk, WAN + LAN NICs | **\$9.99 / month** |
+
+VPCs without a gateway have no outbound internet — VMs reach the internet only via their own Public IP attachments. The gateway choice is mutually exclusive (one or none, not both) and switchable later, with a brief outbound-traffic outage during the switch.
+
+### Port forwarding (with Platform Router)
+- **Up to 10 rules per VPC**
+- Map `public_port` on the router's IP → `private_ip:private_port` inside the VPC
+- TCP and UDP supported
+- Rules apply within seconds of save
+
+### VM membership
+- A single VM can belong to **multiple VPCs simultaneously** — each VPC gives it a separate NIC
+- A VM can also have one or more public IPs alongside its VPC interfaces
+- Detach is blocked if it would leave the VM with **zero network interfaces**
+- VPCs are region-scoped — only VMs in the same region can attach
+
+## Pricing
+
+| Item | Rate |
+|---|---|
+| **The VPC itself** | **Free** — no cost to create, hold, or use |
+| **Same-region traffic between VMs in the VPC** | **Free**, never metered |
+| **Same-region traffic to Object Storage / Kubernetes** | **Free**, never metered |
+| **Platform Router gateway** | **Free** — Raff runs the gateway VM and its public IP at no charge |
+| **Firewall Appliance — Small** (2 vCPU / 4 GB / 50 GB) | **\$4.99 / month** |
+| **Firewall Appliance — Large** (4 vCPU / 8 GB / 120 GB) | **\$9.99 / month** |
+| **Public IPs attached to VMs in the VPC** | See [Public IPs pricing](/products/network/public-ips/details/features-and-limits) |
+| **Internet egress** through any gateway / public IP | Subject to standard public-internet egress, never to private VM-to-VM |
+
+There is **no per-VPC fee, no per-CIDR fee, no per-VNI fee, and no per-DHCP-lease fee.** You can hold dozens of VPCs at zero cost — pricing only kicks in when a VPC has a Firewall Appliance gateway or when its members generate public-internet egress.
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **CIDR prefix range** | `/16` (65,533 usable IPs) to `/28` (13 usable IPs) |
+| **Allowed private ranges** | RFC 1918 + RFC 6598 (`100.64.0.0/10`) |
+| **VPCs per account** | No hard cap published; subject to overall account capacity |
+| **VMs per VPC** | Bounded by the CIDR's usable address count (e.g. 253 for a `/24`, 4,093 for a `/20`) |
+| **NICs per VM** | Same as the VM-level NIC limit — see [Virtual Machines features & limits](/products/build/virtual-machines/details/features-and-limits) |
+| **Port-forward rules** | **10 per VPC** (Platform Router only) |
+| **Internet gateways per VPC** | **0 or 1** — Platform Router and Firewall Appliance are mutually exclusive |
+| **MTU** | **8950** (fixed, not configurable) |
+| **VPC name length** | Free-form, must be unique per account |
+| **CIDR alignment** | Must match the prefix — `192.168.1.50/20` is rejected, `192.168.0.0/20` is accepted |
+| **Region scope** | Each VPC lives in **one region** — `us-east` is the only region today |
+
+## Region
+
+| Region | Status |
+|---|---|
+| **`us-east`** | Available today |
+| Other regions | Coming — VPC will be region-scoped, same as VMs and volumes |
+
+## What's not available today
+
+- **VPC peering** — placeholder under the **Peering** tab; ships in a future release
+- **Load Balancer as a service** — placeholder under the **Services** tab
+- **VPN Gateway as a service** — placeholder under the **Services** tab; the Firewall Appliance covers this case in the meantime via OPNsense's built-in WireGuard / IPsec / OpenVPN
+- **Cross-region VPCs** — VPCs are regional only
+- **Custom route tables / transit gateway / VPC endpoints** — not on the near-term roadmap
+
+## See also
+
+<CardGroup cols={3}>
+  <Card title="VXLAN, CIDR, and isolation" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    The technology behind the limits.
+  </Card>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Internet gateway, port forwarding, DNS.
+  </Card>
+  <Card title="Pricing (VM)" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    For Firewall Appliance VM costs.
+  </Card>
+</CardGroup>

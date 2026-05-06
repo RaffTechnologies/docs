@@ -1,0 +1,118 @@
+---
+title: Connect via SSH
+description: Open a session to a Linux VM — in-browser terminal, direct SSH, or VNC console fallback
+---
+
+Once a Linux VM is `active`, you have three ways to connect:
+
+| Method | Where it runs | Best for |
+|---|---|---|
+| **Browser terminal** | In the dashboard | One-off checks; no client install |
+| **Direct SSH** | Your machine (terminal or PuTTY) | Daily use, scripts, file transfer |
+| **VNC console** | In the dashboard | Fallback when networking is broken or the VM has no public IP |
+
+The dashboard's **Console** button picks the right in-app option automatically:
+- **Public IPv4 exists and SSH not disabled** → SSH browser terminal opens.
+- **No public IPv4, or SSH disabled** → VNC console opens instead.
+
+## 1. Browser terminal (in-app SSH)
+
+You can open it from three places.
+
+### a. VM detail page → Console
+
+The big orange **Console** button at the top of any VM's detail page.
+
+<Frame>
+  ![VM detail page with the Console action button at the top](/images/products/build/virtual-machines/connect-via-ssh-02-vm-detail-console.png)
+</Frame>
+
+### b. Instances list → row's 3-dot menu → Open Terminal
+
+Click the **⋮** at the right end of any VM row, then **Open Terminal**.
+
+<Frame>
+  ![Instance list with the row Actions menu open showing Open Terminal](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+</Frame>
+
+### c. VM detail page → Actions tab
+
+The same Console action also appears under the **Actions** tab on the detail page — useful when you've scrolled past the top action bar.
+
+### What you see
+
+The terminal opens in a new tab, authenticates as `root` automatically using the VM's stored credentials, and drops you at a shell. **Fullscreen** and **Disconnect** are top-right.
+
+<Frame>
+  ![Browser-based SSH terminal connected to a VM with a root shell](/images/products/build/virtual-machines/connect-via-ssh-03-browser-terminal.png)
+</Frame>
+
+## 2. Direct SSH (your terminal or PuTTY)
+
+For daily work, scripts, file transfer (`scp`/`rsync`), port forwarding, etc.
+
+### macOS / Linux — terminal
+
+```bash
+ssh root@<public-ipv4>
+```
+
+If you set up the VM with **SSH Key** auth, your matching private key authenticates automatically (e.g. `~/.ssh/id_ed25519`). If you used **Password** auth, you'll be prompted.
+
+To use a specific key file:
+
+```bash
+ssh -i ~/.ssh/raff_key root@<public-ipv4>
+```
+
+If you get **Permission denied (publickey)**, fix key permissions: `chmod 600 ~/.ssh/raff_key`.
+
+### Windows — PuTTY
+
+1. Download PuTTY from [putty.org](https://www.putty.org).
+2. In **Host Name (or IP address)**, paste the VM's public IPv4. Port `22`, connection type **SSH**.
+3. For SSH-key auth: open **Connection → SSH → Auth → Credentials** and browse to your `.ppk` private key. If you only have an OpenSSH-format key, convert it first using **PuTTYgen** (Load → Save private key as `.ppk`).
+4. Click **Open**. Username `root`. PuTTY uses the key, or prompts for the password.
+
+### Windows — built-in OpenSSH (Windows 10+ / 11)
+
+PowerShell or Command Prompt — same as macOS/Linux:
+
+```powershell
+ssh root@<public-ipv4>
+```
+
+Works if your private key is at `%USERPROFILE%\.ssh\id_ed25519` (or similar).
+
+## 3. VNC console (graphical fallback)
+
+The VNC console connects through the hypervisor instead of the network. Use it when:
+
+- The VM has **no public IPv4** (private-only VPC)
+- You misconfigured the firewall or security group and locked yourself out over SSH
+- The SSH daemon isn't running or you've disabled it
+- You need single-user mode or to recover from a broken boot
+
+Open it the same way as the browser terminal — **Console** button on the detail page, or **Open Terminal** on the row Actions menu. When SSH isn't reachable, the dashboard automatically opens VNC instead and shows the OS login prompt.
+
+Close the browser tab to disconnect.
+
+## Troubleshooting
+
+- **Connection refused** — the attached security group must allow inbound TCP/22 from your IP.
+- **Permission denied (publickey)** — verify your private key matches the public key uploaded at VM creation; on macOS/Linux make sure the key permissions are `600`.
+- **Connection timed out** — check the VM is `active`, not `passive` or `provisioning`. Confirm the public IPv4 in the dashboard hasn't changed.
+- **No public IP** — use the VNC console, or reach the VM through another VM in the same VPC.
+
+See [Troubleshooting](/products/build/virtual-machines/troubleshooting) for more.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Start, stop, reboot.
+  </Card>
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Recover access if you're locked out.
+  </Card>
+</CardGroup>

@@ -1,0 +1,101 @@
+---
+title: Reinstall a VM
+description: Re-image a VM with a fresh OS template while keeping the IP, attached volumes, and specs
+---
+
+Reinstall replaces the VM's OS disk with a fresh OS template. The VM keeps its ID, public IPv4, attached volumes, and CPU/RAM/disk specs — everything else on the OS disk is destroyed.
+
+## Before you start
+
+<Warning>
+  Reinstall is destructive. The OS disk is wiped and **all snapshots and backups of this VM are deleted**. If you want to keep anything, take a snapshot to attached volumes or push to Object Storage first.
+</Warning>
+
+## What's preserved vs reset
+
+| Preserved | Reset |
+|---|---|
+| Attached volumes and their data | OS disk (everything on it) |
+| Network configuration and IP addresses | Installed software and configurations |
+| VM specifications (CPU, RAM, base disk size) | Root / Administrator password (regenerated) |
+| | Existing snapshots and backups of this VM |
+
+The VM is unavailable for **1-5 minutes** during the rebuild. See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the full survival matrix across reinstall, factory reset, and delete.
+
+## Two ways to start
+
+### a. VM detail page → Actions tab → Change OS
+
+Open the **Actions** tab on the VM detail page. Under **System Operations** find the **OS Reinstallation** card and click **Change OS**.
+
+<Frame>
+  ![Actions tab on VM detail page with the OS Reinstallation card and Change OS button](/images/products/build/virtual-machines/reinstall-01-actions-tab.png)
+</Frame>
+
+### b. Instance list row → Actions menu → Reinstall OS
+
+In the **Instances** list, open the row's **⋮** menu and pick **Reinstall OS**. Both paths open the same 3-step dialog.
+
+<Frame>
+  ![Row Actions menu showing Reinstall OS option](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+</Frame>
+
+## Step 1 — Select OS
+
+Pick the new OS template (or stay on the same one for a clean reinstall) and the version.
+
+<Frame>
+  ![Reinstall Step 1: OS grid with Ubuntu, Fedora, Debian, CentOS, AlmaLinux, Rocky Linux, FreeBSD, Alpine Linux, openSUSE, and a Version dropdown](/images/products/build/virtual-machines/reinstall-02-select-os.png)
+</Frame>
+
+Same OS lineup as VM creation. Switch between Linux distros, jump from Linux to Windows, or stay put for a clean reinstall. The **Marketplace** tab is also available for pre-built application images.
+
+## Step 2 — Authentication
+
+Pick how you'll log in to the rebuilt VM.
+
+<Frame>
+  ![Reinstall Step 2: three authentication options — SSH Key, Set Password, Email Me Password](/images/products/build/virtual-machines/reinstall-03-authentication.png)
+</Frame>
+
+| Option | What it does |
+|---|---|
+| **SSH Key** | Pick an existing key from your saved list (same keys used at VM creation) |
+| **Set Password** | Type your own root / Administrator password |
+| **Email Me Password** | Platform generates a secure password and emails it to your account address |
+
+## Step 3 — Confirm
+
+Review what's preserved and reset, tick the acknowledgement box, and click **Reinstall OS**.
+
+<Frame>
+  ![Reinstall Step 3: confirmation listing preserved/reset items and the 1-5 minute unavailability warning](/images/products/build/virtual-machines/reinstall-04-confirm.png)
+</Frame>
+
+## After reinstall
+
+- The VM transitions `provisioning` → `booting` → `active` (typically 1-5 minutes).
+- Public IPv4 is unchanged — DNS records still point at the right place.
+- Connect with the new credentials (your SSH key, the password you set, or the emailed password).
+- Attached volumes are still attached but may need re-mounting; the new OS won't have your old `/etc/fstab`.
+
+## Reinstall vs other options
+
+| Goal | Use |
+|---|---|
+| Clean OS reset, keep IP and specs | **Reinstall** |
+| Same OS, just a clean state | **Reinstall** with the same template |
+| Switch between Linux and Windows | **Reinstall** with the new family |
+| Recover from misconfiguration without wiping the OS | [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) + [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback) |
+| Fully start over with a new VM | [Delete](/products/build/virtual-machines/quickstart-guides/delete-vm) and [Create](/products/build/virtual-machines/quickstart-guides/create-a-vm) |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a snapshot" icon="camera" href="/products/build/virtual-machines/quickstart-guides/create-snapshot">
+    Capture state before reinstalling.
+  </Card>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    Reconnect after the rebuild.
+  </Card>
+</CardGroup>

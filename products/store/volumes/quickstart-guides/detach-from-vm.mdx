@@ -1,0 +1,93 @@
+---
+title: Detach from a VM
+description: Cleanly unmount a volume from a VM so it can be reattached elsewhere, while keeping all data intact
+---
+
+Detaching frees a volume from its current VM. The data is untouched — you can reattach the same volume to a different VM in the same region whenever you want.
+
+## Before you start
+
+- **The dashboard recommends powering off the VM before detach** — it warns you in the confirmation dialog and offers a "Detach Anyway" option. Powering off is the safest path; if you need to keep the VM running, at minimum unmount the volume cleanly inside the OS first.
+- The VM must be in `active` or `passive` state. If the VM is `provisioning` (e.g. taking a snapshot or backup) the dashboard blocks detach with a warning.
+- The volume is currently attached to a VM. **Detach from VM** only appears in the actions menu when the volume is attached.
+
+## 1. (Recommended) Power off the VM, or unmount cleanly
+
+The cleanest path is to **power off the VM** before detach — the dashboard explicitly recommends this in the confirmation dialog. If powering off isn't an option, unmount the volume inside the running OS first.
+
+### Linux — unmount in the live OS
+
+```bash
+# Stop anything writing to the mount point
+sudo lsof +D /mnt/data       # see what's using it
+# Stop the offending services first
+
+sudo umount /mnt/data
+```
+
+If `umount` complains the device is busy, find and stop the process holding it (`fuser -m /mnt/data`).
+
+Edit `/etc/fstab` and **remove or comment out** the line for this volume — otherwise the next boot can hang waiting for a missing device. (If you added `nofail` per the [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) guide, the boot won't hang — but cleaning up the line is still good hygiene.)
+
+### Windows — offline in Disk Management
+
+In **Computer Management → Disk Management**, right-click the volume → **Offline**. The drive letter disappears once Windows confirms there are no open handles.
+
+## 2. Detach in the dashboard
+
+In the **Volumes** list, open the volume's row Actions menu and pick **Detach from VM**.
+
+<Frame>
+  ![Volume row Actions menu while attached, showing Detach from VM at the top](/images/products/store/volumes/volume-row-actions-attached.png)
+</Frame>
+
+A confirmation dialog opens with the data-corruption warning:
+
+<Frame>
+  ![Confirm Volume Detachment dialog warning that it's recommended to power off the VM before detaching, with Cancel and red Detach Anyway buttons](/images/products/store/volumes/detach-from-vm-01-confirm.png)
+</Frame>
+
+If the VM is fully powered off, click **Detach Anyway** — the warning still shows, but there's no live filesystem at risk. If the VM is running and you've unmounted, click **Detach Anyway** to confirm. If you haven't unmounted yet, **Cancel**, unmount first, then come back.
+
+The volume's row updates to show **Not attached**. The actions menu narrows to **Attach to VM**, **Configure volume**, and **Delete** — **Increase size** and **Take snapshot** are only available while attached.
+
+## If the VM is in `provisioning`
+
+If a snapshot or backup is in progress on the VM, detach is blocked with a top-of-page warning:
+
+<Frame>
+  ![Top-of-page warning: Please wait! VM is not ready to detach volume. VM should be in an active or passive state to detach volumes](/images/products/store/volumes/detach-from-vm-02-not-ready-warning.png)
+</Frame>
+
+Wait for the snapshot/backup to finish (the VM returns to `active` or `passive`), then retry the detach.
+
+## What's preserved on detach
+
+| Item | Result |
+|---|---|
+| Volume contents | Untouched — every byte preserved |
+| Filesystem | Untouched (still ext4 / xfs / NTFS as before) |
+| `/etc/fstab` entry on the VM | Still there unless you removed it — clean it up |
+| Volume billing | Continues — the volume still exists, just isn't attached |
+| Snapshots taken from this volume | Untouched |
+
+## After detaching
+
+The volume sits standalone in your region until you do something with it. Three options:
+
+| Goal | What to do |
+|---|---|
+| Move to another VM | [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm) — pick the new target. The data is the same; you only need to mount it inside the new VM (`/etc/fstab`). |
+| Keep around as cold storage | Nothing — the volume keeps existing and billing for storage. |
+| Stop billing entirely | [Delete the volume](/products/store/volumes/quickstart-guides/delete-volume). Take a snapshot first if you want to preserve the data. |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Attach to a VM" icon="link" href="/products/store/volumes/quickstart-guides/attach-to-vm">
+    Move the volume to a different VM in the same region.
+  </Card>
+  <Card title="Delete a volume" icon="trash" href="/products/store/volumes/quickstart-guides/delete-volume">
+    Permanently remove if no longer needed.
+  </Card>
+</CardGroup>

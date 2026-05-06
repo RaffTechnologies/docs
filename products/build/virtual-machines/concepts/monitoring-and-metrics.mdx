@@ -1,0 +1,149 @@
+---
+title: Monitoring & metrics
+description: How Raff measures VM health, what each graph means, and where to read live state
+---
+
+A running VM emits a continuous stream of operational signals — CPU, memory, network, disk, and aggregate data transfer. Raff collects these from the **hypervisor**, not from inside the guest OS, so there's no agent to install and metrics work the same way regardless of distro, kernel, or whether the OS is even healthy.
+
+Hypervisor-level metrics treat the VM as a black box: they tell you how loaded the VM is, but not why. Pair them with in-VM tools (`top`, `htop`, your APM) for the full picture.
+
+## What's tracked
+
+| Metric | Granularity | What it answers |
+|---|---|---|
+| **Total Data Transfer** | Cumulative outbound to internet | "How much egress is this VM generating?" |
+| **CPU Usage** | Average % over time | "Is this VM CPU-bound? Do I need to resize?" |
+| **Memory Usage** | Used vs Free in MB | "Memory leak? OOM kill? Memory pressure?" |
+| **Network Traffic** | RX/TX KB/s per interface | "Is traffic actually reaching the right NIC?" |
+| **Disk Throughput** | Read/Write KB/s on boot disk | "Is the workload disk-bound?" |
+
+All five share a single time-range selector and update on a regular interval.
+
+## Where to find it
+
+Open the VM detail page either way:
+
+- **Click the row** anywhere in the Instances list, or
+- Open the row's **⋮** menu and pick **View Details**
+
+The detail page opens on the **Graphs** tab by default.
+
+<Frame>
+  ![VM detail page on the Graphs tab with the VM Information side panel and time-range selector](/images/products/build/virtual-machines/monitoring-01-graphs-overview.png)
+</Frame>
+
+The time-range selector at the top of the tab applies to every chart at once: **30m / 1h / 2h / 6h / 24h / 7d / 1m / All**. Pick a wider range for trend analysis, narrower for live troubleshooting. The **Refresh** button forces an immediate re-fetch; otherwise charts auto-refresh.
+
+## Reading each graph
+
+### Total Data Transfer
+
+Cumulative outbound bytes from the VM to the public internet for the selected window. Outbound bandwidth is **unlimited and free** on every plan — this graph is for visibility, not billing. Useful for:
+
+- Catching unexpected egress (compromised host, runaway loop, data leak)
+- Sizing CDN offload for static assets
+- Capacity-planning across regions
+
+Inbound traffic isn't counted here; private VPC traffic between your own VMs is also excluded.
+
+### CPU Usage
+
+Average CPU utilization (%) across all vCPUs over time. The dashed red line at **80%** is a soft threshold — sustained CPU above it means the VM is becoming a bottleneck.
+
+<Note>
+  **Raff does not throttle your VM.** The 80% line is a visual reference, not a cap. As long as your usage is legitimate, you are free to run at 100% across all vCPUs for as long as you need — no CPU credits, no burst quotas, no automatic slowdown.
+</Note>
+
+What the shape tells you:
+- **Single spikes** — normal: a deploy, a backup, a cron job
+- **Sustained 80%+** — undersized; resize up, optimize, or split workload
+- **Saw-tooth** — periodic load: a scheduler running every N minutes
+- **Stuck at 100%** — a runaway process; SSH in and check `top`
+
+### Memory Usage
+
+Used and Free memory in MB, summing to the VM's total RAM.
+
+<Frame>
+  ![Memory Usage graph showing Used (red) and Free (green) MB stacked over time, with a sharp drop indicating an OOM event or restart](/images/products/build/virtual-machines/monitoring-02-memory.png)
+</Frame>
+
+What to watch for:
+- **Used trending up over hours** — memory leak; check long-running services
+- **Sharp drop in Used** — OOM kill, service restart, or VM reboot
+- **Used near total** — paging or swap pressure; resize up
+
+Note: "Used" includes the OS page cache, which Linux happily fills. Treat it as a load indicator, not a panic signal.
+
+### Network Traffic
+
+RX (receive) and TX (transmit) per network interface, in KB/s. Each interface is numbered (`0`, `1`, …). Typically `0` is the public NIC and `1` is the VPC NIC, but labelling depends on attachment order — verify on the **Network** tab.
+
+<Frame>
+  ![Network Traffic graph with RX and TX series for two interfaces over time](/images/products/build/virtual-machines/monitoring-03-network.png)
+</Frame>
+
+Use it to:
+- Confirm an app is actually receiving traffic (RX > 0 on the right interface)
+- Catch traffic on the wrong NIC (e.g. internal calls hitting the public IP)
+- Detect DDoS, scraping, or bandwidth abuse (sudden sustained RX spike)
+- Verify private-network setups (RX/TX on the VPC interface)
+
+### Disk Throughput
+
+Read and Write in KB/s on the **boot disk** (attached volumes have their own metrics).
+
+<Frame>
+  ![Disk Throughput graph with Read and Write KB/s over time, showing a single read spike during a one-off load](/images/products/build/virtual-machines/monitoring-04-disk.png)
+</Frame>
+
+What to watch for:
+- **Sustained writes** — background jobs, log churn, or a database flushing
+- **Sustained reads** — cache misses; consider more RAM or a read replica
+- **Periodic spikes** — backups, cron jobs, snapshot windows
+
+## VM Information side panel
+
+The left side panel on the detail page is a **live summary** of the VM — useful even when you're not looking at graphs. It collapses with the chevron when you want more room for charts.
+
+| Section | What it shows |
+|---|---|
+| **Pricing** | Plan, monthly price, status, next billing date, current billing period |
+| **Credentials** | Username (e.g. `root`), Send Password to Email |
+| **Resources** | vCPU, memory, storage, total storage |
+| **Network** | Public IPv4, IPv6 (if enabled), private IPv4 in the VPC |
+| **Storage & Volumes** | Boot disk size, count of attached volumes |
+| **Backups & Snapshots** | Counts of each |
+
+Click an arrow on a section header to jump to the related management page (Resources → Resize, Storage → Volumes, etc.).
+
+## What hypervisor metrics can't tell you
+
+Because the data comes from outside the guest, the dashboard can't see:
+
+| You won't see here | Use instead (inside the VM) |
+|---|---|
+| Per-process CPU / RAM | `top`, `htop`, `pidstat` |
+| Per-mount disk usage | `df`, `du` |
+| Per-connection network | `ss`, `iftop`, `tcpdump` |
+| Application latency, errors | Prometheus / OpenTelemetry / APM |
+| HTTP request rates | Web-server logs, APM |
+
+For production observability, run an in-VM agent and ship to your own monitoring stack (Prometheus + Grafana, Datadog, New Relic, etc.). Raff's graphs are best used as a **first-glance** signal: is the VM alive, is it loaded, is it transferring data — then dig deeper with in-VM tools.
+
+## Retention and refresh
+
+- **Time range** — up to **All** (since VM creation). Older windows are aggregated; recent windows show finer-grained samples.
+- **Refresh** — charts update on a regular interval. The **Refresh** button forces an immediate refetch.
+- **Export** — not available in the dashboard today; for long-term retention or alerting, scrape from inside the VM or use an external monitoring stack.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Plans & sizing" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
+    What CPU, RAM, and storage a plan includes.
+  </Card>
+  <Card title="Resize a VM" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
+    When metrics tell you the VM is undersized.
+  </Card>
+</CardGroup>

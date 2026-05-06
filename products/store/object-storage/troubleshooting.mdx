@@ -1,0 +1,231 @@
+---
+title: Troubleshooting
+description: Common Raff Object Storage errors — authentication, connection, uploads, ACLs — and the fix that works in each case
+---
+
+The most-seen failures with Raff Object Storage and the fix that resolves each. Most of these come from the SDK side; for ACL and policy questions see [Set public or private](/products/store/object-storage/quickstart-guides/set-public-private). If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+
+Raff Object Storage runs on **Ceph RGW** (RADOS Gateway), so error responses follow standard S3 conventions — the error codes (`SignatureDoesNotMatch`, `EntityTooSmall`, `AccessDenied`, etc.) are the same ones you'd see from AWS, MinIO, or other Ceph-backed services. Most fixes are universal across S3-compatible providers.
+
+## Authentication and signing
+
+<AccordionGroup>
+  <Accordion title="`SignatureDoesNotMatch` — request fails with auth errors">
+    **What's happening:** the SDK signs the request, Raff rejects the signature.
+
+    **Most common cause:** **region mismatch.** Your SDK is signing with `us-east-1` (AWS default) but Raff's region is `us-east`.
+
+    **Fix:** set region explicitly:
+
+    | SDK | Setting |
+    |---|---|
+    | boto3 | `region_name="us-east"` |
+    | aws-cli | `--region us-east` or `AWS_REGION=us-east` |
+    | AWS SDK v3 (JS) | `region: "us-east"` |
+    | aws-sdk-go-v2 | `config.WithRegion("us-east")` |
+    | rclone | `region = us-east` |
+    | s3cmd | `bucket_location = us-east` |
+
+    Other causes:
+    - **Wrong endpoint** — confirm `endpoint_url = https://s3.raffusercloud.com`.
+    - **System clock skew** — SigV4 rejects requests more than 15 min off real time. Run `ntpdate` or `chronyc sources` to verify.
+    - **Mangled secret key** — copy/paste lost a character; regenerate the key if unsure.
+  </Accordion>
+
+  <Accordion title="`InvalidAccessKeyId` — key not recognized">
+    **What's happening:** Raff doesn't know that access key ID.
+
+    **Fix:**
+    1. Confirm you copied the key from the right Raff account (check the dashboard).
+    2. Confirm the key wasn't deleted or disabled — see **Object Storage → Access Keys**.
+    3. If you saved a typo'd ID, generate a new key — there's no way to retrieve the original from the dashboard.
+  </Accordion>
+
+  <Accordion title="`AccessDenied` even with valid keys">
+    **What's happening:** the key is valid, but the operation isn't allowed.
+
+    **Likely causes:**
+    1. **Limited-scope access key** that doesn't include this bucket — see [Generate access keys → Limited](/products/store/object-storage/quickstart-guides/generate-access-keys#limited). Re-scope or create a new key.
+    2. **Bucket policy denies the operation** — open the bucket's [Permissions tab](/products/store/object-storage/quickstart-guides/set-public-private) and check the policy. A `Deny` always wins. If your `Deny Delete` policy is blocking your own cleanup, **Delete Policy** first.
+    3. **Object owned by another account** in a multi-account setup. The current account doesn't have ACL grants on this object.
+    4. **Customer-edited bucket policy broke a Limited key** — Limited access keys depend on a Raff-managed policy. If someone edited the policy directly via the S3 API, the auto-grant for that key may have been removed. Either restore the policy or re-create the key.
+  </Accordion>
+
+  <Accordion title="boto3 / AWS SDK silently calls `*.amazonaws.com`">
+    **What's happening:** the SDK ignores or drops your endpoint, talks to AWS, and you see weird auth errors or "bucket not found" against AWS S3.
+
+    **Fix:** confirm `endpoint_url` (boto3) / `endpoint:` (JS v3) / `BaseEndpoint` (Go v2) is set on **every client constructor**. The setting doesn't propagate from environment unless you explicitly read it. Most common copy-paste mistake.
+  </Accordion>
+</AccordionGroup>
+
+## Connection and TLS
+
+<AccordionGroup>
+  <Accordion title="`SSL: certificate verify failed` for buckets with dots in the name">
+    **What's happening:** the wildcard TLS certificate covers `*.s3.raffusercloud.com` (one DNS label). Bucket names with dots like `my.app.bucket` resolve to `my.app.bucket.s3.raffusercloud.com` — multi-label, which the wildcard doesn't cover.
+
+    **Fix:** force path-style addressing.
+
+    | SDK | Setting |
+    |---|---|
+    | boto3 | `Config(s3={"addressing_style": "path"})` |
+    | aws-cli | `aws s3api ...` (most ops support both) or `aws --no-verify-ssl` (not for production) |
+    | AWS SDK v3 (JS) | `forcePathStyle: true` |
+    | aws-sdk-go-v2 | `o.UsePathStyle = true` |
+    | rclone | `force_path_style = true` |
+
+    **Better fix:** for new buckets, **don't use dots** — use hyphens. `my-app-bucket` works with virtual-host style, no path-style override needed.
+  </Accordion>
+
+  <Accordion title="`Could not resolve host: s3.raffusercloud.com`">
+    **What's happening:** DNS lookup fails before the request leaves your machine.
+
+    **Likely causes:**
+    1. **Local DNS issue** — try `dig s3.raffusercloud.com` or `nslookup s3.raffusercloud.com`. If that fails, your DNS resolver is broken; restart networking or switch resolvers.
+    2. **Corporate proxy / firewall** — some networks block third-party S3 endpoints. Check with your IT team or test from outside the network.
+    3. **Typo in the endpoint** — `raffusercloud` not `raffusercloud.io` or other variants. The exact endpoint is `https://s3.raffusercloud.com`.
+  </Accordion>
+
+  <Accordion title="Connection times out, no response">
+    **What's happening:** TCP connection to `s3.raffusercloud.com:443` doesn't establish.
+
+    **Fix:**
+    1. Confirm you can reach the internet at all (`curl https://example.com`).
+    2. Confirm port 443 isn't blocked (`curl -v https://s3.raffusercloud.com`).
+    3. Check [status.rafftechnologies.com](https://status.rafftechnologies.com) for an Object Storage incident.
+  </Accordion>
+</AccordionGroup>
+
+## Uploads
+
+<AccordionGroup>
+  <Accordion title="`EntityTooSmall` on `CompleteMultipartUpload`">
+    **What's happening:** the multipart upload completes the API call but Raff rejects the assembly because one or more parts (other than the last) is below 5 MiB.
+
+    **Fix:** every part except the final one must be **at least 5 MiB**. Most SDKs enforce this automatically; if you're hand-rolling multipart, check your part-sizing logic.
+
+    Aborted incomplete uploads keep their uploaded parts billed as storage until cleaned up. Run an `AbortMultipartUpload` for the upload ID, or apply the **Abort Incomplete Uploads** lifecycle pattern.
+  </Accordion>
+
+  <Accordion title="Upload hangs partway, never completes">
+    **What's happening:** the request stalls during transfer.
+
+    **Likely causes:**
+    1. **Network instability** — multipart upload retries individual parts; if your network drops more than the retry budget, the whole upload fails. Check your connection's stability.
+    2. **Single-part PUT on a large file** — for files larger than ~100 MB, prefer multipart (every modern SDK auto-switches above 5-10 MB; if your code disables it, files past ~5 GB will fail outright).
+    3. **Server-side timeout** — large single-PUT requests have a connection time limit. Switch to multipart.
+
+    **Fix:** make sure your client uses multipart for large files. In `boto3`, `s3.upload_file` and `Object.upload_file` use multipart by default. In `aws-cli`, `aws s3 cp` does too. In `aws-sdk-go-v2`, use `s3manager.Uploader` instead of raw `PutObject`.
+  </Accordion>
+
+  <Accordion title="Files appear duplicated or partially uploaded">
+    **What's happening:** the bucket lists the object but the size or content is wrong.
+
+    **Likely causes:**
+    1. **Multipart upload was aborted before completion** — the parts are billed as storage but invisible. Run `ListMultipartUploads` against the bucket to find them, then `AbortMultipartUpload` on each.
+    2. **Two clients raced** to write the same key. Last-write-wins; the loser sees its data overwritten.
+    3. **Object listed before consistency window settled** — Raff's listing is strongly consistent, but if you `PutObject` then immediately `ListObjects`, retry once if the object isn't there.
+  </Accordion>
+
+  <Accordion title="Dashboard upload progresses, then nothing happens">
+    **What's happening:** the upload dialog says complete but the object doesn't show in the bucket.
+
+    **Fix:**
+    1. **Refresh the page** — the bucket listing doesn't always live-update.
+    2. **Check the file size** — files above ~100 MB use multipart; the dashboard does this transparently but it can take a moment for the assembly to finish on the server side.
+    3. If still missing after 1-2 minutes, contact support with the bucket name and approximate upload time.
+  </Accordion>
+</AccordionGroup>
+
+## ACLs and access
+
+<AccordionGroup>
+  <Accordion title="Public bucket but Object URL returns 403">
+    **What's happening:** you set the bucket ACL to `Public Read` but accessing the URL in a browser returns Forbidden.
+
+    **Likely causes:**
+    1. **Object has its own `Private` ACL override** — open the object's Details page → Access Control. Set to Public.
+    2. **Bucket policy explicitly denies anonymous access** — the bucket ACL grants public, but a `Deny` in the policy wins. Open the [Permissions tab](/products/store/object-storage/quickstart-guides/set-public-private) and review the policy JSON.
+    3. **Wrong URL format** — the public URL is `https://<bucket>.s3.raffusercloud.com/<key>`, not `https://s3.raffusercloud.com/<bucket>/<key>` (path style). The latter requires authentication for browser access.
+  </Accordion>
+
+  <Accordion title="Limited access key suddenly stopped working">
+    **What's happening:** a key that was working starts returning `AccessDenied`.
+
+    **Why:** Limited access keys depend on a **Raff-managed bucket policy** that grants them access. If anyone edited that bucket's policy directly via the S3 API, `aws-cli`, or the dashboard's policy JSON editor, the auto-grant for the Limited key may have been overwritten or removed.
+
+    **Fix:**
+    1. Open the bucket's [Permissions tab](/products/store/object-storage/quickstart-guides/set-public-private). Review the JSON policy — look for statements granting access to your access key ID.
+    2. **Easiest path:** delete the existing Limited access key and create a new one — Raff regenerates the bucket policy for the new key.
+    3. **Alternative:** restore the missing grant manually in the bucket policy JSON.
+    4. **Prevent recurrence:** if your team edits bucket policies often, consider using **Full Access** keys for those buckets — Full Access doesn't depend on bucket policies and can't be broken by policy edits.
+  </Accordion>
+
+  <Accordion title="CORS errors when calling Raff from a browser">
+    **What's happening:** browser console shows `No 'Access-Control-Allow-Origin' header` or `CORS policy blocked the request`.
+
+    **Fix:** configure CORS on the bucket. Use the S3 SDK's `PutBucketCors` API:
+
+    ```bash
+    aws --endpoint-url https://s3.raffusercloud.com --region us-east \
+        s3api put-bucket-cors --bucket my-bucket --cors-configuration '{
+      "CORSRules": [{
+        "AllowedOrigins": ["https://your-app.example.com"],
+        "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        "AllowedHeaders": ["*"],
+        "ExposeHeaders": ["ETag"],
+        "MaxAgeSeconds": 3000
+      }]
+    }'
+    ```
+
+    Don't use `"AllowedOrigins": ["*"]` for buckets that hold private or authenticated content — it lets any site embed your URLs.
+  </Accordion>
+</AccordionGroup>
+
+## Pricing and billing
+
+<AccordionGroup>
+  <Accordion title="Storage usage looks higher than what I uploaded">
+    **What's happening:** the bucket size in the dashboard is bigger than the sum of files you can see.
+
+    **Likely causes:**
+    1. **Aborted multipart uploads** — uploaded parts that never completed assembly are still stored and billed. List with `ListMultipartUploads` and abort.
+    2. **Versioning enabled** — every PUT to the same key keeps the previous version. Old versions stay billed until cleaned up. Disable versioning if you don't need it; or expire old versions via lifecycle.
+    3. **Hidden delete markers** (versioned buckets) — deleting an object in a versioned bucket leaves a marker; previous versions stay until you explicitly purge.
+  </Accordion>
+
+  <Accordion title="Hit by the \$7/month minimum on a small bucket">
+    **What's happening:** you're storing a few MB of data but billing \$7/month.
+
+    **Why:** the **subscription plan** has a \$7/month base that includes the first 100 GB. If you're storing well under 100 GB, the per-GB rate would be cheaper.
+
+    **Fix:** [request PAYG](/products/store/object-storage/details/features-and-limits#pay-as-you-go-enterprise--smb-on-request) from support — at \$0.07/GB/month with no minimum, small buckets pay only what they use.
+  </Accordion>
+</AccordionGroup>
+
+## Migration
+
+<AccordionGroup>
+  <Accordion title="Migrating from AWS S3 — what doesn't port?">
+    **Not portable:**
+    - Calls to S3 Select, Object Lambda, Storage Classes (Glacier / IA / Intelligent-Tiering), Object Lock compliance modes, S3 Replication, Access Points, Transfer Acceleration, IAM-principal bucket policies, KMS-managed keys.
+
+    **Portable:**
+    - Bucket / object CRUD, multipart, ACLs, bucket policies (rewritten to use access keys instead of IAM principals), CORS, versioning, presigned URLs.
+
+    **Migration path:** [`rclone`](#rclone--best-for-syncs-and-mass-copies) with both providers configured as remotes; `rclone sync source:bucket raff:bucket`. Or [contact support](mailto:support@rafftechnologies.com) — Raff can run end-to-end migrations and hand you a working bucket. See [S3 compatibility](/products/store/object-storage/concepts/s3-compatibility) for the full feature matrix.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The **bucket name** and the **access key ID** in use
+- The exact **error message** from your SDK / CLI / browser console
+- The **request ID** (most SDKs surface this — `e.response['ResponseMetadata']['RequestId']` in boto3, `Error.RequestId` in JS, etc.)
+- The **timestamp** (with timezone) of the failed request
+- A minimal repro if possible — the smallest code that triggers the problem
+
+Status page: [rafftechnologies.com/status](https://rafftechnologies.com/status).

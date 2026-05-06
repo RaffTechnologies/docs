@@ -1,0 +1,94 @@
+---
+title: Move a reserved IP between VMs
+description: Detach a reserved public IP from one VM, attach it to another, without changing the IP itself — useful for blue/green deploys, failover, and partner-whitelist preservation
+---
+
+A **reserved IP** can be moved from one VM to another without changing the address. Detach it from VM A, attach it to VM B — the IP stays the same, your DNS records stay valid, partner whitelists stay correct, and the only thing that changes is which server traffic lands on. This is the standard pattern for blue/green deploys, manual failover, and "promote a candidate VM by repointing the IP" workflows.
+
+This page covers reserved IPs only. **Auto-assigned IPs cannot be moved** — when you detach an auto-assigned IP, it returns to the regional pool and may be allocated to someone else. If you need this workflow, [reserve an IP first](/products/network/public-ips/quickstart-guides/reserve-ip).
+
+## Before you start
+
+- A **reserved** IP — the Type column on the Public IPs tab will say "Reserved" (not "VM" or "Gateway")
+- A target VM in the **same region** as the IP — IPs are region-locked
+- The target VM should not already have a public IP of the same type (IPv4 ↔ IPv4, IPv6 ↔ IPv6) — remove its existing one first, or assign the moved IP to the IPv6 slot if it's free
+
+## 1. Detach from the source VM
+
+Two equivalent paths — pick whichever is closer:
+
+| From | How |
+|---|---|
+| **VM detail → Network tab** | Click **Remove Public IP** on the IP's card. Confirm the dialog (it shows "reserved IP — will stay in your account"). |
+| **Networking → Public IPs** | Find the IP's row, click `⋮` → **Detach from VM**. |
+| **Networking diagram** | Click the blue IP chip floating above the source VM → **Detach from VM**. |
+
+The IP detaches in seconds. On the Public IPs tab, the row's **Assigned To** column now reads `—` (or `Unassigned`) and the IP is ready to re-attach.
+
+**The address stays the same.** Active SSH/RDP/HTTP sessions to the IP drop because they're now hitting nothing — that's expected. DNS records pointing at this IP keep resolving correctly; they just temporarily don't have a backend until you complete step 2.
+
+## 2. Attach to the target VM
+
+Three equivalent paths:
+
+| From | How |
+|---|---|
+| **VM detail → Network tab** (target VM) | Click **Add Public IP** → choose **Reserved IP** → pick this IP from the list |
+| **Networking → Public IPs** | Find the IP's row, click `⋮` → **Attach to VM** → pick the target |
+| **Networking diagram** | Click the unattached IP node → **Attach to VM** → pick the target (when this entry point is wired in the diagram) |
+
+The IP attaches to the new VM, the new VM picks it up via cloud-init / DHCP, and outbound traffic from the IP starts originating on the new VM. Inbound traffic to the IP starts arriving on the new VM as soon as the move completes — typically within a few seconds.
+
+## What this does *not* change
+
+- **The IP address itself** — same `1.2.3.4` before and after
+- **DNS records** — anything pointing at the IP is still valid; you don't need to update DNS
+- **TLS certificates pinned to the IP** — still valid
+- **Partner whitelists by IP** — still match
+- **Your billing for the IP** — \$3/month continues uninterrupted
+
+## What it *does* change
+
+- **The MAC address** behind the IP — it's now the new VM's NIC
+- **Active TCP connections** — drop on detach. Clients reconnect; the new VM serves them
+- **Outbound source IP** — outbound traffic from the new VM now appears to originate from the moved IP
+- **The Public IPs tab's Assigned To column** — points at the new VM
+- **The diagram** — the blue IP chip moves above the new VM card
+
+## Blue/green deploy pattern
+
+The canonical "swap the green VM in" workflow:
+
+1. Build a fresh VM (the "green" candidate) — runs in parallel, no traffic
+2. Test green via its own auto-assigned IP, an internal VPC IP, or a hosts-file override
+3. When ready, **detach** the reserved IP from the current "blue" VM
+4. **Attach** it to the green VM — traffic immediately flips
+5. Keep blue running for a rollback window. If green is healthy, delete blue (or the reverse if not)
+
+The whole switch is one detach-then-attach, taking under a minute. Rollback is just running the same two steps in reverse.
+
+## Failover pattern
+
+When a primary VM is unhealthy and you keep a warm-standby:
+
+1. Standby VM exists in the same region, configured identically, with no public IP
+2. Detect failure (manually or via monitoring)
+3. **Detach** the reserved IP from the failed primary
+4. **Attach** to the standby
+5. Standby starts serving the same address; clients reconnect
+
+There's no managed failover product on Raff today; this is the do-it-yourself pattern. Automate steps 3–4 with the [Change IP API](/api-reference/endpoint/change-ip) if you need it scripted.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Make an IP movable by reserving it.
+  </Card>
+  <Card title="Manage from a VM" icon="server" href="/products/network/public-ips/quickstart-guides/manage-from-vm">
+    Per-VM Network tab walkthrough.
+  </Card>
+  <Card title="Release an IP" icon="trash" href="/products/network/public-ips/quickstart-guides/release-ip">
+    Stop billing when you don't need the IP.
+  </Card>
+</CardGroup>

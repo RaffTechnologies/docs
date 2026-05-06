@@ -1,0 +1,94 @@
+---
+title: Manage public IPs from a VM
+description: Every VM has a Network tab in its detail page where you can add, remove, or attach a Firewall to the VM's public IPv4 and IPv6 addresses, and connect the VM to a VPC
+---
+
+The **Network** tab on a VM's detail page is the per-VM control panel for that VM's public IPs and VPC connections. Most operations you can do from the account-wide **Public IPs** tab in Networking, you can also do here — and this is the right place when you're focused on one VM rather than the whole account.
+
+## Open the Network tab
+
+From **Compute**, click into a VM. The detail page has a row of tabs across the top — **Graphs / Activity / Actions / Network / Snapshots / Backups / Power / Resize / Destroy**. Click **Network**.
+
+<Frame>
+  ![VM detail page on the Network tab showing Public Networking section with IPv4 (eth0, Public + Primary tags, Active, IP 23.26.4.27, MAC, Gateway, Firewall: None / Attach, Remove Public IP button) and IPv6 (Add IPv6 Address button), and Private Networking section with eth1 connected to a VPC at 10.7.0.2 plus a Connect VPC button](/images/products/network/public-ips/vm-network-tab.png)
+</Frame>
+
+The page is split into two zones — **Public Networking** at the top and **Private Networking** below.
+
+## Public Networking — IPv4 and IPv6
+
+This section shows up to one **IPv4** card and up to one **IPv6** card from the dashboard. (More than that requires support — see [Multiple IPs per VM](#multiple-ips-per-vm) below.)
+
+### IPv4 card — what's on it
+
+When the VM has a public IPv4, the card shows the full picture:
+
+| Field | Example | What it is |
+|---|---|---|
+| **Interface name** | `eth0 - Public Network` | The Linux/Windows NIC name where this IP lives |
+| **Tags** | `Public`, `Primary` | The IP is public-internet routable; `Primary` means it's the VM's default outbound IP |
+| **Status** | `Active` | The interface is up and the IP is bound |
+| **IP Address** | `23.26.4.27` | The public IPv4 address (with copy icon) |
+| **MAC Address** | `02:00:17:1a:04:1b` | Layer-2 address for the NIC |
+| **Gateway** | `23.26.4.254` | The upstream gateway the VM routes through for outbound |
+| **Firewall** | `None` / **Attach** | A Raff Firewall (security group) attached to this IP — see [Firewall](/products/network/firewall) when written |
+
+Two action buttons at the bottom:
+
+- **Attach** (next to Firewall) — opens the firewall picker. Select an existing firewall to apply its rules to this IP. The same IP can have one firewall attached.
+- **Remove Public IP** (red) — detaches this IP from the VM. **For an auto-assigned IP, the address goes back to the regional pool.** For a reserved IP, the IP stays in your account, just unattached. The dialog confirms which type before you proceed.
+
+### Add a public IP
+
+If the VM doesn't currently have a public IP of a given type, you'll see an **Add Public IPv4 / IPv6 Address** button instead of the card.
+
+Click it; a small dialog opens letting you pick:
+
+| Source | What it does |
+|---|---|
+| **Auto-assign from pool** | Free, IP returns to pool on later detach. Same as the [Auto-assign flow](/products/network/public-ips/quickstart-guides/auto-assign) but scoped to this VM |
+| **Choose a reserved IP** | Pick from your unattached reserved IPs in the same region. The IP attaches to this VM; billing continues |
+
+The IPv6 section in the screenshot shows the empty state — *"Enable dual-stack networking with a public IPv6 address"* with an **Add IPv6 Address** button. Click to add an IPv6 the same way.
+
+### Remove a public IP
+
+Click **Remove Public IP** on the IP card. A confirmation dialog explains what happens next based on the IP's type:
+
+| IP type | What happens on remove |
+|---|---|
+| **Auto-assigned** | IP returns to the regional pool. **You can't get the same IP back** if you re-add later |
+| **Reserved** | IP stays in your account, unattached. You can re-attach it to any VM in the same region. Billing continues |
+
+The VM stays running. If you remove its only public IP, the VM is reachable only over its VPC connections after the remove. Active SSH/RDP sessions on the removed IP are dropped.
+
+## Private Networking — VPC connections
+
+Below Public Networking, the **Private Networking** section shows the VM's VPC interfaces.
+
+| Element | What it is |
+|---|---|
+| **Connect VPC** button (top right) | Add the VM to another VPC — opens the same flow as [Attach a VM](/products/network/vpc/quickstart-guides/attach-vm) |
+| **`eth1 - vpc-...` cards** | Each VPC the VM is currently in. Shows the VPC name, the VPC tag, status, IP, MAC |
+
+A VM can hold one **public** interface (`eth0`) and any number of **VPC** interfaces (`eth1`, `eth2`, …). Each VPC card has its own Detach action — the equivalent of detaching from a VPC's VMs tab.
+
+## Multiple IPs per VM
+
+The dashboard supports **at most one IPv4 and one IPv6 per VM**. If your workload needs more (multi-homed services, anycast-ish setups, IP-based virtual hosting where SNI isn't an option), [contact support](mailto:support@rafftechnologies.com) — they can attach additional IPs at **\$3/month per extra IPv4** or **\$1/month per extra IPv6**, billed the same way as a reserved IP.
+
+This is rare; most workloads use a single public IP plus a reverse proxy / SNI, or attach a Firewall Appliance to the VPC and run multiple services behind it. Reach for multiple IPs only when you've ruled those out.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Auto-assign a public IP" icon="wand-magic-sparkles" href="/products/network/public-ips/quickstart-guides/auto-assign">
+    From the account-wide Public IPs tab.
+  </Card>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Hold an IP across rebuilds, $3/mo.
+  </Card>
+  <Card title="Move between VMs" icon="arrow-right-arrow-left" href="/products/network/public-ips/quickstart-guides/move-between-vms">
+    Detach here, re-attach to another VM.
+  </Card>
+</CardGroup>

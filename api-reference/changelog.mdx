@@ -13,6 +13,54 @@ All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progre
 
 ## v1.0.0 (In Progress)
 
+### April 30, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — `skip_public_ip` and `skip_vpc` flags on **Create VM** — `POST /api/v1/vms`. Build VPC-only VMs (no public IP) or public-IP-only VMs (no VPC). Cannot be combined.
+
+**Networking — API**
+- 🟢 **Added** — **Floating IP reserve/release** — `POST /api/v1/ips/reserve`, `DELETE /api/v1/ips/{id}/reserve`, plus `GET /api/v1/ips`, `GET /api/v1/ips/{id}`, `POST /api/v1/ips/{id}/change`. Reserve runs through the same balance/billing checks as VM create (402 / 403). Release refunds remaining time pro-rata for subscription IPs.
+- 🟢 **Added** — **VPC CRUD** — `POST/GET/PUT/DELETE /api/v1/vpcs[/{id}]` and `GET /api/v1/vpcs/cidr-suggestions`. Customers can now create and manage VPCs directly via the public API instead of only through VM creation.
+- 🟢 **Added** — `?type=public|vpc|ipv6` query filter on **List VM network interfaces** — `GET /api/v1/vms/{id}/networks?type=public`.
+- 🔵 **Updated** — `VMNetwork.type` enum now includes `ipv6`.
+- 🔴 **Removed** — `mac` field from public `VMNetwork` schema (still in raw response for the dashboard, hidden from public API consumers).
+
+**Networking — CLI**
+- 🟢 **Added** — `raff ip list|get|reserve|release|change`
+- 🟢 **Added** — `raff vpc list|get|create|update|delete|cidr-suggestions`
+- 🟢 **Added** — `raff vm networks <vm-id> --type public|vpc|ipv6` filter
+
+**Virtual Machines — API**
+- 🟢 **Added** — **Update VM note** — `PATCH /api/v1/vms/{id}/notes/{type}` — replaces existing note content; returns 404 if no note exists yet (use `PUT` to create).
+- 🟢 **Added** — **Append to VM note** — `POST /api/v1/vms/{id}/notes/{type}/append` — concatenates new content onto the existing note (newline-separated), creates the note if missing.
+- 🟢 **Added** — `type` query filter on **Get VM notes** — `GET /api/v1/vms/{id}/notes?type=personal|account` to fetch only one scope.
+
+**Virtual Machines — CLI**
+- 🟢 **Added** — `raff vm notes update <vm-id> --type X --content Y` (errors if note missing)
+- 🟢 **Added** — `raff vm notes append <vm-id> --type X --content Y`
+- 🟢 **Added** — `raff vm notes get <vm-id> --type personal|account` filter
+- 🟢 **Added** — `raff vm tags list <vm-id>` to discover tag IDs
+
+### April 29, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — **Hard reboot VM** for unresponsive instances — `POST /api/v1/vms/{id}/reboot-hard`
+- 🟢 **Added** — **Save VM disk as custom image** — `POST /api/v1/vms/{id}/save-image`
+- 🟢 **Added** — **List VM network interfaces** — `GET /api/v1/vms/{id}/networks`
+- 🟢 **Added** — **Attach/detach VM to/from VPC** — `POST/DELETE /api/v1/vms/{id}/vpc[/{nic_id}]`
+- 🟢 **Added** — **Attach/detach floating IP** — `POST/DELETE /api/v1/vms/{id}/ip[/{nic_id}]`
+- 🟢 **Added** — **Attach/detach security group to VM NIC** — `POST/DELETE /api/v1/vms/{id}/firewall[/{sg_id}/{nic_id}]`
+- 🟢 **Added** — **Add/update/remove VM tags** — `POST/PATCH/DELETE /api/v1/vms/{id}/tags[/{tagId}]`
+- 🟢 **Added** — **Get/upsert VM notes** (personal + account scopes) — `GET /api/v1/vms/{id}/notes`, `PUT /api/v1/vms/{id}/notes/{type}`
+- 🔴 **Removed** — `vm_id` field from VM responses (was an OpenNebula internal identifier — use `id` instead)
+- 🔵 **Updated** — `BillingError.reason` enum trimmed to currently-returned values: `banned`, `failed`, `no_billing_customer`. Insufficient balance now consistently returns `402` with a plain `Error` body.
+
+**Virtual Machines — CLI**
+- 🟢 **Added** — `raff vm hard-reboot`, `raff vm save-image`, `raff vm networks`, `raff vm vpc attach|detach`, `raff vm ip attach|detach`, `raff vm sg attach|detach`, `raff vm tags add|update|remove`, `raff vm notes get|set`
+
+**Virtual Machines — Terraform**
+- 🔴 **Removed** — `vm_id` computed attribute from `raff_vm` (was the OpenNebula int ID; use `id` instead)
+
 ### March 25, 2026
 
 **General**
@@ -21,8 +69,8 @@ All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progre
 ### March 15, 2026
 
 **Virtual Machines — API**
-- 🟢 **Added** — **Resize VM disk storage** without recreating — `POST /api/v1/vms/{id}/resize-disk`
-- 🟢 **Added** — **Bulk delete VMs** in a single request — `POST /api/v1/vms/bulk-delete`
+- 🟢 **Added** — **Resize VM disk storage** without recreating — `POST /api/v1/vms/{id}/disk/resize`
+- 🟢 **Added** — **Bulk delete VMs** in a single request — `DELETE /api/v1/vms/bulk`
 - 🔵 **Updated** — **Create VM** now accepts `enable_ipv6` parameter for IPv6 support — `POST /api/v1/vms`
 
 ### March 10, 2026

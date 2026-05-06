@@ -1,0 +1,112 @@
+---
+title: Pricing
+description: How Virtual Machines are billed on the Raff Platform
+---
+
+{/* PHASE 2: pull live plan rates from /api-reference/catalog/list-vm-pricing and present as a table per region. */}
+
+Raff bills VMs against a prepaid **account balance**. The default model is subscription; pay-as-you-go is available on request.
+
+## Subscription (default)
+
+You pay for the term you pick (e.g. monthly) up front from your account balance. The full subscription cost is reserved at creation, and the VM runs without any further charges until the term ends or you change something.
+
+When you delete a VM, downsize via [resize](/products/build/virtual-machines/quickstart-guides/resize), or otherwise reduce the subscription, the **unused days and hours are credited back to your account balance**. The credit is immediate and can be used to top up other resources or another VM.
+
+Stopping a VM (`passive` state) does **not** prorate or pause billing — the subscription continues for the term you paid for.
+
+## Pay-as-you-go (enterprise / SMB on request)
+
+Pay-as-you-go (PAYG) bills usage by the hour from your balance, with no advance commitment. The hourly rate matches the per-hour cost of the equivalent subscription plan.
+
+PAYG is available for enterprise and SMB customers on request — contact [support](mailto:support@rafftechnologies.com) to enable it on your account. The default for new accounts is subscription.
+
+## Subscription vs PAYG
+
+| | Subscription | Pay-as-you-go |
+|---|---|---|
+| **Default for new accounts** | Yes | No (enable on request) |
+| **When you pay** | Up front, full term | Hourly, after use |
+| **On delete** | Unused time credited to balance | Nothing to credit (no advance payment) |
+| **Best for** | Steady workloads | Bursty or short-lived VMs |
+
+The cost of a single full term is the same in both modes; the only real difference is **when** you pay.
+
+## Billing-date alignment to the 1st of the month
+
+Raff automatically normalizes every account's billing to the **1st of the month**, so that no matter when you create VMs, you eventually receive **one consolidated invoice on the 1st** instead of a separate invoice for every create date.
+
+This happens by default — no setting to toggle.
+
+### How it works
+
+| Cycle | What happens |
+|---|---|
+| **Month 1 — create** | You pay the full subscription term from your create date forward (e.g. create on the 14th → pay for one month, ending on the 14th of the next month). |
+| **Month 2 — normalization** | At the next renewal, Raff issues a **prorated charge** that covers the gap between your renewal date and the upcoming 1st. From there, your billing date is locked to the 1st. |
+| **Month 3 onward — aligned** | Every renewal lands on the **1st of the month**. Every VM, volume, snapshot, backup, and Public IP on the same account renews together. |
+
+The prorated charge in month 2 is always **smaller** than a full month — it covers only the leftover days between the old renewal date and the 1st. After that single correction, your invoices are 1-to-1 with calendar months.
+
+### Worked example
+
+You create three VMs on different dates in May:
+
+| VM | Created | Plan |
+|---|---|---|
+| `web-01` | May 5 | \$9.99/mo |
+| `db-01` | May 14 | \$19.99/mo |
+| `worker-01` | May 22 | \$4.99/mo |
+
+What you pay:
+
+| Date | Charge | What it covers |
+|---|---|---|
+| May 5 | \$9.99 | `web-01` for May 5 → June 5 |
+| May 14 | \$19.99 | `db-01` for May 14 → June 14 |
+| May 22 | \$4.99 | `worker-01` for May 22 → June 22 |
+| Jun 5 | ~\$8.66 | `web-01` prorated from Jun 5 → Jul 1 (~26 days) |
+| Jun 14 | ~\$11.32 | `db-01` prorated from Jun 14 → Jul 1 (~17 days) |
+| Jun 22 | ~\$1.50 | `worker-01` prorated from Jun 22 → Jul 1 (~9 days) |
+| **Jul 1** | **\$34.97** | **All three VMs renew together for the full month — one invoice** |
+
+From July 1 forward, every VM on this account renews on the 1st. Every invoice has clear per-resource line items — VMs are billed together but never merged into a lump sum.
+
+### Why this matters
+
+- **One invoice per month** — easier reconciliation, easier expense reports, easier monthly budgeting.
+- **Predictable cash flow** — you know exactly when the next bill lands.
+- **Clean separation** — every resource is its own line item with its own price and term, so you can still see what each VM costs.
+- **Smaller mid-flight charges** — the only "extra" event is one prorated charge per resource, always less than a full month.
+
+PAYG accounts (enterprise / SMB on request) follow a different cycle — usage accrues hourly and is settled at month-end on the 1st without the prorated normalization step.
+
+## What's billed separately
+
+| Item | Billing |
+|---|---|
+| **Plan** (CPU, RAM, base disk) | Subscription term or hourly |
+| **Outbound bandwidth** | **Unlimited — included on every plan, no per-GB charge** |
+| **Block storage volumes** | Subscription term or hourly |
+| **Snapshots** | Per GB stored |
+| **Backups** | Per GB stored (first 3 backups per VM are free) |
+| **Object Storage** | Per GB stored |
+| **Public IPs** | Per IP, separately billed |
+
+## Live rates
+
+The current plan list with regional pricing is available at:
+
+- **API** — [List VM Pricing](/api-reference/catalog/list-vm-pricing)
+- **Dashboard** — Plan picker on the VM creation page
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Plans & sizing" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
+    What's bundled in a plan.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/build/virtual-machines/details/features-and-limits">
+    Full feature list.
+  </Card>
+</CardGroup>

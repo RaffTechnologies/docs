@@ -1,0 +1,164 @@
+---
+title: Delete a VM
+description: Permanently destroy a virtual machine, decide what to do with its volumes and VPCs, and credit unused subscription time back to your balance
+---
+
+Deleting a VM removes it from your account and stops billing. The dashboard walks you through a **two-step confirmation** that lets you decide what to do with the VM's attached volumes and VPCs at the same time. On a subscription, the unused days and hours of the current term are credited back to your account balance.
+
+## Before you delete — keep a recovery option
+
+<Warning>
+  Deletion is permanent. The VM's OS disk **and all of its snapshots** are destroyed. Plan recovery before you click destroy, not after.
+</Warning>
+
+Two ways to keep a path back:
+
+| Option | What survives | How to recover later |
+|---|---|---|
+| **Take a backup first** | A retained backup of the VM's disk | Contact [support](mailto:support@rafftechnologies.com) — Raff support can use the backup to create a new VM with all your data and installation intact |
+| **Save a snapshot as an image** (do this *before* deleting) | A reusable custom image | Create a new VM from the image any time — see [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image) |
+
+If you only care about specific files (not the whole VM), back them up to [Object Storage](/products/store/object-storage) or off-platform before deleting.
+
+## Three ways to start
+
+### a. VM detail page → Destroy tab
+
+Open the VM detail page, click the **Destroy** tab (last tab in the secondary nav).
+
+<Frame>
+  ![VM detail page Destroy tab with the permanent-action warning and the red Destroy VM button](/images/products/build/virtual-machines/delete-vm-01-destroy-tab.png)
+</Frame>
+
+Click the red **Destroy VM** button to start the two-step confirmation.
+
+### b. Instance list → row Actions menu → Destroy
+
+Open the row's **⋮** menu and pick **Destroy** (in red, at the bottom).
+
+<Frame>
+  ![Instance list row Actions menu showing Destroy in red at the bottom](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+</Frame>
+
+This redirects you to the **Destroy** tab on the VM detail page — same confirmation flow as path **a**.
+
+### c. Bulk — multiple VMs at once
+
+In the Instances list, tick the checkbox on multiple VM rows. The bulk toolbar at the top shows **Delete Selected**.
+
+<Frame>
+  ![Instance list with two VMs checked and the bulk toolbar showing Stop 2 and Delete Selected](/images/products/build/virtual-machines/manage-power-02-bulk-select.png)
+</Frame>
+
+Bulk delete uses the **same two-step confirmation** described below — the volume / VPC handling choices you make apply to **every** VM in the selection.
+
+## Step 1 — Type the VM name to confirm
+
+A "Destroy VM" dialog opens. Type the VM's exact name to enable the **Confirm** button.
+
+<Frame>
+  ![Destroy VM dialog with the VM name field, a confirmation text input, and a Subscription Billing notice that remaining days return to your account balance](/images/products/build/virtual-machines/delete-vm-02-confirm-name.png)
+</Frame>
+
+Two things on this screen:
+
+- **Type the VM name to confirm** — copy or type the name exactly. Prevents accidental deletes.
+- **Subscription Billing** notice — reminder that your current subscription will be cancelled and the remaining days will return to your account balance (not your card).
+
+Click **Confirm** to advance to step 2.
+
+## Step 2 — Final Confirmation: volumes and VPCs
+
+The "Final Confirmation" dialog asks you to decide what happens to **attached volumes** and **attached VPCs** *along with* the VM. This is the part most users miss the first time — the choices you make here are made together with the VM destroy, in one operation.
+
+<Frame>
+  ![Final Confirmation dialog showing what will be deleted, attached volumes block, attached VPCs block with Keep VPCs and Delete VPCs (recommended) options, and a red Destroy VM button](/images/products/build/virtual-machines/delete-vm-03-final-confirmation.png)
+</Frame>
+
+### Attached volumes
+
+If the VM has attached volumes, you choose what happens to each one:
+
+| Option | Effect | Use when |
+|---|---|---|
+| **Detach (keep volume)** | Volume detaches from the VM and stays in your account, ready to attach to another VM in the same region | The data on the volume should outlive this VM |
+| **Delete volume** | Volume is permanently destroyed along with the VM — every byte gone | The volume is throwaway / scratch storage / specific to this VM only |
+
+A volume can only be attached to one VM at a time, so detaching here makes it available to attach to a different VM later (data preserved). Deleting is the equivalent of running [Delete a volume](/products/store/volumes/quickstart-guides/delete-volume) immediately after the VM destroy — same one-way destruction.
+
+If the VM has **no attached volumes**, this section shows "No attached volumes" and there's nothing to choose.
+
+### Attached VPCs
+
+The dialog lists every VPC the VM is currently in. You choose:
+
+| Option | Effect |
+|---|---|
+| **Keep VPCs** | VPCs remain in your account, available for other VMs |
+| **Delete VPCs (recommended)** | VPCs are permanently deleted with the VM |
+
+**Critical safety rule** — even if you select **Delete VPCs**, the platform **preserves any VPC that still has another VM attached**. Only VPCs with no remaining VMs are actually deleted. This protects shared VPCs from accidental deletion when you're tearing down one of several VMs that share the same network.
+
+The "recommended" label assumes the VPC was created for this single VM. If you have a multi-VM stack on the same VPC, leaving **Keep VPCs** selected is the safer choice — though as noted, the platform also won't let you accidentally delete a still-in-use VPC.
+
+### Confirm
+
+Click the red **Destroy VM** button. The VM and the elements you selected are removed; the VPC safety rule applies as described.
+
+## What happens on delete
+
+| Resource | Result |
+|---|---|
+| **VM and OS disk** | Destroyed |
+| **VM snapshots** | Deleted with the VM |
+| **Attached volumes** | **Per your choice in step 2** — detach (kept) or delete (destroyed) |
+| **Attached VPCs** | **Per your choice in step 2**, *and* preserved automatically if any other VM still uses them |
+| **Public IPv4 / IPv6** | Released back to the regional pool — cannot be reclaimed |
+| **Subscription** | Closed; unused days and hours credited back to your account balance |
+| **PAYG billing** (if applicable) | Stops immediately |
+| **Backups** | Retained according to their backup retention policy |
+| **Public IPs** | Detached but **not** released — you keep paying for the reservation until you release them separately |
+
+## Bulk delete — same two-step flow
+
+When you select multiple VMs and click **Delete Selected**, the same two-step dialog runs once. The choices you make (keep/delete volumes, keep/delete VPCs) **apply to every selected VM**:
+
+- "Delete VPCs" → applies to every selected VM's VPCs, with the same per-VPC safety rule (preserved if a non-selected VM still uses it).
+- "Detach volumes" → every attached volume across the selection is detached (kept).
+- "Delete volumes" → every attached volume across the selection is destroyed.
+
+If your selection mixes VMs that should be torn down completely with VMs that share a VPC with others *outside* the selection, the safety rule still protects the still-in-use VPCs even with **Delete VPCs** selected — but for clarity, do the destructive batch first and the surgical ones separately.
+
+## Cleanup after delete
+
+If you opted to keep volumes, VPCs, or Public IPs, those keep billing until you remove them:
+
+- **Volumes** — see [Delete a volume](/products/store/volumes/quickstart-guides/delete-volume).
+- **Public IPs** — [release](/products/network/public-ips/quickstart-guides/release-ip) them if not reused on another VM.
+- **Backups** — survive per their retention. Keep one if you might want support to restore the VM later; otherwise delete from the [Backups tab](/products/build/virtual-machines/quickstart-guides/enable-backups) to stop the storage meter.
+- **Backup schedules** — orphaned schedules pointing at the destroyed VM should be removed from **Compute Resources → Backups → Scheduled Backups**.
+
+## Subscription credit on delete
+
+When the VM is on a subscription term (Monthly, Yearly, 2-Year), deleting in the middle of the term credits the unused days and hours back to your **account balance**. The credit is immediate and can fund another VM, top up a different subscription, or sit until the next renewal cycle. It is not refunded to your card.
+
+If the VM was running on PAYG, billing simply stops at the minute of deletion.
+
+## Restore a deleted VM
+
+You can't undelete from the dashboard. To get back to a working VM:
+
+1. **From a backup** — contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with the backup name or ID. Support can spin up a new VM from the backup with the same disk contents and installed software.
+2. **From an image** — if you saved the VM's disk as an image before deleting, create a new VM and pick the image under [OS template → Marketplace / Custom images](/products/build/virtual-machines/quickstart-guides/create-a-vm#3-pick-an-os-template).
+3. **From scratch** — if you have neither, start over with [Create a VM](/products/build/virtual-machines/quickstart-guides/create-a-vm).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Enable backups" icon="cloud-arrow-up" href="/products/build/virtual-machines/quickstart-guides/enable-backups">
+    Plan recovery before you need it.
+  </Card>
+  <Card title="Create a VM" icon="plus" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
+    Spin up a replacement.
+  </Card>
+</CardGroup>

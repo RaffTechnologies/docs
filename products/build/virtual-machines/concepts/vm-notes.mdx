@@ -1,0 +1,59 @@
+---
+title: VM notes — My Notes & Team Notes
+description: Two kinds of free-form notes attached to a VM, and who can see each
+---
+
+Every VM has two free-form note fields living together at the bottom of the **Actions** tab on the VM detail page:
+
+- **My Notes** — *only you* can see them. Private to the user who wrote them.
+- **Team Notes** — *every team member* with access to the account can see them. Shared knowledge for the whole team.
+
+<Frame>
+  ![Actions tab on a VM detail page showing My Notes and Team Notes fields, with hint text "only you can see this" and "visible to all members"](/images/products/build/virtual-machines/vm-notes-01-actions-tab.png)
+</Frame>
+
+Both fields are stored with the VM and survive resizes, reinstalls, and rebuilds — they're tied to the VM's ID, not its disk.
+
+## Side by side
+
+| | My Notes | Team Notes |
+|---|---|---|
+| Dashboard label hint | *only you can see this* | *visible to all members* |
+| API type | `personal` | `account` |
+| Scope | The user who wrote it | Every member of the account |
+| Best for | Reminders to yourself, debug context, todo flags | Runbook hints, ownership info, "do not delete" warnings |
+
+## When to use which
+
+- **My Notes** — anything that only matters to you. `# investigating slow query, see ticket #ops-1234`. `# resize this VM after Friday's deploy.` Other people on your team don't need to wade through it.
+- **Team Notes** — anything the team needs to know if you're away. `Owner: payments-team.` `Restore from backup before destroying.` `On-call: PagerDuty service raff-prod-payments.`
+
+If you're hesitating, prefer Team Notes. Knowledge in My Notes leaves with the user; Team Notes outlive any one person on the team.
+
+## What notes don't do
+
+- **No notifications** — writing a note doesn't ping anyone; treat it like inline documentation, not a channel.
+- **No formatting** — plain text only.
+- **No version history** — the latest write replaces the previous one. Use git or a runbook tool if you need history.
+- **No global search** — notes show on the VM they're attached to, not in a cross-VM view.
+
+## Lifecycle
+
+Notes survive:
+
+- VM resize, rename, reset password
+- Reinstall (Change OS) — notes belong to the VM record, not the OS disk
+- Factory reset — same reason
+
+Notes are **deleted with the VM**. Delete and recreate ⇒ notes are gone. If you want notes to outlive a VM, keep them in a runbook system instead.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Tags & organization" icon="tag" href="/products/build/virtual-machines/concepts/tags-and-organization">
+    Structured labelling that complements free-form notes.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/get-vm-notes">
+    Read and write notes via API.
+  </Card>
+</CardGroup>

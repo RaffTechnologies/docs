@@ -1,0 +1,45 @@
+---
+title: Plans & sizing
+description: How VM plans map to CPU, RAM, and storage
+---
+
+A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single per-hour rate. Outbound bandwidth is **unlimited** on every plan and is not metered or billed separately. Picking a plan is the main sizing decision when creating a VM.
+
+## What a plan includes
+
+| Resource | Description |
+|---|---|
+| **vCPU** | Number of virtual cores |
+| **RAM** | GB of memory |
+| **Base disk** | OS disk size in GB (additional volumes are separate) |
+| **Bandwidth** | Unlimited outbound traffic, no per-GB charge |
+| **Price** | Subscription term cost (default) or hourly rate (PAYG) |
+
+## Choosing a plan
+
+- **Web/API workloads** — start small (1-2 vCPU, 2-4 GB), scale via resize when load grows.
+- **Database or memory-bound** — pick plans with higher RAM per vCPU.
+- **Burst workloads** — run on a smaller plan; resize up only during the spike.
+
+You can change plans later — see [Resize a VM](/products/build/virtual-machines/quickstart-guides/resize). Storage cannot be reduced, only increased.
+
+## Browse plans
+
+The full list of plans, with current per-hour pricing per region, is in:
+
+<Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+  Per-plan pricing for Virtual Machines.
+</Card>
+
+The same data is available via the [List VM Pricing](/api-reference/catalog/list-vm-pricing) endpoint.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Regions" icon="globe" href="/products/build/virtual-machines/concepts/regions">
+    Where VMs run.
+  </Card>
+  <Card title="Resize a VM" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
+    Change CPU/RAM after launch.
+  </Card>
+</CardGroup>

@@ -1,0 +1,83 @@
+---
+title: Delete a volume
+description: Permanently remove a volume, stop its billing, and credit unused subscription time back to your balance
+---
+
+Deleting a volume permanently destroys its data and stops the volume's subscription billing. On a subscription, the unused days and hours of the current term are credited back to your **account balance**.
+
+<Note>
+  **Deleting a VM can also delete its attached volumes** in one step. The [Destroy VM](/products/build/virtual-machines/quickstart-guides/delete-vm#step-2-final-confirmation-volumes-and-vpcs) flow's final-confirmation dialog lets you pick **Detach (keep)** or **Delete** for every attached volume. If you're tearing down a VM that owns its volume, pick **Delete** there and you don't need to come back to this page.
+</Note>
+
+## Before you delete
+
+<Warning>
+  Deletion is permanent. Every byte on the volume is destroyed. If you might want the data later, take a [snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot) of the volume first — snapshots survive volume delete.
+</Warning>
+
+Checks before clicking Delete:
+
+- Is the volume attached? **Detach it first** (or the dashboard will block delete with a warning).
+- Is the data important? Take a snapshot first — snapshots persist independently of the volume they came from.
+- Is there an `/etc/fstab` entry on a VM still pointing at this volume? Remove it after delete to avoid boot warnings.
+
+## 1. Open the Delete action
+
+In the **Volumes** list, open the volume's row **⋮** Actions menu and pick **Delete**.
+
+<Frame>
+  ![Volume row Actions menu showing Delete in red at the bottom (unattached state)](/images/products/store/volumes/volume-row-actions-unattached.png)
+</Frame>
+
+The Delete action sits at the bottom of the menu in red, in both attached and unattached actions menus. If the volume is currently attached, detach it first — see [Detach from a VM](/products/store/volumes/quickstart-guides/detach-from-vm).
+
+## 2. Confirm
+
+A confirmation dialog opens with the destructive-action warning and a reminder of what happens to your subscription:
+
+<Frame>
+  ![Delete volume confirmation dialog with permanent-action warning, Subscription Billing notice that remaining days return to your account balance, and red Delete button](/images/products/store/volumes/delete-volume-01-confirm.png)
+</Frame>
+
+The dialog shows:
+
+- The volume name and a clear "this action cannot be undone" warning
+- A blue **Subscription Billing** info panel — "Your current subscription will be cancelled and the remaining days will be returned to your account balance"
+- **Cancel** and **Delete** (red) buttons
+
+Click **Delete**. The volume disappears from the list within seconds.
+
+## What happens on delete
+
+| Resource | Result |
+|---|---|
+| **Volume contents** | Destroyed — every byte unrecoverable |
+| **Subscription** | Closed; unused days and hours credited back to your **account balance** |
+| **Volume snapshots** | Retained — snapshots live independently of the source volume |
+| **Backups (none for volumes today)** | n/a — Raff backups apply to VMs, not volumes; volume snapshots are the protective copy |
+| **VM `/etc/fstab` entries** | Still on the VM — clean up to avoid boot warnings |
+
+## Subscription credit on delete
+
+When you delete a volume mid-term (Monthly / Yearly / 2-Year), the prorated unused time is credited to your account balance. The credit is immediate and can fund another volume, top up a VM subscription, or sit until your next renewal. It is **not refunded to your card** — see [Billing model](/products/build/virtual-machines/concepts/billing-model).
+
+## Recover a deleted volume
+
+You can't undelete. Recovery options:
+
+- **From a volume snapshot** — if you took one before delete, create a new volume from it. (Snapshots survive volume delete, but not VM delete in the case of volume snapshots tied to a since-deleted VM — keep at least one snapshot per protective generation.)
+- **From a copy elsewhere** — Object Storage, off-platform backups, or a database dump.
+- **From scratch** — if you have neither, the data is gone.
+
+This is why production volumes should run a snapshot schedule.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Volume types" icon="lightbulb" href="/products/store/volumes/concepts/volume-types">
+    What lives on a volume vs the VM's base disk.
+  </Card>
+  <Card title="Storage model" icon="layer-group" href="/products/build/virtual-machines/concepts/storage-model">
+    How volumes fit alongside snapshots, backups, and images.
+  </Card>
+</CardGroup>

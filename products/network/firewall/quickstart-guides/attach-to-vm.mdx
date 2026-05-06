@@ -1,0 +1,112 @@
+---
+title: Attach a Firewall Group to a VM
+description: Two ways to attach a Firewall Group to a VM's public IP — from the group's row menu, or from the VM's Network tab — plus the mandatory reboot to make the rules take effect inside the guest
+---
+
+A Firewall Group only filters traffic once it's **attached to a VM's public IP**. The group itself sits idle on the Firewall tab until you wire it up. There are two equivalent entry points; both produce the same result.
+
+<Warning>
+**A VM reboot is required after attaching.** The platform writes the rule set immediately, but the guest VM picks up the new firewall only at boot. Reboot the VM (Restart from the VM detail page, or `reboot` from inside the guest) to apply.
+</Warning>
+
+## Path A — From the Firewall Groups list
+
+This is the right path when you have a group already and want to apply it to one or more VMs.
+
+In **Networking → Firewall**, find the group's row and click `⋮`.
+
+<Frame>
+  ![Firewall Groups list with a row context menu open showing Edit Rules (pencil), Assign to VM (link icon), and Delete (red)](/images/products/network/firewall/firewall-group-row-menu.png)
+</Frame>
+
+The menu has three actions:
+
+| Action | What it does |
+|---|---|
+| **Edit Rules** | Opens the same dialog used to create the group, prefilled with the existing rules. There's no separate view-only screen — Edit Rules is how you both inspect and modify a group |
+| **Assign to VM** | Opens the attach dialog — pick a VM in the same region to apply this group to |
+| **Delete** | Removes the group. Disabled if any VM still has it attached (detach first) |
+
+Click **Assign to VM**. The Assign Firewall Group to VM dialog opens.
+
+<Frame>
+  ![Assign Firewall Group to VM dialog with subtitle "Attach 'Web Server' to a VM's public network interface", a read-only Firewall Group field showing "Web Server", a Select VM dropdown labeled "Choose a VM...", and Cancel / Attach buttons](/images/products/network/firewall/assign-to-vm-dialog.png)
+</Frame>
+
+The dialog has two fields:
+
+| Field | Notes |
+|---|---|
+| **Firewall Group** | Read-only — set to whichever group you opened the menu on (the screenshot shows `Web Server`). To attach a *different* group, cancel and reopen from that group's row |
+| **Select VM** | Dropdown of every VM in the dashboard's selected region. Pick one |
+
+Click **Attach**. The group is attached to that VM's **primary public IP** (typically the only one). The Firewall Groups row's **VMs** column now shows the count (e.g. `1 VM` instead of `None`), and the VM's Network tab shows the group name where `None` used to be.
+
+To attach the same group to multiple VMs, repeat: open the row's `⋮` → **Assign to VM** → pick the next VM. Each Assign action attaches to one VM at a time.
+
+## Path B — From the VM's Network tab
+
+This is the right path when you're already on a VM's detail page and decide it needs a firewall.
+
+Open the VM in **Compute** → click the **Network** tab. The IPv4 card has a **Firewall** field that reads `None` and an **Attach** button next to it.
+
+<Frame>
+  ![VM detail page Network tab showing the IPv4 public IP card with eth0 - Public Network, Public + Primary tags, IP 23.26.4.27, MAC, Gateway 23.26.4.254, and a Firewall row showing "None" with an Attach button. A red Remove Public IP button sits below.](/images/products/network/firewall/vm-network-firewall-attach.png)
+</Frame>
+
+Click **Attach**. A picker shows every Firewall Group in the account; pick one and confirm.
+
+The card refreshes — the **Firewall** field now shows the group's name (with a Detach action where Attach used to be), and the group's row in **Networking → Firewall** updates its VMs count.
+
+## Reboot the VM
+
+Either path writes the rule set to the platform's record immediately. **The guest VM does not pick up the new firewall until it reboots.**
+
+Reboot from one of:
+
+| From | How |
+|---|---|
+| **VM detail page** | **Restart** action button at the top |
+| **Inside the guest (Linux)** | `sudo reboot` |
+| **Inside the guest (Windows)** | `shutdown /r /t 0` |
+
+After the reboot, the new firewall is live. Test from outside the VM with the new rules — `nmap -p <port> <ip>` from your laptop, or `curl` against the new ports.
+
+## Detach later
+
+Two equivalent paths, mirroring the attach options:
+
+| From | How |
+|---|---|
+| **VM detail → Network tab** | Click **Detach** next to the Firewall field on the IP card |
+| **Firewall Groups list** | Group row's `⋮` → **Assign to VM** picker → uncheck the VM (when this is supported), or open the VM and detach there |
+
+After detach, the platform clears the rule set from the VM's IP — but the **same reboot rule applies**: the guest keeps using the previous rules until it reboots. Reboot to actually drop them.
+
+If you're switching one group for another (`web-prod-v1` → `web-prod-v2`), do them in order: detach the old, attach the new, **reboot once** at the end. One reboot covers both changes.
+
+## Multiple Firewall Groups on one IP
+
+The dashboard allows attaching more than one Firewall Group to a single public IP. When multiple groups are attached, **their allow lists union** — a packet is allowed if **any** attached group has a rule allowing it. Each Firewall Group still has its 40-inbound + 40-outbound limit, so stacking groups is the workaround when one group isn't enough.
+
+Common pattern: a base group (`infra-essentials` — SSH from office, DNS, NTP) plus a per-service group (`web-prod`, `api-prod`) — combine the two on every web/api VM, edit one without touching the other.
+
+## What about VPC-only VMs?
+
+A VM with no public IP cannot have a Firewall Group attached — there's nothing to attach to. The Network tab shows the IPv4 / IPv6 sections only when public IPs exist; the Attach button doesn't appear for VPC-only VMs.
+
+To filter private VPC traffic, use guest-OS firewalls (`ufw`, `iptables`, Windows Firewall) on the destination VMs, or deploy a [Firewall Appliance](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) (OPNsense) as the VPC's gateway.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Create a Firewall Group" icon="plus" href="/products/network/firewall/quickstart-guides/create-firewall-group">
+    Build the rule set you'll attach.
+  </Card>
+  <Card title="Update rules" icon="pen" href="/products/network/firewall/quickstart-guides/update-rules">
+    Edit a live group's rules.
+  </Card>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model behind the rules.
+  </Card>
+</CardGroup>

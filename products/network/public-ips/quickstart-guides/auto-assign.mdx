@@ -1,0 +1,90 @@
+---
+title: Auto-assign a public IP
+description: Give a VM that has no public IP a free address from the regional pool — IPv4 or IPv6, no commitment, returns to the pool when detached
+---
+
+When a VM doesn't have a public IP — usually because someone deleted it earlier, or the VM was created without one — the fastest way to give it one is **Auto-assign**. Raff picks an available address from the regional pool and attaches it. It's free while the VM holds it; if you detach it later, the IP goes back to the pool.
+
+This is the right path for "I just need this VM to be reachable from the internet, I don't care which IP it gets." If you need a stable address that doesn't change across VM rebuilds, [reserve an IP](/products/network/public-ips/quickstart-guides/reserve-ip) instead.
+
+## Open the Public IPs tab
+
+In the left sidebar, click **Networking** → switch to the **Public IPs** tab. The list shows every IP currently associated with your account (attached to VMs, attached to gateways, or reserved/unattached).
+
+<Frame>
+  ![Public IPs tab showing 9 IPs grouped by VPC, with stats cards (Public IPv4 9, Public IPv6 0, Reserved 0, Available in pool 0) and Auto-assign IP and + Reserve IP buttons in the top right](/images/products/network/public-ips/public-ips-list.png)
+</Frame>
+
+The four stats cards across the top are worth knowing:
+
+| Stat | What it counts |
+|---|---|
+| **Public IPv4** | Total IPv4 addresses in your account — attached + reserved-unattached |
+| **Public IPv6** | Same, for IPv6 |
+| **Reserved** | IPs you've explicitly reserved that are currently **unattached** (still billing) |
+| **Available in pool** | IPs in the regional pool that the auto-assigner could hand out next. Zero means the pool is empty for that region; auto-assign falls through and returns an error |
+
+## Open the Auto-assign dialog
+
+Click **Auto-assign IP** (the outlined button with the globe icon, immediately left of the orange Reserve IP button).
+
+<Frame>
+  ![Auto-assign Public IP dialog showing IP Type selector (IPv4 selected, IPv6 alternative), a Select VM dropdown placeholder "Choose a VM without public IP...", and an info note "A free IP will be assigned from the pool. This is an auto-assigned IP — if you detach it later, it returns to the pool."](/images/products/network/public-ips/auto-assign-dialog.png)
+</Frame>
+
+The dialog has two fields and an explainer.
+
+## 1. Pick IP Type — IPv4 or IPv6
+
+Default is **IPv4**. Switch to **IPv6** if you want to enable dual-stack (or IPv6-only) on this VM.
+
+A few rules:
+
+- **A VM can hold at most one IPv4 and one IPv6 from the dashboard.** Need more? Contact [support](mailto:support@rafftechnologies.com) — they can attach additional IPs at \$3/month each for IPv4, \$1/month each for IPv6.
+- IPv4 and IPv6 are **independent allocations** — auto-assign one or both, in any order.
+- If you already have a public IP of this type on the chosen VM, the dialog blocks the assignment with "VM already has an IPv4/IPv6". To replace it, remove the existing one first from the [VM detail Network tab](/products/network/public-ips/quickstart-guides/manage-from-vm).
+
+## 2. Select VM
+
+The dropdown lists every VM in the dashboard's selected region that **doesn't already have a public IP of the chosen type**. VMs with an existing IP are filtered out so you can't double-assign.
+
+If the dropdown is empty:
+
+- All your VMs already have a public IP of that type — nothing to assign to
+- All your VMs are in another region — switch the region selector at the top of the dashboard
+- The VM is in a transient state (`creating`, `deleting`) — wait for it to settle
+
+## 3. Click Assign IP
+
+The IP is allocated from the pool, attached to the VM, and the VM picks it up immediately. You don't need to do anything inside the guest — Raff configures the new interface via cloud-init / DHCP.
+
+The dialog closes and the Public IPs list refreshes with the new IP under the VM's row. The dialog's footer note — *"A free IP will be assigned from the pool. This is an auto-assigned IP — if you detach it later, it returns to the pool."* — is the important behavior:
+
+- **While attached** — free, no billing
+- **When you detach or delete the VM** — the IP returns to the pool, *not* to your account. You won't get the same IP back if you auto-assign again.
+
+## When to use Auto-assign vs Reserve
+
+| Scenario | Use |
+|---|---|
+| New VM, internet access without DNS commitments | **Auto-assign** |
+| You just removed an IP and want a fresh one back on the same VM | **Auto-assign** |
+| You want the IP to survive VM rebuilds, partner whitelisting, DNS records pointing at it | [**Reserve**](/products/network/public-ips/quickstart-guides/reserve-ip) |
+| Multi-region failover where the IP must be the same across rebuilds | **Reserve** |
+| Cost-sensitive workload that doesn't care about address stability | **Auto-assign** |
+
+You can also **upgrade an auto-assigned IP to reserved** if you change your mind — see [Reserve a static IP → "Convert an auto-assigned IP to reserved"](/products/network/public-ips/quickstart-guides/reserve-ip#convert-an-auto-assigned-ip-to-reserved).
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Hold an IP across rebuilds, $3/mo.
+  </Card>
+  <Card title="Manage from a VM" icon="server" href="/products/network/public-ips/quickstart-guides/manage-from-vm">
+    Same operations from the VM detail page.
+  </Card>
+  <Card title="Auto-assigned vs reserved" icon="lightbulb" href="/products/network/public-ips/concepts/reserved-vs-ephemeral">
+    The lifecycle difference in depth.
+  </Card>
+</CardGroup>

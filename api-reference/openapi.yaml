@@ -46,6 +46,8 @@ tags:
     description: Organize resources into projects for billing and access control
   - name: Virtual Machines
     description: Create, manage, and control virtual machines
+  - name: Networking
+    description: Attach and detach VPCs, floating IPs, and security groups to VM network interfaces
 
 paths:
   /health:
@@ -571,10 +573,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
         '403':
           $ref: '#/components/responses/BillingValidationFailed'
-        '503':
-          $ref: '#/components/responses/ResourcesUnavailable'
 
   /api/v1/vms/{id}:
     get:
@@ -682,7 +684,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteVMsBulkResponse'
+                $ref: '#/components/schemas/BulkDeleteVMsResult'
         '400':
           $ref: '#/components/responses/MissingProjectID'
 
@@ -773,13 +775,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: New name for the virtual machine
+              $ref: '#/components/schemas/RenameVMRequest'
       responses:
         '200':
           description: VM renamed
@@ -913,7 +909,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '402':
-          description: Insufficient balance for upgrade
+          $ref: '#/components/responses/InsufficientBalance'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -953,7 +949,1148 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '402':
-          description: Insufficient balance for upgrade
+          $ref: '#/components/responses/InsufficientBalance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/reboot-hard:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Hard reboot VM
+      description: |
+        Force an immediate power-off and restart of a virtual machine, **without** a graceful shutdown.
+
+        ## When to use
+
+        Use this only when a soft reboot (`POST /api/v1/vms/{id}/reboot`) does not work — for example, the VM is hung and not responding to OS-level signals.
+
+        ## Risks
+
+        - **Unsaved data may be lost.** Filesystems and applications cannot flush state before power-off.
+        - **Filesystem corruption is possible.** Hard power-off skips clean unmount.
+
+        Prefer the standard reboot whenever the VM is responsive.
+      operationId: hardRebootVM
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Hard reboot initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/save-image:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Save VM disk as custom image
+      description: |
+        Save a VM's disk (live state or a snapshot) as a reusable custom OS image. The new image becomes available alongside the public OS templates and can be passed as `template_id` when creating a new VM.
+
+        ## Sources
+
+        Pick what to capture with `disk_id` and `snapshot_id`:
+
+        - `disk_id: 0` — the OS disk
+        - `disk_id: 1+` — an attached volume
+        - `snapshot_id: -1` — capture the **current live disk state** (stop the VM first for a consistent image)
+        - `snapshot_id: <id>` — capture from a specific saved snapshot
+      operationId: saveVMDiskAsImage
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveImageRequest'
+      responses:
+        '201':
+          description: Image creation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VMImage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vpcs:
+    get:
+      tags:
+        - Networking
+      summary: List VPCs
+      description: |
+        List virtual private clouds (VPCs).
+
+        Pass `X-Project-ID` to scope to a specific project. Omit it to list all VPCs you have access to across the account.
+      operationId: listVPCs
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Project to scope the list to. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of VPCs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VPC'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Networking
+      summary: Create VPC
+      description: |
+        Create a new virtual private cloud. Pick a `cidr` block that doesn't overlap with any of your existing VPCs.
+
+        ## CIDR planning
+
+        Use `GET /api/v1/vpcs/cidr-suggestions` to get suggested non-overlapping CIDR blocks if you don't have one in mind.
+      operationId: createVPC
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVPCRequest'
+      responses:
+        '201':
+          description: VPC created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VPC'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
+  /api/v1/vpcs/cidr-suggestions:
+    get:
+      tags:
+        - Networking
+      summary: Suggest non-overlapping CIDR blocks
+      description: |
+        Returns suggested CIDR blocks that don't overlap with the account's existing VPCs.
+        Use one of these as `cidr` when creating a new VPC.
+      operationId: listVPCCIDRSuggestions
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: CIDR suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CIDRSuggestionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/vpcs/{id}:
+    get:
+      tags:
+        - Networking
+      summary: Get VPC
+      description: Get details of a single VPC.
+      operationId: getVPC
+      parameters:
+        - $ref: '#/components/parameters/VPCIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VPC details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VPC'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Networking
+      summary: Update VPC
+      description: Update a VPC's name or description. CIDR cannot be changed after creation.
+      operationId: updateVPC
+      parameters:
+        - $ref: '#/components/parameters/VPCIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVPCRequest'
+      responses:
+        '200':
+          description: VPC updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/VPC'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Networking
+      summary: Delete VPC
+      description: |
+        Delete a VPC. The VPC must not have any VMs attached — detach them first via `DELETE /api/v1/vms/{id}/vpc/{nic_id}`.
+      operationId: deleteVPC
+      parameters:
+        - $ref: '#/components/parameters/VPCIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VPC deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/ips:
+    get:
+      tags:
+        - Networking
+      summary: List floating IPs
+      description: |
+        List the account's floating (public) IP addresses, including reserved IPs and IPs currently attached to VMs.
+        Filter to just reserved IPs with `?reserved=true`.
+      operationId: listIPs
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: reserved
+          in: query
+          required: false
+          description: When `true`, return only reserved IPs (not currently attached to a VM).
+          schema:
+            type: boolean
+        - name: status
+          in: query
+          required: false
+          description: |
+            Filter by IP status:
+            - `free` — IP is in the pool. Combined with `reserved=true` it means held for the account but not attached to a VM.
+            - `in-use` — currently attached to a VM.
+          schema:
+            type: string
+            enum: [free, in-use]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of floating IPs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FloatingIP'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/ips/reserve:
+    post:
+      tags:
+        - Networking
+      summary: Reserve a floating IP
+      description: |
+        Reserve a floating public IP. The IP is allocated immediately and held for your account until you release it.
+
+        ## Billing
+
+        Reserved IPs are billed. For subscription accounts the IP price is charged from the account balance up front for the chosen `billing_period` (default monthly):
+
+        - **Insufficient balance** for the subscription returns `402`. Top up the balance and retry.
+
+        For pay-as-you-go (PAYG) accounts no upfront charge happens — usage accrues hourly.
+      operationId: reserveIP
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReserveIPRequest'
+      responses:
+        '201':
+          description: IP reserved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FloatingIP'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
+  /api/v1/ips/{id}:
+    get:
+      tags:
+        - Networking
+      summary: Get floating IP
+      description: Get details of a single floating IP.
+      operationId: getIP
+      parameters:
+        - $ref: '#/components/parameters/IPIDPath'
+      responses:
+        '200':
+          description: IP details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FloatingIP'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/ips/{id}/reserve:
+    delete:
+      tags:
+        - Networking
+      summary: Release a reserved IP
+      description: |
+        Release a reserved IP back to the pool.
+
+        ## Billing
+
+        For subscription IPs the remaining prepaid balance is refunded pro-rata (hourly precision) to your account balance. For PAYG IPs the IP simply stops accruing further hourly usage — no refund is needed.
+
+        The IP must not be attached to a VM. Detach it first via `DELETE /api/v1/vms/{id}/ip/{nic_id}`.
+      operationId: releaseIP
+      parameters:
+        - $ref: '#/components/parameters/IPIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: IP released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/ips/{id}/change:
+    post:
+      tags:
+        - Networking
+      summary: Change reserved IP
+      description: |
+        Swap a reserved IP for a different one from the available pool. The subscription stays the same — no extra charge, no refund. Useful if the current IP is blacklisted somewhere.
+
+        The IP must be reserved (not currently attached to a VM).
+      operationId: changeIP
+      parameters:
+        - $ref: '#/components/parameters/IPIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: IP changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  old_ip:
+                    $ref: '#/components/schemas/FloatingIP'
+                  new_ip:
+                    $ref: '#/components/schemas/FloatingIP'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/security-groups:
+    get:
+      tags:
+        - Networking
+      summary: List security groups
+      description: |
+        List the account's security groups. Pass `X-Project-ID` to scope to one project, or omit it to list across all accessible projects.
+      operationId: listSecurityGroups
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of security groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Networking
+      summary: Create security group
+      description: |
+        Create a new security group with a set of inbound/outbound rules.
+
+        Optionally seed from a template (`template_id` from `GET /api/v1/security-groups/templates`) — its rules are copied as the starting set, then merged with any explicit `rules` you pass.
+      operationId: createSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSecurityGroupRequest'
+      responses:
+        '201':
+          description: Security group created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SecurityGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/security-groups/templates:
+    get:
+      tags:
+        - Networking
+      summary: List security group templates
+      description: |
+        Pre-built security group templates customers can clone when creating a new group (e.g. "Web server", "SSH only", "Database"). Pass the chosen `id` as `template_id` on `POST /api/v1/security-groups`.
+      operationId: listSecurityGroupTemplates
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SecurityGroupTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/security-groups/{id}:
+    get:
+      tags:
+        - Networking
+      summary: Get security group
+      description: Get details of a single security group, including its rules.
+      operationId: getSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/SecurityGroupResourceIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Security group details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SecurityGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Networking
+      summary: Update security group
+      description: |
+        Update a security group's name, description, or rules. Passing `rules` replaces the entire rule set — to add or remove a single rule, GET the current rules first, modify the array, then PUT the result.
+      operationId: updateSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/SecurityGroupResourceIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSecurityGroupRequest'
+      responses:
+        '200':
+          description: Security group updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SecurityGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Networking
+      summary: Delete security group
+      description: |
+        Delete a security group. The group must not be attached to any VM NIC. Detach it first via `DELETE /api/v1/vms/{id}/security-groups/{sg_id}/{nic_id}`.
+      operationId: deleteSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/SecurityGroupResourceIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Security group deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/networks:
+    get:
+      tags:
+        - Networking
+      summary: List VM network interfaces
+      description: |
+        List all network interfaces (NICs) attached to a virtual machine.
+        Each NIC has a `nic_id` used when detaching from a VPC, IP, or security group.
+
+        Use `?type=` to filter by interface type (`public`, `vpc`, or `ipv6`).
+      operationId: listVMNetworks
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - name: type
+          in: query
+          required: false
+          description: Filter to one interface type. Omit to return all.
+          schema:
+            type: string
+            enum: [public, vpc, ipv6]
+      responses:
+        '200':
+          description: List of network interfaces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VMNetwork'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/vpc:
+    post:
+      tags:
+        - Networking
+      summary: Attach VM to VPC
+      description: |
+        Attach a virtual machine to a VPC. The VM gains a private network interface inside the VPC.
+
+        Use `ip` to request a specific private IP from the VPC's CIDR range. If omitted, an IP is auto-assigned.
+      operationId: attachVMToVPC
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachVPCRequest'
+      responses:
+        '200':
+          description: VM attached to VPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/vpc/{nic_id}:
+    delete:
+      tags:
+        - Networking
+      summary: Detach VM from VPC
+      description: |
+        Detach a VM's network interface from its VPC. Use the `nic_id` from `GET /api/v1/vms/{id}/networks` to identify the interface.
+      operationId: detachVMFromVPC
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/NICIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: VM detached from VPC
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/ip:
+    post:
+      tags:
+        - Networking
+      summary: Attach floating IP to VM
+      description: |
+        Attach a floating public IP to a virtual machine. Pick **one** of two modes:
+
+        ## Option A — attach a reserved IP (use `ip_id`)
+
+        Pass `ip_id` set to a previously reserved IP (from `POST /api/v1/ips/reserve` or `GET /api/v1/ips?reserved=true`). The IP must:
+        - belong to the same account
+        - not be currently attached to another VM
+        - have `reserved: true`
+
+        No new billing — you're already paying for the reserved IP.
+
+        ## Option B — auto-assign a new IP (use `type`)
+
+        Leave `ip_id` empty and pass `type` to allocate a fresh IP from the pool:
+        - `type: IPv4` (default if omitted)
+        - `type: IPv6`
+
+        A new IP is allocated and billed to your account from the moment of attach. Detach to release it back to the pool.
+
+        ## Notes
+
+        - VM must not already have a public IP of the same family (detach first).
+        - Optionally pass `security_groups` (UUID array) to apply security groups to the new NIC.
+      operationId: attachVMIP
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachIPRequest'
+      responses:
+        '200':
+          description: IP attached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachIPResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/ip/{nic_id}:
+    delete:
+      tags:
+        - Networking
+      summary: Detach floating IP from VM
+      description: |
+        Detach a floating IP from a VM. The IP returns to your reserved pool (or is released, for auto-assigned IPs).
+        Use the `nic_id` from `GET /api/v1/vms/{id}/networks`.
+      operationId: detachVMIP
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/NICIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: IP detached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/security-groups:
+    post:
+      tags:
+        - Networking
+      summary: Attach security group to VM NIC
+      description: |
+        Attach a security group to a specific network interface on a VM.
+        The security group's rules apply to inbound and outbound traffic on that NIC.
+
+        Use `nic_id` from `GET /api/v1/vms/{id}/networks` to target a specific interface.
+      operationId: attachVMSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachSecurityGroupRequest'
+      responses:
+        '200':
+          description: Security group attached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/security-groups/{sg_id}/{nic_id}:
+    delete:
+      tags:
+        - Networking
+      summary: Detach security group from VM NIC
+      description: Remove a security group from a specific NIC on a VM.
+      operationId: detachVMSecurityGroup
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/SecurityGroupIDPath'
+        - $ref: '#/components/parameters/NICIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Security group detached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/tags:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Add tag to VM
+      description: |
+        Attach a custom tag to a virtual machine. Tags help organize and filter resources.
+        Returns the updated full tag list for the VM.
+      operationId: addVMTag
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddVMTagRequest'
+      responses:
+        '200':
+          description: Tag added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VMTagsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/tags/{tagId}:
+    patch:
+      tags:
+        - Virtual Machines
+      summary: Update VM tag
+      description: |
+        Update a tag's name or priority on a specific VM.
+        Returns the updated full tag list for the VM.
+
+        ## Finding the tag ID
+
+        Tags are returned in the `tags` array of `GET /api/v1/vms/{id}`. Each tag includes its `id`, `name`, `priority`, and `created_at`. Use the tag's `id` as `tagId` here.
+      operationId: updateVMTag
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/TagIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVMTagRequest'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VMTagsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Virtual Machines
+      summary: Remove VM tag
+      description: |
+        Remove a tag from a VM. Returns the updated full tag list for the VM.
+
+        ## Finding the tag ID
+
+        Tags are returned in the `tags` array of `GET /api/v1/vms/{id}`. Each tag includes its `id`, `name`, `priority`, and `created_at`. Use the tag's `id` as `tagId` here.
+      operationId: removeVMTag
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/TagIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Tag removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VMTagsResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/notes:
+    get:
+      tags:
+        - Virtual Machines
+      summary: Get VM notes
+      description: |
+        Get the personal and account-shared notes attached to a VM.
+
+        - **Personal note** — visible only to the user that wrote it.
+        - **Account note** — visible to all members of the account.
+
+        Use the optional `type` query param to fetch only one scope. Either or both fields may be absent from the response if no note has been written yet — in that case only `{ "success": true }` is returned.
+      operationId: getVMNotes
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - name: type
+          in: query
+          required: false
+          description: |
+            Filter to one note scope. Omit to return both.
+          schema:
+            type: string
+            enum: [personal, account]
+      responses:
+        '200':
+          description: VM notes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VMNotesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/notes/{type}/append:
+    post:
+      tags:
+        - Virtual Machines
+      summary: Append to VM note
+      description: |
+        Append `content` to the existing note (separated by a newline). If no note exists yet for this scope, the new content becomes the entire note body.
+
+        Use this when you want to add to a note without losing what's already there — for example, a teammate adding a line to the shared `account` note.
+      operationId: appendVMNote
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/NoteTypePath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertVMNoteRequest'
+      responses:
+        '200':
+          description: Content appended (or note created if it didn't exist)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  note:
+                    $ref: '#/components/schemas/VMNote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/notes/{type}:
+    patch:
+      tags:
+        - Virtual Machines
+      summary: Update VM note
+      description: |
+        Replace an existing note's content.
+
+        Unlike `PUT` (which creates the note if missing), `PATCH` returns **404** when no note exists yet for this scope. Use this when you want to fail loudly if the note isn't there — i.e. when you intend to edit, not create.
+
+        For "create or replace" semantics use `PUT /api/v1/vms/{id}/notes/{type}`.
+        For appending without losing existing content use `POST /api/v1/vms/{id}/notes/{type}/append`.
+      operationId: updateVMNote
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/NoteTypePath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertVMNoteRequest'
+      responses:
+        '200':
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  note:
+                    $ref: '#/components/schemas/VMNote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No note exists yet for this scope. Use `PUT` to create one.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Virtual Machines
+      summary: Upsert VM note
+      description: |
+        Create or fully replace the personal or account note on a VM.
+
+        ## Behavior
+
+        This is an **overwrite**, not an append — the request `content` becomes the entire note body.
+        To append, fetch the existing note via `GET /api/v1/vms/{id}/notes` first, concatenate, and PUT the combined value.
+
+        ## Scopes
+
+        - **`type: personal`** — one note per user per VM (unique on `vm_id + user_id`). Visible only to the user that wrote it.
+        - **`type: account`** — one note per account per VM (unique on `vm_id + account_id`). Visible to all account members; any member with permission can update it.
+
+        ## Clearing a note
+
+        Pass `content: ""` to set an empty note. The note row is kept (still returned by `GET /notes`); only the content is empty.
+      operationId: upsertVMNote
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/NoteTypePath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertVMNoteRequest'
+      responses:
+        '200':
+          description: Note saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  note:
+                    $ref: '#/components/schemas/VMNote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -998,7 +2135,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '402':
-          description: Insufficient balance for upgrade
+          $ref: '#/components/responses/InsufficientBalance'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -1031,6 +2168,64 @@ components:
       in: header
       required: true
       description: Project ID. Required for all mutating operations (create, delete, power actions, resize).
+      schema:
+        type: string
+        format: uuid
+    NICIDPath:
+      name: nic_id
+      in: path
+      required: true
+      description: |
+        Network interface ID. Get it from the `nic_id` field of `GET /api/v1/vms/{id}/networks`.
+      schema:
+        type: integer
+    TagIDPath:
+      name: tagId
+      in: path
+      required: true
+      description: |
+        Tag ID (UUID). Get it from the `tags` array on `GET /api/v1/vms/{id}` — each tag has an `id` field.
+      schema:
+        type: string
+        format: uuid
+    SecurityGroupIDPath:
+      name: sg_id
+      in: path
+      required: true
+      description: |
+        Security group ID (UUID). Get it from the `security_group_id` field of `GET /api/v1/vms/{id}/networks`, or list all account security groups via `GET /api/v1/security-groups` (coming soon).
+      schema:
+        type: string
+        format: uuid
+    SecurityGroupResourceIDPath:
+      name: id
+      in: path
+      required: true
+      description: Security group ID (UUID).
+      schema:
+        type: string
+        format: uuid
+    NoteTypePath:
+      name: type
+      in: path
+      required: true
+      description: Note scope. `personal` is visible only to the writer; `account` is shared across the account.
+      schema:
+        type: string
+        enum: [personal, account]
+    VPCIDPath:
+      name: id
+      in: path
+      required: true
+      description: VPC ID (UUID).
+      schema:
+        type: string
+        format: uuid
+    IPIDPath:
+      name: id
+      in: path
+      required: true
+      description: Floating IP ID (UUID).
       schema:
         type: string
         format: uuid
@@ -1076,7 +2271,7 @@ components:
           default: true
           description: Whether to delete associated VPCs. Only succeeds if no other VMs are using them.
 
-    DeleteVMsBulkResponse:
+    BulkDeleteVMsResult:
       type: object
       properties:
         success:
@@ -1096,10 +2291,10 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/DeleteVMBulkResult'
+            $ref: '#/components/schemas/BulkDeleteVMItemResult'
           description: Per-VM deletion results.
 
-    DeleteVMBulkResult:
+    BulkDeleteVMItemResult:
       type: object
       properties:
         id:
@@ -1134,7 +2329,10 @@ components:
 
     BillingError:
       type: object
-      description: Billing validation error response
+      description: Billing validation error response. Returned when the account is not in good standing for paid operations.
+      required:
+        - error
+        - reason
       properties:
         error:
           type: string
@@ -1144,17 +2342,36 @@ components:
           example: Payment failed. Please update your payment method.
         reason:
           type: string
-          description: Machine-readable reason code
+          description: |
+            Machine-readable reason code:
+            - `banned` — account has been suspended
+            - `failed` — last payment failed; balance top-up needed
+            - `no_billing_customer` — billing has not been set up for this account
           enum:
-            - no_billing_customer
             - banned
             - failed
-            - no_payment_method
-            - vm_limit_exceeded
-            - resources_unavailable
+            - no_billing_customer
 
     VM:
       type: object
+      required:
+        - id
+        - name
+        - status
+        - cpu
+        - ram
+        - storage
+        - added_storage
+        - total_storage
+        - template_id
+        - template_name
+        - template_version
+        - price_per_hour
+        - pricing_id
+        - region
+        - active
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -1215,9 +2432,6 @@ components:
           type: string
           description: OS template version
           example: "24.10x64"
-        vm_id:
-          type: integer
-          description: Internal VM identifier
         version:
           type: string
           description: VM version
@@ -1274,21 +2488,7 @@ components:
         tags:
           type: array
           items:
-            type: object
-            properties:
-              id:
-                type: string
-                description: Unique tag identifier
-              name:
-                type: string
-                description: Tag name
-              priority:
-                type: integer
-                description: Tag priority (ordering)
-              created_at:
-                type: string
-                format: date-time
-                description: When the tag was created
+            $ref: '#/components/schemas/VMTag'
           description: Custom tags
         active:
           type: boolean
@@ -1386,6 +2586,659 @@ components:
           description: "CIDR block for the new VPC (e.g. `10.0.1.0/24`). Must be used together with `vpc_name`."
           pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
           example: "10.0.1.0/24"
+        skip_public_ip:
+          type: boolean
+          default: false
+          description: |
+            When `true`, the VM is created without a public IPv4 address. It will only be reachable on its VPC private IP, so a VPC is required — pass `vpc_id` (existing) or `vpc_name` + `vpc_cidr` (new), or leave VPC fields empty to auto-create one. Combining `skip_public_ip=true` with `skip_vpc=true` is rejected because the VM would have no network at all.
+        skip_vpc:
+          type: boolean
+          default: false
+          description: |
+            When `true`, no VPC is created or attached. The VM will only have its public IP — no private networking. Cannot be combined with `skip_public_ip=true`.
+
+    AddVMTagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Tag name.
+          example: production
+        priority:
+          type: integer
+          description: Display priority (lower sorts first). Defaults to 0.
+          example: 0
+
+    UpdateVMTagRequest:
+      type: object
+      description: At least one field is required.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: New tag name.
+        priority:
+          type: integer
+          description: New display priority.
+
+    VMTagsResponse:
+      type: object
+      description: Returns the full updated tag list for the VM.
+      required:
+        - success
+        - tags
+      properties:
+        success:
+          type: boolean
+          example: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/VMTag'
+
+    VMNote:
+      type: object
+      description: A free-form note attached to a VM. `personal` notes are visible only to the writer; `account` notes are shared across the account.
+      required:
+        - id
+        - vm_id
+        - user_id
+        - type
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Note identifier.
+        vm_id:
+          type: string
+          format: uuid
+          description: VM this note belongs to.
+        user_id:
+          type: string
+          format: uuid
+          description: User who wrote the note.
+        type:
+          type: string
+          enum: [personal, account]
+          description: Note scope.
+        content:
+          type: string
+          description: Note text.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VMNotesResponse:
+      type: object
+      description: Personal and account notes for a VM. Either or both may be present.
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        personal_note:
+          $ref: '#/components/schemas/VMNote'
+        account_note:
+          $ref: '#/components/schemas/VMNote'
+
+    UpsertVMNoteRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Note text. Pass an empty string to clear the note.
+
+    VMNetwork:
+      type: object
+      description: A network interface attached to a VM.
+      required:
+        - nic_id
+        - network_name
+        - ip
+        - type
+      properties:
+        nic_id:
+          type: integer
+          description: Interface ID. Use this when detaching from a VPC, IP, or security group.
+          example: 0
+        network_name:
+          type: string
+          description: Network name.
+          example: vpc-prod
+        ip:
+          type: string
+          description: IP address assigned to the interface (IPv4 or IPv6 depending on `type`).
+          example: "10.0.1.42"
+        gateway:
+          type: string
+          description: Gateway IP for this interface.
+          example: "10.0.1.1"
+        type:
+          type: string
+          enum: [public, vpc, ipv6]
+          description: |
+            Interface type:
+            - `public` — public IPv4 address
+            - `vpc` — private IPv4 inside a VPC
+            - `ipv6` — public IPv6 address
+        security_group_id:
+          type: string
+          format: uuid
+          description: ID of the security group attached to this NIC, if any.
+
+    AttachVPCRequest:
+      type: object
+      required:
+        - vpc_id
+      properties:
+        vpc_id:
+          type: string
+          format: uuid
+          description: VPC to attach the VM to.
+        ip:
+          type: string
+          description: Specific private IP within the VPC's CIDR range. Auto-assigned if omitted.
+          example: "10.0.1.42"
+
+    AttachIPRequest:
+      type: object
+      description: |
+        Provide **either** `ip_id` (attach an existing reserved IP) **or** `type` (auto-allocate a new IP). Don't combine — `ip_id` takes precedence and `type` is ignored when both are sent.
+      properties:
+        ip_id:
+          type: string
+          format: uuid
+          description: |
+            ID of a previously reserved IP. The IP must belong to the same account, be reserved, and not already attached to another VM. No new billing — you're already paying for the reserved IP.
+        type:
+          type: string
+          enum: [IPv4, IPv6]
+          description: |
+            IP family to auto-allocate. Used only when `ip_id` is omitted. Defaults to `IPv4`. A new IP is allocated from the pool and billed to your account from the moment of attach.
+        security_groups:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Security group IDs (UUIDs) to apply to the new NIC.
+
+    AttachIPResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            vm_id:
+              type: string
+              format: uuid
+              description: VM the IP was attached to.
+            ip_address:
+              type: string
+              description: The attached IP address.
+            nic_id:
+              type: integer
+              description: NIC identifier for this attachment. Use it when detaching.
+            mac:
+              type: string
+
+    AttachSecurityGroupRequest:
+      type: object
+      required:
+        - security_group_id
+        - nic_id
+      properties:
+        security_group_id:
+          type: string
+          format: uuid
+          description: Security group to attach.
+        nic_id:
+          type: integer
+          description: NIC to attach the security group to. Get from `GET /api/v1/vms/{id}/networks`.
+
+    SaveImageRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Custom image name.
+          example: web-server-baseline
+        description:
+          type: string
+          description: Optional description for the saved image.
+        disk_id:
+          type: integer
+          default: 0
+          description: |
+            Which disk to capture. `0` for the OS disk, `1+` for attached volumes.
+        snapshot_id:
+          type: integer
+          default: -1
+          description: |
+            Source for the image. `-1` captures the current live disk state. Pass a snapshot ID to capture from a saved snapshot.
+
+    VMImage:
+      type: object
+      description: A custom OS image saved from a VM disk. Use `id` as `template_id` when creating new VMs.
+      required:
+        - id
+        - name
+        - region
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Image ID — use as `template_id` when creating a VM.
+        name:
+          type: string
+          description: Image name.
+        version:
+          type: string
+        description:
+          type: string
+        os_type:
+          type: string
+        is_windows:
+          type: boolean
+        region:
+          type: string
+          enum: [us-east]
+        created_at:
+          type: string
+          format: date-time
+
+    VPC:
+      type: object
+      description: A virtual private cloud (VPC).
+      required:
+        - id
+        - name
+        - cidr
+        - status
+        - region
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: VPC identifier.
+        account_id:
+          type: string
+          format: uuid
+          description: Account this VPC belongs to.
+        project_id:
+          type: string
+          format: uuid
+          description: Project this VPC belongs to.
+        name:
+          type: string
+          description: VPC display name.
+          example: vpc-prod
+        cidr:
+          type: string
+          description: CIDR block for the VPC.
+          example: "10.0.0.0/24"
+        gateway:
+          type: string
+          description: Gateway IP for the VPC.
+          example: "10.0.0.1"
+        dns:
+          type: string
+          description: DNS server IP for the VPC.
+        status:
+          type: string
+          description: VPC lifecycle status.
+          example: active
+        total_ips:
+          type: integer
+          description: Total addressable IPs in the VPC.
+          example: 256
+        used_ips:
+          type: integer
+          description: IPs currently leased to VMs.
+          example: 4
+        region:
+          type: string
+          enum: [us-east]
+          description: Region where the VPC lives.
+        gateway_type:
+          type: string
+          description: Gateway type (e.g. `none`, `nat`).
+        router_public_ip:
+          type: string
+          description: Public IP of the VPC gateway, if a gateway is enabled.
+        router_status:
+          type: string
+          description: Gateway router status.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVPCRequest:
+      type: object
+      required:
+        - name
+        - cidr
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: VPC name.
+          example: vpc-prod
+        cidr:
+          type: string
+          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+          description: CIDR block. Must not overlap with other VPCs in the account. See `GET /api/v1/vpcs/cidr-suggestions` for non-overlapping options.
+          example: "10.0.0.0/24"
+        region:
+          type: string
+          enum: [us-east]
+          description: Region for the VPC. Defaults to `us-east`.
+          example: us-east
+
+    UpdateVPCRequest:
+      type: object
+      description: At least one field is required. CIDR cannot be changed after creation.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: New VPC name.
+        description:
+          type: string
+          description: VPC description.
+
+    CIDRSuggestionsResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        suggested:
+          type: string
+          description: Recommended CIDR — non-overlapping and right-sized for typical use.
+          example: "10.1.0.0/24"
+        suggested_ips:
+          type: integer
+          description: Number of usable IPs in the suggested block.
+          example: 256
+        alternatives:
+          type: array
+          description: Other non-overlapping CIDRs to choose from, sized small/medium/large.
+          items:
+            $ref: '#/components/schemas/CIDRSuggestion'
+        existing_count:
+          type: integer
+          description: Number of VPCs you already have.
+
+    CIDRSuggestion:
+      type: object
+      properties:
+        cidr:
+          type: string
+          example: "10.2.0.0/24"
+        available_ips:
+          type: integer
+          example: 256
+        size:
+          type: string
+          enum: [small, medium, large]
+
+    SecurityGroup:
+      type: object
+      description: A security group — a named set of inbound/outbound rules that can be attached to VM NICs.
+      required:
+        - id
+        - name
+        - rules
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Security group ID.
+        name:
+          type: string
+          example: web-server
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityGroupRule'
+        vm_count:
+          type: integer
+          description: Number of VM NICs currently using this security group.
+        project_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SecurityGroupRule:
+      type: object
+      description: A single inbound or outbound rule.
+      required:
+        - protocol
+        - rule_type
+      properties:
+        protocol:
+          type: string
+          enum: [TCP, UDP, ICMP, ICMPV6, IPSEC, ALL]
+          description: Network protocol.
+        rule_type:
+          type: string
+          enum: [INBOUND, OUTBOUND]
+          description: Direction of traffic.
+        range:
+          type: string
+          description: Port or port range. Single port (`80`) or range (`8000:9000`). Empty for ICMP/ALL.
+          example: "80"
+        ip:
+          type: string
+          description: Source/destination IP for the rule. Empty means any.
+          example: "0.0.0.0"
+        size:
+          type: integer
+          description: CIDR block size (e.g. `24` for /24). Used with `ip` to allow a network range.
+        icmp_type:
+          type: integer
+          description: ICMP message type (only for ICMP/ICMPV6 protocols).
+
+    SecurityGroupTemplate:
+      type: object
+      description: A pre-built security group template.
+      required:
+        - id
+        - name
+        - rules
+      properties:
+        id:
+          type: string
+          description: Template ID — pass as `template_id` when creating a security group.
+          example: web-server
+        name:
+          type: string
+          example: Web Server
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityGroupRule'
+
+    CreateSecurityGroupRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: web-server
+        description:
+          type: string
+        template_id:
+          type: string
+          description: Seed from a template. Template rules are copied, then merged with any explicit `rules`.
+          example: web-server
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityGroupRule'
+
+    UpdateSecurityGroupRequest:
+      type: object
+      description: At least one field is required. Passing `rules` replaces the entire rule set.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityGroupRule'
+
+    FloatingIP:
+      type: object
+      description: A floating public IP address.
+      required:
+        - id
+        - ip_address
+        - type
+        - status
+        - reserved
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: IP identifier.
+        account_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+          description: User who reserved the IP.
+        ip_address:
+          type: string
+          description: The IP address.
+          example: "203.0.113.42"
+        type:
+          type: string
+          enum: [IPv4, IPv6]
+          description: IP family.
+        status:
+          type: string
+          enum: [free, in-use]
+          description: |
+            - `free` — IP is in the pool, not currently attached to any VM.
+            - `in-use` — currently attached to a VM.
+        reserved:
+          type: boolean
+          description: |
+            Whether the IP is reserved (held for the account regardless of VM attachment). A reserved IP can be either `free` (held but not attached) or `in-use` (held and attached).
+        region:
+          type: string
+          enum: [us-east]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReserveIPRequest:
+      type: object
+      description: Optional fields for IP reservation. Send an empty body to use defaults.
+      properties:
+        type:
+          type: string
+          enum: [IPv4, IPv6]
+          default: IPv4
+          description: IP family to reserve. Defaults to IPv4.
+        region:
+          type: string
+          enum: [us-east]
+          description: Region. Defaults to the project's default region.
+        billing_period:
+          type: string
+          enum: [monthly, yearly, twenty_four_month]
+          default: monthly
+          description: Subscription billing period. Ignored for PAYG accounts.
+
+    VMTag:
+      type: object
+      description: Custom tag attached to a VM.
+      required:
+        - id
+        - name
+        - priority
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique tag identifier
+        name:
+          type: string
+          description: Tag name
+        priority:
+          type: integer
+          description: Tag priority (ordering)
+        created_at:
+          type: string
+          format: date-time
+          description: When the tag was created
+
+    RenameVMRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: New name for the virtual machine
 
     ReinstallVMRequest:
       type: object
@@ -1473,6 +3326,12 @@ components:
 
     Region:
       type: object
+      required:
+        - id
+        - code
+        - name
+        - country_code
+        - is_default
       properties:
         id:
           type: integer
@@ -1505,6 +3364,17 @@ components:
 
     Template:
       type: object
+      required:
+        - id
+        - name
+        - version
+        - cpu
+        - ram
+        - storage
+        - is_windows
+        - os_type
+        - category
+        - region
       properties:
         id:
           type: string
@@ -1556,6 +3426,18 @@ components:
 
     VMPricingPlan:
       type: object
+      required:
+        - id
+        - vcpu
+        - memory_gib
+        - ssd_gib
+        - transfer_gib
+        - price_per_hour
+        - monthly_price
+        - yearly_price
+        - twenty_four_month_price
+        - vm_type
+        - region
       properties:
         id:
           type: integer
@@ -1636,51 +3518,46 @@ components:
 
     IPPricing:
       type: object
-      description: IP address pricing grouped by type
+      description: IP address pricing grouped by type.
       properties:
         ipv4:
-          type: object
-          description: IPv4 pricing
-          properties:
-            price_per_hour:
-              type: number
-              description: Hourly price in USD
-              example: 0.005
-            monthly_price:
-              type: number
-              description: Monthly price in USD
-              example: 3.50
-            yearly_price:
-              type: number
-              description: Yearly commitment price in USD
-              example: 35.00
-            twenty_four_month_price:
-              type: number
-              description: 24-month commitment price in USD
-              example: 70.00
+          $ref: '#/components/schemas/IPPricingTier'
         ipv6:
-          type: object
-          description: IPv6 pricing
-          properties:
-            price_per_hour:
-              type: number
-              description: Hourly price in USD
-              example: 0.0
-            monthly_price:
-              type: number
-              description: Monthly price in USD
-              example: 0.0
-            yearly_price:
-              type: number
-              description: Yearly commitment price in USD
-              example: 0.0
-            twenty_four_month_price:
-              type: number
-              description: 24-month commitment price in USD
-              example: 0.0
+          $ref: '#/components/schemas/IPPricingTier'
+
+    IPPricingTier:
+      type: object
+      description: Pricing for a single IP address type.
+      properties:
+        price_per_hour:
+          type: number
+          description: Hourly price in USD
+          example: 0.005
+        monthly_price:
+          type: number
+          description: Monthly price in USD
+          example: 3.50
+        yearly_price:
+          type: number
+          description: Yearly commitment price in USD
+          example: 35.00
+        twenty_four_month_price:
+          type: number
+          description: 24-month commitment price in USD
+          example: 70.00
 
     Project:
       type: object
+      required:
+        - id
+        - account_id
+        - name
+        - slug
+        - default_region
+        - is_default
+        - is_active
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -1772,12 +3649,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -1786,13 +3657,11 @@ components:
             $ref: '#/components/schemas/Error'
     BillingValidationFailed:
       description: |
-        Billing validation failed. Check the `reason` field for details:
-        - `no_billing_customer`: No billing account found
-        - `banned`: Account has been suspended
-        - `failed`: Payment failed, update payment method
-        - `no_payment_method`: No active payment method
-        - `activation_required`: Activation deposit needed
-        - `vm_limit_exceeded`: Account VM/RAM limit exceeded
+        Billing validation failed. The account is not in good standing.
+        Check the `reason` field:
+        - `banned` — account suspended
+        - `failed` — last payment failed; top up the account balance
+        - `no_billing_customer` — billing not set up
       content:
         application/json:
           schema:
@@ -1806,9 +3675,13 @@ components:
           example:
             error: Bad Request
             message: X-Project-ID required
-    ResourcesUnavailable:
-      description: System resources temporarily unavailable
+    InsufficientBalance:
+      description: |
+        Account balance is insufficient for this operation. Top up the balance and retry.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/BillingError'
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Payment Required
+            message: Insufficient balance for subscription

@@ -1,0 +1,261 @@
+---
+title: Troubleshooting
+description: Common VPC problems — CIDR rejection, IPs that don't talk to each other, DNS not propagating, port forwarding not working, gateway and delete blocks — and the fix for each
+---
+
+The most-seen issues with Raff VPCs and the fix that resolves each. Most come from one of three categories: **the dashboard rejecting input** (CIDR validation, specific-IP conflicts), **the network not behaving as expected after a change** (DNS lag, MTU surprises, default-route confusion), or **delete/detach blocks** (the safety rules in [Delete a VPC](/products/network/vpc/quickstart-guides/delete-vpc)). If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+
+## Create and CIDR validation
+
+<AccordionGroup>
+  <Accordion title="`CIDR prefix must be between /16 and /28`">
+    **What's happening:** you typed a Custom CIDR with a prefix outside the allowed range.
+
+    **Fix:** stick to **/16 through /28**. Bigger than `/16` (e.g. `/15`, `/8`) is rejected — too large; smaller than `/28` (e.g. `/30`, `/32`) is rejected — too small to be useful (a `/28` only has 13 usable IPs as it is).
+
+    For most workloads, the **Recommended /20** preset (~4,093 IPs) is the right answer. Only use Custom CIDR when the suggested ranges conflict with your on-prem network.
+  </Accordion>
+
+  <Accordion title="`CIDR must be in private range (10.x.x.x, 172.16-31.x.x, 192.168.x.x, or 100.64-127.x.x)`">
+    **What's happening:** you used a public IP block as the VPC CIDR.
+
+    **Fix:** use one of the four allowed private ranges:
+    - `10.0.0.0/8` (RFC 1918)
+    - `172.16.0.0/12` (RFC 1918)
+    - `192.168.0.0/16` (RFC 1918)
+    - `100.64.0.0/10` (RFC 6598 — carrier-grade NAT range, useful when 10/172/192 are exhausted)
+
+    Public ranges (`8.0.0.0/8`, `1.0.0.0/8`, etc.) are rejected because the VPC's gateway would conflict with internet routing.
+  </Accordion>
+
+  <Accordion title="CIDR rejected for alignment — `192.168.1.50/20` won't work">
+    **What's happening:** the network address doesn't align with the prefix.
+
+    **Fix:** the network bits must be zeros. `192.168.1.50/20` is invalid because a `/20` block always starts on a 16-bit boundary — the correct form is `192.168.0.0/20`.
+
+    Quick rule: for prefix `/N`, the host bits (the last `32 - N` bits) must all be zero. If you're not sure, type the *network* address you want and let the validator confirm.
+  </Accordion>
+
+  <Accordion title="VPC name already exists">
+    **What's happening:** another VPC in your account has the same name.
+
+    **Fix:** VPC **names** must be unique inside an account. CIDRs can overlap freely (VXLAN VNI handles isolation), but two VPCs can't share the same label. Pick a different name — `prod-2`, `staging-east`, etc.
+  </Accordion>
+</AccordionGroup>
+
+## VMs in the same VPC can't reach each other
+
+<AccordionGroup>
+  <Accordion title="Two VMs in the same VPC can't ping each other on private IPs">
+    **What's happening:** they're attached to the VPC but traffic isn't flowing.
+
+    **Most likely causes, in order:**
+
+    1. **Firewall rules on the VMs** — Raff's Firewall product or the guest's OS-level firewall (`ufw`, `iptables`, Windows Firewall) is dropping ICMP or the port you're testing. Open the relevant port between the VMs' private IPs.
+    2. **Wrong VPC NIC selected on the source VM** — if the VM is in multiple VPCs, run `ip a` (Linux) or `Get-NetIPAddress` (Windows) to confirm which interface holds which VPC's IP. Bind your test (`ping -I <iface>`, `psping -s <local_ip>`) to the right NIC.
+    3. **DHCP didn't run on the new interface** — after attaching to a VPC, Linux usually auto-configures `eth1` / `enp1s0`. If the new NIC has no IP, run `dhclient -v <iface>` (Linux) or check Disk Management → Adapters (Windows).
+    4. **MTU mismatch on a tunneled / containerized workload** — see the MTU accordion below.
+
+    The VPC layer itself is L2 — packets should always reach the destination's NIC. If they're not, the issue is on one of the two VMs, not the VPC.
+  </Accordion>
+
+  <Accordion title="Two VMs with the same private IP can't reach each other">
+    **What's happening:** they're in **different VPCs** that happen to share a CIDR.
+
+    **Why:** Raff allows CIDR overlap across VPCs because each VPC is a separate VXLAN segment with its own VNI. Two VMs holding `10.0.0.5` in different VPCs are isolated by design — that's the feature, not a bug.
+
+    **Fix:** put both VMs in the **same VPC**, or set up routing through a shared gateway VM that has one NIC in each VPC. There's no way to "peer" the two VPCs today (Peering tab is coming soon).
+  </Accordion>
+
+  <Accordion title="Large packets break, small packets work — MTU issue">
+    **What's happening:** TCP works for short connections, then stalls when the payload grows. Or `ping` works at default size but fails with `-s 1500`.
+
+    **Cause:** something in the path has its MTU hard-coded to 1500. Raff's VPC interfaces use **MTU 8950** (jumbo frames, 9000 minus 50 bytes of VXLAN overhead).
+
+    **Fixes (pick one):**
+    - **Set the guest's interface MTU to 8950** to use jumbo frames end-to-end. Linux: `ip link set <iface> mtu 8950`. Windows: `netsh interface ipv4 set subinterface "<iface>" mtu=8950 store=persistent`.
+    - **Set the guest's interface MTU to 1500** if you can't use jumbo frames (some appliances, some kernels). Slower but always safe.
+    - **For containers and overlays** (Docker, Kubernetes CNI) running on top of the VPC — set the bridge's / CNI's MTU explicitly. Docker: `--mtu=8950` or `--mtu=1500`. Kubernetes Calico/Flannel/Cilium: configure in the CNI manifest.
+    - **For tunnels** (WireGuard, IPsec) — subtract the tunnel overhead from 8950 (or 1500) when sizing the inner MTU. WireGuard adds 80 bytes; IPsec varies.
+  </Accordion>
+</AccordionGroup>
+
+## DNS
+
+<AccordionGroup>
+  <Accordion title="DNS change isn't applied to existing VMs">
+    **What's happening:** you changed the VPC's DNS in **Edit DNS Servers** and `/etc/resolv.conf` (or the Windows DNS settings) on existing VMs still shows the old value.
+
+    **Why:** DNS is delivered to VMs over **DHCP**. Existing VMs only pick up the change when they renew their lease — which can take minutes to hours depending on the image's DHCP client config.
+
+    **Force renewal inside the guest:**
+    - **Linux** — `dhclient -r && dhclient` (releases and re-requests). Or `systemctl restart systemd-networkd` / `systemd-resolved`.
+    - **Windows** — `ipconfig /renew` from an elevated prompt. Then `ipconfig /flushdns` to clear cache.
+    - **Either** — reboot the VM. Always works.
+
+    The dialog shows "Changes will be applied to all connected VMs in the background" — that's accurate, just not instantaneous.
+  </Accordion>
+
+  <Accordion title="VMs can't resolve anything after pointing DNS at an internal resolver">
+    **What's happening:** you set the VPC's Primary DNS to a VM inside the VPC (e.g. an internal PowerDNS / CoreDNS), and now no VM can resolve names.
+
+    **Most likely causes:**
+
+    1. **The resolver VM is down** — start it; DHCP only re-checks on lease renewal, so the existing VMs won't recover until that runs.
+    2. **The resolver VM isn't listening on its VPC IP** — bind it to `0.0.0.0` or to the specific VPC IP. `ss -lnup | grep :53`.
+    3. **The resolver VM has a firewall blocking UDP/TCP 53** — `ufw allow 53` or open in Raff's Firewall.
+    4. **A DNS loop** — the resolver itself uses Raff's VPC DNS as upstream, which now points back at it. Set its upstream to a real resolver (`8.8.8.8`, `1.1.1.1`).
+
+    **Quick recovery:** revert Primary DNS to `8.8.8.8` from the Edit DNS dialog, force-renew on the VMs, then debug the resolver out-of-band.
+  </Accordion>
+</AccordionGroup>
+
+## Internet Gateway and port forwarding
+
+<AccordionGroup>
+  <Accordion title="VMs in the VPC have no internet after enabling Platform Router">
+    **What's happening:** you enabled the **Platform Router** but VMs can't reach `8.8.8.8`.
+
+    **Most likely causes:**
+
+    1. **The VM has its own Public IP** — and its default route goes through the public NIC, not the VPC NIC. The VM is using its public IP for outbound, not the router. This is usually fine; check `ping 8.8.8.8` works (it does, just not via the router).
+    2. **The VM's default route doesn't point at the VPC gateway** — `ip route` should show `default via 10.x.0.1` for the VPC the router sits on. If not, set it: `ip route add default via 10.x.0.1 dev <iface>`.
+    3. **The router is still provisioning** — first deploy takes a minute or two. The detail page's gateway badge flips to active when ready.
+    4. **DNS isn't set or isn't reachable** — see the DNS accordions above.
+  </Accordion>
+
+  <Accordion title="Port forwarding rule doesn't work">
+    **What's happening:** you added a rule mapping `public_port → private_ip:private_port` but external traffic to that port doesn't reach the VM.
+
+    **Checklist, in order:**
+
+    1. **Platform Router enabled?** — port forwarding is only available with the Platform Router gateway. The Port Fwd tab is hidden / blank otherwise.
+    2. **Private IP is in the VPC's range and currently in use** — typo'd IPs silently fail. Confirm the VM's IP via the VMs tab on the VPC detail page.
+    3. **The destination VM is listening on `private_port`** — `ss -lnt | grep :<port>` (Linux) or `netstat -an | findstr :<port>` (Windows).
+    4. **The destination VM's firewall allows inbound on `private_port`** — both Raff Firewall rules and the guest's OS firewall must allow it from the router's private IP.
+    5. **You're testing from outside the VPC** — `curl <router_public_ip>:<public_port>` from your laptop. Testing from inside the VPC takes a different path and may not exercise the rule.
+    6. **At the 10-rule limit?** — Platform Router supports up to **10 forwarding rules per VPC**. Beyond that, deploy a Firewall Appliance (OPNsense) for unlimited rules.
+  </Accordion>
+
+  <Accordion title="Firewall Appliance stuck on Deploy">
+    **What's happening:** you clicked Deploy on the Firewall Appliance card, the gateway badge stays as "deploying" or reverts after a few minutes.
+
+    **Why:** OPNsense bootstrap failed. The image (OPNsense 26.1) requires the FAT32 config disk to attach correctly on first boot.
+
+    **Fix:** in most cases, click Deploy again — transient infra issues clear on retry. If it fails twice, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with the VPC ID. Don't try to log into the partial OPNsense VM via VNC; the bootstrap script needs to complete first.
+  </Accordion>
+
+  <Accordion title="Lost the OPNsense admin password before saving it">
+    **What's happening:** you deployed the Firewall Appliance and didn't copy the auto-generated password from the dialog before clicking Deploy.
+
+    **Recovery:** the dashboard stores the password — open the deployed appliance VM in **Compute** to view it, or check the VPC's Internet Gateway card on the detail page (the password is exposed there too). If somehow neither shows it, **Disable** the gateway and **Deploy** again — you'll get a fresh password to copy. Existing OPNsense rules are lost on redeploy, so this is only a clean option before you've configured anything.
+
+    **Going forward:** the dialog hints "(copy before deploying)" next to Credentials for a reason. Paste the password into your secrets manager *before* clicking Deploy.
+  </Accordion>
+</AccordionGroup>
+
+## Attach, detach, and delete blocks
+
+<AccordionGroup>
+  <Accordion title="VM doesn't appear in the Add VM dropdown">
+    **What's happening:** the VM you want to attach isn't in the **Select a VM** list.
+
+    **Possible reasons:**
+
+    1. **Already attached to this VPC** — the dropdown only shows VMs not currently in the target VPC. Check the VMs tab.
+    2. **In a different region** — VPCs are region-scoped. A `us-east` VPC can only hold `us-east` VMs; cross-region attach is not possible.
+    3. **VM is in a transient state** — `creating`, `deleting`, `migrating`. Wait for it to settle, then refresh the dropdown.
+    4. **Caching** — close and reopen the dialog, or refresh the page.
+  </Accordion>
+
+  <Accordion title="Specific IP rejected — already in use or in reserved range">
+    **What's happening:** the IP you typed isn't accepted.
+
+    **Fix — check three things:**
+
+    1. **Reserved IPs** — `.0` (network), `.1` (gateway), and `.255` (broadcast on `/24` and larger) are always reserved. Pick anything else in the Available range.
+    2. **In-use** — another VM in the same VPC already holds that IP. The dialog shows the conflict; pick a different one or detach the holder first.
+    3. **Outside the CIDR** — typing `10.7.1.5` into a `10.7.0.0/24` is silently outside the range. Stay inside the **Available range** shown in the dialog.
+
+    Or just leave it on **Auto-assign** unless you have a strong reason for a fixed IP.
+  </Accordion>
+
+  <Accordion title="Detach blocked — `VM has no other interfaces`">
+    **What's happening:** clicking Detach on a VM in the VMs tab fails because the VM would be left with zero network interfaces.
+
+    **Fix:** give the VM another way to reach the network **before** detaching:
+    - **Attach a Public IP** to the VM directly, or
+    - **Attach the VM to another VPC** first, then come back and detach from this one.
+
+    A VM with no NICs is useless and unreachable, so Raff blocks the action.
+  </Accordion>
+
+  <Accordion title="`Delete (has VMs)` — delete action greyed out">
+    **What's happening:** you're trying to delete a VPC that still has VMs attached. The Delete option in the row menu and the detail-page header are both disabled.
+
+    **Fix:** clear the VMs first. Two paths:
+    - **Detach** every VM (VPC detail → VMs tab → Detach on each row) if you want them to keep running on other interfaces.
+    - **Delete** the VMs from the **Compute** page if you're tearing down. Use the VM-delete dialog's "delete attached VPCs" option to delete the VPC at the same time as the last VM — saves a step.
+
+    See [Delete a VPC](/products/network/vpc/quickstart-guides/delete-vpc) for the full flow including shared-VPC safety rules.
+  </Accordion>
+
+  <Accordion title="Delete still fails after the VMs are gone">
+    **What's happening:** the VMs column shows `0 VMs` but the API or the detail page still rejects the delete.
+
+    **Possible causes:**
+
+    1. **A pending Internet Gateway provision** — if you clicked Enable on Platform Router or Deploy on Firewall Appliance and the gateway VM is still creating, the VPC is locked. Wait for it to finish or fail, then retry.
+    2. **A locked operation** — rename or DNS update in flight. Refresh the page and retry.
+    3. **Stale dashboard cache** — the API is the source of truth. Refresh, or call the API directly with `gh`-style tooling to confirm.
+
+    If it persists for more than a few minutes, contact support with the VPC ID.
+  </Accordion>
+</AccordionGroup>
+
+## "Coming soon" features
+
+<AccordionGroup>
+  <Accordion title="VPC Peering tab is empty / unclickable">
+    **Status:** the Peering tab is a UI placeholder for an upcoming feature. **VPC peering is not available today.**
+
+    **Workarounds for cross-VPC traffic:**
+    - Route through a **shared gateway VM** with one NIC in each VPC, manually configured to forward traffic
+    - Have both source and destination VMs hold **public IPs**, route over the public internet
+    - Re-architect to put the workloads in the **same VPC**
+
+    Subscribe to the [changelog](/api-reference/changelog) for the launch announcement.
+  </Accordion>
+
+  <Accordion title="Services tab shows `Load Balancer & VPN Gateway — coming soon`">
+    **Status:** managed Load Balancer and VPN Gateway services are not yet available.
+
+    **Workarounds:**
+    - **Load balancer** — run HAProxy / Nginx / Traefik on a small VM in the VPC; or use Raff Kubernetes (which provides ingress controllers).
+    - **VPN gateway** — deploy the **Firewall Appliance** (OPNsense) on the VPC; it ships with WireGuard, IPsec, and OpenVPN built in.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- **VPC name and ID** — copy from the detail page URL or the row's `⋮` → Copy CIDR (and add the name)
+- **The exact error message** and the time you saw it
+- **What you tried** from this page
+
+Same-day response in business hours; faster for production-impacting issues.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VXLAN, CIDR, and isolation" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    The model that explains most "why doesn't this work?" questions.
+  </Card>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Detail page tour — gateway, DNS, port forwarding.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/network/vpc/details/features-and-limits">
+    Concrete numbers for sizing decisions.
+  </Card>
+</CardGroup>
