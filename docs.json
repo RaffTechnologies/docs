@@ -424,14 +424,14 @@
                     ]
                   },
                   {
-                    "group": "Security groups",
+                    "group": "Firewall",
                     "pages": [
-                      "api-reference/endpoint/list-firewall",
-                      "api-reference/endpoint/create-firewall-group",
+                      "api-reference/endpoint/list-security-groups",
+                      "api-reference/endpoint/create-security-group",
                       "api-reference/endpoint/list-security-group-templates",
                       "api-reference/endpoint/get-security-group",
                       "api-reference/endpoint/update-security-group",
-                      "api-reference/endpoint/delete-firewall-group"
+                      "api-reference/endpoint/delete-security-group"
                     ]
                   },
                   {
