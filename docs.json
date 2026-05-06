@@ -426,12 +426,12 @@
                   {
                     "group": "Firewall",
                     "pages": [
-                      "api-reference/endpoint/list-security-groups",
-                      "api-reference/endpoint/create-security-group",
-                      "api-reference/endpoint/list-security-group-templates",
-                      "api-reference/endpoint/get-security-group",
-                      "api-reference/endpoint/update-security-group",
-                      "api-reference/endpoint/delete-security-group"
+                      "api-reference/endpoint/list-firewalls",
+                      "api-reference/endpoint/create-firewall",
+                      "api-reference/endpoint/list-firewall-templates",
+                      "api-reference/endpoint/get-firewall",
+                      "api-reference/endpoint/update-firewall",
+                      "api-reference/endpoint/delete-firewall"
                     ]
                   },
                   {
@@ -442,8 +442,8 @@
                       "api-reference/endpoint/detach-vm-from-vpc",
                       "api-reference/endpoint/attach-vm-ip",
                       "api-reference/endpoint/detach-vm-ip",
-                      "api-reference/endpoint/attach-vm-security-group",
-                      "api-reference/endpoint/detach-vm-security-group"
+                      "api-reference/endpoint/attach-vm-firewall",
+                      "api-reference/endpoint/detach-vm-firewall"
                     ]
                   }
                 ]
