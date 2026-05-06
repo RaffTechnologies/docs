@@ -29,8 +29,6 @@ info:
     url: https://rafftechnologies.com
 
 servers:
-  - url: https://api.raffcomputing.com
-    description: Development
   - url: https://api.rafftechnologies.com
     description: Production
 
