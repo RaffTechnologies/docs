@@ -1,0 +1,142 @@
+---
+title: Use Raff docs in your AI tools
+description: Plug Raff's full documentation into Claude, Cursor, and other MCP-enabled AI clients. The Model Context Protocol endpoint exposes search and page retrieval over Raff's docs so your AI assistant grounds its answers on real, current Raff content instead of guessing.
+icon: robot
+---
+
+<sub>Updated May 8, 2026</sub>
+
+Raff's documentation ships with a built-in **MCP server** (Model Context Protocol) — a standardized way for AI assistants to read your docs as a tool. Connect Claude, Cursor, or any MCP-compatible client to one URL and the AI gets live, up-to-date Raff knowledge: it can search the docs, pull specific pages, and cite real content when answering your questions about Raff.
+
+## Endpoint
+
+```
+https://docs.rafftechnologies.com/mcp
+```
+
+This is the URL you point any MCP client at. It's a public, read-only server — no API key, no setup on Raff's side, no rate limit beyond fair-use.
+
+The server exposes two tools to your AI:
+
+| Tool | What it returns |
+|---|---|
+| **Search docs** | Full-text search across every published page on Raff's docs site |
+| **Query docs filesystem** | Pulls a specific page or section by its docs path (e.g. `products/build/virtual-machines/quickstart-guides/create-a-vm`) |
+
+When you ask your AI a Raff question, the model decides which tool to call, gets the relevant content back, and answers with that content as grounding. No hallucinations about endpoints or features that don't exist.
+
+## Connect from popular AI clients
+
+<Tabs>
+  <Tab title="Claude Desktop">
+    Edit Claude Desktop's MCP config:
+
+    - **macOS** — `~/Library/Application Support/Claude/claude_desktop_config.json`
+    - **Windows** — `%APPDATA%\Claude\claude_desktop_config.json`
+
+    Add the Raff docs server:
+
+    ```json
+    {
+      "mcpServers": {
+        "raff-docs": {
+          "url": "https://docs.rafftechnologies.com/mcp"
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop. In any new conversation, Claude can now call `raff-docs.search` and `raff-docs.query` automatically when answering Raff questions.
+  </Tab>
+  <Tab title="Cursor">
+    Open **Settings → MCP → Add new MCP server**.
+
+    | Field | Value |
+    |---|---|
+    | **Name** | `raff-docs` |
+    | **Type** | URL / SSE |
+    | **URL** | `https://docs.rafftechnologies.com/mcp` |
+
+    Save. Cursor's AI panel now has the Raff docs as a tool — it'll call them silently when you ask Raff-related questions in chat or inline edits.
+  </Tab>
+  <Tab title="Claude Code (CLI)">
+    Add the server to your Claude Code MCP config:
+
+    ```bash
+    claude mcp add raff-docs --url https://docs.rafftechnologies.com/mcp
+    ```
+
+    Or edit `~/.claude/mcp.json` directly:
+
+    ```json
+    {
+      "mcpServers": {
+        "raff-docs": {
+          "url": "https://docs.rafftechnologies.com/mcp"
+        }
+      }
+    }
+    ```
+
+    Run `claude mcp list` to verify the server is registered. The CLI will use it on any prompt where Raff context is helpful.
+  </Tab>
+  <Tab title="Continue / Cline / other">
+    Most other MCP clients accept the same URL-based config. Add a server entry pointing at:
+
+    ```
+    https://docs.rafftechnologies.com/mcp
+    ```
+
+    Refer to your client's MCP-server documentation for the exact config-file format. The endpoint speaks standard MCP — any compliant client can talk to it.
+  </Tab>
+</Tabs>
+
+## What changes after you connect
+
+Without MCP, asking Claude or Cursor "How do I attach a Volume to a Raff VM?" gets a generic cloud-VM answer based on the model's training data — which may be stale, wrong about Raff specifics, or hallucinated.
+
+With MCP connected:
+
+1. You ask the same question
+2. The model calls `raff-docs.search("attach volume to VM")` → gets back the real `attach-to-vm.mdx` page from Raff's docs
+3. It answers using **your actual product** — correct device names (`/dev/vdb`), correct steps, correct UI labels, correct dashboard paths
+4. The answer cites the docs page so you can click through
+
+This works for everything in the docs: VMs, Volumes, Object Storage, VPC, Public IPs, Firewall, Team & Projects, the API Reference, the CLI, the Terraform provider, billing, troubleshooting — anything published.
+
+## Example questions to try
+
+Once connected, paste these into your AI chat to see grounded answers:
+
+- *"Show me the curl call to create a Raff VM in the production project."*
+- *"What does Raff's Default Firewall block by default and why?"*
+- *"How do I move a reserved IP between two Raff VMs without downtime?"*
+- *"Write a Terraform module for a Raff VM with a 100 GB volume and a reserved IPv4."*
+- *"What are Raff's Standard vs Premium plans, and which should I pick for a Postgres database?"*
+
+Each of these triggers the AI to call the MCP server, retrieve the relevant docs sections, and answer with real Raff specifics.
+
+## What the MCP server is not
+
+A few things to set expectations:
+
+- **Not an execution endpoint.** The MCP server exposes Raff's *docs*, not Raff's *API*. It cannot create VMs, charge your account, or change anything in your account. To execute actions, your AI tool calls the [public REST API](/api-reference/introduction) directly using your API key.
+- **Not authenticated.** Anyone with the URL can read the docs through it — exactly what's true of the public docs site itself. There's no customer-specific data behind the endpoint.
+- **Not a substitute for the API.** Use MCP for *answering questions about Raff*; use the [REST API](/api-reference/introduction) (or [`raff-go`](/reference/cli/install) / [`raff-cli`](/reference/cli/introduction) / [Terraform](/reference/terraform/introduction)) for *doing things in Raff*.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Use the REST API directly — what the AI calls when it needs to do something, not just read about it.
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli/introduction">
+    `raff` — the command-line equivalent of every Raff API operation.
+  </Card>
+  <Card title="Terraform Reference" icon="cube" href="/reference/terraform/introduction">
+    Provision Raff resources declaratively from your AI-generated Terraform.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    First Raff API call in under five minutes.
+  </Card>
+</CardGroup>
