@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Raff",
   "colors": {
-    "primary": "#F97316",
-    "light": "#FB923C",
-    "dark": "#EA580C"
+    "primary": "#db4a2b",
+    "light": "#e87454",
+    "dark": "#a83619"
   },
   "favicon": "/favicon.ico",
   "logo": {
