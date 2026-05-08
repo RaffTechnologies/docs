@@ -74,7 +74,7 @@ raff vm list --output json
 raff vm list --output json | jq '.[] | select(.status == "running") | .id'
 ```
 
-The JSON shape matches the [public API response schema](/api-reference/introduction). Anything you can do with `curl` you can do with `raff <command> --output json`.
+The JSON shape matches the [public API response schema](/api-reference/endpoints). Anything you can do with `curl` you can do with `raff <command> --output json`.
 
 ## Cross-cutting flags
 
@@ -89,7 +89,7 @@ The JSON shape matches the [public API response schema](/api-reference/introduct
 
 ## What's covered
 
-The CLI tracks the public API surface. Anything documented in the [API Reference](/api-reference/introduction) is available through the CLI with one exception: low-traffic admin endpoints aren't exposed (admin-service has its own internal tooling). For the customer-facing surface — VMs, projects, VPCs, IPs, firewalls — there's full parity.
+The CLI tracks the public API surface. Anything documented in the [API Reference](/api-reference/endpoints) is available through the CLI with one exception: low-traffic admin endpoints aren't exposed (admin-service has its own internal tooling). For the customer-facing surface — VMs, projects, VPCs, IPs, firewalls — there's full parity.
 
 ## Where to go next
 

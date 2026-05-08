@@ -57,10 +57,10 @@ The Raff API has **113 endpoints across 15 categories**. Pick a group below to j
 
 Every endpoint shares the same auth, header, and response conventions:
 
-- **Auth:** `X-API-Key` header on all endpoints except `/api/v1/public/*` (catalog) and `/health`. See [Authentication](/authentication).
+- **Auth:** `X-API-Key` header on all endpoints except `/api/v1/public/*` (catalog) and `/health`.
 - **Project scope:** mutating endpoints require `X-Project-ID` (header). List endpoints accept it optionally to filter to a single project.
 - **Pagination:** list endpoints support `?limit=` and `?offset=`.
 - **Response envelope:** `{success: true, data: ..., total: ...}` for lists, `{success: true, data: ...}` for single resources.
 - **Errors:** `{error: "...", message: "..."}` on 4xx and 5xx. Common statuses: 400 / 401 / 402 / 403 / 404 / 409 / 429.
 
-For the full list of headers, error codes, and rate limits, see the [Introduction](/api-reference/introduction).
+For the full list of headers, error codes, rate limits, and language examples, see [Authentication](/authentication).

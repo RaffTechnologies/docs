@@ -326,7 +326,6 @@
           {
             "group": "API Reference",
             "pages": [
-              "api-reference/introduction",
               "api-reference/endpoints",
               {
                 "group": "Catalog",
@@ -645,7 +644,7 @@
         "header": "Docs",
         "items": [
           { "label": "Docs Home", "href": "/introduction" },
-          { "label": "API Reference", "href": "/api-reference/introduction" },
+          { "label": "API Reference", "href": "/api-reference/endpoints" },
           { "label": "Quickstart", "href": "/quickstart" },
           { "label": "Products", "href": "/products" }
         ]
