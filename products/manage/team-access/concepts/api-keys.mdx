@@ -23,19 +23,26 @@ Keys are tied to your **account** (not to a specific user) and carry a **frozen 
 
 Every key carries an Account Role + (optionally) a Project Role applied to one or more projects:
 
+```mermaid
+flowchart LR
+    K["**API Key**<br/>name + `raff_<suffix>`<br/>+ expiration"]
+    AR["Account Role"]
+    PR["Projects + Project Role"]
+    AP["**Account permissions**<br/>(`account.*`)"]
+    RP["**Project permissions**<br/>on the selected projects only<br/>(`project.*` / `vm.*` / `vpc.*` / ...)"]
+    K --> AR
+    K --> PR
+    AR --> AP
+    PR --> RP
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│  API Key — name + raff_<suffix>                                    │
-│                                                                     │
-│  Account Role: ───────────────────► Account permissions (account.*)│
-│                                                                     │
-│  Projects + Project Role: ────────► Project permissions on these   │
-│                                     projects only (project.* /     │
-│                                     vm.* / vpc.* / ...)            │
-│                                                                     │
-│  Expiration                                                         │
-└────────────────────────────────────────────────────────────────────┘
-```
+
+In plain words:
+
+| The key carries | Which determines |
+|---|---|
+| **Account Role** (one — required) | The key's `account.*` permissions (members, billing, audit, project list, role catalog) |
+| **Projects + Project Role** (zero or more projects, one role applied to all of them — optional, hidden when Account Role is Owner) | The key's `project.*` / `vm.*` / `vpc.*` / etc. permissions on **those projects only** |
+| **Expiration** | When the key auto-revokes |
 
 Three points worth highlighting:
 
@@ -56,19 +63,12 @@ This is the centralized role system in action. Roles are the single source of tr
 
 The full key value is **shown exactly once** — in the **API Key Created** dialog right after you click Create. After that, only the prefix (`raff_17d70fcf…`) is visible on the dashboard's API Keys list.
 
-```
-┌────────────────────────────────────────────┐
-│  Create API Key dialog → Create Key click  │
-│             ↓                               │
-│  API Key Created dialog                    │
-│  ─ Full key value visible (one time only)  │
-│  ─ Copy to your secret store               │
-│  ─ Click Done                              │
-│             ↓                               │
-│  API Keys list                             │
-│  ─ Only the prefix is visible              │
-│  ─ Full value cannot be retrieved          │
-└────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A["**Create API Key dialog**<br/>fill name, role, expiration<br/>→ click Create Key"]
+    B["**API Key Created dialog**<br/>full key value shown once<br/>→ copy to your secret store<br/>→ click Done"]
+    C["**API Keys list**<br/>only the prefix visible<br/>full value cannot be retrieved"]
+    A --> B --> C
 ```
 
 This is intentional: Raff stores only a hash of the key value, not the value itself, so even Raff staff can't show it back to you. If you lose the key value, the only path forward is to **rotate** (Regenerate) — that issues a new value and invalidates the old.
