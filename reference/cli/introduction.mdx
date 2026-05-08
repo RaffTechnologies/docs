@@ -1,15 +1,115 @@
 ---
 title: "Raff CLI"
-description: "Control your Raff Cloud infrastructure from the command line."
+description: "Manage Raff Platform resources from your terminal — VMs, projects, VPCs, public IPs, firewalls. The CLI uses the same public API as the dashboard, with the same role-based authorization model."
 ---
 
-<Info>The Raff CLI is coming soon. In the meantime, you can manage your resources using the [REST API](/api-reference/introduction).</Info>
+<sub>Updated March 5, 2026</sub>
 
-The Raff CLI will let you create, manage, and monitor cloud resources directly from your terminal. It will support all operations available through the API, including:
+The **Raff CLI** (`raff`) is a single static binary that wraps the Raff public API for terminal use. Same API key auth as the dashboard, same role-based scoping, same resources — just driven from the command line. It's the right tool for one-off operations, scripted workflows, and CI/CD pipelines.
 
-- Creating and managing virtual machines
-- Managing volumes, snapshots, and backups
-- Configuring networking and security groups
-- Viewing usage and billing information
+For declarative infrastructure (commit your VM and project definitions to git), use [Terraform](/reference/terraform/introduction) instead. CLI is imperative; Terraform is declarative.
 
-Stay tuned for updates.
+## What you can do with the CLI
+
+| Resource | Commands |
+|---|---|
+| **Configure** | `raff configure` — set API key, base URL, default project |
+| **Virtual Machines** | `raff vm` — list, get, create, update, delete, bulk-delete, start, stop, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, attach IP, detach IP, attach firewall, attach VPC, manage tags, manage notes, list networks |
+| **Projects** | `raff project` — list, get, create, update, delete |
+| **VPCs** | `raff vpc` — list, get, create, update, delete, cidr-suggestions |
+| **Public IPs** | `raff ip` — list, get, reserve, release, change |
+| **Firewalls** | `raff security-group` — list, templates, get, create, delete |
+
+Every command supports `--output json` for parseable output (default is human-readable tables). Every command honors the same auth precedence: CLI flag > env var > config file.
+
+## Quick start
+
+```bash
+# Install
+go install github.com/rafftechnologies/raff-cli/cmd/raff@latest
+
+# Configure (writes to ~/.raff/config.yaml)
+raff configure
+
+# Pick the project you want to work with
+raff project list
+
+# Create a VM
+raff vm create \
+  --name web-01 \
+  --template-id <template-uuid> \
+  --pricing-id 9 \
+  --region us-east \
+  --project-id <project-id>
+
+# Watch it come up
+raff vm list --output json | jq '.[] | {name, status}'
+
+# When you're done
+raff vm delete <vm-id>
+```
+
+## Authentication and configuration
+
+The CLI looks for credentials in this order:
+
+1. **CLI flags** (`--api-key`, `--api-url`, `--project-id`)
+2. **Environment variables** (`RAFF_API_KEY`, `RAFF_API_URL`, `RAFF_PROJECT_ID`)
+3. **Config file** (`~/.raff/config.yaml`)
+
+`raff configure` walks you through writing the config file. Multiple profiles are supported with `--profile <name>` so you can keep `prod`, `staging`, and `dev` credentials side-by-side.
+
+For CI/CD where there's no interactive shell, set `RAFF_API_KEY` and `RAFF_PROJECT_ID` as secrets and skip the config file entirely. See [Configure](/reference/cli/configure) for the full setup walkthrough.
+
+## Output formats
+
+```bash
+# Default table output — human-readable
+raff vm list
+
+# JSON output — for scripting
+raff vm list --output json
+
+# Pipe through jq for transformations
+raff vm list --output json | jq '.[] | select(.status == "running") | .id'
+```
+
+The JSON shape matches the [public API response schema](/api-reference/introduction). Anything you can do with `curl` you can do with `raff <command> --output json`.
+
+## Cross-cutting flags
+
+| Flag | What it does |
+|---|---|
+| `--api-url <url>` | Override the API base URL — defaults to production |
+| `--api-key <key>` | Override the API key for this command |
+| `--project-id <uuid>` | Override the default project for this command |
+| `-o, --output <format>` | `table` (default) or `json` |
+| `--profile <name>` | Use a named profile from your config file |
+| `--help` | Show help for any command (`raff vm --help`, `raff vm create --help`, etc.) |
+
+## What's covered
+
+The CLI tracks the public API surface. Anything documented in the [API Reference](/api-reference/introduction) is available through the CLI with one exception: low-traffic admin endpoints aren't exposed (admin-service has its own internal tooling). For the customer-facing surface — VMs, projects, VPCs, IPs, firewalls — there's full parity.
+
+## Where to go next
+
+<CardGroup cols={3}>
+  <Card title="Install the CLI" icon="download" href="/reference/cli/install">
+    Build from source, install via go, or grab a release binary.
+  </Card>
+  <Card title="Configure" icon="gear" href="/reference/cli/configure">
+    Set up API key, profiles, and defaults.
+  </Card>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    The full set of Virtual Machines commands with examples.
+  </Card>
+  <Card title="Project commands" icon="folder" href="/reference/cli/project">
+    Create and manage projects.
+  </Card>
+  <Card title="VPC commands" icon="network-wired" href="/reference/cli/vpc">
+    Private networks and CIDR suggestions.
+  </Card>
+  <Card title="Public IP commands" icon="globe" href="/reference/cli/ip">
+    Reserve, attach, swap, release public addresses.
+  </Card>
+</CardGroup>

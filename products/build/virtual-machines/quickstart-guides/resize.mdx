@@ -3,6 +3,8 @@ title: Resize a VM
 description: Change CPU, RAM, or disk size on a virtual machine
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Resize lets you change a VM's plan (CPU + RAM) or grow its disk. Both run from the **Resize** tab on the VM detail page; both require the VM to be **powered off** first.
 
 ## Open the Resize tab
@@ -63,7 +65,87 @@ Click **Proceed to Checkout**. The order summary shows the prorated charge.
 After confirmation:
 
 - **Compute resize** — the platform applies the new plan, then boots the VM. It returns to `active` on the same IP, with the new CPU/RAM.
-- **Storage resize** — the disk grows immediately. You may need to extend the partition and filesystem inside the OS (`growpart` + `resize2fs` on Linux; **Disk Management** on Windows).
+- **Storage resize** — the disk grows immediately. You may need to extend the partition and filesystem inside the OS — see the per-OS steps below.
+
+## Extending the filesystem after a disk resize
+
+Storage resize grows the underlying disk, but the **partition table** and **filesystem** inside the guest don't auto-extend. You'll see the new GBs at the disk level (`lsblk`, `Get-Disk`) but only the original size at the filesystem level (`df`, `Disk Management → free space`) until you extend.
+
+### Linux — `growpart` + filesystem resize
+
+After the VM reboots into the resized disk, SSH in and run:
+
+```bash
+# Find the device — usually /dev/vda1 (the OS disk's first partition)
+lsblk
+
+# Install cloud-utils if not present
+# Ubuntu / Debian
+sudo apt-get update && sudo apt-get install -y cloud-guest-utils
+
+# RHEL family
+sudo dnf install -y cloud-utils-growpart
+
+# Grow the partition (note the SPACE between device and partition number)
+sudo growpart /dev/vda 1
+
+# Resize the filesystem in place
+# ext4 (Ubuntu, Debian, RHEL default)
+sudo resize2fs /dev/vda1
+
+# xfs (some RHEL setups)
+sudo xfs_growfs /
+
+# Verify
+df -h /
+```
+
+Expected output (going from 50 GB → 120 GB):
+
+```
+$ growpart /dev/vda 1
+CHANGED: partition=1 start=2048 old: size=104855552 end=104857599 new: size=251656192 end=251658239
+
+$ resize2fs /dev/vda1
+resize2fs 1.47.0 (5-Feb-2023)
+Filesystem at /dev/vda1 is mounted on /; on-line resizing required
+old_desc_blocks = 7, new_desc_blocks = 15
+The filesystem on /dev/vda1 is now 31457024 (4k) blocks long.
+
+$ df -h /
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda1       118G  3.2G  115G   3% /
+```
+
+If `growpart` reports `NOCHANGE: partition is already the size of the device`, you're done — sometimes the resize ran on first boot via cloud-init.
+
+### Windows — Disk Management
+
+After the VM reboots, sign in and:
+
+1. **Open Disk Management** — Right-click **Start** → **Disk Management** (or `diskmgmt.msc`)
+2. **Refresh** — Action menu → Refresh. The disk now shows the new size; the existing volume (typically `C:`) is followed by **Unallocated** space
+3. **Right-click the existing volume** (e.g., `C:`) → **Extend Volume...**
+4. The Extend Volume Wizard opens — click **Next**, accept the default to use all available unallocated space, click **Next**, then **Finish**
+5. The volume now spans the full disk; `C:` shows the new size in **This PC**
+
+If **Extend Volume** is greyed out:
+
+- The unallocated space isn't immediately to the right of the volume you're trying to extend (Windows can only extend into adjacent unallocated space). Move data off, delete the intermediate volume, then extend.
+- **MBR-partitioned disks have a 2 TiB limit** — if you're trying to grow past that, the disk needs to be GPT. Convert via `mbr2gpt.exe` from an elevated prompt (`mbr2gpt /convert /allowFullOS`) before extending.
+
+PowerShell equivalent if you prefer scripting:
+
+```powershell
+# Verify the disk grew
+Get-Disk
+
+# Find the C: partition's max supported size
+$size = Get-PartitionSupportedSize -DriveLetter C
+Resize-Partition -DriveLetter C -Size $size.SizeMax
+```
+
+Verify with `Get-Volume` or by opening **This PC** in Explorer.
 
 ## Billing
 

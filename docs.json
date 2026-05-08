@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Raff Cloud Platform",
+  "name": "Raff",
   "colors": {
     "primary": "#F97316",
     "light": "#FB923C",
@@ -13,7 +13,7 @@
     "dark": "/logo/dark.svg"
   },
   "api": {
-    "baseUrl": "https://api.rafftechnologies.com",
+    "baseUrl": "https://api.raffcomputing.com",
     "auth": {
       "method": "key",
       "name": "X-API-Key"
@@ -22,10 +22,10 @@
       "mode": "simple"
     }
   },
-  "mcp": {
-    "enabled": true
-  },
   "openapi": ["/api-reference/openapi.yaml"],
+  "metadata": {
+    "timestamp": true
+  },
   "navigation": {
     "tabs": [
       {
@@ -34,7 +34,8 @@
           {
             "group": "Products Home",
             "pages": [
-              "products/index"
+              "products/index",
+              "products/why-raff"
             ]
           },
           {
@@ -53,6 +54,8 @@
                       "products/build/virtual-machines/quickstart-guides/initial-server-setup",
                       "products/build/virtual-machines/quickstart-guides/connect-via-ssh",
                       "products/build/virtual-machines/quickstart-guides/connect-via-rdp",
+                      "products/build/virtual-machines/quickstart-guides/open-browser-console",
+                      "products/build/virtual-machines/quickstart-guides/transfer-files",
                       "products/build/virtual-machines/quickstart-guides/manage-power",
                       "products/build/virtual-machines/quickstart-guides/rename",
                       "products/build/virtual-machines/quickstart-guides/resize",
@@ -266,37 +269,37 @@
             "icon": "folder",
             "pages": [
               {
-                "group": "Team & Access",
+                "group": "Team & Projects",
                 "icon": "users",
                 "pages": [
-                  "products/manage/team-access/index",
+                  "products/manage/team-projects/index",
                   {
                     "group": "Quickstart & guides",
                     "pages": [
-                      "products/manage/team-access/quickstart-guides/invite-member",
-                      "products/manage/team-access/quickstart-guides/change-role",
-                      "products/manage/team-access/quickstart-guides/remove-member",
-                      "products/manage/team-access/quickstart-guides/create-a-project",
-                      "products/manage/team-access/quickstart-guides/delete-a-project",
-                      "products/manage/team-access/quickstart-guides/generate-api-key",
-                      "products/manage/team-access/quickstart-guides/rotate-api-key"
+                      "products/manage/team-projects/quickstart-guides/invite-member",
+                      "products/manage/team-projects/quickstart-guides/change-role",
+                      "products/manage/team-projects/quickstart-guides/remove-member",
+                      "products/manage/team-projects/quickstart-guides/create-a-project",
+                      "products/manage/team-projects/quickstart-guides/delete-a-project",
+                      "products/manage/team-projects/quickstart-guides/generate-api-key",
+                      "products/manage/team-projects/quickstart-guides/rotate-api-key"
                     ]
                   },
                   {
                     "group": "Concepts",
                     "pages": [
-                      "products/manage/team-access/concepts/roles-and-api-keys",
-                      "products/manage/team-access/concepts/projects-and-scoping",
-                      "products/manage/team-access/concepts/api-keys"
+                      "products/manage/team-projects/concepts/roles-and-api-keys",
+                      "products/manage/team-projects/concepts/projects-and-scoping",
+                      "products/manage/team-projects/concepts/api-keys"
                     ]
                   },
                   {
                     "group": "Details",
                     "pages": [
-                      "products/manage/team-access/details/permissions-matrix"
+                      "products/manage/team-projects/details/permissions-matrix"
                     ]
                   },
-                  "products/manage/team-access/troubleshooting"
+                  "products/manage/team-projects/troubleshooting"
                 ]
               }
             ]
@@ -451,38 +454,150 @@
               {
                 "group": "Volumes",
                 "pages": [
-                  "api-reference/volumes/introduction",
+                  "api-reference/volumes/list-volumes",
+                  "api-reference/volumes/create-volume",
+                  "api-reference/volumes/get-volume",
+                  "api-reference/volumes/delete-volume",
+                  "api-reference/volumes/attach-volume",
+                  "api-reference/volumes/detach-volume",
                   "api-reference/volumes/resize-volume"
                 ]
               },
               {
                 "group": "Snapshots",
-                "pages": ["api-reference/snapshots/introduction"]
+                "pages": [
+                  "api-reference/snapshots/list-snapshots",
+                  "api-reference/snapshots/create-snapshot",
+                  "api-reference/snapshots/get-snapshot",
+                  "api-reference/snapshots/delete-snapshot",
+                  "api-reference/snapshots/restore-snapshot",
+                  "api-reference/snapshots/rename-snapshot"
+                ]
               },
               {
                 "group": "Backups",
-                "pages": ["api-reference/backups/introduction"]
+                "pages": [
+                  {
+                    "group": "Backups",
+                    "pages": [
+                      "api-reference/backups/list-backups",
+                      "api-reference/backups/create-backup",
+                      "api-reference/backups/get-backup",
+                      "api-reference/backups/delete-backup",
+                      "api-reference/backups/restore-backup"
+                    ]
+                  },
+                  {
+                    "group": "Schedules",
+                    "pages": [
+                      "api-reference/backups/schedules/list-backup-schedules",
+                      "api-reference/backups/schedules/create-backup-schedule",
+                      "api-reference/backups/schedules/get-backup-schedule",
+                      "api-reference/backups/schedules/update-backup-schedule",
+                      "api-reference/backups/schedules/delete-backup-schedule"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "SSH Keys",
+                "pages": [
+                  "api-reference/ssh-keys/list-ssh-keys",
+                  "api-reference/ssh-keys/create-ssh-key",
+                  "api-reference/ssh-keys/get-ssh-key",
+                  "api-reference/ssh-keys/update-ssh-key",
+                  "api-reference/ssh-keys/delete-ssh-key"
+                ]
+              },
+              {
+                "group": "Team & Access",
+                "pages": [
+                  {
+                    "group": "Members",
+                    "pages": [
+                      "api-reference/members/list-members",
+                      "api-reference/members/add-member",
+                      "api-reference/members/get-member",
+                      "api-reference/members/update-member",
+                      "api-reference/members/remove-member"
+                    ]
+                  },
+                  {
+                    "group": "Project Members",
+                    "pages": [
+                      "api-reference/project-members/list-project-members",
+                      "api-reference/project-members/add-project-member",
+                      "api-reference/project-members/get-project-member",
+                      "api-reference/project-members/update-project-member",
+                      "api-reference/project-members/remove-project-member"
+                    ]
+                  },
+                  {
+                    "group": "Roles",
+                    "pages": [
+                      "api-reference/roles/list-roles",
+                      "api-reference/roles/create-role",
+                      "api-reference/roles/get-role",
+                      "api-reference/roles/update-role",
+                      "api-reference/roles/delete-role"
+                    ]
+                  },
+                  {
+                    "group": "Permissions",
+                    "pages": [
+                      "api-reference/permissions/list-permissions"
+                    ]
+                  },
+                  {
+                    "group": "API Keys",
+                    "pages": [
+                      "api-reference/api-keys/list-api-keys",
+                      "api-reference/api-keys/create-api-key",
+                      "api-reference/api-keys/get-api-key",
+                      "api-reference/api-keys/update-api-key",
+                      "api-reference/api-keys/revoke-api-key",
+                      "api-reference/api-keys/regenerate-api-key"
+                    ]
+                  },
+                  {
+                    "group": "Invitations",
+                    "pages": [
+                      "api-reference/invitations/create-account-invitation",
+                      "api-reference/invitations/create-project-invitation",
+                      "api-reference/invitations/cancel-invitation"
+                    ]
+                  }
+                ]
               }
             ]
           },
           {
             "group": "CLI",
-            "pages": ["reference/cli/introduction"]
+            "pages": [
+              "reference/cli/introduction",
+              "reference/cli/install",
+              "reference/cli/configure",
+              "reference/cli/vm",
+              "reference/cli/project",
+              "reference/cli/vpc",
+              "reference/cli/ip",
+              "reference/cli/security-group"
+            ]
           },
           {
             "group": "Terraform",
-            "pages": ["reference/terraform/introduction"]
+            "pages": [
+              "reference/terraform/introduction",
+              "reference/terraform/install",
+              "reference/terraform/raff_project",
+              "reference/terraform/raff_vm"
+            ]
           }
         ]
       }
     ],
     "global": {
       "anchors": [
-        {
-          "anchor": "Products",
-          "href": "/products",
-          "icon": "arrow-left-long"
-        },
         {
           "anchor": "Dashboard",
           "href": "https://app.rafftechnologies.com",

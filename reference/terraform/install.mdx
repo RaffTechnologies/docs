@@ -1,0 +1,117 @@
+---
+title: "Install the Raff Terraform Provider"
+description: "Install the provider from the Terraform Registry, build from source for local development, or pin a specific version. Works with Terraform 1.0+ and OpenTofu."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The Raff Terraform Provider is published to the [Terraform Registry](https://registry.terraform.io/) under `rafftechnologies/raff`. For most users, declaring it in your `required_providers` block is the only "install" step needed — Terraform downloads it on first `terraform init`.
+
+## Standard install (Terraform Registry)
+
+In any new or existing Terraform module:
+
+```hcl
+terraform {
+  required_providers {
+    raff = {
+      source  = "rafftechnologies/raff"
+      version = "~> 0.1"
+    }
+  }
+}
+
+provider "raff" {
+  api_key = var.raff_api_key
+}
+```
+
+Then:
+
+```bash
+terraform init
+```
+
+Terraform fetches the provider from the registry and pins it in `.terraform.lock.hcl`. Re-run `terraform init -upgrade` to pull a newer version that satisfies the version constraint.
+
+The same workflow works with OpenTofu (`tofu init`).
+
+## Version constraints
+
+| Constraint | What it allows |
+|---|---|
+| `version = "0.1.0"` | Exactly 0.1.0 |
+| `version = "~> 0.1"` | Any 0.1.x — recommended for most teams |
+| `version = "~> 0.1, < 0.5"` | Any 0.1.x up to but not including 0.5.0 |
+| `version = ">= 0.1"` | Any version ≥ 0.1 — use only when you actively track changes |
+
+Lock-files (`.terraform.lock.hcl`) record the exact version `terraform init` resolved, so collaborators on the same module use the same provider build. Commit the lock file.
+
+## Build from source (local development)
+
+Useful when you're contributing to the provider, testing a pre-release fix, or need to debug locally:
+
+```bash
+# Clone
+git clone https://github.com/rafftechnologies/terraform-provider-raff.git
+cd terraform-provider-raff
+
+# Build
+go build -o terraform-provider-raff
+
+# Install to local Terraform plugin path
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/rafftechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)
+cp terraform-provider-raff ~/.terraform.d/plugins/registry.terraform.io/rafftechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)/
+```
+
+Now any Terraform module that requires `rafftechnologies/raff` 0.1.0 will use your local build instead of the registry version.
+
+To switch back to the registry version, delete the local plugin file and re-run `terraform init -upgrade`.
+
+## Verify
+
+```bash
+terraform providers
+```
+
+Should list `rafftechnologies/raff` with the resolved version.
+
+```bash
+terraform plan
+```
+
+Against an empty state, this should connect to the API (using the configured key) and report `No changes`.
+
+## Authentication
+
+The provider needs an API key. Two ways to provide it:
+
+```hcl
+# Block argument
+provider "raff" {
+  api_key = var.raff_api_key
+}
+```
+
+Or, more commonly:
+
+```bash
+# Environment variable — keeps the key out of .tf files
+export RAFF_API_KEY="raff_<your-key>"
+```
+
+Block arguments take precedence over env vars when both are set. See [Generate an API key](/products/manage/team-projects/quickstart-guides/generate-api-key) for issuing a scoped key, and [Roles, scopes, and the Owner](/products/manage/team-projects/concepts/roles-and-api-keys) for picking the right role to assign.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="raff_project" icon="folder" href="/reference/terraform/raff_project">
+    The project resource.
+  </Card>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    The VM resource.
+  </Card>
+  <Card title="Provider intro" icon="map" href="/reference/terraform/introduction">
+    Quick start and what the provider covers.
+  </Card>
+</CardGroup>

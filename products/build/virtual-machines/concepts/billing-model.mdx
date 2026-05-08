@@ -3,6 +3,8 @@ title: Billing model
 description: How money moves through your account — cards, balance, subscriptions, credits, and the rotation rule
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Raff's billing has a few moving parts that look more complicated than they are. This page walks through the whole money flow on one canvas, so the rules you'll encounter elsewhere — credit on delete, balance applied first, rotation to the 1st — fit together.
 
 ## The two payment containers
@@ -39,7 +41,21 @@ Raff accepts ten payment methods at checkout — seven major card networks and t
 
 Cards are saved on file when you check out the first time and reused for renewals. Wallets work the same way — you authorize once at checkout, and the wallet is the saved-payment-method for renewals afterwards. Add, remove, or reorder methods at any time from **Settings → Payment Methods**.
 
-3D Secure / SCA is supported transparently — Visa, Mastercard, and Amex purchases that require a step-up will surface the bank's challenge inline at checkout.
+### 3D Secure / SCA at checkout
+
+When your card-issuing bank requires a step-up authentication (3D Secure 2 / SCA in Europe, equivalent rails for other regions), Airwallex's flow surfaces the challenge **inline at checkout**:
+
+1. You click **Activate Subscription** (or **Top up balance**)
+2. Airwallex routes the auth through your bank
+3. If the bank requires 3DS, an inline modal appears asking for the challenge — usually a one-time code from your banking app, an SMS, or a biometric prompt in your bank's mobile app
+4. After you complete the challenge, the auth completes and the subscription / top-up is confirmed
+
+Some specific behaviors to know:
+
+- **Frictionless 3DS** — if your bank can authorize without challenging (low-risk transactions, well-known device + IP combo), the flow completes without showing you a modal at all. Both paths are still 3DS-authenticated; one just doesn't ask
+- **Failed 3DS** — if you cancel the challenge, enter the wrong code too many times, or the bank declines, checkout shows the failure with a `3DS authentication failed` message. Try again or pick a different card
+- **Saved cards** — first checkout authenticates the card. Subsequent renewals from the same card are typically frictionless (Airwallex's Merchant-Initiated Transaction flow handles re-auth invisibly), unless your bank specifically requires re-challenge
+- **Wallet-paid purchases** (Apple Pay, Google Pay, Airwallex Pay) — the wallet's own biometric is the SCA equivalent; no separate 3DS modal appears
 
 ## The two billing modes
 

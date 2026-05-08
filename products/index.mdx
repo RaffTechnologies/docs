@@ -1,51 +1,145 @@
 ---
 title: Products
-description: Everything you can build, store, network, and manage on Raff Cloud
+description: Every product on the Raff Platform — Virtual Machines, Volumes, Object Storage, VPC, Public IPs, Firewall, Team & Projects — plus what's coming next. One platform, one bill, one API.
+icon: grid-2
 ---
 
-<sub>Updated May 3, 2026</sub>
+<sub>Updated May 6, 2026</sub>
 
-Pick a product to dive in. Each product page has the same shape: a quick **Overview**, hands-on **Quickstart & guides** for dashboard tasks, **Concepts** that explain how it works, **Details** for limits and pricing, and **Troubleshooting** for common issues.
+# One platform for digital teams
+
+Build, store, network, and manage — under one account, one bill, and one API. Every product below uses the same authentication, the same regional infrastructure, and the same prorate-on-delete billing model. **Start with one product, add more whenever you need them.**
+
+<Note>
+**New here?** Read [Why Raff](/products/why-raff) for the founding story, mission, and the full ecosystem vision — or jump straight into [creating your first VM](/products/build/virtual-machines/quickstart-guides/create-a-vm) and have a server running in five minutes.
+</Note>
 
 ---
 
-## Build
+## Build — compute and orchestration
+
+Run code on dedicated infrastructure you control. Pick the abstraction that fits the workload.
 
 <CardGroup cols={3}>
-  <Card title="Virtual Machines" icon="server" href="/products/build/virtual-machines">
-    On-demand compute with flexible CPU, RAM, and storage. Includes snapshots and backups.
+  <Card title="Virtual Machines" icon="server" color="#F97316" href="/products/build/virtual-machines">
+    **Ready** · Linux & Windows VMs, NVMe SSD, snapshots, backups, SSH/RDP. Plans from \$5/mo.
+  </Card>
+  <Card title="Kubernetes" icon="dharmachakra" color="#9CA3AF">
+    **Coming soon** · Managed K8s clusters with Helm marketplace, auto-scaling worker pools.
+  </Card>
+  <Card title="Apps (PaaS)" icon="rocket" color="#9CA3AF">
+    **Coming soon** · Push-to-deploy app hosting with managed builds, domains, and TLS.
   </Card>
 </CardGroup>
 
-## Store
+---
+
+## Store — block, object, and data
+
+Persistent storage for everything from boot disks to media archives. NVMe SSD across every tier today; HDD class for cold data on the way.
 
 <CardGroup cols={3}>
-  <Card title="Volumes" icon="hard-drive" href="/products/store/volumes">
-    Block storage you can attach to a VM as additional disk capacity.
+  <Card title="Volumes" icon="hard-drive" color="#F97316" href="/products/store/volumes">
+    **Ready** · NVMe SSD block storage, 10 GiB–1 TiB, attach/detach to any VM. \$0.05/GiB/mo.
   </Card>
-  <Card title="Object Storage" icon="bucket" href="/products/store/object-storage">
-    S3-compatible storage for media, backups, and static assets.
+  <Card title="Object Storage" icon="bucket" color="#F97316" href="/products/store/object-storage">
+    **Ready** · S3-compatible buckets, AWS-SDK works as-is. \$7/mo first 100 GB, then \$0.07/GB.
+  </Card>
+  <Card title="Database" icon="database" color="#9CA3AF">
+    **Coming soon** · Managed PostgreSQL and MySQL — backups, replicas, point-in-time restore.
+  </Card>
+  <Card title="Vector Storage" icon="diagram-project" color="#9CA3AF">
+    **Coming soon** · Built-in vector search and similarity, integrated with the AI Gateway.
   </Card>
 </CardGroup>
 
-## Network
+---
+
+## Network — connect and secure
+
+The cross-cutting layer every product runs on. Private networking, public addressing, and the firewall in front of it all.
 
 <CardGroup cols={3}>
-  <Card title="VPC" icon="network-wired" href="/products/network/vpc">
-    Isolated private networking with custom CIDR ranges.
+  <Card title="VPC" icon="network-wired" color="#F97316" href="/products/network/vpc">
+    **Ready** · VXLAN-isolated private networks, custom CIDRs, optional Internet Gateway with port forwarding. Free.
   </Card>
-  <Card title="Public IPs" icon="globe" href="/products/network/public-ips">
-    Auto-assigned IPv4/IPv6 free with VMs, or reserved static IPs for $3/month.
+  <Card title="Public IPs" icon="globe" color="#F97316" href="/products/network/public-ips">
+    **Ready** · Auto-assigned IPv4 free with VMs; reserved IPv4 \$3/mo, IPv6 \$1/mo.
   </Card>
-  <Card title="Firewall" icon="shield-halved" href="/products/network/firewall">
-    Stateful firewall rule sets attached to VM network interfaces.
+  <Card title="Firewall" icon="shield-halved" color="#F97316" href="/products/network/firewall">
+    **Ready** · Stateful inbound/outbound rules with 5 prebuilt templates. Free.
   </Card>
 </CardGroup>
 
-## Manage
+---
+
+## Manage — access, billing, and ops
+
+Everything you need to run the account itself: members, projects, roles, API keys.
 
 <CardGroup cols={3}>
-  <Card title="Team & Access" icon="users" href="/products/manage/team-access">
-    Members, projects, roles, and API keys — all access control in one place.
+  <Card title="Team & Projects" icon="users" color="#F97316" href="/products/manage/team-projects">
+    **Ready** · Members, projects, role-based permissions, API keys with scoped roles, audit log.
+  </Card>
+  <Card title="Communicate" icon="envelope" color="#9CA3AF">
+    **Coming soon** · Email hosting, transactional email, and campaign sends from one provider.
+  </Card>
+  <Card title="Automate" icon="bolt" color="#9CA3AF">
+    **Coming soon** · Workflows, cron jobs, and webhooks — triggers and actions across every product.
   </Card>
 </CardGroup>
+
+---
+
+## AI — the next pillar
+
+The platform's fifth pillar, focused on bringing AI features into your product without stitching together five third-party APIs.
+
+<CardGroup cols={3}>
+  <Card title="AI Gateway" icon="sparkles" color="#9CA3AF">
+    **Coming soon** · Unified API across LLM providers with usage tracking, rate limits, and prompt caching.
+  </Card>
+  <Card title="AI Agents" icon="robot" color="#9CA3AF">
+    **Coming soon** · Build agents that execute multi-step workflows against the rest of the Raff platform.
+  </Card>
+  <Card title="Vector Search" icon="magnifying-glass" color="#9CA3AF">
+    **Coming soon** · Semantic search and RAG over your own data, integrated with Object Storage.
+  </Card>
+</CardGroup>
+
+---
+
+## Common to every product
+
+These apply to **every product on the platform**, current or coming:
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/virtual-machines/details/pricing">
+    Subscription is the default; pay-as-you-go available on request. Unused time credits back to your account balance on delete.
+  </Card>
+  <Card title="SLA" icon="shield-check" href="/products/build/virtual-machines/details/sla">
+    Uptime commitments and credit terms across VMs, volumes, and Object Storage.
+  </Card>
+  <Card title="Support" icon="life-ring" href="/products/build/virtual-machines/details/support">
+    Email support, response targets, and how to reach the on-call team.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Full HTTP API with OpenAPI spec, key-based auth, project scoping.
+  </Card>
+</CardGroup>
+
+---
+
+## Each product page has the same shape
+
+Every product in this docs site is organized identically so you can navigate by muscle memory:
+
+| Section | What you'll find |
+|---|---|
+| **Overview** | Hero screenshot, what the product does, key specs, fastest-task cards |
+| **Quickstart & guides** | Dashboard task walkthroughs — create, configure, attach, delete, etc. |
+| **Concepts** | The model behind the product — how it works, what trade-offs exist |
+| **Details** | Features, limits, pricing, regional availability, SLA |
+| **Troubleshooting** | Common issues with the fix for each |
+
+Pick a product above and the sidebar drops you into all five sections.

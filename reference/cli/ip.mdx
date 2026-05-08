@@ -1,0 +1,77 @@
+---
+title: "raff ip"
+description: "Manage Public IPs from the CLI — list, get, reserve a static IP ($3/mo IPv4, $1/mo IPv6), release, or swap a reserved IP for a different one from the pool."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The `raff ip` command group manages Public IPs. See [Public IPs overview](/products/network/public-ips) for the auto-assigned-vs-reserved model and pricing.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List every public IP in the account |
+| [`get`](#get) | Show one IP's details |
+| [`reserve`](#reserve) | Reserve a new static IP |
+| [`release`](#release) | Release a reserved IP back to the pool |
+| [`change`](#change) | Swap a reserved IP for a different pool address |
+
+To attach an IP to a VM or detach it, use `raff vm ip attach` / `raff vm ip detach` — see [VM commands → ip attach](/reference/cli/vm#ip-attach).
+
+---
+
+## list
+
+```bash
+raff ip list [--output table|json]
+```
+
+Lists every IP in the account: auto-assigned (free, attached to VMs), reserved (static, billed), and gateway IPs (Platform Router / Firewall Appliance).
+
+## get
+
+```bash
+raff ip get <ip-id> [--output table|json]
+```
+
+## reserve
+
+```bash
+raff ip reserve \
+  [--ip-type ipv4|ipv6] \
+  [--region us-east] \
+  [--billing-period monthly|yearly|24-month]
+```
+
+Reserve a new static IP. **\$3/month for IPv4** or **\$1/month for IPv6**. Yearly and 24-month locks are at the same effective per-month rate (see [Reserve a static IP](/products/network/public-ips/quickstart-guides/reserve-ip)).
+
+## release
+
+```bash
+raff ip release <ip-id>
+```
+
+**Permanent.** Returns the IP to the pool — billing stops, address can't be reclaimed. Use only when you no longer need the address. To stop using an IP without losing the reservation, **detach it from the VM** instead (`raff vm ip detach`).
+
+## change
+
+```bash
+raff ip change <ip-id>
+```
+
+Swap a reserved IP for a different pool address. The subscription stays the same — no extra charge, no refund. Useful when the current address is on a deny-list somewhere and you want a fresh one without releasing-and-re-reserving (which would change billing).
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Attach / detach IPs to specific VMs.
+  </Card>
+  <Card title="Public IPs overview" icon="globe" href="/products/network/public-ips">
+    Auto-assigned vs reserved.
+  </Card>
+  <Card title="Reserve a static IP" icon="anchor" href="/products/network/public-ips/quickstart-guides/reserve-ip">
+    Dashboard walkthrough.
+  </Card>
+</CardGroup>

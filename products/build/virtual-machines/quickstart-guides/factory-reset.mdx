@@ -3,6 +3,8 @@ title: Factory reset
 description: Reinstall the same OS on a VM with a clean disk while keeping volumes, snapshots, and backups
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Factory Reset wipes the VM's OS disk and reinstalls **the same** OS template fresh. Everything outside the OS disk — attached volumes, backups, volume snapshots, and IP addresses — is preserved.
 
 Use it when you want a clean OS state without changing OS templates or losing your protective copies.
@@ -23,6 +25,15 @@ Use it when you want a clean OS state without changing OS templates or losing yo
 | Downtime | 15 seconds — 3 minutes | 1 — 5 minutes |
 
 If you want to keep your backups and volume snapshots, **use Factory Reset** instead of Reinstall.
+
+### "Same OS template" means the *original* one
+
+Factory Reset always reinstalls the **template the VM was originally created with** — not the most recent template. This matters when a VM has been reinstalled to a different template at some point in its life:
+
+- Created with **Ubuntu 24.04** → reinstalled to **Debian 12** → factory-reset
+- Result: **back to Ubuntu 24.04**, not Debian 12
+
+Verified in `services/vm-service/internal/services/vm_service.go` (`FactoryResetVM` reads `OriginalTemplateID`). If you want to keep the most recent OS template, use [Reinstall](/products/build/virtual-machines/quickstart-guides/reinstall) and pick the template you currently have. If you want to wipe back to the original, use Factory Reset.
 
 ## Where to find it
 

@@ -3,6 +3,8 @@ title: Delete a VPC
 description: Delete is blocked while VMs are attached — detach or delete the VMs first, then delete the VPC from the row menu or the detail page
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Deleting a VPC permanently removes the private network and frees its VXLAN VNI for reuse. It does not delete the VMs that were inside it — but it does require that you detach (or delete) every VM first. The dashboard enforces this with a hard block.
 
 ## The rule: a VPC with VMs cannot be deleted

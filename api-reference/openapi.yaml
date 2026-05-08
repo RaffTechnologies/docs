@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Raff Cloud Platform API
+  title: Raff API
   description: |
-    REST API for managing cloud infrastructure on the Raff Cloud Platform.
+    REST API for managing cloud infrastructure on Raff.
 
     ## Authentication
     Most endpoints require authentication via API key. Catalog endpoints under `/api/v1/public/` are open and require no authentication.
@@ -10,7 +10,7 @@ info:
     ### API Key Authentication
     Include your API key in the `X-API-Key` header:
       ```
-      curl -H "X-API-Key: YOUR_API_KEY" https://api.rafftechnologies.com/api/v1/vms
+      curl -H "X-API-Key: YOUR_API_KEY" https://api.raffcomputing.com/api/v1/vms
       ```
 
     ## Catalog
@@ -29,6 +29,8 @@ info:
     url: https://rafftechnologies.com
 
 servers:
+  - url: https://api.raffcomputing.com
+    description: Local
   - url: https://api.rafftechnologies.com
     description: Production
 
@@ -46,6 +48,26 @@ tags:
     description: Create, manage, and control virtual machines
   - name: Networking
     description: Attach and detach VPCs, floating IPs, and security groups to VM network interfaces
+  - name: Snapshots
+    description: Point-in-time copies of VMs and volumes for quick rollback or cloning
+  - name: Backups
+    description: Scheduled and on-demand VM backups with restore capability
+  - name: Backup Schedules
+    description: Recurring daily or weekly backup schedules attached to a VM
+  - name: SSH Keys
+    description: Manage account-level SSH keys for VM provisioning
+  - name: Members
+    description: Account-level members — invite, list, update role, remove
+  - name: Project Members
+    description: Members of a specific project — same model as Members but project-scoped
+  - name: Roles
+    description: Custom roles bundling account or project permissions
+  - name: Permissions
+    description: List the catalog of permission strings used by roles
+  - name: API Keys
+    description: Create and manage API keys for programmatic access
+  - name: Invitations
+    description: Create and cancel email-based invitations to join the account or a project
 
 paths:
   /health:
@@ -2092,7 +2114,170 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/volumes:
+    get:
+      tags:
+        - Volumes
+      summary: List volumes
+      description: |
+        List volumes for the authenticated account. Filter by VM or region.
+
+        Pass `X-Project-ID` to scope the list to a single project. When omitted, returns volumes across every project the API key has access to.
+      operationId: listVolumes
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+        - name: vm_id
+          in: query
+          description: Filter by attached VM UUID
+          schema:
+            type: string
+            format: uuid
+        - name: region
+          in: query
+          description: Filter by region
+          schema:
+            type: string
+            enum: [us-east]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of volumes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Volume'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Volumes
+      summary: Create volume
+      description: |
+        Create a new block storage volume. Volumes are created asynchronously — the response returns immediately with `pending` status.
+
+        Optionally attach the volume to an existing VM at create time by passing `vm_id`. Volume and VM must be in the same region.
+
+        ## Filesystem
+
+        For Linux VMs, set `filesystem_type` to choose how the volume is formatted:
+
+        - `ext4` (default), `xfs`, `btrfs` — Linux filesystems
+        - Omit for Windows VMs — they always use NTFS
+
+        Filesystem is only applied if the volume is attached to a VM that mounts it via cloud-init or the contextualization script.
+      operationId: createVolume
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVolumeRequest'
+      responses:
+        '202':
+          description: Volume creation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Volume'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
   /api/v1/volumes/{id}:
+    get:
+      tags:
+        - Volumes
+      summary: Get volume
+      description: Get details of a specific volume.
+      operationId: getVolume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Volume ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Volume details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Volume'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Volumes
+      summary: Delete volume
+      description: |
+        Permanently delete a volume. The volume must be detached from any VM before deletion.
+
+        ## Billing
+
+        For subscription volumes, the remaining prepaid balance is refunded pro-rata (hourly precision) to your account balance.
+      operationId: deleteVolume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Volume ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Volume deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       tags:
         - Volumes
@@ -2134,6 +2319,1623 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '402':
           $ref: '#/components/responses/InsufficientBalance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/volumes/{id}/attach:
+    post:
+      tags:
+        - Volumes
+      summary: Attach volume to VM
+      description: |
+        Attach a volume to a VM. The VM must be in the same region as the volume. A volume can only be attached to one VM at a time — detach it first if it's already attached elsewhere.
+
+        Inside the guest, the volume appears as `/dev/vdb`, `/dev/vdc`, etc. (virtio-blk).
+      operationId: attachVolume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Volume ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachVolumeRequest'
+      responses:
+        '200':
+          description: Volume attached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Volume'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/volumes/{id}/detach:
+    post:
+      tags:
+        - Volumes
+      summary: Detach volume from VM
+      description: |
+        Detach a volume from its current VM. Unmount the filesystem inside the guest before calling this endpoint to avoid data corruption.
+      operationId: detachVolume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Volume ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Volume detached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Volume'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/snapshots:
+    get:
+      tags:
+        - Snapshots
+      summary: List snapshots
+      description: |
+        List snapshots for the authenticated account. Filter by VM, volume, or type.
+
+        Pass `X-Project-ID` to scope the list to a single project. When omitted, returns snapshots across every project the API key has access to.
+      operationId: listSnapshots
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+        - name: vm_id
+          in: query
+          description: Filter by VM UUID
+          schema:
+            type: string
+            format: uuid
+        - name: volume_id
+          in: query
+          description: Filter by volume ID
+          schema:
+            type: integer
+        - name: type
+          in: query
+          description: Filter by snapshot type (`vm` or `volume`)
+          schema:
+            type: string
+            enum: [vm, volume]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of snapshots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Snapshot'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Snapshots
+      summary: Create snapshot
+      description: |
+        Create a snapshot of a VM or a volume.
+
+        - For a **VM snapshot**, set `resource_type` to `vm` and pass the VM UUID as `resource_id`.
+        - For a **volume snapshot**, set `resource_type` to `volume` and pass the integer `volume_id`.
+      operationId: createSnapshot
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSnapshotRequest'
+      responses:
+        '201':
+          description: Snapshot created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Snapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
+  /api/v1/snapshots/{id}:
+    get:
+      tags:
+        - Snapshots
+      summary: Get snapshot
+      description: Get details of a specific snapshot.
+      operationId: getSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Snapshot ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Snapshot details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Snapshot'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Snapshots
+      summary: Delete snapshot
+      description: Permanently delete a snapshot.
+      operationId: deleteSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Snapshot ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Snapshot deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/snapshots/{id}/restore:
+    post:
+      tags:
+        - Snapshots
+      summary: Restore snapshot
+      description: |
+        Revert the source VM (or volume) to the state captured in this snapshot.
+
+        For VM snapshots, the VM must be in `passive` state (powered off) before calling this endpoint.
+
+        After a successful restore, this snapshot's `status` flips to `active` and the previously-active snapshot (if any) is cleared. An `active` snapshot cannot be deleted — restore the source to a different snapshot first, or take a fresh one.
+      operationId: restoreSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Snapshot ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Snapshot restore initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/snapshots/{id}/rename:
+    patch:
+      tags:
+        - Snapshots
+      summary: Rename snapshot
+      description: Rename a snapshot. Updates the display name only — does not affect the underlying disk image.
+      operationId: renameSnapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Snapshot ID
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Snapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/backups:
+    get:
+      tags:
+        - Backups
+      summary: List backups
+      description: |
+        List backups for the authenticated account. Filter by VM.
+
+        Pass `X-Project-ID` to scope the list to a single project. When omitted, returns backups across every project the API key has access to.
+      operationId: listBackups
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+        - name: vm_id
+          in: query
+          description: Filter by VM UUID
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Backup'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Backups
+      summary: Create backup
+      description: |
+        Create an on-demand backup of a VM. The backup is created asynchronously — the response returns immediately with a `pending` status.
+
+        Use [List Backups](#tag/Backups/operation/listBackups) or [Get Backup](#tag/Backups/operation/getBackup) to track completion.
+      operationId: createBackup
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBackupRequest'
+      responses:
+        '202':
+          description: Backup creation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Backup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
+  /api/v1/backups/{id}:
+    get:
+      tags:
+        - Backups
+      summary: Get backup
+      description: Get details of a specific backup.
+      operationId: getBackup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup ID (UUID)
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Backup details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Backup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Backups
+      summary: Delete backup
+      description: Permanently delete a backup.
+      operationId: deleteBackup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup ID (UUID)
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Backup deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/backups/{id}/restore:
+    post:
+      tags:
+        - Backups
+      summary: Restore backup
+      description: |
+        Restore a VM from a backup. The restore runs asynchronously — the response returns immediately with a `pending` status.
+
+        The target VM is overwritten in place. The VM should be powered off before restoring.
+      operationId: restoreBackup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup ID (UUID)
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '202':
+          description: Backup restore accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Backup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/backup-schedules:
+    get:
+      tags:
+        - Backup Schedules
+      summary: List backup schedules
+      description: |
+        List backup schedules for the authenticated account. Filter by VM.
+
+        Pass `X-Project-ID` to scope the list to a single project. When omitted, returns schedules across every project the API key has access to.
+      operationId: listBackupSchedules
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+        - name: vm_id
+          in: query
+          description: Filter by VM UUID
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of backup schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BackupSchedule'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Backup Schedules
+      summary: Create backup schedule
+      description: |
+        Create a recurring backup schedule for a VM.
+
+        - **Daily** — set `type` to `daily`. Runs every day at `time`.
+        - **Weekly** — set `type` to `weekly` and pass `day_of_week` (Monday–Sunday). Runs on that day at `time`.
+
+        `keep_count` controls retention — older backups beyond this count are pruned automatically.
+      operationId: createBackupSchedule
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBackupScheduleRequest'
+      responses:
+        '201':
+          description: Backup schedule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BackupSchedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/backup-schedules/{id}:
+    get:
+      tags:
+        - Backup Schedules
+      summary: Get backup schedule
+      description: Get details of a specific backup schedule.
+      operationId: getBackupSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup schedule ID — the `id` field returned by [List Backup Schedules](#tag/Backup-Schedules/operation/listBackupSchedules) or [Create Backup Schedule](#tag/Backup-Schedules/operation/createBackupSchedule).
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Backup schedule details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BackupSchedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Backup Schedules
+      summary: Update backup schedule
+      description: Update one or more fields on an existing backup schedule. Omitted fields are unchanged.
+      operationId: updateBackupSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup schedule ID — the `id` field returned by [List Backup Schedules](#tag/Backup-Schedules/operation/listBackupSchedules) or [Create Backup Schedule](#tag/Backup-Schedules/operation/createBackupSchedule).
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBackupScheduleRequest'
+      responses:
+        '200':
+          description: Backup schedule updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BackupSchedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Backup Schedules
+      summary: Delete backup schedule
+      description: Delete a backup schedule. Existing backups created by this schedule are retained.
+      operationId: deleteBackupSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Backup schedule ID — the `id` field returned by [List Backup Schedules](#tag/Backup-Schedules/operation/listBackupSchedules) or [Create Backup Schedule](#tag/Backup-Schedules/operation/createBackupSchedule).
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Backup schedule deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/ssh-keys:
+    get:
+      tags:
+        - SSH Keys
+      summary: List SSH keys
+      description: List SSH keys for the authenticated account. SSH keys are account-level — no project scoping.
+      operationId: listSSHKeys
+      responses:
+        '200':
+          description: List of SSH keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SSHKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - SSH Keys
+      summary: Create SSH key
+      description: |
+        Add an SSH public key to your account. Pass the key on VM create via the `ssh_keys` array to enable key-based login.
+
+        Supported key types: RSA, ECDSA, Ed25519. The `key_type` field on the response is parsed automatically from the public key.
+      operationId: createSSHKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSSHKeyRequest'
+      responses:
+        '201':
+          description: SSH key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SSHKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/ssh-keys/{id}:
+    get:
+      tags:
+        - SSH Keys
+      summary: Get SSH key
+      description: Get details of a specific SSH key.
+      operationId: getSSHKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: SSH key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SSH key details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SSHKey'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - SSH Keys
+      summary: Update SSH key
+      description: Update an SSH key's display name. The public key itself cannot be changed — delete and recreate to rotate.
+      operationId: updateSSHKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: SSH key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSSHKeyRequest'
+      responses:
+        '200':
+          description: SSH key updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SSHKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - SSH Keys
+      summary: Delete SSH key
+      description: Permanently delete an SSH key from your account. VMs that already have this key installed continue to accept it until the key is removed from the VM's `~/.ssh/authorized_keys`.
+      operationId: deleteSSHKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: SSH key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SSH key deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/SSHKey'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/members:
+    get:
+      tags:
+        - Members
+      summary: List account members
+      description: List all members of the authenticated account, including pending invitations.
+      operationId: listMembers
+      parameters:
+        - name: status
+          in: query
+          description: Filter by member status
+          schema:
+            type: string
+            enum: [pending, active, suspended]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of account members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Member'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Members
+      summary: Add account member
+      description: |
+        Add a new member to the account. There are three ways:
+
+        - **Email invitation** — pass `email` only. An invitation is sent; the recipient accepts it from the dashboard. The member appears in `pending` status until accepted. Equivalent to calling `POST /api/v1/invitations` directly.
+        - **Direct add** — pass `target_user_id` for a user who already has an account on Raff (e.g. a project-only user being promoted to account member).
+        - **API key** — pass `api_key_id` to make an existing API key a member with the given role. Mutually exclusive with `email` and `target_user_id`.
+      operationId: addMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '201':
+          description: Member added (or invitation sent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Member'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/members/{id}:
+    get:
+      tags:
+        - Members
+      summary: Get account member
+      description: Get details of a specific account member.
+      operationId: getMember
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Member details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Member'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Members
+      summary: Update account member
+      description: Update a member's role or status. Pass only the fields you want to change.
+      operationId: updateMember
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRequest'
+      responses:
+        '200':
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Member'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Members
+      summary: Remove account member
+      description: Remove a member from the account. Account owners cannot be removed via this endpoint — transfer ownership first from the dashboard.
+      operationId: removeMember
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/projects/{id}/members:
+    get:
+      tags:
+        - Project Members
+      summary: List project members
+      description: List members of a specific project.
+      operationId: listProjectMembers
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+        - name: status
+          in: query
+          description: Filter by member status
+          schema:
+            type: string
+            enum: [pending, active, suspended]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of project members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectMember'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Project Members
+      summary: Add project member
+      description: |
+        Add an existing account member (or API key) to a project with a specific role.
+
+        - Pass `target_user_id` to add a user. The user must already be a member of the account.
+        - Pass `api_key_id` to grant an API key access to this project. Mutually exclusive with `target_user_id`.
+
+        To invite a brand-new email to a project, use [Create Project Invitation](#tag/Invitations/operation/createProjectInvitation) instead.
+      operationId: addProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddProjectMemberRequest'
+      responses:
+        '201':
+          description: Project member added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ProjectMember'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/projects/{id}/members/{member_id}:
+    get:
+      tags:
+        - Project Members
+      summary: Get project member
+      operationId: getProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+        - name: member_id
+          in: path
+          required: true
+          description: Project member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project member details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ProjectMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Project Members
+      summary: Update project member
+      description: Change a project member's role or status.
+      operationId: updateProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+        - name: member_id
+          in: path
+          required: true
+          description: Project member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRequest'
+      responses:
+        '200':
+          description: Project member updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ProjectMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Project Members
+      summary: Remove project member
+      description: Remove a member from a project. The user remains an account member; only the project-scoped grant is revoked.
+      operationId: removeProjectMember
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+        - name: member_id
+          in: path
+          required: true
+          description: Project member ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/roles:
+    get:
+      tags:
+        - Roles
+      summary: List roles
+      description: |
+        List all roles available to the account — both **system roles** (e.g. `Owner`, `Admin`, `Member`, `Operator`) and any **custom roles** the account has defined.
+      operationId: listRoles
+      parameters:
+        - name: scope
+          in: query
+          description: Filter by scope (`account` or `project`)
+          schema:
+            type: string
+            enum: [account, project]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Roles
+      summary: Create custom role
+      description: |
+        Create a custom role bundling a set of permissions at either account or project scope.
+
+        Get the list of valid permission strings from [List Permissions](#tag/Permissions/operation/listPermissions).
+      operationId: createRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/roles/{id}:
+    get:
+      tags:
+        - Roles
+      summary: Get role
+      operationId: getRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Role ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Role details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Role'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Roles
+      summary: Update custom role
+      description: |
+        Update a custom role's name, description, or permission set. **System roles cannot be edited** — return `400 Bad Request`.
+
+        Editing a role applies to every member and API key currently using it.
+      operationId: updateRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Role ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Roles
+      summary: Delete custom role
+      description: |
+        Delete a custom role. The role must not be in use by any member or API key — reassign them first or deletion will fail.
+
+        System roles cannot be deleted.
+      operationId: deleteRole
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Role ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Role deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/permissions:
+    get:
+      tags:
+        - Permissions
+      summary: List permissions
+      description: |
+        List the full catalog of permission strings recognized by the role system. Use this to discover valid values for the `permissions` array on [Create Role](#tag/Roles/operation/createRole) and [Update Role](#tag/Roles/operation/updateRole).
+
+        Requires authentication, but no specific permission — any valid API key can read the catalog. The catalog is the same for every account.
+      operationId: listPermissions
+      parameters:
+        - name: scope
+          in: query
+          description: Filter by scope
+          schema:
+            type: string
+            enum: [account, project]
+      responses:
+        '200':
+          description: List of permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+
+  /api/v1/api-keys:
+    get:
+      tags:
+        - API Keys
+      summary: List API keys
+      description: |
+        List API keys belonging to the account. Only key prefixes are returned — full secrets are only shown once at create time.
+      operationId: listApiKeys
+      parameters:
+        - name: scope
+          in: query
+          description: Filter by key scope. Customer-created keys are always `public`, so this is rarely useful — included for completeness.
+          schema:
+            type: string
+            enum: [public]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/APIKey'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - API Keys
+      summary: Create API key
+      description: |
+        Create a new API key. The full secret is returned **once** in the `secret` field of the response — store it immediately. Subsequent reads only return the `key_prefix`.
+
+        Pass `role_id` to bind the key to an account role; the key inherits that role's permissions. To grant per-project access, after creating the key add it as a [Project Member](#tag/Project-Members/operation/addProjectMember) on each project (passing `api_key_id`).
+      operationId: createApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAPIKeyRequest'
+      responses:
+        '201':
+          description: API key created (full secret returned once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/APIKeyWithSecret'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/api-keys/{id}:
+    get:
+      tags:
+        - API Keys
+      summary: Get API key
+      description: Get an API key's metadata. The secret is never returned — only the prefix.
+      operationId: getApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: API key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: API key details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/APIKey'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - API Keys
+      summary: Update API key
+      description: |
+        Update an API key's name, expiry, rate-limit tier, or active flag. Permissions cannot be changed via this endpoint — change the role assigned to the key instead, or rotate to a new key.
+      operationId: updateApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: API key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAPIKeyRequest'
+      responses:
+        '200':
+          description: API key updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/APIKey'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - API Keys
+      summary: Revoke API key
+      description: Permanently revoke an API key. In-flight requests using this key fail with `401`. Cannot be undone.
+      operationId: revokeApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: API key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: API key revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/api-keys/{id}/regenerate:
+    post:
+      tags:
+        - API Keys
+      summary: Regenerate API key
+      description: |
+        Rotate an API key — issues a new secret value and immediately invalidates the previous secret. The key keeps its name, scope, role, and expiration.
+
+        The full new secret is returned **once** in `secret`. Update your secret store immediately.
+      operationId: regenerateApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: API key ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: API key regenerated (full secret returned once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/APIKeyWithSecret'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/invitations:
+    post:
+      tags:
+        - Invitations
+      summary: Create account invitation
+      description: |
+        Send an email invitation for someone to join the account with the given role. The recipient gets an email with an accept link. Until they accept, the invitation appears in [List Members](#tag/Members/operation/listMembers) with `status: pending`.
+      operationId: createAccountInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Invitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/invitations/{id}:
+    delete:
+      tags:
+        - Invitations
+      summary: Cancel invitation
+      description: Cancel a pending invitation. The accept link in the recipient's email becomes invalid.
+      operationId: cancelInvitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Invitation ID (UUID)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Invitation cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/projects/{id}/invitations:
+    post:
+      tags:
+        - Invitations
+      summary: Create project invitation
+      description: |
+        Send an email invitation for someone to join a specific project with the given role. The recipient gets an email with an accept link.
+      operationId: createProjectInvitation
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Invitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -3279,6 +5081,112 @@ components:
           minimum: 1
           description: New disk size in GB. Must be larger than current size.
 
+    Volume:
+      type: object
+      required:
+        - id
+        - name
+        - volume_type
+        - size
+        - status
+      properties:
+        id:
+          type: integer
+          description: Volume ID. Use this in `/volumes/{id}` for get, delete, attach, detach, resize.
+        account_id:
+          type: string
+          format: uuid
+          description: Account that owns the volume
+        project_id:
+          type: string
+          format: uuid
+          description: Project the volume belongs to
+        product_vm:
+          type: string
+          format: uuid
+          description: UUID of the VM the volume is currently attached to. Empty when detached.
+        name:
+          type: string
+          description: Volume display name
+          example: data-vol-1
+        volume_type:
+          type: string
+          description: Storage class
+          enum: [nvme]
+          example: nvme
+        size:
+          type: integer
+          description: Volume size in GB
+          example: 100
+        status:
+          type: string
+          enum: [creating, available, attached, deleting, failed]
+          description: |
+            Volume lifecycle status:
+            - `creating` — being provisioned on the hypervisor
+            - `available` — ready, not attached to any VM
+            - `attached` — attached to a VM (see `product_vm`)
+            - `deleting` — being torn down
+            - `failed` — creation or attach failed
+        price_per_hour:
+          type: string
+          description: Hourly billing rate in USD
+        region:
+          type: string
+          enum: [us-east]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVolumeRequest:
+      type: object
+      required:
+        - name
+        - size
+        - volume_type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Volume display name
+          example: data-vol-1
+        size:
+          type: integer
+          minimum: 1
+          description: Volume size in GB
+          example: 100
+        volume_type:
+          type: string
+          enum: [nvme]
+          description: Storage class
+          example: nvme
+        filesystem_type:
+          type: string
+          enum: [ext4, xfs, btrfs]
+          description: Filesystem to format the volume with on first attach. Linux only — Windows VMs use NTFS automatically. Defaults to `ext4`.
+        vm_id:
+          type: string
+          format: uuid
+          description: Optional. Attach the volume to this VM at create time. VM must be in the same region.
+        region:
+          type: string
+          enum: [us-east]
+          description: Region. Defaults to the project's default region.
+
+    AttachVolumeRequest:
+      type: object
+      required:
+        - vm_id
+      properties:
+        vm_id:
+          type: string
+          format: uuid
+          description: UUID of the VM to attach this volume to. VM must be in the same region as the volume.
+
     ResizeVolumeRequest:
       type: object
       required:
@@ -3633,6 +5541,791 @@ components:
           enum: [us-east]
           description: Default region for resources
           example: us-east
+
+    Snapshot:
+      type: object
+      required:
+        - id
+        - type
+        - name
+      properties:
+        id:
+          type: integer
+          description: Snapshot ID
+        account_id:
+          type: string
+          format: uuid
+          description: Account that owns the snapshot
+        project_id:
+          type: string
+          format: uuid
+          description: Project the snapshot belongs to
+        created_by:
+          type: string
+          description: User ID that created the snapshot
+        type:
+          type: string
+          enum: [vm, volume]
+          description: Snapshot source type
+        name:
+          type: string
+          description: Snapshot display name
+        size:
+          type: string
+          description: Current snapshot size
+        target_size:
+          type: string
+          description: Provisioned size of the source disk at snapshot time
+        status:
+          type: string
+          description: |
+            Indicates whether the source VM or volume is currently running on this snapshot:
+
+            - `active` — this snapshot is **in use**. The source VM/volume has been reverted to it and is running on it now. Deleting an active snapshot is blocked.
+            - `""` (empty) — this snapshot is saved but **not in use**. The source has not been reverted to it (or has been reverted to a different snapshot since).
+
+            Only one snapshot per source can be `active` at a time. Calling [Restore Snapshot](#tag/Snapshots/operation/restoreSnapshot) flips that snapshot to `active` and clears the previous active one.
+          enum: ["", active]
+          example: active
+        product_vm:
+          type: string
+          format: uuid
+          description: Source VM UUID (when `type` is `vm`)
+        price_per_hour:
+          type: string
+          description: Hourly storage cost in USD
+        created_at:
+          type: string
+          format: date-time
+
+    CreateSnapshotRequest:
+      type: object
+      required:
+        - resource_type
+        - name
+      properties:
+        resource_type:
+          type: string
+          enum: [vm, volume]
+          description: Source type for the snapshot
+        resource_id:
+          type: string
+          format: uuid
+          description: Source VM UUID. Required when `resource_type` is `vm`.
+        volume_id:
+          type: integer
+          description: Source volume ID. Required when `resource_type` is `volume`.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Snapshot display name
+          example: pre-upgrade
+
+    RenameSnapshotRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: New snapshot display name
+
+    Backup:
+      type: object
+      required:
+        - id
+        - name
+        - storage_size
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Backup ID
+        account_id:
+          type: string
+          format: uuid
+          description: Account that owns the backup
+        project_id:
+          type: string
+          format: uuid
+          description: Project the backup belongs to
+        created_by:
+          type: string
+          description: User ID that created the backup
+        region:
+          type: string
+          enum: [us-east]
+          description: Region the backup is stored in
+        product_vm:
+          type: string
+          format: uuid
+          description: Source VM UUID
+        name:
+          type: string
+          description: Backup display name
+        storage_size:
+          type: integer
+          description: Backup size in GB
+        status:
+          type: string
+          description: |
+            Backup lifecycle status. Common values:
+            - `pending` — creation queued
+            - `creating` — backup being captured
+            - `ready` — available for restore
+            - `restoring` — currently restoring to a VM
+            - `failed` — creation or restore failed
+        price_per_hour:
+          type: string
+          description: Hourly storage cost in USD
+        expire_date:
+          type: string
+          format: date-time
+          description: When the backup will be auto-pruned (only set when retention applies)
+        created_at:
+          type: string
+          format: date-time
+
+    CreateBackupRequest:
+      type: object
+      required:
+        - vm_id
+      properties:
+        vm_id:
+          type: string
+          format: uuid
+          description: Source VM UUID
+        name:
+          type: string
+          maxLength: 128
+          description: Optional backup display name. Defaults to a timestamped name.
+
+    BackupSchedule:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - keep_count
+      properties:
+        id:
+          type: integer
+          description: Backup schedule ID. Use this value in `/backup-schedules/{id}` for get, update, and delete.
+        account_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+        region:
+          type: string
+          enum: [us-east]
+        product_vm:
+          type: string
+          format: uuid
+          description: Source VM UUID
+        name:
+          type: string
+          description: Schedule display name
+        type:
+          type: string
+          enum: [daily, weekly]
+          description: Schedule frequency
+        runtime:
+          type: string
+          description: Human-readable schedule (e.g. `Daily at 8am`, `Saturday 8am`)
+        keep_count:
+          type: integer
+          description: Number of backups retained before auto-pruning
+        price_per_hour:
+          type: string
+          description: Hourly cost in USD
+        size:
+          type: string
+          description: Total size of backups currently retained for this schedule
+        created_at:
+          type: string
+          format: date-time
+
+    CreateBackupScheduleRequest:
+      type: object
+      required:
+        - vm_id
+        - type
+        - time
+        - keep_count
+      properties:
+        vm_id:
+          type: string
+          format: uuid
+          description: Target VM UUID
+        type:
+          type: string
+          enum: [daily, weekly]
+          description: Schedule frequency
+        time:
+          type: string
+          description: Time of day to run the backup (e.g. `8am`, `13:00`)
+          example: 8am
+        day_of_week:
+          type: string
+          enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+          description: Day of week. Required when `type` is `weekly`.
+        keep_count:
+          type: integer
+          minimum: 1
+          description: Number of backups to retain before auto-pruning
+
+    UpdateBackupScheduleRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [daily, weekly]
+        time:
+          type: string
+          example: 8am
+        day_of_week:
+          type: string
+          enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+          description: Required when `type` is `weekly`.
+        keep_count:
+          type: integer
+          minimum: 1
+
+    SSHKey:
+      type: object
+      required:
+        - id
+        - name
+        - public_key
+        - key_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: SSH key ID
+        name:
+          type: string
+          description: SSH key display name
+          example: laptop
+        public_key:
+          type: string
+          description: Full SSH public key string (e.g. `ssh-ed25519 AAAA... user@host`)
+        key_type:
+          type: string
+          description: Parsed key algorithm
+          enum: [ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateSSHKeyRequest:
+      type: object
+      required:
+        - name
+        - public_key
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: SSH key display name
+          example: laptop
+        public_key:
+          type: string
+          description: Full SSH public key string
+          example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@host"
+
+    UpdateSSHKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: New SSH key display name
+
+    Member:
+      type: object
+      required:
+        - id
+        - email
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Account member ID
+        account_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: User UUID. `null` for pending invitations until the invitee accepts.
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          description: Role slug (deprecated — prefer `role_id` and `role_name`)
+        role_id:
+          type: string
+          format: uuid
+        role_name:
+          type: string
+          example: Operator
+        status:
+          type: string
+          enum: [pending, active, suspended]
+          description: |
+            Membership status:
+            - `pending` — invited but not yet accepted
+            - `active` — full member
+            - `suspended` — temporarily disabled by an admin
+        invited_by:
+          type: string
+          format: uuid
+        invited_at:
+          type: string
+          format: date-time
+        accepted_at:
+          type: string
+          format: date-time
+        invitation_id:
+          type: string
+          format: uuid
+          description: Set when `status` is `pending` — the underlying invitation ID. Use [Cancel Invitation](#tag/Invitations/operation/cancelInvitation) to revoke.
+        invitation_expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AddMemberRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email to invite. Mutually exclusive with `target_user_id` and `api_key_id`.
+        target_user_id:
+          type: string
+          format: uuid
+          description: User UUID to add directly. The user must already exist on Raff (e.g. an existing project-only member). Mutually exclusive with `email` and `api_key_id`.
+        api_key_id:
+          type: string
+          format: uuid
+          description: API key UUID to grant account-level access via this membership. Mutually exclusive with `email` and `target_user_id`.
+        role_id:
+          type: string
+          format: uuid
+          description: Role UUID. Required.
+
+    UpdateMemberRequest:
+      type: object
+      description: At least one field is required.
+      properties:
+        role_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, suspended]
+          description: Set `active` to re-enable a suspended member, or `suspended` to disable. `pending` cannot be set directly — that's reserved for invitation flow.
+
+    ProjectMember:
+      type: object
+      required:
+        - id
+        - email
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Project member ID
+        project_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          description: Role slug (deprecated — prefer `role_id` and `role_name`)
+        role_id:
+          type: string
+          format: uuid
+        role_name:
+          type: string
+        status:
+          type: string
+          enum: [pending, active, suspended]
+          description: |
+            Membership status:
+            - `pending` — invited but not yet accepted
+            - `active` — full member
+            - `suspended` — temporarily disabled by an admin
+        invited_by:
+          type: string
+          format: uuid
+        invited_at:
+          type: string
+          format: date-time
+        accepted_at:
+          type: string
+          format: date-time
+        invitation_id:
+          type: string
+          format: uuid
+        invitation_expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    AddProjectMemberRequest:
+      type: object
+      required:
+        - role_id
+      properties:
+        target_user_id:
+          type: string
+          format: uuid
+          description: User UUID to add. Must already be an account member. Mutually exclusive with `api_key_id`.
+        api_key_id:
+          type: string
+          format: uuid
+          description: API key UUID to grant access to this project. Mutually exclusive with `target_user_id`.
+        role_id:
+          type: string
+          format: uuid
+
+    Role:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - scope
+        - permissions
+        - is_system
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+          description: Empty for built-in system roles
+        name:
+          type: string
+          example: Operator
+        slug:
+          type: string
+          example: operator
+        description:
+          type: string
+        scope:
+          type: string
+          enum: [account, project]
+          description: Whether the role grants account-level or project-level permissions
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Permission strings (e.g. `vm.create`, `project.members.view`). See [List Permissions](#tag/Permissions/operation/listPermissions).
+        is_system:
+          type: boolean
+          description: '`true` for built-in roles (Owner, Admin, Member, Operator, etc.) which cannot be edited or deleted. `false` for custom roles.'
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateRoleRequest:
+      type: object
+      required:
+        - name
+        - slug
+        - scope
+        - permissions
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          example: Custom Operator
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 64
+          example: custom-operator
+        description:
+          type: string
+        scope:
+          type: string
+          enum: [account, project]
+        permissions:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: [vm.view, vm.create, volume.view]
+
+    UpdateRoleRequest:
+      type: object
+      description: At least one field is required. Slug and scope cannot be changed after creation.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    Permission:
+      type: object
+      required:
+        - name
+        - scope
+        - category
+      properties:
+        name:
+          type: string
+          example: vm.create
+        description:
+          type: string
+          example: Create new virtual machines
+        scope:
+          type: string
+          enum: [account, project]
+        category:
+          type: string
+          example: vm
+
+    APIKeyProjectAccess:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+        role_id:
+          type: string
+          format: uuid
+        role_name:
+          type: string
+        role_slug:
+          type: string
+
+    APIKey:
+      type: object
+      required:
+        - id
+        - name
+        - key_prefix
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        key_prefix:
+          type: string
+          description: First 13 characters of the key — the `raff_` prefix plus the first 8 hex characters (e.g. `raff_17d70fcf`). The full secret is only returned once at create or regenerate time.
+          example: raff_17d70fcf
+        scope:
+          type: string
+          enum: [public]
+          description: Always `public` for customer-created keys
+        rate_limit_tier:
+          type: string
+          enum: [standard, high]
+          description: Rate-limit tier. Standard is 30 RPS / burst 60; High is 100 RPS / burst 200.
+        expires_at:
+          type: string
+          format: date-time
+          description: When the key auto-expires. Omitted for never-expires keys.
+        last_used_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        role_id:
+          type: string
+          format: uuid
+          description: Account-level role this key uses
+        role_name:
+          type: string
+        role_slug:
+          type: string
+        project_accesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKeyProjectAccess'
+          description: Per-project access grants
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    APIKeyWithSecret:
+      allOf:
+        - $ref: '#/components/schemas/APIKey'
+        - type: object
+          required:
+            - secret
+          properties:
+            secret:
+              type: string
+              description: |
+                The full API key. **Returned only once** — at create or regenerate time. Store immediately; the secret cannot be retrieved later.
+              example: raff_17d70fcf7e7510968a4c19279b25707f088f1cc5ad8b74210341d8e470b5bb7a
+
+    CreateAPIKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: A descriptive label for the key (e.g. `Production CI`, `Backups Lambda`)
+        rate_limit_tier:
+          type: string
+          enum: [standard, high]
+          default: standard
+          description: '`standard` (30 RPS) by default. `high` (100 RPS) requires support approval — request via email if you need it.'
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration timestamp. Omit for never-expires keys.
+        role_id:
+          type: string
+          format: uuid
+          description: Account-level role to assign. The key inherits this role's `account.*` permissions. To grant per-project access, add the key as a Project Member after creation.
+
+    UpdateAPIKeyRequest:
+      type: object
+      description: At least one field is required. To change the role, rotate to a new key — role at create time is frozen.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        rate_limit_tier:
+          type: string
+          enum: [standard, high]
+        expires_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+
+    Invitation:
+      type: object
+      required:
+        - id
+        - type
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [account, project]
+          description: Account-level or project-level invitation
+        account_id:
+          type: string
+          format: uuid
+        account_name:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+          description: Set only when `type` is `project`
+        project_name:
+          type: string
+        email:
+          type: string
+          format: email
+        role_id:
+          type: string
+          format: uuid
+        role_name:
+          type: string
+        invited_by_id:
+          type: string
+          format: uuid
+        invited_by_email:
+          type: string
+          format: email
+        invited_by_name:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          description: When the invitation auto-expires. Past this time, the accept link returns an error and the row is removed by a cleanup job.
+        created_at:
+          type: string
+          format: date-time
+
+    CreateInvitationRequest:
+      type: object
+      required:
+        - email
+        - role_id
+      properties:
+        email:
+          type: string
+          format: email
+          description: Recipient's email address. Must not already be a member.
+        role_id:
+          type: string
+          format: uuid
+          description: 'Role the invitee will receive on acceptance. Must be `scope: account` for account invites or `scope: project` for project invites.'
 
   responses:
     BadRequest:

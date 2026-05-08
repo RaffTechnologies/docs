@@ -3,6 +3,8 @@ title: Create a snapshot
 description: Capture a point-in-time copy of a VM's OS disk or a volume's contents
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 A snapshot is a point-in-time copy of a VM's OS disk or a volume's contents. Use snapshots as restore points before risky changes — kernel upgrades, OS package changes, schema migrations — or as the starting point for a clone.
 
 For automated, scheduled protection use [backups](/products/build/virtual-machines/quickstart-guides/enable-backups). See [Snapshots vs Backups](/products/build/virtual-machines/concepts/snapshots-vs-backups) for when to pick which.
@@ -61,7 +63,7 @@ Tweak the name if you want, then click **Create Snapshot**.
 
 | Status | Meaning |
 |---|---|
-| `creating` | Capture in progress (typically 1-5 minutes, depends on disk size) |
+| `creating` | Capture in progress — typically 1–2 minutes, scales with the size of the disk being captured (backups, by comparison, average ~3 minutes) |
 | `ready` | Stored and restorable |
 | `failed` | Capture didn't complete; safe to delete |
 

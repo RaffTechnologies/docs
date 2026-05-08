@@ -1,0 +1,88 @@
+---
+title: "raff vpc"
+description: "Manage VPCs from the CLI — list, get, create, update, delete, and fetch CIDR suggestions. Each VPC is a VXLAN-isolated private network for VMs in the same region."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The `raff vpc` command group manages Virtual Private Clouds. See [VPC overview](/products/network/vpc) for the model — VXLAN isolation, opt-in membership, allowed CIDR ranges.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List VPCs in the project |
+| [`get`](#get) | Show one VPC's details |
+| [`create`](#create) | Create a new VPC |
+| [`update`](#update) | Update VPC settings (DNS, name) |
+| [`delete`](#delete) | Delete an empty VPC |
+| [`cidr-suggestions`](#cidr-suggestions) | Get suggested non-conflicting CIDRs |
+
+---
+
+## list
+
+```bash
+raff vpc list [--output table|json]
+```
+
+## get
+
+```bash
+raff vpc get <vpc-id> [--output table|json]
+```
+
+## create
+
+```bash
+raff vpc create \
+  --name <name> \
+  --cidr <cidr> \
+  [--region us-east] \
+  [--dns-primary 8.8.8.8] \
+  [--dns-secondary 1.1.1.1]
+```
+
+Create a VPC with a custom CIDR. Allowed prefixes: `/16` to `/28`. Allowed ranges: RFC 1918 (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) and RFC 6598 (`100.64.0.0/10`).
+
+```bash
+raff vpc create --name "prod-services" --cidr "10.5.0.0/24"
+```
+
+## update
+
+```bash
+raff vpc update <vpc-id> [--name <new-name>] [--dns-primary <ip>] [--dns-secondary <ip>]
+```
+
+Update name and/or DNS. CIDR is immutable — recreate to change.
+
+## delete
+
+```bash
+raff vpc delete <vpc-id>
+```
+
+Delete an empty VPC. Fails if any VMs are still attached — detach them first via `raff vm vpc detach`.
+
+## cidr-suggestions
+
+```bash
+raff vpc cidr-suggestions [--output table|json]
+```
+
+Returns three pre-computed CIDRs (Recommended `/20`, Small `/24`, Large `/16`) chosen to not conflict with your existing VPCs. Pass any of them to `raff vpc create --cidr <cidr>`.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    `raff vm vpc attach` to add a VM to a VPC.
+  </Card>
+  <Card title="VPC overview" icon="network-wired" href="/products/network/vpc">
+    The VXLAN model behind VPCs.
+  </Card>
+  <Card title="VXLAN, CIDR, and isolation" icon="lightbulb" href="/products/network/vpc/concepts/cidr-and-isolation">
+    Why CIDR overlap is allowed across VPCs.
+  </Card>
+</CardGroup>

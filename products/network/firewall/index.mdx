@@ -4,7 +4,7 @@ description: Stateful network firewall on Raff — every public interface gets t
 icon: shield-halved
 ---
 
-<sub>Updated May 5, 2026</sub>
+<sub>Updated May 6, 2026</sub>
 
 Raff's **Firewall** is a stateful, port-based filter that applies to a VM's public network interface. It comes in two layers that always run together:
 
@@ -12,6 +12,15 @@ Raff's **Firewall** is a stateful, port-based filter that applies to a VM's publ
 2. **Your Firewall Groups** — custom rule sets you create and attach to specific VMs. Stack on top of the Default to allow or deny exactly the ports and source IPs you need.
 
 Both layers evaluate every packet on a public interface. **Traffic over a VPC's private network is not filtered** — a Firewall Group only affects packets entering or leaving via a public IP.
+
+<Note>
+  **Stateful — what it means for you.** Because the firewall tracks connections, you only write rules for the **direction the connection is initiated**. Reply traffic on the same connection is automatically allowed.
+
+  - Allow inbound TCP/443 to your web server → return packets back to the client are handled automatically. **You do not need an outbound rule for replies.**
+  - Allow outbound TCP/443 from your VM (e.g. to call an external API) → the response from that API is automatically allowed back in. **You do not need an inbound rule for replies.**
+
+  This is the same model AWS Security Groups, Cloudflare Magic Firewall, and most modern cloud firewalls use. If you're coming from old-school static iptables or a stateless ACL, you can drop roughly half your rule count.
+</Note>
 
 <Frame>
   ![Networking page on the Firewall tab showing the Raff Default Firewall card with a System badge applied to all public network interfaces, and Your Firewall Groups section with a Web Server custom group (2 in / 1 out, 14 days ago)](/images/products/network/firewall/firewall-tab.png)

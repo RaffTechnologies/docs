@@ -1,0 +1,98 @@
+---
+title: Create a project
+description: Open the Projects tab, click + Create Project, name it, optionally describe it, and save — projects organize resources for access control and let you scope members to specific subsets of your fleet
+---
+
+<sub>Updated May 8, 2026</sub>
+
+A **project** is a container for resources — VMs, VPCs, public IPs, Object Storage buckets, snapshots, backups. Resources never live "in the account" directly; they always belong to one project. Projects are also the unit of access control — a member with a `Project Member` role on `customer1` only sees `customer1`'s resources.
+
+Every account starts with a `Default` project, pre-created at signup, and you can never delete it. Most accounts that don't need access partitioning leave it as their only project. Create more projects when you want to **isolate customers**, **separate environments** (`prod` / `staging`), give **per-team scoping**, or break out **billing entities**.
+
+## Open the Projects tab
+
+In **Team & Projects**, switch to the **Projects** tab.
+
+<Frame>
+  ![Team & Projects Projects tab showing the heading "Organize resources with projects for better access control", a + Create Project button on the right, and two project rows: Default (Default badge, 0 members, created 1/22/2026) and customer1 (1 member, created 3/23/2026)](/images/products/manage/team-projects/team-projects-projects.png)
+</Frame>
+
+The list shows every project in your account with three columns:
+
+| Column | What it shows |
+|---|---|
+| **Project** | The display name and a stable identifier underneath. The pre-created project shows the orange `Default` badge |
+| **Members** | The number of team members with a project role on this project. `0` is normal for projects you've just created |
+| **Created** | The date the project was created |
+
+Click the orange **+ Create Project** button on the right.
+
+## The Create New Project dialog
+
+<Frame>
+  ![Create New Project dialog with subtitle "Create a project to organize your resources and manage access.", a Name field with placeholder "e.g., Production", a Description (Optional) textarea with placeholder "What is this project for?", and Cancel / Create Project buttons](/images/products/manage/team-projects/create-project-dialog.png)
+</Frame>
+
+The dialog is intentionally short — two fields and a save button.
+
+## 1. Name
+
+Pick a label that's easy to recognize when assigning resources or members later. Common patterns:
+
+| Pattern | Examples |
+|---|---|
+| **Per environment** | `Production`, `Staging`, `Dev` |
+| **Per customer** | `customer1`, `acme-corp`, `globex` |
+| **Per team** | `platform-team`, `data-team`, `mobile-team` |
+| **Per cost center** | `R&D`, `Customer Ops`, `Internal Tools` |
+
+Names must be unique inside your account. Names **can be renamed later** via the row's `⋮` → **Edit Project** — see [Edit or delete a project](/products/manage/team-projects/quickstart-guides/delete-a-project) for the rename flow.
+
+## 2. Description (optional)
+
+Free-form. Useful for telling teammates what this project is for — *"Production workloads for ACME Corp's whitelabel deployment"*, *"Internal staging — destroy and rebuild freely"*. Shows up in the project's row when expanded.
+
+Skip if you don't need it. The field has no length cap; use as much detail as helps the team.
+
+## 3. Click Create Project
+
+The project is created in seconds and appears in the Projects list. The new row shows:
+
+- The display name with no `Default` badge
+- `0` under Members (no one assigned yet)
+- Today's date under Created
+
+The new project is **empty and immediately usable**. From this point on:
+
+- The new project appears in the **top-bar project picker** for anyone with access to it
+- You can **add members** to it from `Team & Projects → Members → row's expansion → + Add to Project`, or by inviting a new member with the **Project** access level scoped to this project
+- Anyone working in the project switches to it via the top-bar project picker, then creates VMs / VPCs / IPs / buckets the normal way — they all land in this project automatically
+
+## What you cannot do
+
+| Action | Status |
+|---|---|
+| **Move existing resources from one project to another** | Not supported today — resources are scoped to their project at creation. To "move" a VM, recreate it in the target project (snapshot the source, restore in the target, or just provision fresh) |
+| **Share a single resource across two projects** | Not supported — every resource lives in exactly one project |
+| **Delete the `Default` project** | Permanent restriction — Default is the always-available fallback project and can't be deleted from the dashboard or the API |
+| **Reassign Default's resources** | Same as the move limitation — there's no "move out of Default" action |
+
+## Who can create projects
+
+A member needs the **`account.projects.create`** permission to use the **+ Create Project** button. The Owner has it; the **Admin** account role has it; **Billing** and **Member** account roles do not. Project-only members never see the Projects tab at all.
+
+If the button is greyed out or missing, you don't have the permission — ask the Owner or an Admin to either create the project or grant you the permission via a Custom role.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Edit or delete a project" icon="pen-to-square" href="/products/manage/team-projects/quickstart-guides/delete-a-project">
+    Rename, change description, or delete a project.
+  </Card>
+  <Card title="Invite a member" icon="user-plus" href="/products/manage/team-projects/quickstart-guides/invite-member">
+    Add a member scoped to a specific project.
+  </Card>
+  <Card title="Projects and scoping" icon="lightbulb" href="/products/manage/team-projects/concepts/projects-and-scoping">
+    How project scope affects every resource and API call.
+  </Card>
+</CardGroup>

@@ -3,6 +3,8 @@ title: Release a public IP
 description: Stop billing on a reserved IP by releasing it back to the pool — irreversible, the IP becomes available for someone else to auto-assign or reserve
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Releasing a reserved IP **stops the billing** and returns the address to the regional pool. After release, the IP is gone from your account; you can't get it back. Someone else may auto-assign or reserve the same address moments later.
 
 This page is for **reserved** IPs only. Auto-assigned IPs are released automatically when you remove them from a VM (or delete the VM) — there's nothing extra to do, and no separate "release" action exists for them.
@@ -43,6 +45,23 @@ To release an attached IP, you have two paths:
 | Stop billing AND delete the VM | Delete the VM with "release attached IPs" — the VM-delete dialog handles both at once |
 
 For auto-assigned IPs the choice is moot — they release automatically on detach or VM delete with no separate action.
+
+## Pool re-allocation timing — and why there is no recovery path
+
+Once released, an IP is **immediately eligible for re-allocation** to any other Raff customer (or back to the same account, but with no preference for "you released it last"):
+
+- There is **no cooldown**. The address goes straight from your account into the available pool.
+- The next auto-assign or reserve call from any customer in the same region — possibly within seconds — can pick up that exact IP.
+- Once it's been allocated to a different tenant, it is **not recoverable to your account**. There is no support escalation that pulls the IP back from the new holder.
+
+Practical implication: only release when you're certain the address is no longer in use anywhere — DNS records, partner allow-lists, hard-coded client configs, monitoring targets. If you find out 10 minutes later that something still pointed at it, the recovery options are:
+
+| Situation | What you can do |
+|---|---|
+| The IP is still in the pool (no one re-claimed yet) | [Reserve a new IP](/products/network/public-ips/quickstart-guides/reserve-ip) and try the same address — auto-assign cannot target a specific IP, but reserve sometimes can if it's still free. There is **no guarantee** |
+| The IP has been re-allocated | Update DNS, allow-lists, and clients to point at a fresh reserved IP. The released address is permanently gone from your account |
+
+This is why the comparison below — **detach (keep reserved)** vs **release** — usually tilts toward keeping reserved at \$3/month. The cost of reclaiming a released address can be far higher than 12 months of holding it.
 
 ## Difference from "detach"
 

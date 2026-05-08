@@ -1,0 +1,244 @@
+---
+title: Troubleshooting
+description: Common Team & Projects problems — invitation never arrived, role changes not taking effect, API keys still authenticating after a member leaves, the Owner question, lost-access recovery, and the rules behind permission denied errors
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The most-seen issues with Team & Projects on Raff and the fix for each. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with the affected member's email or API key prefix, the exact error message, and what you've already tried.
+
+## Invitations
+
+<AccordionGroup>
+  <Accordion title="The invited member says they never received the email">
+    **First, check the dashboard:**
+    - Members tab → look for the row with the invited email. Its status should be `Pending` (gray badge). If the row is missing, the invite wasn't actually sent — re-send via [Invite a member](/products/manage/team-projects/quickstart-guides/invite-member)
+    - If the row exists, the email left Raff's side. The likely problem is delivery
+
+    **Common delivery issues:**
+    - Spam / junk folder — search for `support@rafftechnologies.com` or `noreply@rafftechnologies.com` in the recipient's mailbox
+    - Corporate email filter blocking unknown senders — recipient's IT may need to allowlist `rafftechnologies.com`
+    - Typo in the email address — Members row shows what was actually sent. Cancel the invite and re-send with the correct email
+    - Disposable / role-based addresses (e.g. `info@`, `noreply@`) — some mail servers reject these silently
+
+    **Reinvite the member:** there's no in-place "resend" action. The workflow is **cancel + re-invite**:
+    1. Members tab → `Pending` row's `⋮` → **Cancel Invitation** — the old email's link stops working
+    2. Click **+ Invite Member**, enter the same email, send again — fresh token, fresh email
+
+    This is the *reinvite* pattern. It's the same flow when fixing a typo'd email or changing the invite scope (Account vs Project).
+  </Accordion>
+
+  <Accordion title="The invitation link says `Invitation expired`">
+    Pending invites have a fixed lifetime (typically a few days). If the recipient waited too long, the link is dead.
+
+    **Fix — the reinvite workflow:**
+    1. Members tab → `Pending` row's `⋮` → **Cancel Invitation** (the old expired link is killed)
+    2. Click **+ Invite Member** and send a fresh invite to the same email
+
+    There's no in-place "resend" action — cancel + re-invite is the only path.
+
+    To prevent expired-invitation friction at scale, send invites only when the recipient is ready to accept that day, or use API key flows (no expiry on the invitation step) for automated/programmatic access.
+  </Accordion>
+
+  <Accordion title="The recipient already has a Raff account on this email">
+    No problem — accepting the invitation adds your account to their existing account list. They don't create a new account, don't pick a new password; they just see your account in the account-switcher dropdown after sign-in.
+
+    They may need to **sign in first** (with their existing Raff credentials) and **then** click the invitation link, depending on the order of clicks.
+  </Accordion>
+
+  <Accordion title="Can I cancel a pending invitation?">
+    Yes. Members tab → `Pending` row's `⋮` → **Cancel Invitation**. The link in the email stops working immediately. The row disappears from Members.
+
+    Cancelling and re-inviting is the right pattern when you need to change the invite scope (Account vs Project) — the Invite dialog locks the scope choice once sent, so a fresh invite is the way to switch.
+  </Accordion>
+</AccordionGroup>
+
+## Permission denied
+
+<AccordionGroup>
+  <Accordion title="A member can sign in but sees an empty Compute / Networking / Object Storage page">
+    **Likely cause:** they have an **account role** (so they can sign in and see account-level settings) but **no project role** on any project — so resources are invisible to them.
+
+    The Account vs Project domains are independent on Raff. An `Admin` account role doesn't grant access to project resources; only project roles do. See [Roles, scopes, and the Owner](/products/manage/team-projects/concepts/roles-and-api-keys#two-domains-account-vs-project) for the model.
+
+    **Fix:** open the member's row, expand it, click **+ Add to Project**, pick the project they should access, pick the project role. They see resources on next page load.
+  </Accordion>
+
+  <Accordion title="A member sees `403 — permission denied` on a specific action they expected to have">
+    The member has a role, but the role doesn't include the specific permission for that action.
+
+    **Diagnose:**
+    - Find the member on the Members tab → expand their row → see their account role and per-project roles
+    - Open the **Roles** tab → click the eye icon on whichever role is being checked → look for the missing permission in the role-detail view
+    - The permission name follows `<domain>.<resource>.<action>` (e.g. `vm.delete`, `account.billing.manage`)
+
+    **Fix options:**
+    - Promote them to a role that does include the permission (e.g. `Project Admin` for full project access)
+    - Build a [Custom role](/products/manage/team-projects/concepts/roles-and-api-keys#custom-roles--when-to-build-one) with the exact permission set you want and assign that
+    - For account-level permissions: change the account role; for project-level: change the role on that specific project
+
+    Most "missing permission" issues are confusion between domains — see [Permissions matrix](/products/manage/team-projects/details/permissions-matrix) for which role grants which permission.
+  </Accordion>
+
+  <Accordion title="A member's permissions changed but the change isn't taking effect for them">
+    Role changes apply on the **next API request** the member makes. If they have a page open, they may continue to see stale state until they navigate or the page refreshes.
+
+    **Fix:** ask the member to **refresh the dashboard** (Cmd-R / Ctrl-R) or sign out and back in. Their browser session state will reflect the new role.
+
+    If a member is being **demoted**, they immediately lose access to anything the new role doesn't include — open requests fail with `403`. There's no grace period.
+  </Accordion>
+
+  <Accordion title="API requests with a key fail with 403 even though the key was working yesterday">
+    Three common causes:
+    1. **The role assigned to the key was edited** — adding or removing a permission on the role propagates to every key using it
+    2. **The role assigned to the key was deleted** — keys whose role was deleted fail closed
+    3. **The key was rotated or deleted** — the old value stops authenticating immediately
+
+    **Diagnose:** go to the **API Keys** page, find the key by its prefix (`raff_<first 8 chars>` is shown). Confirm:
+    - Is the key still listed? If not, it was deleted
+    - Has its `Last Used` field updated recently? If not, it's not authenticating
+    - What's the role assignment? Is the role still valid?
+
+    **Fix:** rotate the key (Regenerate) to mint a new value, or recreate with the right role. See [Rotate an API key](/products/manage/team-projects/quickstart-guides/rotate-api-key).
+  </Accordion>
+</AccordionGroup>
+
+## Owner and last-admin scenarios
+
+<AccordionGroup>
+  <Accordion title="The Owner has left the company / can't access the account anymore">
+    Only one Owner per account, and the Owner can't be removed via the dashboard.
+
+    **Fix:** contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+    - Proof of authorization to make this change (often the Owner's signed letter to the support team or board minutes for organizational accounts)
+    - The new Owner's email (already a member of the account, ideally with `Admin` account role)
+
+    Support transfers the Owner badge after verification. The previous Owner can then be removed normally.
+  </Accordion>
+
+  <Accordion title="`Cannot remove the last account.members.manage holder`">
+    The platform refuses to leave the account stranded with no one able to manage members.
+
+    **Fix:** grant `account.members.manage` to at least one other member first:
+    - Via a System role (`Admin` includes it)
+    - Or via a Custom account role with that permission enabled
+
+    Then retry the original removal. The account always has at least one member-manager.
+  </Accordion>
+
+  <Accordion title="I'm the only member-manager and I want to leave the team">
+    Same rule as above — grant the permission to someone else first, then they remove you. If there's no one else suitable, contact support to coordinate the handoff (e.g. transfer Owner to a new hire, or close the account if shutting down).
+  </Accordion>
+
+  <Accordion title="Can I have two Owners?">
+    No — exactly one Owner per account. The closest equivalent is two members with the `Admin` account role (Admin has 15 permissions vs Owner's full 21, and excludes `account.projects.delete` and a few destructive ops). For most teams, two `Admin` members provide redundancy without an Owner conflict.
+  </Accordion>
+</AccordionGroup>
+
+## API keys after a member leaves
+
+<AccordionGroup>
+  <Accordion title="A removed member's API key is still authenticating">
+    **Expected behavior, not a bug.** API keys carry their own role assignment — removing the member who created the key does **not** invalidate the key.
+
+    **Fix as part of offboarding:**
+    - Open the **API Keys** page
+    - Filter / sort by Created By to find keys owned by the departed member
+    - **Rotate** keys you want to keep (mints a new value, invalidates the old)
+    - **Delete** keys that are no longer needed
+
+    Build this into your offboarding runbook. See [Remove a member](/products/manage/team-projects/quickstart-guides/remove-member#cleaning-up-after-removal) for the full checklist.
+  </Accordion>
+
+  <Accordion title="I rotated an API key but old systems are still trying the old value">
+    Rotation invalidates the old value the moment you confirm. If something is still trying it, the old value is hardcoded or cached somewhere.
+
+    **Diagnose:**
+    - Search code repositories for the old prefix (`raff_<first 8>`) — most leaks are committed values
+    - Check secret-manager entries — was the rotation propagated to every system that uses the key?
+    - Check logs for `401 Unauthorized` from the old key — those are the systems still using it
+
+    **Fix:** update every system to use the new value. The audit log records who rotated when; you don't need to change the key again, just deploy the new secret.
+  </Accordion>
+
+  <Accordion title="I lost the full key value after the create dialog closed">
+    Raff stores only a hash of the key — the full value is unrecoverable after you close the create dialog.
+
+    **Fix:** rotate the key (Regenerate) — issues a new value with the same role/expiration. Copy this one immediately to your secret manager. The old (lost) value is invalidated by the rotation.
+  </Accordion>
+</AccordionGroup>
+
+## Roles and Custom-role pitfalls
+
+<AccordionGroup>
+  <Accordion title="I created a Custom role but I can't find it in the dropdown">
+    Two scopes for roles — Account and Project. Custom roles only appear in the dropdown that matches their scope:
+    - Account-scoped Custom role → only in the Account Role dropdown
+    - Project-scoped Custom role → only in the Project Role dropdown
+
+    **Fix:** confirm the scope you picked at create time matches where you're trying to use the role. If wrong, **delete the role and recreate** with the correct scope — scope is locked after creation.
+  </Accordion>
+
+  <Accordion title="I edited a System role to add a permission and the change didn't save">
+    System roles **cannot be edited**. The toggles render in the role-detail view but submitting changes is blocked.
+
+    **Fix:** click the row's `⋮` → **Duplicate** to clone the System role into a Custom role. Edit the Custom role freely. Reassign affected members from the System role to the Custom one.
+  </Accordion>
+
+  <Accordion title="A role I deleted shows up in audit logs but says `unknown role`">
+    Roles can be deleted while audit-log entries reference them. Audit-log readability is degraded after the role is gone (the entry says the action was authorized by role-id `<UUID>` but can't resolve to a name).
+
+    **Fix:** there's no recovery for deleted Custom roles. Recreate with the same name + same permissions if you need future audit-log entries to match. Old entries will continue showing the old role-id with no name.
+  </Accordion>
+</AccordionGroup>
+
+## Projects
+
+<AccordionGroup>
+  <Accordion title="I can't see a project I know exists">
+    Project visibility is governed by your project roles. The project picker in the top bar only shows projects you have a role on.
+
+    **Fix:**
+    - If you're the **Owner** or have an account role with `account.projects.view` — open Team & Projects → **Projects** tab to see every project regardless of project-role grants
+    - If you're a **Project-only** member — you only see projects on which you have a project role. Ask an account-role holder to add you to the project you need
+  </Accordion>
+
+  <Accordion title="I can't delete the Default project">
+    The **Default project cannot be deleted, ever**. It's the always-available fallback project for any resource created without an explicit project. The Delete option is hidden / disabled on its row.
+
+    See [Edit or delete a project](/products/manage/team-projects/quickstart-guides/delete-a-project#two-hard-rules) for the full rule and workarounds.
+  </Accordion>
+
+  <Accordion title="I want to move a VM from one project to another">
+    **Not supported today.** Resources are scoped to their project at creation, and there's no "move resource" action.
+
+    **Workarounds:**
+    - Recreate the resource in the target project (snapshot + restore for VMs, copy-bucket for Object Storage)
+    - For VMs specifically: take a snapshot in the source project, restore the snapshot in the target project, then delete the source VM
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- **The affected member's email** or **the API key prefix** (`raff_<first 8 chars>` — never include the full key)
+- **The exact error message** and the time it occurred
+- **What you tried** from this page
+- **Whether this is a security incident** (a leaked key, an unrecognized member sign-in, etc.) — these get prioritized
+
+Same-day response in business hours; faster for production-impacting issues.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-projects/concepts/roles-and-api-keys">
+    The model behind the permission errors above.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-projects/details/permissions-matrix">
+    Which role grants which permission.
+  </Card>
+  <Card title="Rotate an API key" icon="arrows-rotate" href="/products/manage/team-projects/quickstart-guides/rotate-api-key">
+    The most common offboarding action.
+  </Card>
+</CardGroup>

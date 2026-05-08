@@ -1,0 +1,89 @@
+---
+title: "raff_project"
+description: "Manage Raff projects with Terraform — the access-control container for VMs, volumes, IPs, VPCs, and Object Storage buckets. Required attribute is name; optional are description and default_region."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+Manages a Raff **project** — the access-control unit that owns every resource. See [Team & Projects — Projects](/products/manage/team-projects#projects--the-unit-of-access-control) for the model. Every account starts with a `Default` project that cannot be deleted.
+
+## Example
+
+```hcl
+resource "raff_project" "production" {
+  name           = "production"
+  description    = "Production workloads — customer-facing services"
+  default_region = "us-east"
+}
+
+resource "raff_project" "customer_acme" {
+  name           = "customer-acme"
+  description    = "ACME Corp's whitelabel deployment"
+  default_region = "us-east"
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `name` | string | Yes | Project name. Must be unique across the account |
+| `description` | string | No | Free-form description. Surfaces in the dashboard's project list and in audit-log entries |
+| `default_region` | string | No | Default region for resources created in this project. Currently `us-east` is the only available region |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Project UUID — use as `project_id` on `raff_vm` and other project-scoped resources |
+| `account_id` | The account this project belongs to |
+| `slug` | URL-friendly identifier (lowercase, hyphenated) — derived from `name` |
+| `is_default` | Whether this is the account's `Default` project |
+| `is_active` | Whether the project is active (deleted projects show as inactive briefly before disappearing) |
+| `created_by` | User who created the project |
+| `created_at` | Creation timestamp |
+| `updated_at` | Last modification timestamp |
+
+## Permissions
+
+The API key used by the provider needs:
+
+- **`account.projects.create`** — to create new projects (Owner, Admin)
+- **`account.projects.manage`** — to update existing projects (Owner, Admin)
+- **`account.projects.delete`** — to delete projects (**Owner only by default**; Admin does NOT include this — needs a Custom role)
+
+If `terraform apply` fails with `403 Forbidden` on a project resource, the key's role is missing the relevant permission.
+
+## Importing existing projects
+
+If you have a project that was created via the dashboard or CLI and want to bring it under Terraform management:
+
+```bash
+terraform import raff_project.production <project-uuid>
+```
+
+Then add a matching `resource "raff_project" "production"` block to your `.tf` file. Run `terraform plan` to confirm Terraform's view matches the existing state.
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | New project created, gets a fresh UUID |
+| `terraform apply` (rename / update description) | Updates in-place; UUID unchanged |
+| `terraform apply` (region change) | In-place if supported by the API |
+| `terraform destroy` | Deletes the project. **Fails** if any resources still belong to it (VMs, volumes, IPs, etc.). Move or destroy those first |
+| Trying to destroy the `Default` project | **Always fails** — the Default project is platform-protected |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    VMs reference projects via project_id.
+  </Card>
+  <Card title="Projects" icon="folder" href="/products/manage/team-projects#projects--the-unit-of-access-control">
+    The model behind project-scoped access.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-projects/details/permissions-matrix">
+    Which role grants `account.projects.delete`.
+  </Card>
+</CardGroup>

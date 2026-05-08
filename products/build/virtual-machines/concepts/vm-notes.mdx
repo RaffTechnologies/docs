@@ -3,6 +3,8 @@ title: VM notes — My Notes & Team Notes
 description: Two kinds of free-form notes attached to a VM, and who can see each
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Every VM has two free-form note fields living together at the bottom of the **Actions** tab on the VM detail page:
 
 - **My Notes** — *only you* can see them. Private to the user who wrote them.
@@ -36,6 +38,14 @@ If you're hesitating, prefer Team Notes. Knowledge in My Notes leaves with the u
 - **No formatting** — plain text only.
 - **No version history** — the latest write replaces the previous one. Use git or a runbook tool if you need history.
 - **No global search** — notes show on the VM they're attached to, not in a cross-VM view.
+
+## Length guidance
+
+There's **no enforced character limit** on either My Notes or Team Notes — the API accepts whatever you write. Practical guidance:
+
+- **Keep it scannable** — a few short paragraphs. If a note runs longer than a few hundred characters, the value of "inline at the VM" starts dropping
+- **Link to runbooks for the heavy stuff** — "See PagerDuty service raff-prod-payments" beats a 5-paragraph runbook embedded in the note
+- **The Append API** (`PUT /api/v1/vms/{id}/notes/append`) is the right pattern for change-log-style notes — it adds a new line each call without overwriting earlier text. Use it from CI / deploy scripts: `raff vm notes append <vm-id> --content "deploy v2.3.1 by alice 2026-05-08"`
 
 ## Lifecycle
 

@@ -1,13 +1,16 @@
 ---
 title: API Reference
-description: Complete reference for the Raff Cloud Platform REST API
+description: Complete reference for the Raff REST API
 ---
+
+<sub>Updated May 6, 2026</sub>
 
 ## Base URL
 
-```
-https://api.rafftechnologies.com
-```
+| Environment | URL |
+|-------------|-----|
+| Local | `https://api.raffcomputing.com` |
+| Production | `https://api.rafftechnologies.com` |
 
 ## Authentication
 
@@ -89,7 +92,7 @@ List endpoints support pagination via query parameters:
 ```bash
 # Get page 2 with 10 items per page
 curl -H "X-API-Key: YOUR_API_KEY" \
-  "https://api.rafftechnologies.com/api/v1/vms?limit=10&offset=10"
+  "https://api.raffcomputing.com/api/v1/vms?limit=10&offset=10"
 ```
 
 ## Available Endpoints
@@ -119,4 +122,16 @@ CRUD via `/api/v1/projects` and `/api/v1/projects/{id}`.
 
 ### Volumes
 
-`PATCH /api/v1/volumes/{id}` (resize). Full CRUD, attach/detach, and snapshot/backup endpoints are coming in the next releases.
+CRUD via `/api/v1/volumes` and `/api/v1/volumes/{id}`, plus `POST /api/v1/volumes/{id}/{attach,detach}` and `PATCH /api/v1/volumes/{id}` (resize).
+
+### Snapshots
+
+CRUD via `/api/v1/snapshots` and `/api/v1/snapshots/{id}`, plus `POST /api/v1/snapshots/{id}/restore` and `PATCH /api/v1/snapshots/{id}/rename`. Supports both VM and volume sources.
+
+### Backups
+
+CRUD via `/api/v1/backups` and `/api/v1/backups/{id}`, plus `POST /api/v1/backups/{id}/restore`. Schedules under `/api/v1/backup-schedules` (daily / weekly with retention).
+
+### SSH Keys
+
+Account-level CRUD via `/api/v1/ssh-keys` and `/api/v1/ssh-keys/{id}`. No `X-Project-ID` required — keys are scoped to the account.

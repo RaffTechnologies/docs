@@ -1,0 +1,257 @@
+---
+title: Transfer files to and from a VM
+description: Move files to and from your Raff VM with SCP for one-shot copies, SFTP for interactive sessions, rsync for big trees, or a GUI client like FileZilla / WinSCP. Same SSH credentials you already use for shell access.
+---
+
+<sub>Updated May 8, 2026</sub>
+
+There's nothing Raff-specific about file transfer — every method below uses your existing **SSH credentials and VM IP**. If you can [SSH into the VM](/products/build/virtual-machines/quickstart-guides/connect-via-ssh), you can transfer files to it. Pick the tool that fits the job:
+
+| Job | Tool |
+|---|---|
+| Copy one file or a small directory, one-shot | **`scp`** |
+| Browse files interactively, mix uploads/downloads in one session | **`sftp`** or a GUI client |
+| Sync a large directory, resume after interruption, copy only changed files | **`rsync`** |
+| Drag-and-drop GUI on macOS / Linux / Windows | **FileZilla** |
+| Drag-and-drop GUI on Windows specifically | **WinSCP** |
+
+All five use the standard SSH/SFTP protocol on **TCP port 22** of the VM's public IPv4. If your VM is in a VPC without a public IP, transfer through the [Platform Router's port forwarding](/products/network/vpc/quickstart-guides/manage-vpc#port-fwd-tab--public-port-forwarding) or a bastion VM.
+
+## Before you start
+
+- A VM with a [public IPv4](/products/network/public-ips) (or a port-forwarded VPC route)
+- An SSH key on your local machine, or the password you set with [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password)
+- The VM's **public IP** — copy it from the VM detail page
+
+Throughout this page, examples use:
+
+- `1.2.3.4` — placeholder for your VM's public IPv4
+- `root` — the default Linux user; substitute your sudo user if you've changed it
+- `~/.ssh/id_ed25519` — your SSH private key path on your local machine
+
+## SCP — one-shot file copy
+
+`scp` (secure copy) is the simplest tool — one command, copies one file or one directory, then exits.
+
+### Upload — local → VM
+
+```bash
+# Single file
+scp -i ~/.ssh/id_ed25519 ./local-file.tar.gz root@1.2.3.4:/root/
+
+# Directory (recursive)
+scp -i ~/.ssh/id_ed25519 -r ./local-dir root@1.2.3.4:/var/www/
+
+# Rename on the way
+scp -i ~/.ssh/id_ed25519 ./config.yml root@1.2.3.4:/etc/myapp/config.yml
+```
+
+### Download — VM → local
+
+```bash
+# Single file
+scp -i ~/.ssh/id_ed25519 root@1.2.3.4:/var/log/app.log ./
+
+# Directory
+scp -i ~/.ssh/id_ed25519 -r root@1.2.3.4:/var/backups ./
+```
+
+### Common flags
+
+| Flag | What it does |
+|---|---|
+| `-i <path>` | Use this SSH private key |
+| `-r` | Recursive (required for directories) |
+| `-P <port>` | Use a non-default SSH port — typical when you're going through a Platform Router port-forward (`-P 2222`) |
+| `-p` | Preserve modification times, access times, and modes |
+| `-C` | Compression — useful on slow links, marginal on fast ones |
+| `-q` | Quiet — suppress progress meter |
+| `-v` | Verbose — useful when debugging "permission denied" or "no route to host" |
+
+### When to skip SCP
+
+- **Big directory trees** — `scp -r` doesn't resume on interruption. Use `rsync` instead.
+- **Many small files** — `scp` opens a separate transfer per file. `rsync` or a tar-pipe is much faster.
+- **Files larger than a few GB** — `scp` works but has no progress / resume. Use `rsync --progress` instead.
+
+## SFTP — interactive session
+
+`sftp` opens a long-lived FTP-like session over SSH. Useful for browsing and ad-hoc up/downloads in one connection.
+
+```bash
+sftp -i ~/.ssh/id_ed25519 root@1.2.3.4
+```
+
+Inside the session, common commands:
+
+| Command | What it does |
+|---|---|
+| `ls` / `ls -la` | List files on the **remote** VM |
+| `lls` | List files **locally** (note the leading `l`) |
+| `cd /var/www` | Change directory on the remote |
+| `lcd ./local-dir` | Change directory locally |
+| `pwd` / `lpwd` | Show current remote / local directory |
+| `get file.tar.gz` | Download to the current local directory |
+| `put file.tar.gz` | Upload to the current remote directory |
+| `mget *.log` | Download all files matching a glob |
+| `mput *.png` | Upload all matching local files |
+| `rm`, `mkdir`, `rename` | Standard remote file ops |
+| `bye` or `exit` | End the session |
+
+A typical workflow: `cd` into the right remote dir, `lcd` to the local source, then `put` / `get` until you're done — far faster than re-running `scp` for each file.
+
+## rsync — sync directories, resume on failure
+
+`rsync` is the right tool for **anything bigger than "a couple of files"**. It only transfers changed bytes, resumes interrupted runs, optionally compresses on the wire, and handles permissions correctly.
+
+### Basic syntax
+
+```bash
+# Upload — local dir → VM (sync, don't delete remote)
+rsync -avz -e "ssh -i ~/.ssh/id_ed25519" ./local-dir/ root@1.2.3.4:/var/www/
+
+# Download — VM dir → local
+rsync -avz -e "ssh -i ~/.ssh/id_ed25519" root@1.2.3.4:/var/log/ ./logs/
+```
+
+The trailing `/` on `local-dir/` matters: with the slash, it copies the **contents** into `/var/www/`; without it, it copies the **directory itself** as `/var/www/local-dir/`. Same convention applies to remote paths.
+
+### Useful flags
+
+| Flag | What it does |
+|---|---|
+| `-a` | Archive mode — recursive + preserves permissions, times, symlinks, ownership |
+| `-v` | Verbose — show what's being transferred |
+| `-z` | Compress in flight — helpful on slow / high-latency links |
+| `-P` | Show progress + enable resume of partially-transferred files |
+| `--dry-run` / `-n` | Show what would change without actually doing it |
+| `--delete` | Delete remote files that no longer exist locally — make remote a mirror |
+| `--exclude=<pattern>` | Skip files matching the pattern (e.g. `--exclude='node_modules'`) |
+| `--bwlimit=<KB/s>` | Cap bandwidth — useful when transferring during business hours |
+
+### Resume-after-failure pattern
+
+If a long `rsync` dies mid-transfer (network blip, laptop closed, SSH timeout), just run **the same command again** — `rsync` figures out what's already there and only transfers the rest. With `-P` it picks up partial files at the byte level.
+
+```bash
+rsync -avzP -e "ssh -i ~/.ssh/id_ed25519" ./big-tree/ root@1.2.3.4:/data/
+```
+
+### When you'd use a tar-pipe instead
+
+For one-shot transfer of a huge tree of small files, a tar-pipe can outperform rsync because it avoids the per-file roundtrips:
+
+```bash
+tar -czf - ./local-dir | ssh -i ~/.ssh/id_ed25519 root@1.2.3.4 "tar -xzf - -C /target"
+```
+
+Use this when you're copying once (initial seed), and use rsync when you'll re-sync.
+
+## FileZilla — cross-platform GUI
+
+[FileZilla](https://filezilla-project.org/) runs on macOS, Windows, and Linux. Drag-and-drop with the same SSH credentials.
+
+### Add a connection profile
+
+1. **File → Site Manager → New Site**
+2. Fill in:
+   - **Protocol**: `SFTP – SSH File Transfer Protocol`
+   - **Host**: `1.2.3.4` (your VM's public IP)
+   - **Port**: `22` (or your port-forward, e.g. `2222`)
+   - **Logon Type**: `Key file`
+   - **User**: `root` (or your sudo user)
+   - **Key file**: browse to `~/.ssh/id_ed25519` (the **private** key)
+3. **Connect**
+
+The first connection prompts to trust the VM's host fingerprint — accept it; it's recorded for future sessions.
+
+### Day-to-day use
+
+The split-pane shows your local files on the left, the VM's files on the right. Drag-and-drop in either direction starts a transfer; the queue at the bottom shows progress. **Tools → Speed limits** lets you cap bandwidth.
+
+## WinSCP — Windows-only GUI
+
+[WinSCP](https://winscp.net/) is the established Windows file-transfer client — same idea as FileZilla but with a more Explorer-like UI.
+
+### Add a session
+
+1. **Session → New Session**
+2. **File protocol**: `SFTP`
+3. **Host name**: your VM's public IP
+4. **Port number**: `22`
+5. **User name**: `root`
+6. **Advanced → SSH → Authentication → Private key file**: select your `.ppk` file (WinSCP needs a PuTTY-format key)
+   - If you have an OpenSSH-format key, WinSCP prompts to convert it on first use, or use `puttygen` to convert manually
+7. **Login**
+
+The first connection prompts to trust the host key — accept it.
+
+### Day-to-day use
+
+Same Explorer-style interface as FileZilla. Drag-and-drop, browse remote / local in parallel, queue multiple transfers. WinSCP also has a built-in text editor for editing remote config files in place.
+
+## Quick reference — which tool when
+
+| Goal | Best tool |
+|---|---|
+| Push a single config file | `scp` |
+| Pull a single log | `scp` |
+| Browse the VM's filesystem and grab a few things | `sftp` or FileZilla / WinSCP |
+| Copy a big directory the first time | `rsync -avzP` (or `tar` pipe for many small files) |
+| Keep two directories synced | `rsync -avz --delete` on a cron / before each deploy |
+| Edit a remote config file in place | WinSCP's built-in editor, or `nano` / `vim` over SSH |
+| Move a database dump | `rsync` for resume capability + `--bwlimit` to avoid saturating the link |
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="Permission denied (publickey)">
+    SSH refused your key. Causes:
+    - Wrong key path (`-i ~/.ssh/id_ed25519` vs the one you actually authorized on the VM)
+    - Wrong username (`root` vs your sudo user)
+    - Key permissions too open — `chmod 600 ~/.ssh/id_ed25519` on macOS/Linux
+    - The public key isn't in `~/.ssh/authorized_keys` on the VM — see [Connect via SSH](/products/build/virtual-machines/quickstart-guides/connect-via-ssh)
+  </Accordion>
+
+  <Accordion title="Connection refused / timeout">
+    The VM isn't reachable on port 22:
+    - Confirm the VM is **active** (not paused or stopped) on the dashboard
+    - Confirm the IP is correct — VMs that lose their auto-assigned public IP get a different one when re-attached
+    - Check the [Firewall](/products/network/firewall) — if you've attached a custom group, verify TCP 22 is allowed inbound from your IP
+    - Test with `ssh -v root@1.2.3.4` first; if SSH times out too, the issue is networking, not file transfer
+  </Accordion>
+
+  <Accordion title="Transfer is slow even on a fast connection">
+    Several knobs to try:
+    - Add `-z` (rsync) or `-C` (scp) for compression on text-heavy files; for already-compressed binaries (`.gz`, `.zip`, `.mp4`), compression slows things down
+    - Use `rsync -avP` instead of `scp -r` — rsync's per-file overhead is much lower
+    - Check if the bottleneck is your local upload, not the VM (`speedtest-cli`)
+    - For huge files, split-and-parallel: `split -b 1G big.tar.gz part-` then `rsync` the parts
+  </Accordion>
+
+  <Accordion title="Files appear with wrong permissions / ownership on the VM">
+    `scp` and `sftp` reset to default umask permissions; `rsync -a` preserves them. Use rsync with `-a` if perms matter (executable scripts, key files, etc.). After upload, you can fix in the guest with `chmod` / `chown`.
+  </Accordion>
+
+  <Accordion title="`scp -r` warning: 'is not a regular file'">
+    Likely a broken symlink in the source tree. Either fix the source (delete the dangling symlink) or switch to `rsync` — `rsync -a` follows symlinks correctly with `-L`, or copies them as symlinks with `-l`.
+  </Accordion>
+
+  <Accordion title="Big file transfers fill up the disk on the VM">
+    Use `df -h` over SSH first to confirm there's enough free space. For VMs running tight on disk, attach a [Volume](/products/store/volumes) and transfer to the volume mount point instead.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    The same credentials and IP that file transfer uses.
+  </Card>
+  <Card title="Authentication" icon="key" href="/products/build/virtual-machines/concepts/authentication">
+    SSH keys vs passwords, generating and adding keys.
+  </Card>
+  <Card title="Volumes" icon="hard-drive" href="/products/store/volumes">
+    Attach extra disk capacity for big file transfers.
+  </Card>
+</CardGroup>

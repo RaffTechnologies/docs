@@ -3,6 +3,8 @@ title: Lifecycle states
 description: How a VM moves through provisioning, running, stopped, and terminal states
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Every VM has a `status` field that reflects where it is in its lifecycle. Most actions you take in the dashboard or via the API are state transitions.
 
 ## State diagram
@@ -40,7 +42,7 @@ While a snapshot or scheduled/instant backup is running on a VM, the dashboard t
 This is **normal and not a problem**:
 
 - The VM continues running. Network traffic, SSH/RDP sessions, and applications keep working.
-- The state flips back to `active` automatically when the capture completes (typically 1-5 minutes).
+- The state flips back to `active` automatically when the capture completes — snapshots are typically 1–2 minutes, backups around 3 minutes on average; both scale with the size of the disk being captured.
 - It's the same `provisioning` label used during creation; the dashboard reuses the state because the hypervisor is doing capture work in the background.
 
 If you see `provisioning` and you didn't trigger anything, check the **Snapshots** or **Backups** tab on the VM detail page — there's almost certainly a scheduled job running. No action needed; just wait for it to finish.

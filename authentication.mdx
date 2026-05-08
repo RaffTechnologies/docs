@@ -1,7 +1,9 @@
 ---
 title: Authentication
-description: Authenticate with the Raff Cloud Platform API
+description: Authenticate with the Raff API — API keys, required headers, response shape, rate limits, and how to call the API from popular HTTP clients
 ---
+
+<sub>Updated March 5, 2026</sub>
 
 All API endpoints (except `/health` and `/ready`) require authentication via API key.
 
@@ -56,10 +58,12 @@ API responses return the same standard fields:
 
 API keys are managed from the [Raff Dashboard](https://app.rafftechnologies.com):
 
-1. Navigate to **Settings** > **API Keys**
+1. Click **API Keys** in the sidebar (it's a top-level menu item — not under Settings)
 2. Click **Create API Key**
-3. Name your key and click **Create**
-4. Copy the key immediately - it's only shown once
+3. Name the key, pick its Account Role (and Project Role if not Owner), set an expiration, and click **Create Key**
+4. Copy the key immediately — it's only shown once
+
+For the full create flow with roles and permissions preview, see [Generate an API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
 
 <Warning>
   Store your API keys securely. Never commit them to version control or expose them in client-side code.
@@ -67,12 +71,131 @@ API keys are managed from the [Raff Dashboard](https://app.rafftechnologies.com)
 
 ## Rate Limiting
 
-API requests are rate limited per API key:
+Requests are rate-limited **per API key**. The tier is set on the key when it's created (or by Raff support, on request).
 
-| Tier | Requests/sec | Burst |
-|------|-------------|-------|
-| Standard | 50 | 100 |
-| High | 200 | 500 |
-| Unlimited | No limit | No limit |
+| Tier | Requests/sec | Burst | Notes |
+|---|---|---|---|
+| **Standard** *(default for all new keys)* | **30 / sec** | **60** | The right tier for typical dashboards, scripts, and automation — well above what most workloads sustain |
+| **High** | **100 / sec** | **200** | For tools that legitimately drive sustained throughput — bulk migrations, monitoring exporters scraping every endpoint, large fleet reconciliation loops |
 
-When rate limited, the API returns `429 Too Many Requests`. Implement exponential backoff in your applications.
+**How it actually works.** The limiter is a sliding 1-second window plus a separate burst budget. As long as you stay within the per-second number, you're fine. If you exceed it briefly, the burst budget covers you for short spikes — once that's consumed, you start getting `429`s until both windows recover. Burst budget refreshes on a 60-second window.
+
+When rate-limited, the API returns:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+X-RateLimit-Limit: 30
+X-RateLimit-Remaining: 0
+
+{
+  "error": "Rate limit exceeded",
+  "message": "Maximum 30 requests per second allowed for your tier"
+}
+```
+
+**Recommended client behavior:**
+
+1. **Honor the `Retry-After` header.** It tells you exactly when to retry — don't guess
+2. **Implement exponential backoff** for `429` and `5xx`: `1s → 2s → 4s → 8s → 16s` capped at ~60s
+3. **Coalesce reads** — if you're polling list endpoints every 100 ms in a loop, slow down. Most resources change on second-or-slower timescales
+4. **Cache catalog data** — `/api/v1/public/templates`, `/api/v1/public/pricing/vm`, region lists, etc. don't change minute-to-minute. Cache them locally for the lifetime of your script
+
+### Upgrading tier
+
+Need more than Standard sustains? Two paths:
+
+| Path | When |
+|---|---|
+| **Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com)** | Production migration, large fleet bulk-create, tooling that legitimately needs sustained throughput. Tell us the workload and the target peak RPS — we'll move the key to **High** if it's reasonable |
+| **Stay on Standard** | Anything human-driven (dashboards, ad-hoc scripts, occasional automation). Standard's 30/sec + burst-of-60 covers it with room to spare |
+
+There's no self-service upgrade today — it's a support request because we want to understand the use case (and stop accidental loops from flooding the platform).
+
+## Calling the API from HTTP clients
+
+Raff doesn't ship a first-party SDK today. The API is plain REST + JSON, so any HTTP client works. The same headers + body apply across languages:
+
+<Tabs>
+  <Tab title="Python (requests)">
+    ```python
+    import os, requests
+
+    headers = {
+        "X-API-Key": os.environ["RAFF_API_KEY"],
+        "X-Project-ID": os.environ["RAFF_PROJECT_ID"],
+        "Content-Type": "application/json",
+    }
+
+    resp = requests.get("https://api.rafftechnologies.com/api/v1/vms", headers=headers, timeout=30)
+    resp.raise_for_status()
+
+    for vm in resp.json()["data"]:
+        print(vm["id"], vm["name"], vm["status"])
+    ```
+  </Tab>
+  <Tab title="Node.js (fetch)">
+    ```javascript
+    const headers = {
+      "X-API-Key": process.env.RAFF_API_KEY,
+      "X-Project-ID": process.env.RAFF_PROJECT_ID,
+      "Content-Type": "application/json",
+    };
+
+    const resp = await fetch("https://api.rafftechnologies.com/api/v1/vms", { headers });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+
+    const { data } = await resp.json();
+    for (const vm of data) console.log(vm.id, vm.name, vm.status);
+    ```
+  </Tab>
+  <Tab title="Go (raff-go)">
+    ```bash
+    go get github.com/rafftechnologies/raff-go
+    ```
+
+    ```go
+    package main
+
+    import (
+      "context"
+      "fmt"
+      "os"
+
+      "github.com/rafftechnologies/raff-go"
+    )
+
+    func main() {
+      client := raff.NewFromToken(
+        os.Getenv("RAFF_API_KEY"),
+        raff.SetProjectID(os.Getenv("RAFF_PROJECT_ID")),
+      )
+
+      vms, _, err := client.VMs.List(context.Background(), nil)
+      if err != nil {
+        fmt.Fprintln(os.Stderr, "list failed:", err)
+        os.Exit(1)
+      }
+      for _, vm := range vms {
+        fmt.Println(vm.ID, vm.Name, vm.Status)
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Ruby (Net::HTTP)">
+    ```ruby
+    require "net/http"
+    require "json"
+
+    uri = URI("https://api.rafftechnologies.com/api/v1/vms")
+    req = Net::HTTP::Get.new(uri)
+    req["X-API-Key"]    = ENV["RAFF_API_KEY"]
+    req["X-Project-ID"] = ENV["RAFF_PROJECT_ID"]
+
+    resp = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+    raise "HTTP #{resp.code}: #{resp.body}" unless resp.code == "200"
+
+    JSON.parse(resp.body)["data"].each { |vm| puts "#{vm["id"]} #{vm["name"]} #{vm["status"]}" }
+    ```
+  </Tab>
+</Tabs>

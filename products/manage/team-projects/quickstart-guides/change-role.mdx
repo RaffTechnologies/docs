@@ -1,0 +1,83 @@
+---
+title: Change or remove a member's role
+description: Re-scope an existing member by changing their account role or any of their per-project roles, or remove a single grant entirely without removing the member from the account
+---
+
+<sub>Updated May 8, 2026</sub>
+
+A member's access on Raff is built from up to two kinds of grants — one **account role** (optional) and one **project role per project** they're added to. This page walks the dashboard flow for changing or removing any of those grants without re-inviting the member.
+
+If you want to remove the member from the account entirely (instead of just adjusting one of their grants), see [Remove a member](/products/manage/team-projects/quickstart-guides/remove-member). The actions on this page are the granular per-grant ones.
+
+## Open the member's row
+
+In **Team & Projects → Members**, find the member and click the chevron on the left of their row to expand. The expanded row shows two sections — **Account Access** and **Project Access** — each independently manageable.
+
+The Account Access section shows the member's account role (if any). The Project Access section lists every project they have a role on. Each grant has its own `⋮` menu.
+
+## Change or remove a project role
+
+On the **Project Access** section, click the `⋮` next to any project row.
+
+<Frame>
+  ![Expanded member row for batuhan with Project-only badge. Account Access section shows "No account-level access. This user can only access specific projects below." with Add to Account button. Project Access section shows one row — customer1 with Project-operator role badge — and the ⋮ menu opened revealing two actions: Change Role (people-cog icon) and Remove (red, trash icon)](/images/products/manage/team-projects/project-row-change-remove-menu.png)
+</Frame>
+
+The menu has two actions:
+
+| Action | What happens |
+|---|---|
+| **Change Role** | Opens a role picker prefilled with the current role. Pick any **Project role** — System (`Project Admin`, `Operator`, `Project Member`, `Viewer`) or any Project-scoped Custom role you've created. Save. The new role applies immediately on the member's next page load |
+| **Remove** | Removes the member's grant on **this project only**. They keep all their other grants. If this was their only project grant *and* they have no account role, removing it leaves them as a member with no access — they'll see an empty dashboard until you grant them something else. The member is **not deleted** — to remove them entirely, see [Remove a member](/products/manage/team-projects/quickstart-guides/remove-member) |
+
+Both actions affect **only the project on this row**. To change a member's role on a different project, open that project's row in the same Project Access section.
+
+## Change or remove an account role
+
+The Account Access section works the same way for the member's account role. If they have one, the section shows the role with a `⋮` menu offering:
+
+| Action | What happens |
+|---|---|
+| **Change Role** | Pick a different account role — `Admin`, `Billing`, `Member`, or any Account-scoped Custom role |
+| **Remove** | Removes their account role. The member keeps all their project roles; their badge on the Members list flips to **Project-only** |
+
+If the member has no account role, the section shows the **Add to Account** button instead. Clicking it grants an account role with no email — same flow as the post-invite expansion in [Invite a member](/products/manage/team-projects/quickstart-guides/invite-member#after-they-accept--adding-more-access).
+
+## Adding a project after invite
+
+The **+ Add to Project** button in the Project Access header isn't a "change role" action — it's the equivalent of granting access to an additional project after the member has already accepted an invite. Pick a project and a project role; the member gains that grant immediately, no email step.
+
+This is how a member who started with one project ends up on three — invite once, add to more projects as their responsibilities grow.
+
+## Effects of a change
+
+| Change | When it takes effect |
+|---|---|
+| **Promote** (more permissions) | The member sees the new permissions on next page load — open dashboards refresh, new resources become visible |
+| **Demote** (fewer permissions) | The member loses access immediately; if they had a page open that they no longer have access to, the next API call fails with `403` and the page redirects |
+| **Remove a project grant** | The project disappears from their project picker, all of its resources become invisible to them on next load |
+| **Remove an account role** | They lose account-wide visibility (members list, billing if they had it, etc.) but keep all their project access |
+
+API keys created by the member **inherit their current access** — so changing the member's roles also changes what their existing keys can do. Rotate keys after a demotion if you want to make sure no key has more access than the member currently does.
+
+## Restrictions
+
+A few rules the dashboard enforces:
+
+- **You can't change your own roles** — a member with permission to manage members can change other members' roles, but not their own. Ask another account-role holder (or the Owner) for self-promotions.
+- **You can't change the Owner's roles** — the Owner has full access by definition; the role picker isn't shown for the Owner row.
+- **You can't remove the only `account.members.manage` holder** — the dashboard prevents you from removing or demoting the last member who could manage other members. There has to be at least one path back to inviting/managing.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Invite a member" icon="user-plus" href="/products/manage/team-projects/quickstart-guides/invite-member">
+    Add a teammate at account or project scope.
+  </Card>
+  <Card title="Remove a member" icon="user-minus" href="/products/manage/team-projects/quickstart-guides/remove-member">
+    Remove the member from the account entirely.
+  </Card>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-projects/concepts/roles-and-api-keys">
+    The Account vs Project model.
+  </Card>
+</CardGroup>

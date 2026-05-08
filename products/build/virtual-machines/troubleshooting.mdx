@@ -3,6 +3,8 @@ title: Troubleshooting
 description: Common Virtual Machine issues and how to fix them
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 The most-seen failures with Raff VMs and the fix that works in each case. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
 ## Connection problems
@@ -103,7 +105,7 @@ The most-seen failures with Raff VMs and the fix that works in each case. If you
 
     **Cause:** A snapshot or backup is running. The dashboard reuses the `provisioning` label while the hypervisor captures state. The VM continues serving traffic the whole time.
 
-    **Fix:** Wait — typically 1-5 minutes. See [Lifecycle states](/products/build/virtual-machines/concepts/lifecycle-states#provisioning-during-snapshots-and-backups).
+    **Fix:** Wait for the capture to finish — snapshots are typically 1–2 minutes, backups around 3 minutes on average; both scale with the size of the disk being captured. See [Lifecycle states](/products/build/virtual-machines/concepts/lifecycle-states#provisioning-during-snapshots-and-backups).
   </Accordion>
 
   <Accordion title="Can't resize — `VM must be stopped`">

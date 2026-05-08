@@ -3,6 +3,8 @@ title: Delete a Firewall Group
 description: Permanently remove a custom Firewall Group from the row menu — the action is blocked while VMs are attached, and any attached VMs need to be rebooted afterward
 ---
 
+<sub>Updated May 8, 2026</sub>
+
 Deleting a Firewall Group permanently removes the rule set from your account. The action is in the row's `⋮` menu and asks for a one-click confirmation — there's no soft-delete or recovery window. Use this when a group's no longer needed (decommissioned service, retired environment, replaced by a different group).
 
 ## Before you delete
@@ -35,7 +37,7 @@ Click the red **Delete** to proceed, or **Cancel** to back out.
 |---|---|
 | **The group disappears from the Firewall Groups list** | Immediate — no soft-delete, no recovery |
 | **Any VM it was attached to has its `Firewall: <group>` field flip back to `None`** | Detach happens as part of the delete, but only if you didn't detach first |
-| **Audit-log entry recorded** | `firewall.deleted` (or the equivalent) — captures who deleted, when, the group ID and name. Visible to members with `account.audit.view` |
+| **Audit-log entry recorded** | `securitygroup.delete` — captures who deleted, when, the group ID and name. Visible to members with `account.audit.view` |
 | **VMs need a reboot** | The platform record updates immediately, but each affected VM keeps using its previous firewall state until reboot |
 
 ## Reboot the VMs

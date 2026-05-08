@@ -3,29 +3,21 @@ title: Inbound vs outbound, layers, and rule format
 description: How the Raff Firewall actually evaluates traffic — the two layers (system Default + your Groups), what a single rule looks like (protocol, direction, port, source IP), the formats Raff accepts, and the ports you cannot open
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 This is the one page to read before you build a Firewall Group. It's the model — what the layers are, how a rule is shaped, what protocols and port formats the system accepts, and which ports are off-limits no matter what you write.
 
 ## Two layers, both always on
 
 Every packet that arrives at or leaves your VM's **public** interface goes through two filters:
 
-```
-Internet
-    │
-    ▼
-┌─────────────────────────────────────────┐
-│  Layer 1: Raff Default Firewall (system)│  Blocks 7 known-dangerous ports
-│  Always on. You can't disable it.       │  Lets everything else through
-└─────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────┐
-│  Layer 2: Your Firewall Groups (custom) │  Optional. 0 or more attached per IP
-│  Add, edit, detach as you like.         │  Each group has inbound + outbound rules
-└─────────────────────────────────────────┘
-    │
-    ▼
-VM (public NIC)
+```mermaid
+flowchart TB
+    Internet([Internet])
+    L1["**Layer 1 — Raff Default Firewall** (system)<br/>Blocks 7 known-dangerous ports.<br/>Always on. You can't disable it."]
+    L2["**Layer 2 — Your Firewall Groups** (custom)<br/>Optional. 0 or more attached per IP.<br/>Each group has inbound + outbound rules."]
+    VM([VM — public NIC])
+    Internet --> L1 --> L2 --> VM
 ```
 
 **Both layers must allow the packet** — the Default doesn't override your group, and your group doesn't override the Default. If either one drops the packet, it's gone.

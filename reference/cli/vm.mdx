@@ -1,0 +1,287 @@
+---
+title: "raff vm"
+description: "Manage Virtual Machines from the CLI — list, get, create, update, delete (incl. bulk-delete), power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP, firewall, VPC, tags, notes, and networks subcommands."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The `raff vm` command group covers every Virtual Machine operation in the public API. Each subcommand also supports `--output json` for scripting.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List all VMs in the project |
+| [`get`](#get) | Show details for one VM |
+| [`create`](#create) | Create a new VM |
+| [`update`](#update) | Update VM metadata |
+| [`delete`](#delete) | Delete a VM |
+| [`bulk-delete`](#bulk-delete) | Delete multiple VMs at once |
+| [`start`](#start), [`stop`](#stop), [`reboot`](#reboot), [`hard-reboot`](#hard-reboot) | Power state |
+| [`reinstall`](#reinstall) | Reinstall the OS template |
+| [`factory-reset`](#factory-reset) | Reset to factory image |
+| [`rename`](#rename) | Rename a VM |
+| [`reset-password`](#reset-password) | Reset the root/admin password |
+| [`resize`](#resize) | Resize compute (vCPU/RAM) |
+| [`resize-disk`](#resize-disk) | Grow the OS disk |
+| [`save-image`](#save-image) | Save the OS disk as a Custom Image |
+| [`ip attach`](#ip-attach) / [`ip detach`](#ip-detach) | Attach / detach a public IP |
+| [`sg add`](#sg-add) / [`sg remove`](#sg-remove) | Attach / detach a Firewall Group |
+| [`vpc attach`](#vpc-attach) / [`vpc detach`](#vpc-detach) | Attach / detach a VPC |
+| [`tags add`](#tags-add) / [`tags remove`](#tags-remove) / [`tags set`](#tags-set) / [`tags list`](#tags-list) | Manage VM tags |
+| [`notes set`](#notes-set) / [`notes append`](#notes-append) / [`notes get`](#notes-get) | Manage VM notes |
+| [`networks`](#networks) | List the VM's network attachments |
+
+---
+
+## list
+
+```bash
+raff vm list [--project-id <uuid>] [--output table|json]
+```
+
+List every VM in the current project. Output columns: `ID`, `NAME`, `STATUS`, `IP ADDRESS`, `CPU`, `RAM`, `STORAGE`, `REGION`, `CREATED`.
+
+```bash
+# Default table
+raff vm list
+
+# JSON for scripting
+raff vm list --output json | jq '.[] | {id, name, status}'
+
+# In a non-default project
+raff vm list --project-id <other-project-id>
+```
+
+## get
+
+```bash
+raff vm get <vm-id> [--output table|json]
+```
+
+Show full details for one VM — pricing, tags, networks, attached volumes, snapshots, backups.
+
+## create
+
+```bash
+raff vm create \
+  --name <name> \
+  --template-id <template-uuid> \
+  --pricing-id <plan-id> \
+  --region <region> \
+  [--password <password>] \
+  [--ssh-keys <key1,key2>] \
+  [--extra-storage <gb>] \
+  [--backup-type none|daily|weekly] \
+  [--tags <tag1,tag2>] \
+  [--vpc-id <vpc-uuid> | --vpc-name <name> --vpc-cidr <cidr>]
+```
+
+Create a new VM. Required: `--name`, `--template-id`, `--pricing-id`, `--region`. Get template IDs via [List Templates](/api-reference/catalog/list-templates) and pricing IDs via [List VM Pricing](/api-reference/catalog/list-vm-pricing) or the [Pricing](/products/build/virtual-machines/details/pricing) page.
+
+## update
+
+```bash
+raff vm update <vm-id> [--name <new-name>]
+```
+
+Update VM metadata. Currently rename-only.
+
+## delete
+
+```bash
+raff vm delete <vm-id> [--force]
+```
+
+Delete the VM. With `--force`, skips the confirmation prompt — required in scripts.
+
+## bulk-delete
+
+```bash
+raff vm bulk-delete --vm-ids <id1,id2,id3> [--keep-volumes] [--keep-vpcs]
+```
+
+Delete multiple VMs in one call. By default, attached volumes detach (preserved), and shared VPCs are kept if other VMs still use them. Pass `--keep-volumes false` to also delete volumes; `--keep-vpcs false` to also delete VPCs (subject to the shared-VPC safety rule — see [Delete a VM](/products/build/virtual-machines/quickstart-guides/delete-vm)).
+
+## Power commands
+
+```bash
+raff vm start <vm-id>          # Boot up
+raff vm stop <vm-id>           # Graceful shutdown
+raff vm reboot <vm-id>         # Graceful reboot
+raff vm hard-reboot <vm-id>    # Force reboot — no graceful shutdown, data may be lost
+```
+
+Use `hard-reboot` only when graceful reboot is hung. The API behavior matches the dashboard — see [Manage power](/products/build/virtual-machines/quickstart-guides/manage-power).
+
+## reinstall
+
+```bash
+raff vm reinstall <vm-id> --template-id <new-template-uuid> [--password <pw>]
+```
+
+Reinstall the VM's OS with a different template. Erases the OS disk; preserves attached volumes, IP, VPC, tags, and specs. See [Reinstall](/products/build/virtual-machines/quickstart-guides/reinstall).
+
+## factory-reset
+
+```bash
+raff vm factory-reset <vm-id>
+```
+
+Reset to the original template the VM was created with. Same preservation rules as reinstall.
+
+## rename
+
+```bash
+raff vm rename <vm-id> --name <new-name>
+```
+
+## reset-password
+
+```bash
+raff vm reset-password <vm-id>
+```
+
+Resets the root (Linux) or Administrator (Windows) password to a new generated value. Output shows the new password — copy it immediately. The VM reboots if active to apply the change.
+
+## resize
+
+```bash
+raff vm resize <vm-id> --pricing-id <new-plan-id>
+```
+
+Change the compute plan (vCPU / RAM / base disk). Triggers a reboot. Pricing pro-rates against the current term.
+
+## resize-disk
+
+```bash
+raff vm resize-disk <vm-id> --size-gb <new-size>
+```
+
+Grow the OS disk. Cannot shrink. Filesystem expansion inside the guest is not automatic — see [Resize](/products/build/virtual-machines/quickstart-guides/resize) for the `growpart` / `resize2fs` steps.
+
+## save-image
+
+```bash
+raff vm save-image <vm-id> --name <image-name>
+```
+
+Snapshot the OS disk as a reusable Custom Image you can launch other VMs from. See [Custom Images](/products/build/virtual-machines/concepts/custom-images).
+
+## ip attach
+
+```bash
+raff vm ip attach <vm-id> --ip-id <ip-uuid>
+```
+
+Attach a reserved public IP to the VM.
+
+## ip detach
+
+```bash
+raff vm ip detach <vm-id> --ip-id <ip-uuid>
+```
+
+Detach a public IP. Reserved IPs return to your account; auto-assigned IPs return to the regional pool.
+
+## sg add
+
+```bash
+raff vm sg add <vm-id> --sg-id <firewall-uuid>
+```
+
+Attach a Firewall Group to the VM's public IP. **A reboot is required** for the new rules to take effect inside the guest — see [Update rules](/products/network/firewall/quickstart-guides/update-rules).
+
+## sg remove
+
+```bash
+raff vm sg remove <vm-id> --sg-id <firewall-uuid>
+```
+
+Detach a Firewall Group. Reboot required.
+
+## vpc attach
+
+```bash
+raff vm vpc attach <vm-id> --vpc-id <vpc-uuid>
+```
+
+Add a VPC interface to the VM. The VM gets a private IP from the VPC's CIDR.
+
+## vpc detach
+
+```bash
+raff vm vpc detach <vm-id> --vpc-id <vpc-uuid>
+```
+
+Remove the VPC interface. Blocked if it would leave the VM with zero interfaces — attach another network first.
+
+## tags add
+
+```bash
+raff vm tags add <vm-id> --tag <tag-name>
+```
+
+## tags remove
+
+```bash
+raff vm tags remove <vm-id> --tag <tag-name>
+```
+
+## tags set
+
+```bash
+raff vm tags set <vm-id> --tags <tag1,tag2,tag3>
+```
+
+Replace the VM's tag set with the given list (clears any existing tags first).
+
+## tags list
+
+```bash
+raff vm tags list <vm-id>
+```
+
+## notes set
+
+```bash
+raff vm notes set <vm-id> --content "<note text>"
+```
+
+Replace the VM's note. See [VM notes](/products/build/virtual-machines/concepts/vm-notes).
+
+## notes append
+
+```bash
+raff vm notes append <vm-id> --content "<additional text>"
+```
+
+Append to the existing note (newline-separated).
+
+## notes get
+
+```bash
+raff vm notes get <vm-id>
+```
+
+## networks
+
+```bash
+raff vm networks <vm-id>
+```
+
+List every network attached to the VM — public IPs, VPCs, with their addresses and statuses.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Project commands" icon="folder" href="/reference/cli/project">
+    Manage projects.
+  </Card>
+  <Card title="VPC commands" icon="network-wired" href="/reference/cli/vpc">
+    Private networks.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    The HTTP API behind the CLI.
+  </Card>
+</CardGroup>

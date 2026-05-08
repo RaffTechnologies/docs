@@ -1,0 +1,214 @@
+---
+title: Generate an API key
+description: Create an API key with the same Account / Project role model used for members — pick an Account Role, pick projects and a Project Role (skipped when Owner is chosen), set expiration, and copy the key once
+---
+
+<sub>Updated May 8, 2026</sub>
+
+API keys are how scripts, CI pipelines, Terraform, and any non-interactive automation authenticates against Raff. They use the **same role-based permission model as members** — you give a key an Account Role and (unless you picked Owner) a Project Role applied to one or more projects. The same `account.*` and `project.*` permission catalog applies; the key carries a frozen snapshot of that role's permissions when it's used.
+
+This page walks the dashboard create flow.
+
+## Open the API Keys page
+
+API keys live under their own sidebar item, **API Keys** (not on the Team & Projects page). Open it from the left navigation, then click **+ Create API Key**.
+
+## The Create API Key dialog
+
+<Frame>
+  ![Create API Key dialog with subtitle "Create a new API key with specific permissions for programmatic access.", a Name field with placeholder "e.g., Production API Key", a Step 1 - Account Access section with the Account Role dropdown set to Owner (21 permissions), a Manage Roles link, an info banner "Full access — this key will have owner-level permissions across all projects. No project selection needed.", an Expiration dropdown set to "Never expires", and a Permissions Preview section showing "Account Permissions (Owner) - 21 permissions". Cancel and Create Key buttons at the bottom.](/images/products/manage/team-projects/api-key-create-owner.png)
+</Frame>
+
+The dialog is shaped to match the Account/Project permission model:
+
+| Block | Purpose |
+|---|---|
+| **Name** | A label to recognize the key by — `Production CI`, `Backups Lambda`, `Terraform — staging` |
+| **Step 1 — Account Access** | Pick the **Account Role** the key uses for `account.*` permissions |
+| **Step 2 — Resource Access** *(conditional)* | Pick **projects** + a **Project Role** applied to them. Hidden when Step 1 is set to **Owner** |
+| **Expiration** | When the key auto-expires |
+| **Permissions Preview** | Live readout of what the key will be able to do, based on Steps 1+2 |
+
+## 1. Name
+
+Type a descriptive label. The name shows up in the API Keys list, in audit-log entries when the key is used, and in invoice line items if the key creates billable resources.
+
+Pick a name that tells you immediately *what owns this key* — `Backups Lambda`, `Terraform Prod`, `On-call dashboard`. Avoid vague names like `key1`.
+
+## 2. Step 1 — Account Role
+
+This determines the key's `account.*` permissions. The dropdown lists every account-scope role in your account (System + Custom).
+
+<Frame>
+  ![Account Role dropdown opened, showing four options with permission counts: Admin (15 permissions), Billing (2 permissions), Member (3 permissions), and Owner (21 permissions) with a checkmark indicating it's the current selection](/images/products/manage/team-projects/api-key-account-role-dropdown.png)
+</Frame>
+
+The four System options at a glance (see [Permissions matrix](/products/manage/team-projects/details/permissions-matrix) for full detail):
+
+| Option | When to pick |
+|---|---|
+| **Owner** *(21 permissions — full access)* | The key needs to do everything the Owner can — including managing members, billing, audit, every project. **Step 2 is skipped** because Owner already covers all projects |
+| **Admin** *(15)* | Account management except destructive actions and billing — useful for an ops-automation key that creates projects, invites members, generates other keys |
+| **Billing** *(2)* | A key for an accounting integration that pulls invoices and updates payment methods — nothing else |
+| **Member** *(3)* | The narrowest account role — view projects, members, settings. Useful as a base for a key that lives mostly in projects |
+
+The **Manage Roles** link in the top-right of this section opens the Roles tab in a new context so you can review or create Custom roles before finalizing the key.
+
+### When you pick Owner — Step 2 disappears
+
+The screenshot above (Owner selected) shows what's special about Owner: **the dialog hides Step 2 entirely** because Owner means "everything in every project, current and future." A blue banner makes this explicit:
+
+> **Full access** — this key will have owner-level permissions across all projects. No project selection needed.
+
+This is the right choice for a small team's single power key, or a setup-time bootstrap key. It's also the riskiest — if leaked, it can do anything. Prefer narrower roles for keys that only need a slice.
+
+## 3. Step 2 — Resource Access (when not Owner)
+
+Pick anything other than Owner in Step 1 and a new section appears: **Step 2 - Resource Access**.
+
+<Frame>
+  ![Create API Key dialog with Account Role set to Admin and Step 2 - Resource Access visible. Projects section shows "Select which projects this API key can access" with two unchecked checkboxes — Default (Default badge) and customer1. Below, Project Role dropdown labeled "Select a project role" with helper text "Determines what resources this key can manage in the selected projects. The same role is applied to all selected projects."](/images/products/manage/team-projects/api-key-step2-empty.png)
+</Frame>
+
+Step 2 has two fields:
+
+| Field | What goes here |
+|---|---|
+| **Projects** | Tick every project the key should be able to reach. Tick zero, and the key has only its account-level permissions (no project-resource visibility). Tick one or many — the same Project Role applies to all of them |
+| **Project Role** | Pick a Project Role (System: `Project Admin`, `Operator`, `Project Member`, `Viewer`; or any Project-scoped Custom role). The dropdown shows the permission count next to each name |
+
+The helper text under Project Role spells out the constraint that's worth highlighting: *"Determines what resources this key can manage in the selected projects. The same role is applied to all selected projects."* You **cannot give the key different roles on different projects** in one create. If you need that, create one key per role — narrower scope is better security anyway.
+
+A typical filled-in Step 2:
+
+<Frame>
+  ![Create API Key dialog Step 2 with both Default and customer1 checked, showing "2 projects selected", Project Role set to Operator (29 permissions), Expiration "Never expires", and a Permissions Preview at the bottom showing two collapsed rows: Account Permissions (Admin) - 15 permissions, and Project Permissions (Operator) - 29 permissions](/images/products/manage/team-projects/api-key-step2-filled.png)
+</Frame>
+
+The example above creates a key with:
+
+- **Account access:** `Admin` (15 permissions — full account management except destructive operations and billing)
+- **Project access:** `Operator` on **both** the Default project and customer1 (29 permissions per project — manage VMs/VPCs/IPs/etc. but no delete)
+
+That's a typical "ops automation" scoping — broad enough to do real work, narrow enough that a leak isn't catastrophic.
+
+## 4. Expiration
+
+Pick how long the key should live. Expired keys are rejected by the API and become unusable.
+
+| Option | When to pick |
+|---|---|
+| **Never expires** | Long-lived integrations where rotation is managed externally (your own runbook, a secret-rotation tool). **Default**, but consider a fixed expiry instead |
+| **30 days** | Short-lived contractor access, time-boxed integrations |
+| **60 / 90 days** | Common rotation cadences |
+| **120 / 180 days** | Quarterly / semi-annual rotation policies |
+| **1 year** | Annual rotation — the longest preset |
+
+Most production integrations should use **at least one of the bounded options** so the key actively expires if you forget about it. Set a calendar reminder a week before expiry to rotate (see [Rotate an API key](/products/manage/team-projects/quickstart-guides/rotate-api-key)).
+
+The Expiration field is configured at create time; it cannot be extended later. To extend a key's life, rotate to a new key with a fresh expiry.
+
+## 5. Permissions Preview
+
+The bottom of the dialog has a **Permissions Preview** — a collapsed summary of what the key will be able to do based on Step 1 and Step 2:
+
+- `Account Permissions (<role>) — N permissions`
+- `Project Permissions (<role>) — N permissions` *(when Step 2 is filled)*
+
+Click the chevron next to each row to expand and see the exact permission list — the same view shown in the role-detail dialog, just inline. Use this to verify the key has what it needs *and nothing more* before you click Create.
+
+If you realize the preview is missing a permission — for example, the key needs `vm.console` and the Project Role you picked doesn't include it — **don't toggle the permission directly here.** That's not how the dialog works. The fix is to:
+
+1. Cancel the create
+2. Either pick a different Project Role that includes the missing permission, or
+3. Open Roles → **+ Create Role** to build a Custom role with exactly the permissions you need
+4. Come back to Create API Key and pick the Custom role
+
+This is the **centralized role system** working as designed: every grant — to a member or to a key — references a role definition. To change what a key can do, you change the role (and every key/member using it changes with it), or you create a new role and re-issue.
+
+## 6. Click Create Key — and copy it immediately
+
+The key is generated and the dashboard shows it in a one-time **API Key Created** dialog.
+
+<Frame>
+  ![API Key Created dialog with subtitle "Copy your API key now. You won't be able to see it again." A warning banner reads "Make sure to copy your API key now. You won't be able to see it again!" The full key is displayed as raff_17d70fcf7e7510968a4c19279b25707f088f1cc5ad8b74210341d8e470b5bb7a with a copy-to-clipboard button next to it. A Done button at the bottom right.](/images/products/manage/team-projects/api-key-created-copy.png)
+</Frame>
+
+<Warning>
+**This is the only time the full key will be shown.** Click the copy button and paste it into your secret store **before** clicking **Done**. Once the dialog closes, only the key's prefix (`raff_17d70fcf…`) remains visible — the rest can never be retrieved. If you lose it, the only fix is to rotate to a new key.
+</Warning>
+
+Every Raff API key starts with the **`raff_`** prefix followed by a long random suffix — easy to grep for in code reviews and to detect accidental commits to source control. Pipe the key straight into your secret manager:
+
+- **1Password** / **Bitwarden** — paste into a secure note tagged for this integration
+- **AWS Secrets Manager** — `aws secretsmanager put-secret-value --secret-id raff/prod-ci --secret-string $KEY`
+- **GitHub Actions** — Repo Settings → Secrets → New secret
+- **Doppler** / **HashiCorp Vault** / **Kubernetes Secret** — same pattern, your tool's CLI
+
+Click **Done** when you've safely copied it. The new key now appears in the API Keys list.
+
+## After creation — the API Keys list
+
+<Frame>
+  ![API Keys list page with breadcrumb Home > Api Keys, page title "API Keys", subtitle "Create and manage API keys for programmatic access", and a + Create API Key button on the right. The table has columns Name, Key Prefix, Account Role, Project Access, Expires, Last Used, Created. One row visible: Test / raff_17d70fcf... / Admin / customer1 (Project Admin) Default (Project Admin) / Never / Never / 5/5/2026 — with Regenerate (cycle icon) and Delete (red trash) actions on the right.](/images/products/manage/team-projects/api-keys-list.png)
+</Frame>
+
+The list is the at-a-glance summary of everything in your account. Each column:
+
+| Column | What it shows |
+|---|---|
+| **Name** | The label you typed at create time |
+| **Key Prefix** | The first ~12 characters of the key — enough to identify it in audit logs without exposing the secret. The full key is gone forever after the create dialog closes |
+| **Account Role** | The Account Role you picked in Step 1 (e.g. `Admin`, `Owner`, or your Custom role name) |
+| **Project Access** | A badge per project the key has access to, with the Project Role shown in parentheses — e.g. `customer1 (Project Admin)`, `Default (Project Admin)`. Owner-keys show `All projects` instead. Empty when the key has no project access |
+| **Expires** | The chosen expiration — `Never` for never-expires, or a date for any time-bounded option. Past-due keys show `Expired` |
+| **Last Used** | When the key last authenticated a request. `Never` for unused keys; otherwise a relative timestamp like `2 hours ago` |
+| **Created** | When the key was generated |
+
+Each row also has two actions on the right:
+
+| Action | Icon | What it does |
+|---|---|---|
+| **Regenerate** | 🔄 cycle | Rotates the key — issues a new key value (with the same name, scope, and expiration) and immediately invalidates the old key. Use when the key may be compromised, when you're rotating per policy, or when you want to extend a key's life past its current expiration. See [Rotate an API key](/products/manage/team-projects/quickstart-guides/rotate-api-key) |
+| **Delete** | 🗑️ red trash | Permanently revokes the key. The key value is deleted; any in-flight requests using it fail with a `401`. Cannot be undone — recreate from scratch if you delete by mistake |
+
+The list refreshes when you create, regenerate, or delete a key. **Last Used** updates a few seconds after a successful API call from the key.
+
+## How API keys authenticate
+
+Every authenticated request to the API includes the key in the **`X-API-Key`** header:
+
+```bash
+curl -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  https://api.rafftechnologies.com/api/v1/vms
+```
+
+For project-scoped requests (every endpoint that lists or creates a resource in a project), include the **`X-Project-ID`** header set to one of the projects the key has access to. The combination of `X-API-Key` + `X-Project-ID` lets the API resolve which permission set to apply.
+
+For account-only operations (members, billing, etc.), `X-Project-ID` is omitted — the key's Account Role permissions apply directly.
+
+<Note>
+**The full request reference is on [Authentication](/authentication).** It covers: the exact header set, language SDK setup (Python, Node, Go), example requests for the most common endpoints, and the `401` / `403` responses you'll see when the key is missing, invalid, expired, or scoped wrong. Bookmark that page when you're integrating Raff into a new application.
+</Note>
+
+## What you cannot do today
+
+- **Edit a key's permissions after create** — to change a key's access, rotate it. The key's role at create-time is frozen on the key record
+- **Assign different Project Roles to different projects in the same key** — one Project Role applies to every selected project. Create separate keys when projects need different scopes
+- **Recover the full key after the create dialog closes** — only the prefix is preserved. If you lose the key, rotate to a new one
+- **Extend the expiration** — if a key is about to expire, rotate to a new key with a fresh expiry
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Rotate an API key" icon="arrows-rotate" href="/products/manage/team-projects/quickstart-guides/rotate-api-key">
+    Replace a leaked or aging key.
+  </Card>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-projects/concepts/roles-and-api-keys">
+    The model behind the role dropdowns.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-projects/details/permissions-matrix">
+    What each role grants.
+  </Card>
+</CardGroup>

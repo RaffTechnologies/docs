@@ -1,0 +1,94 @@
+---
+title: Edit or delete a project
+description: Open the project's row menu to rename it, change its description (Edit Project), or delete it — with the hard rule that the Default project can never be deleted
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The Projects tab gives every project the same `⋮` row menu with two actions — **Edit Project** and **Delete**. This page covers both.
+
+## Open the row menu
+
+In **Team & Projects → Projects**, find the project and click the `⋮` on the right of its row.
+
+<Frame>
+  ![Projects tab with the row context menu opened on the customer1 project, showing Edit Project (pencil icon) and Delete (red, trash icon)](/images/products/manage/team-projects/project-row-menu.png)
+</Frame>
+
+| Action | What it does |
+|---|---|
+| **Edit Project** | Opens a dialog to rename the project and/or change its description |
+| **Delete** | Permanently deletes the project. Disabled / blocked for the `Default` project (see below) and any project with attached resources |
+
+## Edit a project — rename and description
+
+Click **Edit Project**. The dialog is the same shape as Create New Project, prefilled with the current values:
+
+| Field | Editable? |
+|---|---|
+| **Name** | Yes — type a new name and save. The change applies immediately; the project picker, the Members list, and every API response that returns the project name update on next page load |
+| **Description** | Yes — free-form, no length cap |
+
+The project's **identifier** (the lowercase label shown under the display name on the row) **does not change** when you rename. Resources keep their stable identifier; only the display name changes. This means automation that references a project by its UUID is unaffected by renames.
+
+You can rename the **Default** project too — the orange `Default` badge stays attached even after a rename, because Default is determined by the project's role in the account (the always-available fallback), not by its name.
+
+## Delete a project
+
+Click **Delete** from the row's `⋮` menu. A confirmation dialog asks you to type the project name to proceed.
+
+### Two hard rules
+
+<Warning>
+**The `Default` project cannot be deleted, ever.** It's the always-available fallback project for resources created without an explicit project, and the platform never lets you remove it. The Delete option is hidden / disabled on the Default row.
+</Warning>
+
+<Warning>
+**A project must be empty before deletion.** If any VM, VPC, public IP, Object Storage bucket, snapshot, or other resource still belongs to the project, the Delete action is blocked. The dashboard shows the blocking resources; clear them before retrying.
+</Warning>
+
+### Clearing a project before delete
+
+To delete a non-Default project that still has resources, you need to remove the resources first. Two paths:
+
+| Path | When to use |
+|---|---|
+| **Delete each resource from its own product** | Simplest if the resources are no longer needed. Open Compute → delete each VM, then Networking → delete each VPC, etc. |
+| **Migrate to another project** | Today there's no "move resource to another project" action. To migrate, recreate in the target — for VMs, snapshot the source then restore the snapshot in the target project. For Object Storage, copy buckets via the S3 API |
+
+Once the project is empty, retry the Delete action.
+
+### What gets cleaned up
+
+When a project is successfully deleted:
+
+- **Member project-role grants** on this project are removed. Members who had only this project as their Project Access end up as account-only members (or with no access at all if they had no other grants).
+- **Audit-log entries** referencing the project are kept for compliance — the entries continue to exist, just refer to a project ID that no longer resolves to a current project.
+- **The project's name** is freed for reuse — you can immediately create another project with the same name.
+
+The deletion is final. There's no soft-delete or recovery window today.
+
+## Who can edit / delete projects
+
+A member needs the right account permission to use these actions:
+
+| Action | Required permission | Holders |
+|---|---|---|
+| **Edit Project** | `account.projects.manage` | Owner, Admin, plus any Custom account role that includes it |
+| **Delete Project** | `account.projects.delete` | Owner only by default — `Admin` does not include `account.projects.delete` (look at the Admin role's permission list and you'll see this one is OFF). To delegate, create a Custom account role with `account.projects.delete` enabled |
+
+If the actions are missing or greyed out for you, your account role doesn't include the permission — ask the Owner or someone with the right permission, or have them grant you a Custom role.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Create a project" icon="plus" href="/products/manage/team-projects/quickstart-guides/create-a-project">
+    Walk the Create New Project dialog.
+  </Card>
+  <Card title="Projects and scoping" icon="lightbulb" href="/products/manage/team-projects/concepts/projects-and-scoping">
+    How project scope affects resources and API calls.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-projects/details/permissions-matrix">
+    Which roles include `account.projects.manage` and `account.projects.delete`.
+  </Card>
+</CardGroup>

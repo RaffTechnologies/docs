@@ -1,0 +1,92 @@
+---
+title: "raff security-group"
+description: "Manage Firewall Groups (security groups in the API) from the CLI — list, list templates, get, create, delete. Customer-facing label is Firewall; the API path is still security-groups."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The `raff security-group` command group manages Firewall Groups. The dashboard product is called **Firewall**; the underlying API path is `security-groups`, which is what the CLI command name reflects. Functionality is the same — see [Firewall overview](/products/network/firewall) for the model.
+
+To attach a group to a VM, use `raff vm sg add` (see [VM commands → sg add](/reference/cli/vm#sg-add)). The CLI doesn't yet expose Update Rules — use the [Update Firewall API](/api-reference/endpoint/update-firewall) directly for now.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List Firewall Groups in the project |
+| [`templates`](#templates) | List the 5 prebuilt templates |
+| [`get`](#get) | Show one group's full rule set |
+| [`create`](#create) | Create a new Firewall Group |
+| [`delete`](#delete) | Delete a Firewall Group |
+
+---
+
+## list
+
+```bash
+raff security-group list [--output table|json]
+```
+
+## templates
+
+```bash
+raff security-group templates [--output table|json]
+```
+
+Lists the 5 System templates: `web-server`, `database-server`, `ssh-only`, `allow-all`, `deny-all`. Use the `id` field as `--template-id` on `create` to start from a template.
+
+## get
+
+```bash
+raff security-group get <sg-id> [--output table|json]
+```
+
+Show a Firewall Group's full inbound and outbound rule set, plus the VMs it's attached to.
+
+## create
+
+```bash
+raff security-group create \
+  --name <name> \
+  [--description <text>] \
+  [--template-id <template-id>] \
+  [--rules-file <path-to-json>]
+```
+
+Create a Firewall Group. Either start from a template (`--template-id web-server`), pass rules as JSON via `--rules-file`, or both (rules merge with template). Rule format follows the [Create Firewall API](/api-reference/endpoint/create-firewall) schema:
+
+```json
+[
+  { "protocol": "TCP", "rule_type": "INBOUND", "range": "22", "ip": "0.0.0.0", "size": "0" },
+  { "protocol": "TCP", "rule_type": "INBOUND", "range": "80,443", "ip": "0.0.0.0", "size": "0" },
+  { "protocol": "ALL", "rule_type": "OUTBOUND" }
+]
+```
+
+Maximum **40 inbound rules + 40 outbound rules** per group. The system Default Firewall blocks TCP 135/139/445/5985–5986 and UDP 137–138 — those are stripped from any rule range you submit.
+
+## delete
+
+```bash
+raff security-group delete <sg-id>
+```
+
+Delete a Firewall Group. Fails if it's still attached to any VM — detach with `raff vm sg remove` on each VM first.
+
+## Reboot reminder
+
+Any rule change (create, attach, detach, delete) requires a **VM reboot** for the new rules to take effect inside the guest. The platform record updates immediately; the guest network stack picks it up only at boot. See [Update rules](/products/network/firewall/quickstart-guides/update-rules#a-vm-reboot-is-required-after-saving) for the full reboot rule.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    `raff vm sg add` to attach to a VM.
+  </Card>
+  <Card title="Firewall overview" icon="shield-halved" href="/products/network/firewall">
+    The two-layer firewall model.
+  </Card>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    Rule format, port ranges, CIDR.
+  </Card>
+</CardGroup>

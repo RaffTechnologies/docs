@@ -3,6 +3,8 @@ title: Monitoring & metrics
 description: How Raff measures VM health, what each graph means, and where to read live state
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 A running VM emits a continuous stream of operational signals — CPU, memory, network, disk, and aggregate data transfer. Raff collects these from the **hypervisor**, not from inside the guest OS, so there's no agent to install and metrics work the same way regardless of distro, kernel, or whether the OS is even healthy.
 
 Hypervisor-level metrics treat the VM as a black box: they tell you how loaded the VM is, but not why. Pair them with in-VM tools (`top`, `htop`, your APM) for the full picture.

@@ -3,10 +3,17 @@ title: Quickstart
 description: Make your first API call in under 5 minutes
 ---
 
+<sub>Updated March 5, 2026</sub>
+
 ## Prerequisites
 
-- A Raff Cloud Platform account ([sign up](https://app.rafftechnologies.com))
-- An API key (generate one from your dashboard)
+- A Raff account ([sign up](https://app.rafftechnologies.com))
+- An API key — see [Generate an API key](/products/manage/team-projects/quickstart-guides/generate-api-key) for the full dashboard create flow (Account Role, Project Role, expiration, and copy-once warning).
+
+```bash
+# Set these once for the rest of the quickstart
+export RAFF_API_KEY="your_api_key_here"
+```
 
 ## Step 1: Check API Health
 
@@ -38,54 +45,267 @@ curl -H "X-API-Key: YOUR_API_KEY" \
 }
 ```
 
-## Step 3: Create a VM
+## Step 3: Get a project ID
 
-Create your first virtual machine. Write operations require the `X-Project-ID` header — you can find your project ID in the [Raff Dashboard](https://app.rafftechnologies.com) under your project settings.
+Mutating endpoints require an `X-Project-ID` header. List your projects and pick one:
+
+```bash
+curl -H "X-API-Key: $RAFF_API_KEY" \
+  https://api.rafftechnologies.com/api/v1/projects
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "8c3e4d52-1a6b-4f1e-9a47-2f8a3b9c1d20",
+      "name": "default",
+      "slug": "default",
+      "description": "Default project",
+      "default_region": "us-east",
+      "is_default": true
+    }
+  ]
+}
+```
+
+```bash
+export RAFF_PROJECT_ID="8c3e4d52-1a6b-4f1e-9a47-2f8a3b9c1d20"
+```
+
+## Step 4: Browse the catalog
+
+The public catalog tells you what's available before you create anything — regions, OS templates, and per-resource pricing. **No auth required** for any catalog endpoint.
+
+| Endpoint | What it returns |
+|---|---|
+| `GET /api/v1/public/regions` | Active data center regions |
+| `GET /api/v1/public/templates` | OS templates and marketplace apps (filter with `?category=os` or `?category=marketplace`) |
+| `GET /api/v1/public/pricing/vm` | VM pricing plans (the `pricing_id` value used on Create VM) |
+| `GET /api/v1/public/pricing/volume` | Volume storage pricing |
+| `GET /api/v1/public/pricing/snapshot` | Snapshot storage pricing |
+| `GET /api/v1/public/pricing/backup` | Backup storage pricing |
+| `GET /api/v1/public/pricing/ip` | Floating IP pricing |
+
+For this quickstart, grab an OS template:
+
+```bash
+curl https://api.rafftechnologies.com/api/v1/public/templates?category=os
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "5ac21891-32e6-41ce-8a93-b5d6ab708b0d",
+      "name": "Ubuntu 24.04 LTS (x64)",
+      "category": "os",
+      "region": "us-east"
+    }
+  ]
+}
+```
+
+And a VM pricing plan:
+
+```bash
+curl https://api.rafftechnologies.com/api/v1/public/pricing/vm
+```
+
+Pick a `pricing_id` from the response — `pricing_id: 1` is the cheapest Premium plan.
+
+## Step 5: Create a VM
 
 ```bash
 curl -X POST https://api.rafftechnologies.com/api/v1/vms \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -H "X-Project-ID: YOUR_PROJECT_ID" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "my-first-vm",
-    "template_id": "<template-uuid>",
+    "template_id": "5ac21891-32e6-41ce-8a93-b5d6ab708b0d",
     "pricing_id": 1,
     "region": "us-east"
   }'
 ```
 
-<Note>
-  Replace `<template-uuid>` with an actual OS template ID. You can find available templates in your dashboard.
-</Note>
-
-## Step 4: Check VM Status
+## Step 6: Check VM Status
 
 Once created, fetch your VM details:
 
 ```bash
-curl -H "X-API-Key: YOUR_API_KEY" \
+curl -H "X-API-Key: $RAFF_API_KEY" \
   https://api.rafftechnologies.com/api/v1/vms/{vm-id}
 ```
 
-The VM will transition through statuses: `provisioning` → `booting` → `initiating` → `active`.
+The VM will transition through statuses: `initiating` → `provisioning` → `booting` → `active`.
 
-## Step 5: Control Your VM
+## Step 7: Control Your VM
 
 Start, stop, or reboot your VM:
 
 ```bash
 # Stop a VM
-curl -X POST -H "X-API-Key: YOUR_API_KEY" -H "X-Project-ID: YOUR_PROJECT_ID" \
+curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
   https://api.rafftechnologies.com/api/v1/vms/{vm-id}/stop
 
 # Start a VM
-curl -X POST -H "X-API-Key: YOUR_API_KEY" -H "X-Project-ID: YOUR_PROJECT_ID" \
+curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
   https://api.rafftechnologies.com/api/v1/vms/{vm-id}/start
 
 # Reboot a VM
-curl -X POST -H "X-API-Key: YOUR_API_KEY" -H "X-Project-ID: YOUR_PROJECT_ID" \
+curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
   https://api.rafftechnologies.com/api/v1/vms/{vm-id}/reboot
+```
+
+## Finding resource IDs
+
+Every resource — VM, snapshot, backup, volume, key — gets an `id` at create time, returned in the create response. **If you didn't save it, the only way to find it later is to list the resource and pick the one you want.** The dashboard does this internally; you do the same over the API.
+
+| Resource | List endpoint | Notes |
+|---|---|---|
+| VMs | `GET /api/v1/vms` | Filter `?project_id=<uuid>` or `?status=active` |
+| Volumes | `GET /api/v1/volumes` | Filter `?vm_id=<uuid>` for volumes attached to one VM |
+| Snapshots | `GET /api/v1/snapshots` | Filter `?vm_id=<uuid>`, `?volume_id=<int>`, or `?type=vm\|volume` |
+| Backups | `GET /api/v1/backups` | Filter `?vm_id=<uuid>` |
+| Backup schedules | `GET /api/v1/backup-schedules` | Filter `?vm_id=<uuid>` |
+| SSH keys | `GET /api/v1/ssh-keys` | Account-scoped, no filters |
+| Projects | `GET /api/v1/projects` | Account-scoped |
+| VPCs | `GET /api/v1/vpcs` | Filter `?region=us-east` |
+| Floating IPs | `GET /api/v1/ips` | Filter `?status=available\|reserved\|attached` |
+| Security groups | `GET /api/v1/security-groups` | — |
+
+All list endpoints support `limit` (default 20–50) and `offset` for pagination. Pass `X-Project-ID` to scope to a single project where applicable.
+
+## Same flow in Python / Node.js / Go
+
+Raff doesn't ship a first-party SDK today — the API is plain REST + JSON, so any HTTP client works. Examples of the same Step 5 (create VM) below.
+
+<Tabs>
+  <Tab title="Python (requests)">
+    ```python
+    import os, requests
+
+    api_key = os.environ["RAFF_API_KEY"]
+    project_id = os.environ["RAFF_PROJECT_ID"]
+
+    resp = requests.post(
+        "https://api.rafftechnologies.com/api/v1/vms",
+        headers={
+            "X-API-Key": api_key,
+            "X-Project-ID": project_id,
+            "Content-Type": "application/json",
+        },
+        json={
+            "name": "my-first-vm",
+            "template_id": "5ac21891-32e6-41ce-8a93-b5d6ab708b0d",
+            "pricing_id": 1,
+            "region": "us-east",
+        },
+        timeout=30,
+    )
+
+    if resp.status_code >= 400:
+        raise RuntimeError(f"Create failed [{resp.status_code}]: {resp.text}")
+
+    print(resp.json()["data"]["id"])
+    ```
+  </Tab>
+  <Tab title="Node.js (fetch)">
+    ```javascript
+    const apiKey = process.env.RAFF_API_KEY;
+    const projectId = process.env.RAFF_PROJECT_ID;
+
+    const resp = await fetch("https://api.rafftechnologies.com/api/v1/vms", {
+      method: "POST",
+      headers: {
+        "X-API-Key": apiKey,
+        "X-Project-ID": projectId,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "my-first-vm",
+        template_id: "5ac21891-32e6-41ce-8a93-b5d6ab708b0d",
+        pricing_id: 1,
+        region: "us-east",
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Create failed [${resp.status}]: ${await resp.text()}`);
+    }
+
+    const { data } = await resp.json();
+    console.log(data.id);
+    ```
+  </Tab>
+  <Tab title="Go (raff-go)">
+    `raff-go` is the official Go client. `go get github.com/rafftechnologies/raff-go`.
+
+    ```go
+    package main
+
+    import (
+      "context"
+      "fmt"
+      "os"
+
+      "github.com/google/uuid"
+      "github.com/rafftechnologies/raff-go"
+      "github.com/rafftechnologies/raff-go/spec"
+    )
+
+    func main() {
+      client := raff.NewFromToken(
+        os.Getenv("RAFF_API_KEY"),
+        raff.SetProjectID(os.Getenv("RAFF_PROJECT_ID")),
+      )
+
+      vm, _, err := client.VMs.Create(context.Background(), &raff.CreateVMRequest{
+        Name:       "my-first-vm",
+        TemplateID: uuid.MustParse("5ac21891-32e6-41ce-8a93-b5d6ab708b0d"),
+        PricingID:  1,
+        Region:     spec.CreateVMRequestRegionUsEast,
+      })
+      if err != nil {
+        fmt.Fprintln(os.Stderr, "create failed:", err)
+        os.Exit(1)
+      }
+
+      fmt.Println(vm.ID)
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Errors you'll hit early
+
+Every error response is JSON with an `error` (short label) and a `message` (human-readable detail). The HTTP statuses you'll see most:
+
+| HTTP status | What it means | What to do |
+|---|---|---|
+| `400` | Bad request | Inspect `message` — usually a field validation issue (bad CIDR, password too short, missing `pricing_id`) or a missing `X-Project-ID` header on a mutating endpoint. Fix the payload and retry |
+| `401` | Unauthorized | The `X-API-Key` is missing, malformed, expired, or revoked. Generate a new key in the dashboard |
+| `402` | Payment Required | Account balance is too low to provision. [Top up](https://app.rafftechnologies.com) and retry |
+| `403` | Billing validation failed | Account is `banned`, has a `failed` last payment, or has `no_billing_customer`. Check `message.reason` and resolve in the dashboard |
+| `404` | Not found | The VM/project/resource ID isn't reachable from this key. Double-check IDs and `X-Project-ID` |
+| `409` | Conflict | Resource state mismatch (e.g. resizing a VM that isn't `passive`). Read `message` and adjust |
+| `429` | Rate limited | Too many requests — back off. Default tier is **30 RPS / burst 60** per API key; honor the `Retry-After` header. See [Authentication](/authentication#rate-limiting) for tier detail and how to upgrade |
+| `5xx` | Server error | Retry with exponential backoff. If it persists, [support@rafftechnologies.com](mailto:support@rafftechnologies.com) |
+
+A simple retry helper for `5xx` and `429`:
+
+```python
+import time, requests
+
+def call_with_retry(method, url, **kwargs):
+    for attempt in range(5):
+        resp = requests.request(method, url, timeout=30, **kwargs)
+        if resp.status_code < 500 and resp.status_code != 429:
+            return resp
+        time.sleep(2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
+    resp.raise_for_status()
+    return resp
 ```
 
 ## Next Steps

@@ -3,6 +3,8 @@ title: Auto-assigned vs reserved IPs
 description: How the two public-IP lifecycles differ on Raff — what survives a detach, what survives a VM delete, when each one bills, and which to pick for stable addresses
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Raff has two distinct lifecycles for a public IP. The dashboard, the API, and the billing system all treat them as different first-class objects — choose the wrong one and you'll either pay too much for an address you don't need to keep stable, or lose an address you wanted to preserve.
 
 This page is the side-by-side reference. Most of what's here is repeated in the quickstart guides; the difference is that this page is just the model, no walkthrough.
@@ -42,32 +44,24 @@ Splitting them — auto-assign for transient, reserve for stable — lets each g
 
 ### Auto-assigned
 
-```
-[VM creation] → IP from pool ─attached──▶ Free
-                                          │
-                                          ▼
-[VM delete OR remove IP]
-                                          │
-                                          ▼
-                                   Returns to pool
-                                   (someone else may get it)
+```mermaid
+flowchart TB
+    A["VM creation"] -->|"IP from pool"| B["Attached — Free"]
+    B --> C["VM delete OR Remove IP"]
+    C --> D(["Returns to pool<br/>(someone else may get it)"])
 ```
 
 Detaching is terminal — the IP doesn't come back to your account. If you re-add a public IP to the same VM later, you get a different address.
 
 ### Reserved
 
-```
-[Reserve IP $3/mo] ─unattached─▶ In your account, billing
-        │
-        ▼
-[Attach to VM] ─attached──▶ In your account, billing, in use
-        │
-        ▼
-[Detach from VM] ─unattached─▶ In your account, billing, ready to re-attach
-        │
-        ▼
-[Release] ─returned to pool─▶ Gone from your account, billing stops
+```mermaid
+flowchart TB
+    A["**Reserve IP** — \$3/mo IPv4 / \$1/mo IPv6"] --> B["Unattached — in your account, billing"]
+    B -->|Attach to VM| C["Attached — in use, billing"]
+    C -->|Detach from VM| B
+    B -->|"**Release**"| D(["Returned to pool<br/>billing stops, address gone"])
+    C -.->|"VM delete<br/>(IP survives)"| B
 ```
 
 The IP stays yours through every state except after Release. Billing runs continuously through every state except after Release.

@@ -1,36 +1,63 @@
 ---
 title: Regions
-description: Where Raff Cloud VMs run
+description: Where Raff VMs run today (us-east only) and how regional scope affects networking, IP allocation, and migration
 ---
 
-A **region** is a geographic location where Raff Cloud operates compute. The region you pick at VM creation determines where the VM's CPU, RAM, and disk physically live, and which IP ranges it gets.
+<sub>Updated May 6, 2026</sub>
+
+A **region** is a geographic location where Raff operates compute, storage, and networking. The region you pick at VM creation determines where the VM physically lives, which IP ranges it can be assigned, and which VPCs it can join.
 
 ## Available regions
 
-| Region | Location | Status |
+| Region | Status | Notes |
 |---|---|---|
-| `us-east` | United States (East) | Available |
+| **`us-east`** | Available | The single region today |
 
-<Note>
-  Additional regions are planned. The [List Regions](/api-reference/catalog/list-regions) endpoint always returns the current set.
-</Note>
+Pass `region: "us-east"` (or pick "US East" in the dashboard) on every create call. The [List Regions](/api-reference/catalog/list-regions) endpoint returns the current set programmatically.
 
-## How region choice affects your VM
+## What region scope means
 
-- **Latency** — pick the region closest to your users.
-- **Pricing** — per-plan rates are region-dependent (see [Pricing](/products/build/virtual-machines/details/pricing)).
-- **VPC scope** — a VPC and the VMs inside it must share a region.
-- **IP allocation** — public IPv4 addresses are drawn from region-specific pools.
+A region is a hard boundary — resources from different regions cannot share networking or be moved between regions in place.
 
-A VM cannot move between regions after creation. To migrate, snapshot the source VM, save the disk as a custom image, and create a new VM in the target region from that image.
+| Scope | Behavior |
+|---|---|
+| **VM location** | The VM's CPU, RAM, and disk physically live in the chosen region's datacenter |
+| **VPC scope** | A VPC and every VM in it must share a region. You can't have one VPC spanning two regions |
+| **Public IPs** | IPv4 / IPv6 addresses come from region-specific pools. A reserved IP can only attach to VMs in the same region it was reserved in |
+| **Volumes** | A volume can only attach to VMs in its own region |
+| **Object Storage** | Buckets are region-scoped; same-region traffic between VMs and Object Storage is free |
+| **Snapshots and backups** | Stored in the same region as the source VM |
+
+## Picking a region
+
+With one region today, the choice is straightforward — `us-east`. When this matters more in the future:
+
+- **Latency** — pick the region closest to your users. Round-trip time to a region is the floor of how fast your service can respond
+- **Data residency** — if you have customer-data-locality requirements, the region determines where the data is stored
+- **Cross-region traffic** — same-region traffic between Raff resources is free; cross-region (when other regions exist) goes over the public internet and counts against egress
+
+## Migrating a VM to a different region
+
+You can't change a running VM's region. The migration path:
+
+1. **Snapshot** the source VM (or save its OS disk as a Custom Image)
+2. **Create a new VM** in the target region from that image
+3. **Restore data** from any volume snapshots or backups, or copy data via SCP/SFTP/rsync
+4. **Update DNS / load balancer / clients** to point at the new VM
+5. **Delete the source VM** when the cutover is done — unused subscription time credits back to your balance
+
+Keep the old VM running until the new one is verified — there's no auto-failover between regions.
 
 ## Related
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Plans & sizing" icon="lightbulb" href="/products/build/virtual-machines/concepts/plans-and-sizing">
-    What a plan includes per region.
+    Per-plan specs and pricing.
   </Card>
   <Card title="VPC" icon="network-wired" href="/products/network/vpc">
-    Private networking within a region.
+    Region-scoped private networking.
+  </Card>
+  <Card title="Public IPs" icon="globe" href="/products/network/public-ips">
+    Region-scoped IPv4 / IPv6.
   </Card>
 </CardGroup>

@@ -3,6 +3,8 @@ title: "API Changelog"
 description: "Track all changes to the Raff Cloud API"
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 # API Changelog
 
 All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progress).
@@ -12,6 +14,31 @@ All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progre
 ---
 
 ## v1.0.0 (In Progress)
+
+### May 8, 2026
+
+**Volumes — API**
+- 🟢 **Added** — **Volume CRUD + attach/detach** — `GET/POST /api/v1/volumes`, `GET/DELETE /api/v1/volumes/{id}`, `POST /api/v1/volumes/{id}/attach`, `POST /api/v1/volumes/{id}/detach`. Create is async (202 Accepted).
+- 🔴 **Removed** — `vm_id`, `vm_internal_id`, `image_id`, `attached_volume_id` fields from volume responses (OpenNebula internal identifiers). Use `id` and `product_vm` instead.
+
+**Snapshots — API**
+- 🟢 **Added** — **Snapshot CRUD + restore + rename** — `GET/POST /api/v1/snapshots`, `GET/DELETE /api/v1/snapshots/{id}`, `POST /api/v1/snapshots/{id}/restore`, `PATCH /api/v1/snapshots/{id}/rename`. Supports VM and volume sources (`resource_type: vm|volume`). `Snapshot.status = active` indicates the source has been reverted to this snapshot.
+
+**Backups — API**
+- 🟢 **Added** — **Backup CRUD + restore** — `GET/POST /api/v1/backups`, `GET/DELETE /api/v1/backups/{id}`, `POST /api/v1/backups/{id}/restore`. Create and restore are async (202 Accepted).
+- 🟢 **Added** — **Backup schedules** — `GET/POST /api/v1/backup-schedules`, `GET/PATCH/DELETE /api/v1/backup-schedules/{id}`. Daily or weekly with configurable retention.
+- 🔴 **Removed** — `schedule_id`, `backup_id`, `vm_id` from backup/schedule responses (OpenNebula internal identifiers). Use `id` and `product_vm`.
+
+**SSH Keys — API**
+- 🟢 **Added** — **SSH key CRUD** — `GET/POST /api/v1/ssh-keys`, `GET/PUT/DELETE /api/v1/ssh-keys/{id}`. Account-scoped (no `X-Project-ID` required).
+
+**Team & Access — API**
+- 🟢 **Added** — **Account Members** — `GET/POST /api/v1/members`, `GET/PATCH/DELETE /api/v1/members/{id}`. Email invite, direct add, or attach an API key as member.
+- 🟢 **Added** — **Project Members** — `GET/POST /api/v1/projects/{id}/members`, `GET/PATCH/DELETE /api/v1/projects/{id}/members/{member_id}`.
+- 🟢 **Added** — **Roles** — `GET/POST /api/v1/roles`, `GET/PATCH/DELETE /api/v1/roles/{id}`. Custom account- or project-scoped roles. System roles are read-only.
+- 🟢 **Added** — **Permissions catalog** — `GET /api/v1/permissions`. Lists every permission string usable in role definitions. Requires a valid API key (no specific permission needed).
+- 🟢 **Added** — **API Keys** — `GET/POST /api/v1/api-keys`, `GET/PATCH/DELETE /api/v1/api-keys/{id}`, `POST /api/v1/api-keys/{id}/regenerate`. Full secret only returned once at create or regenerate.
+- 🟢 **Added** — **Invitations** — `POST /api/v1/invitations` (account), `POST /api/v1/projects/{id}/invitations` (project), `DELETE /api/v1/invitations/{id}` (cancel). Public spec deliberately omits `Invitation.token` since it's the acceptance secret.
 
 ### April 30, 2026
 

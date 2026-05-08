@@ -3,6 +3,8 @@ title: Set public or private
 description: Bucket-level ACL, bucket policies (JSON), per-object ACL, and presigned URLs — three layers that combine to control who can read what
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Raff Object Storage controls access at three levels, and they combine. **Default everything to private.** Only flip something public when the data's whole purpose is to be served to unauthenticated readers — and even then, prefer a per-object public override on a private bucket.
 
 ## The three layers
@@ -82,6 +84,156 @@ The default empty policy is `{"Version": "2012-10-17", "Statement": []}` — no 
 Pick a template, the editor fills in working JSON, you tweak (add your IP, your folder name, etc.), then **Save Policy**.
 
 To remove a policy entirely, **Delete Policy** clears the document; access falls back to the bucket's ACL alone.
+
+### What each template looks like as JSON
+
+If you'd rather paste a template into your own infrastructure-as-code or write your own, here's the JSON each one produces. Replace `BUCKET_NAME` with your actual bucket name; replace IP / prefix placeholders where called out.
+
+#### Public Read Only
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::BUCKET_NAME/*"
+    }
+  ]
+}
+```
+
+#### Public Read + List
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": [
+        "arn:aws:s3:::BUCKET_NAME",
+        "arn:aws:s3:::BUCKET_NAME/*"
+      ]
+    }
+  ]
+}
+```
+
+#### Deny Delete
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": ["s3:DeleteObject", "s3:DeleteObjectVersion"],
+      "Resource": "arn:aws:s3:::BUCKET_NAME/*"
+    }
+  ]
+}
+```
+
+#### IP Restricted Upload
+
+Replace `192.168.1.0/24` with your office or CI runner CIDR.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::BUCKET_NAME/*",
+      "Condition": {
+        "IpAddress": {
+          "aws:SourceIp": "192.168.1.0/24"
+        }
+      }
+    }
+  ]
+}
+```
+
+#### Enforce HTTPS Only
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::BUCKET_NAME",
+        "arn:aws:s3:::BUCKET_NAME/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}
+```
+
+Pair with one of the public-read templates for a public bucket that rejects cleartext traffic — combine the two `Statement` arrays in one policy.
+
+#### Read-Only Public, Write for Owner
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::BUCKET_NAME/*"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_ID:root"
+      },
+      "Action": ["s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::BUCKET_NAME/*"
+    }
+  ]
+}
+```
+
+The "static site" pattern — anyone can GET, only your account can PUT/DELETE.
+
+#### Restrict to Folder Prefix
+
+Replace `uploads/` with your actual prefix.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::BUCKET_NAME/uploads/*"
+    }
+  ]
+}
+```
+
+Limits the public access to one folder. Other prefixes (`private/`, `internal/`) remain inaccessible without credentials.
 
 ### How policies and ACLs interact
 

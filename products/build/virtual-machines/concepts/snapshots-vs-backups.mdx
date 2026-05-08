@@ -1,34 +1,75 @@
 ---
 title: Snapshots vs Backups
-description: When to use snapshots versus scheduled backups
+description: Both capture a VM's disk state, but they answer different needs — manual restore points vs scheduled protection. Both are deleted with the VM.
 ---
 
-Snapshots and backups both capture a VM's disk state, but they answer different needs.
+<sub>Updated May 6, 2026</sub>
+
+Snapshots and backups both capture a VM's disk state, but they're built for different jobs. The short version: **snapshots are manual restore points** you take before risky changes, **backups are scheduled protection** that runs in the background. You can use both on the same VM.
+
+<Warning>
+**Both snapshots and backups are deleted when you delete the VM.** Verified in `vm_deletion_processor.go` — the deletion flow removes snapshots, backup schedules, AND backup files all together. If you need data to survive VM deletion, you have to copy it elsewhere first (Object Storage, an attached Volume that you keep, or `scp` it off). The VM is the lifecycle owner; its protections die with it.
+</Warning>
 
 ## Side by side
 
 | | Snapshot | Backup |
 |---|---|---|
 | **When taken** | On-demand, manually | Automated, on a schedule |
-| **Schedule** | None | `daily`, `weekly`, `monthly` |
-| **Retention** | Until you delete it | Per the schedule's retention policy |
-| **Use case** | Restore point before a risky change; clone a VM | Routine protection without manual effort |
-| **Pricing** | Per-GB stored | Per-GB stored, plus the schedule |
+| **Schedule** | None | `daily` or `weekly` (with chosen time / day) |
+| **Retention** | Until you delete it (or until the VM is deleted) | Configurable per schedule; first 3 backups per VM are free |
+| **Restore time (RTO target)** | Fast — minutes for typical OS disks; restore creates a fresh VM disk from the snapshot | Similar — minutes |
+| **Data freshness (RPO)** | As fresh as the moment you clicked "Snapshot" | At most one schedule interval (e.g. 24 hours behind for daily) |
+| **Best for** | One-off "known good" states; before risky changes | Routine protection without remembering to act |
+| **Pricing** | Per-GB stored, billed continuously | Per-GB stored, plus the schedule. First 3 backups per VM free |
 
 ## When to use a snapshot
 
-- Before upgrading kernel, OS, or critical packages
-- Before a reinstall or factory reset
-- To clone a VM into a new VM (via image)
-- For a one-time "known good" state that doesn't need recurring captures
+- **Before** upgrading kernel, OS, critical packages — quick rollback if the upgrade breaks something
+- **Before** a reinstall or factory reset
+- **To clone a VM** into a new VM (via the [Save image as Custom Image](/products/build/virtual-machines/quickstart-guides/create-snapshot) flow — same machinery)
+- **For a one-time "known good" state** you'll keep around as a recovery floor — e.g. right before a major migration
+
+Snapshots are the manual tool. They're cheap, fast, and capture exactly the moment you click. Use them liberally before any change you're not 100% confident about.
 
 ## When to enable backups
 
-- Production VMs where you can't rely on remembering manual snapshots
-- Compliance / RPO requirements that mandate scheduled protection
-- Any VM where data loss between manual snapshots would matter
+- **Production VMs** where you can't rely on remembering manual snapshots
+- **Compliance / RPO requirements** that mandate "no more than 24 hours of data loss" — a daily backup schedule meets that
+- **Any VM where data loss between manual snapshots would matter** — backups give you a guaranteed safety net even when nobody's paying attention
+- **VMs you'd want to restore to a point-in-time** — backups are dated; pick the right day, restore from it
 
-You can use both — many production VMs have a daily backup schedule **and** ad-hoc snapshots before risky changes.
+Backups are the always-on tool. They run on a schedule whether or not you remember to do anything. The first 3 backups per VM are free, so most production VMs get one for free.
+
+## RPO and RTO targets
+
+If you're sizing your protection strategy:
+
+| Target | Snapshots | Backups |
+|---|---|---|
+| **RPO** (max data loss tolerance) | Whatever interval *you* manually take them at — could be 1 hour, could be 6 months | The schedule interval — `daily` ≈ 24h, `weekly` ≈ 168h |
+| **RTO** (time to restore) | Minutes for typical OS disks (the restore creates a fresh disk from the snapshot, then attaches and boots) | Minutes — same restore mechanism |
+
+Both restore times scale roughly with disk size — 25 GiB OS disk in a couple minutes; a 1 TiB volume snapshot will take longer. There's no fundamental difference between snapshot and backup restore speed; the difference is **when the data was captured**, not how fast it comes back.
+
+## Combining both — typical pattern
+
+Many production VMs use both:
+
+- **Daily backup schedule** for routine protection — covers the "I forgot to snapshot before deploying" case
+- **Manual snapshots** before known-risky changes — kernel upgrades, schema migrations, OS reinstalls
+
+Each tool is independent. The daily backup keeps running whether or not you take a manual snapshot, and the snapshot doesn't replace the next scheduled backup.
+
+## What's *not* a backup
+
+A few patterns that aren't real protection — clarifying so the difference is concrete:
+
+- **A `passive` (stopped) VM** — still consumes quota, still bills, but the disk lives on the same hypervisor as the running VM. A hardware-level loss takes both. Not a backup
+- **A second VM created from the same template** — fresh VM with no data; not a backup of anything
+- **`rsync` between two VMs in the same VPC** — useful for replication but the destination is also on the platform; if the platform has an issue both copies could be impacted
+
+If you need protection that survives platform-wide events: copy data to **[Object Storage](/products/store/object-storage)** (different storage layer, different lifecycle), or pull copies off-platform via `scp` / `rsync` to your own infrastructure.
 
 ## Related
 

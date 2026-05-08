@@ -3,6 +3,8 @@ title: Add rules — port and IP formats by example
 description: The exact formats Raff accepts for the Ports and Source IP fields, with copy-pasteable examples for the most common rules
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 This page is the format reference for the **Ports** and **Source IP** fields you fill on every rule row. The model itself — what inbound vs outbound means, how rules combine, what the system Default blocks — is on [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound). This page is the cheat sheet.
 
 ## Port format
@@ -46,19 +48,9 @@ A quick note on syntax: AWS Security Groups use a hyphen for ranges (`3000-4000`
 
 ## Ports the Default Firewall blocks
 
-These are **always denied** regardless of what you write — the system Default is layered on top of every public interface and Raff actively strips these ports out of any range you submit:
+**TCP 135 / 139 / 445 / 5985–5986 and UDP 137–138** are always denied regardless of what you write — the system Default is layered on top of every public interface and Raff actively strips these ports out of any range you submit. Practical example: writing `Range = 130:200` for inbound TCP saves as `130:134,136:138,140:200` (135 and 139 carved out).
 
-| Protocol | Port(s) | Service |
-|---|---|---|
-| TCP | `135` | MS-RPC |
-| TCP | `139` | NetBIOS Session |
-| TCP | `445` | SMB |
-| TCP | `5985:5986` | WinRM |
-| UDP | `137:138` | NetBIOS |
-
-If you write `Range = 130:200` for inbound TCP, Raff saves it as `130:134,136:138,140:200` (carving out 135 and 139). The saved rule is honest about what's actually allowed.
-
-If you genuinely need WinRM or SMB, run them inside a VPC and reach them via a Firewall Appliance (OPNsense) — not via a public-facing Firewall Group.
+For the canonical table with per-port rationale and the dashboard screenshot, see [Inbound vs outbound, layers, and rule format → What the Default Firewall blocks](/products/network/firewall/concepts/inbound-vs-outbound#what-the-default-firewall-blocks). If you genuinely need WinRM or SMB, run them inside a VPC and reach them via a [Firewall Appliance](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) (OPNsense) — not via a public-facing Firewall Group.
 
 ## Source / destination IP format
 
@@ -75,18 +67,35 @@ The third box on each rule row is **CIDR**. For inbound it's "from where can tra
 
 The `/32` (single IPv4) and `/128` (single IPv6) are how you allowlist exactly one address. The dialog accepts CIDR with or without explicit prefix on `/32`, but type the `/32` for clarity.
 
+### IPv6 examples — same shape, different addresses
+
+If your VM has an IPv6 public IP attached (auto-assigned or reserved), the same rule rows apply — just use IPv6 CIDRs in the source field. **Add a separate rule row for the IPv6 CIDR; one row carries one CIDR.**
+
+| Goal | Source IP |
+|---|---|
+| Public service open to all of IPv6 | `::/0` |
+| One specific IPv6 host | `2001:db8::1/128` |
+| A /48 customer prefix (a typical ISP-allocated block) | `2001:db8:1234::/48` |
+| Documentation / example range | `2001:db8::/32` |
+| Local-link / RFC 4193 ULA range | `fd00::/8` |
+| IPv4-mapped (allows traffic from `::ffff:1.2.3.4`) | `::ffff:0:0/96` |
+
+A "fully open to v4 + v6" inbound on TCP/443 is **two** rule rows — one with `0.0.0.0/0` and one with `::/0`. Same for outbound.
+
 ## Common rule recipes
 
 Each row below is *one rule row* in the create dialog. Add multiple rows for combinations.
 
-**Public web server:**
+**Public web server (IPv4 + IPv6):**
 
 | Direction | Protocol | Ports | Source IP |
 |---|---|---|---|
 | Inbound | TCP | `80,443` | `0.0.0.0/0` |
+| Inbound | TCP | `80,443` | `::/0` |
 | Inbound | TCP | `22` | *(your office IP)*`/32` |
 | Inbound | ICMP | *(blank)* | `0.0.0.0/0` |
 | Outbound | ALL | *(blank)* | `0.0.0.0/0` |
+| Outbound | ALL | *(blank)* | `::/0` |
 
 **Bastion host (SSH only, locked-down outbound):**
 

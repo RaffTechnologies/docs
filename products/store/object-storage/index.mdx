@@ -1,10 +1,10 @@
 ---
 title: Overview
-description: S3-compatible object storage on the Raff Platform — already running production workloads inside Raff itself
+description: S3-compatible object storage on the Raff Platform — NVMe SSD buckets, AWS-SDK-compatible, with the same regional endpoint and SigV4 auth model as AWS S3
 icon: bucket
 ---
 
-<sub>Updated May 4, 2026</sub>
+<sub>Updated May 6, 2026</sub>
 
 Object Storage is **S3-compatible** storage for unstructured data — media files, application backups, logs, static assets, machine-learning artifacts, anything you'd normally throw at an S3 bucket. Use any S3 SDK or tool against the Raff endpoint, organize objects into buckets, and serve them publicly or privately.
 
@@ -13,12 +13,6 @@ Today there is **one storage class — NVMe SSD** — tuned for high-performance
 <Frame>
   ![Buckets list in the Raff dashboard showing several real Raff buckets: marketplace-images, raff-images, raff-invoices, raff-image-builder, raff-security-logs](/images/products/store/object-storage/buckets-list.png)
 </Frame>
-
-## Battle-tested — Raff runs on its own Object Storage
-
-Object Storage isn't a new product we're selling and hoping holds up. It's the **same storage layer Raff itself runs on** in production. Every Raff service you interact with — the dashboard, the marketplace, image builds, audit logs, billing invoices — uses these buckets. The screenshot above shows real production buckets serving real Raff workloads.
-
-That's the whole platform philosophy: **Raff runs on Raff**. Kubernetes, Virtual Machines, and Object Storage power the dashboard you're reading docs about right now. We validate every feature against our own load before exposing it to customers.
 
 ## S3 endpoint
 
@@ -29,6 +23,40 @@ https://<bucket-name>.s3.raffusercloud.com
 ```
 
 Point any AWS-S3 SDK at that endpoint with your access keys and you're connected — no Raff-specific client library needed.
+
+## Object Storage vs Volumes — picking the right one
+
+Both store data; they're built for different access patterns.
+
+| | **Object Storage** | **[Volumes](/products/store/volumes)** |
+|---|---|---|
+| **Access protocol** | HTTP / HTTPS via S3 API | Block device via virtio-blk (looks like a local SSD inside the VM) |
+| **Mounting** | Not mounted — accessed by SDK / `s3` URL | Mounted into the filesystem like a regular disk |
+| **Concurrency** | Many clients read/write the same bucket simultaneously | One VM at a time (single-attach) |
+| **Latency profile** | Tens of ms typical (network round-trip + S3 op) | Sub-millisecond (local NVMe) |
+| **Throughput per object** | High; multipart upload scales horizontally | Highest — direct disk |
+| **Pricing** | \$0.07/GB/mo (\$7/mo first 100 GB included), egress free up to 1 TB/mo | \$0.05/GiB/mo flat |
+| **Best for** | Unstructured data, lots of objects, many readers | Files an OS / database needs to read locally at low latency |
+
+### When to use Object Storage
+
+- **User-uploaded files** — avatars, photos, documents, generated PDFs
+- **Application backups** — scheduled DB dumps, log archives, app artifacts
+- **Static asset hosting** — site images, JS/CSS bundles, video thumbnails (point a CDN at the bucket)
+- **Machine-learning artifacts** — datasets, model weights, training checkpoints
+- **Customer file storage** — anything customers will retrieve via signed URLs
+- **Anything you'd put in AWS S3** — it works the same way
+
+### When to use a Volume instead
+
+- **Database storage** — Postgres / MySQL / MongoDB data directory needs sub-ms disk access
+- **Application file storage** — apps that mmap files, read configs from disk, or expect a local filesystem
+- **VM extra capacity** — you need more space than the plan's base disk and want it to look like a regular disk to the OS
+- **Anything that requires `O_DIRECT` / `fsync` performance** — block-level I/O Object Storage can't match
+
+### Common mistake
+
+**Don't run a database on Object Storage.** S3-API access has too much per-call overhead for the millions of small reads/writes a database makes. Use a Volume for the data directory and (optionally) Object Storage for backups of that database.
 
 ---
 

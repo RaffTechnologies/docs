@@ -3,6 +3,8 @@ title: Connect via SSH
 description: Open a session to a Linux VM — in-browser terminal, direct SSH, or VNC console fallback
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Once a Linux VM is `active`, you have three ways to connect:
 
 | Method | Where it runs | Best for |
@@ -51,6 +53,35 @@ The terminal opens in a new tab, authenticates as `root` automatically using the
 
 For daily work, scripts, file transfer (`scp`/`rsync`), port forwarding, etc.
 
+### Generate an SSH key (if you don't have one)
+
+If you don't already have an SSH key pair on your local machine, generate one before creating the VM. Pick the matching command for your OS — the resulting public key is what you upload to Raff at VM creation, and the private key stays on your machine.
+
+**macOS / Linux / Windows OpenSSH (PowerShell):**
+
+```bash
+# Recommended — Ed25519, modern, fast, short
+ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/raff_key
+
+# Acceptable fallback if a tool requires RSA
+ssh-keygen -t rsa -b 4096 -C "you@example.com" -f ~/.ssh/raff_key
+```
+
+When prompted:
+
+- **Passphrase** — set one. It encrypts the private key on disk so a stolen laptop can't be used to log in. Use `ssh-agent` (`ssh-add ~/.ssh/raff_key`) so you only type it once per session
+- Two files are written:
+  - `~/.ssh/raff_key` — **private** key. Never share, never paste into a web form, never commit to git
+  - `~/.ssh/raff_key.pub` — **public** key. This is what you paste into Raff's **SSH Keys** dialog when creating a VM
+
+Print the public key to copy it:
+
+```bash
+cat ~/.ssh/raff_key.pub
+```
+
+Output looks like `ssh-ed25519 AAAAC3Nza... you@example.com` — copy the entire line into Raff's SSH Keys field.
+
 ### macOS / Linux — terminal
 
 ```bash
@@ -84,6 +115,27 @@ ssh root@<public-ipv4>
 
 Works if your private key is at `%USERPROFILE%\.ssh\id_ed25519` (or similar).
 
+### Avoiding the "host authenticity" prompt with `ssh-keyscan`
+
+The first time you SSH to a new VM, OpenSSH prints something like:
+
+```
+The authenticity of host '203.0.113.10' can't be established.
+ED25519 key fingerprint is SHA256:abc...xyz
+Are you sure you want to continue connecting (yes/no)?
+```
+
+Typing `yes` is fine for interactive use, but for **automation, CI/CD, or scripted provisioning** that prompt blocks the script. Pre-populate `~/.ssh/known_hosts` with the VM's host key before connecting:
+
+```bash
+# Fetch the VM's public host keys and append to known_hosts
+ssh-keyscan -H <public-ipv4> >> ~/.ssh/known_hosts
+```
+
+`-H` hashes the entry so the IP isn't visible in plaintext if the file is leaked. Run once per VM after creation; subsequent SSH calls will not prompt.
+
+For Ansible / Terraform `remote-exec` provisioners, run `ssh-keyscan` as part of your bootstrap step right after the VM becomes `active`.
+
 ## 3. VNC console (graphical fallback)
 
 The VNC console connects through the hypervisor instead of the network. Use it when:
@@ -103,6 +155,7 @@ Close the browser tab to disconnect.
 - **Permission denied (publickey)** — verify your private key matches the public key uploaded at VM creation; on macOS/Linux make sure the key permissions are `600`.
 - **Connection timed out** — check the VM is `active`, not `passive` or `provisioning`. Confirm the public IPv4 in the dashboard hasn't changed.
 - **No public IP** — use the VNC console, or reach the VM through another VM in the same VPC.
+- **`REMOTE HOST IDENTIFICATION HAS CHANGED!`** — the VM's host key changed (typically after a Reinstall, factory reset, or new VM at the same IP). Remove the stale line: `ssh-keygen -R <public-ipv4>`, then reconnect (or re-run `ssh-keyscan` for automation).
 
 See [Troubleshooting](/products/build/virtual-machines/troubleshooting) for more.
 

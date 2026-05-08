@@ -1,15 +1,17 @@
 ---
 title: Create Your First VM
-description: Step-by-step guide to deploying a virtual machine on Raff Cloud
+description: Step-by-step guide to deploying a virtual machine on Raff
 ---
+
+<sub>Updated May 6, 2026</sub>
 
 This guide walks you through creating a virtual machine, connecting via SSH, and managing its lifecycle.
 
 ## Prerequisites
 
-- A Raff Cloud Platform account with billing set up
-- An API key
-- A project ID (found in your dashboard under project settings)
+- A Raff account with billing set up
+- An API key (Dashboard → **API Keys** → Create API Key)
+- A project ID (Dashboard → **Projects**)
 - An SSH key pair (optional but recommended)
 
 ## Step 1: Authenticate
@@ -50,8 +52,9 @@ curl -X POST https://api.rafftechnologies.com/api/v1/vms \
 ```
 
 <Note>
-  Replace `<template-uuid>` with your OS template ID from the dashboard.
-  The `pricing_id` determines CPU, RAM, storage, and bandwidth allocation.
+  Replace `<template-uuid>` with your OS template ID — get one from [List Templates](/api-reference/catalog/list-templates) (no auth required; filter with `?category=os`).
+
+  The `pricing_id` selects a plan that determines vCPU, RAM, storage, and bandwidth — list plans with [List VM Pricing](/api-reference/catalog/list-vm-pricing).
 </Note>
 
 The response includes your new VM details:
@@ -84,14 +87,14 @@ curl -H "X-API-Key: $RAFF_API_KEY" \
   https://api.rafftechnologies.com/api/v1/vms/69590a15-9f68-4b6f-8232-b07781218852
 ```
 
-The VM transitions through these states:
+The VM transitions through these states in order:
 
 | Status | Description |
 |--------|-------------|
-| `provisioning` | Resources being allocated |
-| `booting` | VM is booting up |
-| `initiating` | Initial setup running |
-| `active` | Ready to use |
+| `initiating` | Queued, initial setup before provisioning |
+| `provisioning` | VM being created in the hypervisor |
+| `booting` | VM starting up |
+| `active` | Running and reachable |
 
 ## Step 4: Connect via SSH
 
@@ -123,14 +126,14 @@ curl -X POST -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID" \
 
 ### Resize the VM
 
-Resize requires the VM to be stopped first:
+Resize requires the VM to be stopped first. Pass a new `pricing_id` — the plan determines the new vCPU, RAM, storage, and bandwidth. Get plan IDs from [List VM Pricing](/api-reference/catalog/list-vm-pricing).
 
 ```bash
 curl -X POST https://api.rafftechnologies.com/api/v1/vms/69590a15-9f68-4b6f-8232-b07781218852/resize \
   -H "X-API-Key: $RAFF_API_KEY" \
   -H "X-Project-ID: $RAFF_PROJECT_ID" \
   -H "Content-Type: application/json" \
-  -d '{"cpu": 4, "ram": 8}'
+  -d '{"pricing_id": 5}'
 ```
 
 ### Start the VM
@@ -153,11 +156,11 @@ curl -X DELETE -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $RAFF_PROJECT_ID"
 
 ## VPC Networking
 
-VPC membership is **optional**. A VM with no VPC is still fully reachable via its public IP — you only join a VPC when two or more VMs need to talk to each other privately.
+By default every VM gets a VPC. You can opt out, or share a VPC across multiple VMs.
 
-### No VPC (Default)
+### Auto-created VPC (default)
 
-If you don't pass any VPC options, the VM is created **without a VPC**. It has its public IP only; it can't reach other VMs over a private subnet.
+If you don't pass any VPC fields, a VPC named `vpc-{vm-name}` is created automatically and the VM is attached to it. No extra setup required.
 
 ### Shared VPC
 
@@ -194,5 +197,23 @@ curl -X POST https://api.rafftechnologies.com/api/v1/vms \
     "region": "us-east",
     "vpc_name": "production-vpc",
     "vpc_cidr": "10.0.1.0/24"
+  }'
+```
+
+### Skip the VPC
+
+For a single-VM setup that only needs its public IP, pass `skip_vpc: true` to opt out of the auto-created VPC entirely. Cannot be combined with `skip_public_ip: true` — a VM must have at least one network.
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/vms \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "public-only-vm",
+    "template_id": "<template-uuid>",
+    "pricing_id": 1,
+    "region": "us-east",
+    "skip_vpc": true
   }'
 ```

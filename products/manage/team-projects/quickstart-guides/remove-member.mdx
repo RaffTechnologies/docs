@@ -1,0 +1,111 @@
+---
+title: Remove a member
+description: Permanently revoke a team member's access to the account — removes their account role, every project role they hold, and ends their dashboard sessions. API keys they created keep working until rotated separately.
+---
+
+<sub>Updated May 8, 2026</sub>
+
+Removing a member is the destructive counterpart to [Invite a member](/products/manage/team-projects/quickstart-guides/invite-member). It revokes **every grant** the member has — their account role and every per-project role they hold — and ends their dashboard sessions on next request. Use this when someone leaves the team, loses authorization to access the account, or was invited by mistake.
+
+If you only want to remove **one specific role** (one project, or just the account role) without removing the member from the account, see [Change or remove a member's role](/products/manage/team-projects/quickstart-guides/change-role) instead — that's the granular path. This page is the full removal.
+
+## Before you remove
+
+A few things to handle first; otherwise you'll have orphaned resources or surprised teammates:
+
+- **API keys created by this member keep working** after the member is removed. Each key carries its own role assignment that doesn't reference the member's identity. **Rotate or delete those keys** as part of the offboarding process — see [Rotate an API key](/products/manage/team-projects/quickstart-guides/rotate-api-key)
+- **Resources the member created stay in the project**. Projects own resources; members don't. A VM created by Alice doesn't get deleted when Alice is removed — it stays in the project, billed to the account
+- **Audit-log entries reference the removed member by ID** for the historical record. The member's email and name persist in audit-log rows even after removal so the history is still readable
+
+## 1. Open the Members tab
+
+In **Team & Projects → Members**, find the member by email. Click the chevron on the left to expand their row if you want to verify their grants before removal.
+
+## 2. Open the row's `⋮` menu
+
+The Members list row has an `⋮` action menu on the right. Click it.
+
+| Action | When it shows | What it does |
+|---|---|---|
+| **Change Account Role** | When the member already has an account role (and you have `account.members.manage`) | Opens the role picker prefilled with their current account role. Same effect as expanding the row and using the Account Access section |
+| **Remove from Account** | When the member has an account role (and you have `account.members.remove`) | Removes the **account-role grant** only — does not remove project roles. Use this for "demote from Admin to Project-only" |
+| **Cancel Invitation** | `Pending` rows only | Cancels the invite — the link in their email stops working. To re-send, **invite them again** from the **+ Invite Member** button (the *reinvite* workflow) |
+| **Remove Member** | Existing members (any role) | Permanently removes the member from the account — this is the action covered on this page |
+
+The exact label may show as **Change Role** on mobile (it's the same action — narrow viewport, shorter label). What this page covers is the destructive **Remove Member** action, not the per-grant editing.
+
+Click **Remove Member** (red).
+
+## 3. Confirm the removal
+
+A confirmation dialog asks you to confirm — typically by typing the member's email or clicking a red **Remove** button. Confirm to proceed.
+
+The dashboard immediately:
+
+- Revokes the member's account role (if they had one)
+- Removes every project role they held (across every project)
+- Invalidates their dashboard sessions on next request — they get a `403` and are redirected to the sign-in screen
+- Logs the removal in the account audit log (visible to anyone with `account.audit.view`)
+
+## What you cannot remove
+
+| Member | Why removal is blocked |
+|---|---|
+| **The Owner** | Exactly one Owner per account, granted automatically at signup. The Owner can't be removed via the dashboard. To transfer Owner to another member, contact [support](mailto:support@rafftechnologies.com) — they'll move the badge after verification. The current Owner can then be removed if they're stepping away |
+| **Yourself** | The dashboard prevents self-removal. Ask another account-role holder to remove you |
+| **The last `account.members.manage` holder** | If you're the only person with permission to manage members, you can't be removed without leaving the account stranded. Either grant another member the role first, or coordinate with support |
+
+## Cleaning up after removal
+
+Once the member is gone, the resources they created stay in the project. Walk through this checklist:
+
+| Cleanup step | Why |
+|---|---|
+| **Rotate / delete every API key the member created** | Keys carry their own role; member removal doesn't touch them. Open **API Keys** in the sidebar and rotate or delete any keys the member owned. Filter by Created By if you have many |
+| **Reassign or delete VMs they owned** | The VMs keep running and billing. Decide whether to keep them, transfer ownership informally (no tag changes needed — projects own VMs), or destroy unused ones |
+| **Review pending invitations they sent** | If the member invited others before they left, those invites are still valid for the recipients. Cancel any you don't want to honor — Members tab → row's `⋮` → Cancel Invitation (for `Pending` rows) |
+| **Audit recent actions** | If the removal is for a security reason, review the audit log for any actions taken by the member in the last 30/60/90 days. `account.audit.view` shows their full event history |
+
+## Re-inviting a removed member
+
+A removed member is **fully gone** from the account. To bring them back, [Invite a member](/products/manage/team-projects/quickstart-guides/invite-member) again from scratch — the email gets a fresh invitation, they go through acceptance, and you assign new roles. Their previous role assignments are not restored automatically.
+
+The audit log keeps the member's old user record so historical entries still resolve to a recognizable identity, but the new grant is a fresh row.
+
+## Common confusions
+
+<AccordionGroup>
+  <Accordion title="The member's API key still authenticates after I removed them">
+    **Expected.** API keys carry their own role; removing the member who created the key does **not** invalidate the key. Open the **API Keys** page, find keys created by the removed member, and either rotate or delete them. The audit log records who originally created each key.
+  </Accordion>
+
+  <Accordion title="The dashboard says `Cannot remove the last account.members.manage holder`">
+    The platform refuses to leave the account without anyone able to manage members. Grant `account.members.manage` to another member first (via Custom role or by giving them an account role like `Admin` that includes the permission), then retry the removal.
+  </Accordion>
+
+  <Accordion title="The member's resources are gone">
+    Resources belong to **projects**, not members. If a project's resources are missing after a member removal, something else happened — most likely the member deleted them before being removed. Check the audit log for `vm.delete` / `vpc.delete` / `bucket.delete` events around the time of removal.
+  </Accordion>
+
+  <Accordion title="I removed by mistake — can I undo?">
+    No undo. Re-invite the member from the Invite Member dialog with their email. They'll need to accept the new invitation, and you'll need to re-grant their account and project roles manually. Their audit history is preserved (linked to the same user-id).
+  </Accordion>
+
+  <Accordion title="The member said they got `permission denied` before I removed them">
+    That's the dashboard working correctly — once you removed an account or project role from them, they immediately lost access to the relevant resources, even before full removal. The full removal just terminates their session and revokes everything else.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Change a role" icon="user-pen" href="/products/manage/team-projects/quickstart-guides/change-role">
+    Remove one specific grant instead of the whole member.
+  </Card>
+  <Card title="Rotate an API key" icon="arrows-rotate" href="/products/manage/team-projects/quickstart-guides/rotate-api-key">
+    Critical step in offboarding — rotate keys the departed member created.
+  </Card>
+  <Card title="Invite a member" icon="user-plus" href="/products/manage/team-projects/quickstart-guides/invite-member">
+    Re-invite if removal was a mistake.
+  </Card>
+</CardGroup>

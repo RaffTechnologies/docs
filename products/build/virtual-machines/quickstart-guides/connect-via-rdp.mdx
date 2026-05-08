@@ -3,6 +3,8 @@ title: Connect via RDP
 description: Open a session to a Windows VM — in-browser VNC console or direct RDP from a desktop client
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Once a Windows VM is `active`, you have two ways to connect:
 
 | Method | Where it runs | Best for |
@@ -78,10 +80,27 @@ Pick any of:
 Pick any of:
 
 - **Remmina** — most common GTK client. `sudo apt install remmina remmina-plugin-rdp` on Debian/Ubuntu. Run `remmina`, click **+**, set protocol to **RDP**, fill in host and credentials.
-- **FreeRDP** — command line, robust. Run:
+- **FreeRDP** — command line, robust. Most distros ship FreeRDP 2.x; some recent ones ship 3.x with new flag syntax. Pick the matching example below.
+
+  **FreeRDP 2.x** (older syntax — `/key:value`):
   ```bash
-  xfreerdp /v:<public-ipv4> /u:Administrator /p:'<password>' /size:1920x1080 /cert:ignore
+  xfreerdp /v:<public-ipv4> /u:Administrator /p:'<password>' \
+           /size:1920x1080 /cert:ignore +clipboard
   ```
+
+  **FreeRDP 3.x** (newer syntax — same idea, slightly different flags):
+  ```bash
+  xfreerdp3 /v:<public-ipv4> /u:Administrator /p:'<password>' \
+            /size:1920x1080 /cert:ignore +clipboard
+  ```
+
+  Useful flags either way:
+  - `/size:1920x1080` — set initial resolution. Use `/f` for fullscreen instead
+  - `+clipboard` — enable clipboard sync between Linux host and Windows VM
+  - `/drive:home,$HOME` — share your local home directory as a drive in the VM (`\\tsclient\home`)
+  - `/sound:sys:pulse` — forward Windows audio to local PulseAudio
+  - `/cert:ignore` — accept the VM's self-signed RDP certificate (always needed unless you've installed your own cert in Windows)
+  - `/network:auto` — let FreeRDP pick the best network profile (modem / broadband / LAN) based on round-trip time
 - **KRDC** — KDE's bundled client; same workflow as Remmina.
 
 ## Troubleshooting

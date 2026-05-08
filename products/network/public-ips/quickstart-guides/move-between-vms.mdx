@@ -3,6 +3,8 @@ title: Move a reserved IP between VMs
 description: Detach a reserved public IP from one VM, attach it to another, without changing the IP itself — useful for blue/green deploys, failover, and partner-whitelist preservation
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 A **reserved IP** can be moved from one VM to another without changing the address. Detach it from VM A, attach it to VM B — the IP stays the same, your DNS records stay valid, partner whitelists stay correct, and the only thing that changes is which server traffic lands on. This is the standard pattern for blue/green deploys, manual failover, and "promote a candidate VM by repointing the IP" workflows.
 
 This page covers reserved IPs only. **Auto-assigned IPs cannot be moved** — when you detach an auto-assigned IP, it returns to the regional pool and may be allocated to someone else. If you need this workflow, [reserve an IP first](/products/network/public-ips/quickstart-guides/reserve-ip).
@@ -27,9 +29,26 @@ The IP detaches in seconds. On the Public IPs tab, the row's **Assigned To** col
 
 **The address stays the same.** Active SSH/RDP/HTTP sessions to the IP drop because they're now hitting nothing — that's expected. DNS records pointing at this IP keep resolving correctly; they just temporarily don't have a backend until you complete step 2.
 
-## 2. Attach to the target VM
+## 2. Check the target VM — and remove any existing public IP of the same type first
 
-Three equivalent paths:
+<Warning>
+  **The target VM must not already have a public IP of the same type (IPv4 or IPv6).** A VM holds at most **one** public IPv4 and **one** public IPv6 from the dashboard — if you try to attach a reserved IPv4 to a VM that already has an IPv4 (auto-assigned or reserved), the attach is **rejected** with `VM already has an IPv4`. Same rule for IPv6.
+
+  Open the target VM's detail page → **Network** tab. If the IPv4 (or IPv6) card already shows an address, click **Remove Public IP** on that card *before* moving on to the attach step:
+
+  <Frame>
+    ![VM Network tab IPv4 public IP card with eth0 - Public Network, Public + Primary tags, the existing IP, MAC, Gateway, a Firewall row, and a red Remove Public IP button at the bottom — this is the button to click before attaching the reserved IP](/images/products/network/firewall/vm-network-firewall-attach.png)
+  </Frame>
+
+  Two important nuances:
+
+  - **Auto-assigned IP on the target → Remove returns it to the pool, permanently.** You won't get the same address back. Acceptable in nearly every move-an-IP workflow because the whole point is to use the reserved IP instead.
+  - **Reserved IP on the target → Remove detaches it but keeps it in your account** (still billing at \$3/mo). It's now floating, ready to attach somewhere else, or release if you don't want it. Don't accidentally double up on reserved IPs you'll keep paying for.
+
+  If the target VM uses **only IPv6** today and you're moving a reserved **IPv4**, you can skip the remove step — the IPv4 slot is empty and the attach will succeed directly.
+</Warning>
+
+Once the target VM's same-type slot is empty, attach via one of three equivalent paths:
 
 | From | How |
 |---|---|
@@ -78,6 +97,18 @@ When a primary VM is unhealthy and you keep a warm-standby:
 5. Standby starts serving the same address; clients reconnect
 
 There's no managed failover product on Raff today; this is the do-it-yourself pattern. Automate steps 3–4 with the [Change IP API](/api-reference/endpoint/change-ip) if you need it scripted.
+
+<Warning>
+  **What Raff does not provide.** The reserved-IP move is a control-plane action — it requires an explicit detach + attach call. Raff does **not** ship any of the in-guest, sub-second failover mechanisms you may know from on-prem networking:
+
+  - **No VRRP / keepalived** — the IP is bound to one VM at a time at the platform level. Two VMs in the same VPC cannot share a public IP via heartbeat-driven floating-IP scripts; the second VM cannot ARP for an IP the platform has not attached to it.
+  - **No anycast / BGP failover** — Raff does not announce customer IPs to multiple endpoints
+  - **No managed health-check + automatic failover** — detection of "primary is down" is your responsibility (monitoring, status checks, custom watchdog)
+
+  Sub-second failover patterns from on-prem (`keepalived` + a VIP shared between two NICs) won't work and trying to configure them inside two Raff VMs leads to silent breakage — only one VM ever receives traffic, and it's the one Raff has the IP attached to.
+
+  If you need automatic failover today, build it on top of the [Change IP API](/api-reference/endpoint/change-ip) — your monitoring detects the failure and your script calls the API to repoint the reserved IP. The detach + attach round-trip typically completes in **under a minute**, which is the practical floor on RTO with this approach.
+</Warning>
 
 ## Related
 

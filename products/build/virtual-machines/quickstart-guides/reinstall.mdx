@@ -3,6 +3,8 @@ title: Reinstall a VM
 description: Re-image a VM with a fresh OS template while keeping the IP, attached volumes, and specs
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Reinstall replaces the VM's OS disk with a fresh OS template. The VM keeps its ID, public IPv4, attached volumes, and CPU/RAM/disk specs — everything else on the OS disk is destroyed.
 
 ## Before you start
@@ -20,7 +22,14 @@ Reinstall replaces the VM's OS disk with a fresh OS template. The VM keeps its I
 | VM specifications (CPU, RAM, base disk size) | Root / Administrator password (regenerated) |
 | | Existing snapshots and backups of this VM |
 
-The VM is unavailable for **1-5 minutes** during the rebuild. See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the full survival matrix across reinstall, factory reset, and delete.
+The VM is unavailable during the rebuild. **Typical duration is a few minutes**; the actual time depends on:
+
+- **Template size** — bigger images (Windows Server, Marketplace apps with bundled software) take longer to copy than minimal Linux base images
+- **Hypervisor I/O** — busier hosts copy slower; quieter ones copy faster
+- **Disk size** — base disk being wiped and reprovisioned scales with size (a 25 GiB disk is faster than a 480 GiB one)
+- **First boot work** — cloud-init / sysprep / OS first-boot configuration runs after the disk lands; some templates do more work on first boot than others
+
+There's no published SLA for reinstall duration. For reference: a fresh **Ubuntu 24.04 on a 25 GiB disk** typically completes in 1–3 minutes; a **Windows Server 2022 on a 50 GiB disk** typically takes longer due to sysprep. Plan for **up to 10 minutes** in worst-case scenarios so you don't get nervous mid-rebuild. See [Storage model](/products/build/virtual-machines/concepts/storage-model) for the survival matrix across reinstall, factory reset, and delete.
 
 ## Two ways to start
 
@@ -74,7 +83,7 @@ Review what's preserved and reset, tick the acknowledgement box, and click **Rei
 
 ## After reinstall
 
-- The VM transitions `provisioning` → `booting` → `active` (typically 1-5 minutes).
+- The VM transitions `provisioning` → `booting` → `active` — typically a few minutes; up to ~10 for larger templates / Windows / large disks.
 - Public IPv4 is unchanged — DNS records still point at the right place.
 - Connect with the new credentials (your SSH key, the password you set, or the emailed password).
 - Attached volumes are still attached but may need re-mounting; the new OS won't have your old `/etc/fstab`.

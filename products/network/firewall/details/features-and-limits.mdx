@@ -3,6 +3,8 @@ title: Features & limits
 description: Raff Firewall features, the system Default Firewall blocked-port list, custom Firewall Group rule formats, per-group limits, the 5 templates, and pricing
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 ## Features
 
 ### Two layers, both always on
@@ -67,17 +69,9 @@ Pick a template and tweak before saving, or start from **Custom Rules** for a bl
 
 ## Default Firewall — always-blocked ports
 
-These ports are blocked by the system Default Firewall on every public interface, and Raff strips them from any user-rule range that covers them:
+The system Default Firewall blocks **TCP 135 / 139 / 445 / 5985–5986 and UDP 137–138** on every public interface, and Raff strips those ports from any user-rule range that covers them. Everything else inbound is allowed by default; ICMP (ping) is allowed; all outbound is unrestricted.
 
-| Protocol | Port(s) | Service | Why it's blocked |
-|---|---|---|---|
-| TCP | `135` | MS-RPC | Remote code execution risk |
-| TCP | `139` | NetBIOS Session | Network file-sharing exploit vector |
-| TCP | `445` | SMB | Ransomware vector (WannaCry / EternalBlue) |
-| TCP | `5985:5986` | WinRM | Remote management exploit vector |
-| UDP | `137:138` | NetBIOS | Network discovery exploit |
-
-Everything else inbound is allowed by default. ICMP (ping) is allowed inbound. All outbound is unrestricted by the Default.
+For the full port list with the rationale per port, the visible-in-dashboard rules screenshot, and the Default-vs-Group precedence model, see [Inbound vs outbound, layers, and rule format → What the Default Firewall blocks](/products/network/firewall/concepts/inbound-vs-outbound#what-the-default-firewall-blocks).
 
 If you genuinely need one of these ports, expose the service over a VPC instead and put a [Firewall Appliance](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) (OPNsense) in front. The public Default Firewall isn't bypassable by design.
 

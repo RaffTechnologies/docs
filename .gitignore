@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Editor / OS
+*.swp
+.vscode/
+.idea/
+
+# Mintlify build artifacts
+.mintlify/

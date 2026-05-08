@@ -1,45 +1,131 @@
 ---
 title: Plans & sizing
-description: How VM plans map to CPU, RAM, and storage
+description: Two plan tiers (General Purpose / shared CPU and CPU Optimized / dedicated CPU), how to pick between them, and which size to start with for common workloads — web apps, databases, workers, dev/staging, Windows desktop, game servers
 ---
 
-A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single per-hour rate. Outbound bandwidth is **unlimited** on every plan and is not metered or billed separately. Picking a plan is the main sizing decision when creating a VM.
+<sub>Updated May 6, 2026</sub>
 
-## What a plan includes
+A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single rate. Outbound bandwidth is **unlimited** on every plan. Picking the right plan is the main sizing decision when creating a VM. The full price list lives on [Pricing](/products/build/virtual-machines/details/pricing); this page is the **how-to-pick** guide.
 
-| Resource | Description |
+## The two tiers
+
+| Tier | CPU model | When it's the right pick |
+|---|---|---|
+| **Standard — General Purpose** | **Shared** vCPU | Most workloads. Cheapest per-vCPU rate. Short performance dips during host-level contention are acceptable |
+| **Premium — CPU Optimized** | **Dedicated** vCPU | Workloads where consistent CPU performance matters every millisecond — databases, real-time services, latency-sensitive APIs |
+
+In simple terms:
+
+- **Standard** — the platform may share the underlying physical core with other VMs. Performance is great most of the time but can have brief jitter when neighbors get busy. Best price/CPU.
+- **Premium** — your vCPU is yours alone on the physical core. Performance is predictable and steady. Higher price/CPU but no noisy-neighbor dips.
+
+If you can't tell which fits, **start with Standard**. Move workloads to Premium when you can point to a specific symptom (latency p99 spikes, database query timeouts under load, real-time-stream stutter) that a dedicated CPU would solve.
+
+## Recommended starting plans by workload
+
+Each row below names a **starting** plan — the place to begin, then resize up if you outgrow it. All prices are monthly subscription rates; see [Pricing](/products/build/virtual-machines/details/pricing) for yearly / 24-month locks.
+
+### Web and application servers
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Personal blog, hobby project, low-traffic landing page** | Premium 1 vCPU / 1 GiB / 25 GiB | \$3.99/mo |
+| **Static-site host with Caddy / nginx** | Premium 1 vCPU / 1 GiB or Standard 2 vCPU / 4 GiB | \$3.99–\$4.99/mo |
+| **Small dev / staging server** | Standard 2 vCPU / 4 GiB / 50 GiB | \$4.99/mo |
+| **Production web app, low–medium traffic** | Standard 4 vCPU / 8 GiB / 120 GiB | \$9.99/mo |
+| **Production API, medium traffic** | Standard 8 vCPU / 16 GiB / 240 GiB | \$23.99/mo |
+| **Latency-sensitive production API** | Premium 4 vCPU / 8 GiB / 120 GiB | \$35.99/mo |
+| **High-traffic API or event-driven service** | Premium 8 vCPU / 16 GiB / 180 GiB | \$63.99/mo |
+
+### Databases
+
+Databases are CPU-and-disk-sensitive — almost always pick Premium for consistent I/O.
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Small Postgres / MySQL / MongoDB** (single tenant, &lt;100 GB data) | Premium 2 vCPU / 4 GiB / 80 GiB | \$19.99/mo |
+| **Medium production database** | Premium 4 vCPU / 8 GiB / 120 GiB | \$35.99/mo |
+| **Heavy production database** (many connections, OLTP) | Premium 8 vCPU / 32 GiB / 240 GiB | \$127.99/mo |
+| **Large analytical / OLAP workload** | Premium 16 vCPU / 64 GiB or higher | \$255.99+/mo |
+
+For databases above ~80 GB, attach a [Volume](/products/store/volumes) for the data directory so disk size and VM size scale independently.
+
+### Background workers, batch, ML
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Lightweight cron / scheduled jobs** | Standard 2 vCPU / 4 GiB | \$4.99/mo |
+| **Background queue workers** (Sidekiq, Celery, BullMQ) | Standard 4 vCPU / 8 GiB | \$9.99/mo |
+| **Parallel batch jobs** (data processing, scrapers) | Standard 8 vCPU / 16 GiB | \$23.99/mo |
+| **CPU-bound batch** (encoding, image processing) | Premium 8 vCPU / 16 GiB | \$63.99/mo |
+| **CPU-only ML inference** (small models) | Premium 8 vCPU / 32 GiB | \$127.99/mo |
+
+### CI/CD runners
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Small repo, sequential builds** | Standard 4 vCPU / 8 GiB | \$9.99/mo |
+| **Multiple parallel builds** | Standard 8 vCPU / 16 GiB | \$23.99/mo |
+| **Heavy build (Docker images, monorepo)** | Standard 12 vCPU / 32 GiB | \$43.99/mo |
+
+### Bastion / jump host
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Bastion host** (SSH gateway, low-load) | Premium 1 vCPU / 1 GiB / 25 GiB | \$3.99/mo |
+
+### Windows workloads
+
+Premium is generally the right pick for Windows — UI responsiveness benefits from dedicated CPU, and Windows has a higher RAM floor than Linux.
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Windows admin / RDP terminal** (single user) | Premium 2 vCPU / 4 GiB / 80 GiB | \$19.99/mo |
+| **Multi-user RDP terminal server** | Premium 4 vCPU / 8 GiB / 120 GiB | \$35.99/mo |
+| **Windows app server** (.NET, IIS, SQL Server with light load) | Premium 4 vCPU / 8 GiB | \$35.99/mo |
+| **Windows production database** (SQL Server, heavy) | Premium 8 vCPU / 32 GiB | \$127.99/mo |
+
+### Game servers
+
+Latency-sensitive — Premium is the right pick for any production game server.
+
+| Workload | Starting plan | Cost |
+|---|---|---|
+| **Small game server** (Minecraft, Counter-Strike, &lt;30 players) | Premium 2 vCPU / 4 GiB | \$19.99/mo |
+| **Medium game server** (50–100 players) | Premium 4 vCPU / 8 GiB | \$35.99/mo |
+| **Large game server / multi-instance** | Premium 8 vCPU / 16 GiB | \$63.99/mo |
+
+## How to size in practice
+
+Three rules that beat any sizing chart:
+
+1. **Start one size below what you think you need.** Resize up is fast (one reboot, prorated billing). Right-size at month-end with real metrics.
+2. **Watch RAM, not CPU.** Most "I need a bigger VM" moments are RAM-bound — the OS starts swapping and everything slows down. CPU saturation is rarer than memory pressure for typical web/app workloads.
+3. **Move data off the VM.** If the disk is filling up, attach a [Volume](/products/store/volumes); if backups are the issue, [Object Storage](/products/store/object-storage) is cheaper per GB than VM disk. Don't size up the VM to gain disk.
+
+You can change plans on a running VM — see [Resize](/products/build/virtual-machines/quickstart-guides/resize). Disk can grow but cannot shrink, so be conservative there.
+
+## Plan vs storage vs network — what's billed where
+
+| | Cost |
 |---|---|
-| **vCPU** | Number of virtual cores |
-| **RAM** | GB of memory |
-| **Base disk** | OS disk size in GB (additional volumes are separate) |
-| **Bandwidth** | Unlimited outbound traffic, no per-GB charge |
-| **Price** | Subscription term cost (default) or hourly rate (PAYG) |
-
-## Choosing a plan
-
-- **Web/API workloads** — start small (1-2 vCPU, 2-4 GB), scale via resize when load grows.
-- **Database or memory-bound** — pick plans with higher RAM per vCPU.
-- **Burst workloads** — run on a smaller plan; resize up only during the spike.
-
-You can change plans later — see [Resize a VM](/products/build/virtual-machines/quickstart-guides/resize). Storage cannot be reduced, only increased.
-
-## Browse plans
-
-The full list of plans, with current per-hour pricing per region, is in:
-
-<Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
-  Per-plan pricing for Virtual Machines.
-</Card>
-
-The same data is available via the [List VM Pricing](/api-reference/catalog/list-vm-pricing) endpoint.
+| **Plan** (vCPU + RAM + base disk) | Subscription rate or hourly (see [Pricing](/products/build/virtual-machines/details/pricing)) |
+| **Outbound bandwidth** | **Free, unlimited, never metered** |
+| **Extra block storage** | [Volumes](/products/store/volumes) — \$0.05/GiB/mo |
+| **Snapshots** | Per-GB-month |
+| **Backups** | Per-GB-month, first 3 per VM free |
+| **Public IPs** | Free if auto-assigned and attached; \$3/mo (IPv4) or \$1/mo (IPv6) for reserved |
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Regions" icon="globe" href="/products/build/virtual-machines/concepts/regions">
-    Where VMs run.
+<CardGroup cols={3}>
+  <Card title="Pricing" icon="circle-info" href="/products/build/virtual-machines/details/pricing">
+    Per-plan rates and lock-in discount table.
   </Card>
-  <Card title="Resize a VM" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
-    Change CPU/RAM after launch.
+  <Card title="Resize" icon="up-right-and-down-left-from-center" href="/products/build/virtual-machines/quickstart-guides/resize">
+    Change plan on a running VM.
+  </Card>
+  <Card title="Storage model" icon="hard-drive" href="/products/build/virtual-machines/concepts/storage-model">
+    Where to put data — base disk, volumes, snapshots, backups, Object Storage.
   </Card>
 </CardGroup>

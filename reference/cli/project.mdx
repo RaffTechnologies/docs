@@ -1,0 +1,92 @@
+---
+title: "raff project"
+description: "Manage projects from the CLI — list, get, create, update, delete. Projects are the container for VMs, volumes, IPs, VPCs, buckets, and access control."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The `raff project` command group manages projects — the access-control unit that owns every resource. See [Team & Projects — Projects](/products/manage/team-projects#projects--the-unit-of-access-control) for the model.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List every project in the account |
+| [`get`](#get) | Show details for one project |
+| [`create`](#create) | Create a new project |
+| [`update`](#update) | Rename or change description |
+| [`delete`](#delete) | Delete an empty project |
+
+---
+
+## list
+
+```bash
+raff project list [--output table|json]
+```
+
+List every project the API key has visibility into. Owner-level keys see all; project-only keys see only their assigned projects.
+
+## get
+
+```bash
+raff project get <project-id> [--output table|json]
+```
+
+Show details for one project — name, description, default region, member count, created-at, the `Default` badge if applicable.
+
+## create
+
+```bash
+raff project create \
+  --name <name> \
+  [--description <text>] \
+  [--default-region us-east]
+```
+
+Create a new project. Default region is `us-east` if omitted. Project names must be unique per account.
+
+```bash
+raff project create --name "customer-acme" --description "ACME Corp's whitelabel deployment"
+```
+
+## update
+
+```bash
+raff project update <project-id> [--name <new-name>] [--description <text>]
+```
+
+Rename or change the description. The project's identifier and slug stay stable; automation referencing the project by UUID is unaffected.
+
+## delete
+
+```bash
+raff project delete <project-id>
+```
+
+Delete an empty project. Fails if any resources still belong to it. The `Default` project cannot be deleted, ever — see [Edit or delete a project](/products/manage/team-projects/quickstart-guides/delete-a-project) for the rules.
+
+## Permission notes
+
+| Command | Required permission |
+|---|---|
+| `list`, `get` | `account.projects.view` (Owner, Admin, Member all have it) |
+| `create` | `account.projects.create` (Owner, Admin) |
+| `update` | `account.projects.manage` (Owner, Admin) |
+| `delete` | `account.projects.delete` (**Owner only by default**; Admin does NOT include this) |
+
+If you get `403 Forbidden`, the key's role doesn't include the permission for that action.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Use --project-id to scope VM operations.
+  </Card>
+  <Card title="Roles, scopes, and the Owner" icon="lightbulb" href="/products/manage/team-projects/concepts/roles-and-api-keys">
+    Why `delete` may 403 even on Admin keys.
+  </Card>
+  <Card title="Permissions matrix" icon="table" href="/products/manage/team-projects/details/permissions-matrix">
+    Which role grants which `account.projects.*` permission.
+  </Card>
+</CardGroup>

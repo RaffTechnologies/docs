@@ -3,6 +3,8 @@ title: Attach a Firewall Group to a VM
 description: Two ways to attach a Firewall Group to a VM's public IP — from the group's row menu, or from the VM's Network tab — plus the mandatory reboot to make the rules take effect inside the guest
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 A Firewall Group only filters traffic once it's **attached to a VM's public IP**. The group itself sits idle on the Firewall tab until you wire it up. There are two equivalent entry points; both produce the same result.
 
 <Warning>
@@ -90,6 +92,26 @@ If you're switching one group for another (`web-prod-v1` → `web-prod-v2`), do 
 The dashboard allows attaching more than one Firewall Group to a single public IP. When multiple groups are attached, **their allow lists union** — a packet is allowed if **any** attached group has a rule allowing it. Each Firewall Group still has its 40-inbound + 40-outbound limit, so stacking groups is the workaround when one group isn't enough.
 
 Common pattern: a base group (`infra-essentials` — SSH from office, DNS, NTP) plus a per-service group (`web-prod`, `api-prod`) — combine the two on every web/api VM, edit one without touching the other.
+
+## IP-version mismatch — what if the group's rules are IPv4-only and the VM is IPv6-only (or vice versa)?
+
+A Firewall Group attaches to the VM's **public network interface**, not to a specific IP address. The same group covers both IPv4 and IPv6 traffic on that interface — but **only the rules whose source CIDR matches that traffic's family actually fire**:
+
+| Group rules | VM public IPs | What actually happens |
+|---|---|---|
+| IPv4 rules only (`0.0.0.0/0`, `1.2.3.0/24`) | Dual-stack (IPv4 + IPv6) | IPv4 traffic filtered by your rules. **IPv6 traffic falls through the group entirely** — only the system Default Firewall applies. Effectively, the VM is wide-open on IPv6 except for the 5 default-blocked Windows ports |
+| IPv4 rules only | IPv6-only VM | The group is **functionally a no-op**. None of your rules ever match IPv6 source addresses; only the Default Firewall is active. The dashboard lets you attach it but it does no work |
+| IPv6 rules only (`::/0`, `2001:db8::/32`) | IPv4-only VM | Same — group is a no-op, only the Default applies |
+| IPv6 rules only | Dual-stack | IPv6 filtered by your rules. **IPv4 wide-open** |
+| Mixed (both v4 and v6 source CIDRs) | Dual-stack | Both protocols filtered correctly |
+| Mixed | Single-stack VM | Only the rules matching the VM's actual IP family do anything |
+
+**The common mistake** is copying an IPv4-only template (`Web Server`, `Database`, `SSH from Office`) onto a dual-stack VM and assuming it locked the box down — IPv6 is still wide-open. Either:
+
+1. **Add the matching IPv6 source rows** to every inbound rule (`0.0.0.0/0` → also add `::/0`, `1.2.3.0/24` → also add the partner's IPv6 prefix), or
+2. **Don't attach an IPv6 to the VM at all** — auto-assign IPv4 only, or detach the existing IPv6 from the VM's Network tab. With no IPv6 on the interface there's nothing for unfiltered IPv6 rules to expose.
+
+For a real lockdown on a dual-stack VM, the safest pattern is: attach the group, then run `nmap -6 -Pn <ipv6-addr>` from outside to verify what's reachable on IPv6.
 
 ## What about VPC-only VMs?
 

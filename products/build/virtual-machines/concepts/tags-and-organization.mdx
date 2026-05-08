@@ -3,6 +3,8 @@ title: Tags & organization
 description: How VM tags, priorities, and Group by Tag let you organize many VMs without losing your mind
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 A tag is a free-form label you attach to a VM. Once you have more than a handful of VMs, tags become the primary tool for finding, filtering, and grouping them in the dashboard.
 
 ## What a tag is
@@ -84,6 +86,14 @@ Pick a convention before you have 20 VMs, not after:
 | `<stack>-<role>` | `raff-app-stack-web` | Logical stacks of related VMs |
 
 Keep tags orthogonal to hostnames: hostname says *what this server is*, tags say *which subset is this part of*.
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **Tags per VM** | **20** — covers any reasonable env / team / stack / project mix. If you're hitting it, you're probably encoding things in tags that should be separate metadata |
+| **Tag name characters** | Free-form text. Keep names short (5–20 chars) and consistent for fast filtering |
+| **Bulk tag operations** | Per-VM via the Add Tag dialog and `tags:set` action; the dashboard's bulk-select doesn't yet support a multi-VM tag-edit. Use [`raff vm tags set`](/reference/cli/vm#tags-set) on each VM in a script for fleet-wide changes |
 
 ## Related
 

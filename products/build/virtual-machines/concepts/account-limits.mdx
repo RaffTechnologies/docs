@@ -3,6 +3,8 @@ title: Account limits
 description: Per-account quotas that govern how many VMs and how much CPU/RAM you can run at once
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 Every account has soft caps on how many VMs and how much aggregate CPU and RAM it can hold simultaneously. These limits exist to keep the platform fair, prevent abuse (runaway scripts, mining), and give billing a safety net.
 
 ## What's limited
@@ -29,11 +31,21 @@ A `passive` VM holds its CPU, RAM, disk, and IP reservations on the hypervisor a
 
 ## Request a limit increase
 
-Quotas can be raised on request:
+Quotas can be raised on request. Standard turnaround is **24 hours** for limit-increase emails.
 
-- **Standard increases** — email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with your account ID, the limit you're hitting, and the workload you're planning. Most reasonable bumps are approved within a business day.
-- **Urgent increases** — if you're actively launching, in the middle of an incident, or have a time-sensitive workload, **contact support directly**. Mark the request as urgent in the subject and include the account ID and the deadline; support can lift quotas in real time when context warrants it.
+- **Standard increases** — email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with your account ID, the limit you're hitting, and the workload you're planning. Response within **24 hours** in business hours; reasonable bumps are typically approved on the same response.
+- **Urgent increases** — if you're actively launching, in the middle of an incident, or have a time-sensitive workload, **mark the request as urgent in the subject** and include the account ID and the deadline; support can lift quotas in real time when context warrants it.
 - **Planned bursts** — load tests, conferences, batch jobs, traffic events: give support a heads-up before the window so they can pre-stage the increase.
+
+What to put in the request:
+
+| Field | Example |
+|---|---|
+| Account ID | from the dashboard's account dropdown |
+| Current limit | "30 VMs / 250 GB RAM" |
+| Requested limit | "60 VMs / 500 GB RAM" |
+| Why | "Spinning up a CI fleet for a 2-week migration" |
+| Deadline (if any) | "Need by Monday — production cutover" |
 
 ## Related
 

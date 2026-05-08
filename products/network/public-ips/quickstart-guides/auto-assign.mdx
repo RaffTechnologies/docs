@@ -3,6 +3,8 @@ title: Auto-assign a public IP
 description: Give a VM that has no public IP a free address from the regional pool — IPv4 or IPv6, no commitment, returns to the pool when detached
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 When a VM doesn't have a public IP — usually because someone deleted it earlier, or the VM was created without one — the fastest way to give it one is **Auto-assign**. Raff picks an available address from the regional pool and attaches it. It's free while the VM holds it; if you detach it later, the IP goes back to the pool.
 
 This is the right path for "I just need this VM to be reachable from the internet, I don't care which IP it gets." If you need a stable address that doesn't change across VM rebuilds, [reserve an IP](/products/network/public-ips/quickstart-guides/reserve-ip) instead.
@@ -62,6 +64,17 @@ The dialog closes and the Public IPs list refreshes with the new IP under the VM
 
 - **While attached** — free, no billing
 - **When you detach or delete the VM** — the IP returns to the pool, *not* to your account. You won't get the same IP back if you auto-assign again.
+
+## When the pool is empty
+
+The "Available in pool" stat at the top of the Public IPs tab is a **per-region** count of free addresses the auto-assigner can hand out. If it shows **0** for your selected region:
+
+- The dialog will still open, but clicking **Assign IP** returns an error like *"No public IPs available in `us-east`. Please try again later or contact support."*
+- The IP type matters — IPv4 and IPv6 pools are tracked separately. Try the other type if your workload supports it (most modern OS images come up dual-stack on a fresh IPv6).
+- A pool can refill at any time as other tenants release IPs. The fastest practical recovery is to wait a few minutes and retry; failing that, [reserve an IP](/products/network/public-ips/quickstart-guides/reserve-ip) — reserved addresses come from a separate allocation path.
+- For sustained allocations (large fleets, scale-out events), email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) — pool capacity in `us-east` is monitored and expanded on demand.
+
+Because pools are region-scoped, switching the dashboard's region selector to a different region (when other regions launch) will show a different pool count and resolve the issue if a different region has capacity.
 
 ## When to use Auto-assign vs Reserve
 

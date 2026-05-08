@@ -3,6 +3,8 @@ title: Recover a locked-out VM
 description: Get back into a VM when SSH, RDP, or the OS itself has stopped letting you in
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 You'll lock yourself out eventually — a misedited `sshd_config`, a too-aggressive UFW rule, a broken `/etc/fstab`, a forgotten password. Raff gives you five recovery paths, ordered from least to most destructive. **Try them in order.**
 
 ## 1. Power off, then power on — try this first
@@ -76,8 +78,9 @@ If the boot fails before you can log in (broken `/etc/fstab`, missing kernel mod
 3. Highlight the default kernel entry and press `e` to edit.
 4. Find the line beginning `linux …` (it's long). Move to the end with `End` or `Ctrl-E`.
 5. Append one of:
-   - **Ubuntu / Debian:** ` single`
-   - **Most distros — emergency root shell:** ` init=/bin/bash`
+   - **Ubuntu / Debian:** ` single` — boots normally up to single-user mode; networking and most services off, root shell after entering the password
+   - **Most distros — emergency root shell with init:** ` init=/bin/bash` — skips most of init; minimal environment but works when systemd itself is broken
+   - **Hard fallback when even init=/bin/bash fails:** ` init=/bin/sh` — the most minimal recovery shell; useful when `/bin/bash` is missing or symlinked to a broken binary, or when libc itself is in a bad state. Works on virtually any broken system as long as the kernel can find `/bin/sh`
 6. Press `Ctrl-X` (or `F10`) to boot.
 
 You land at a root shell with the root filesystem mounted **read-only**. To make changes:
@@ -104,7 +107,57 @@ reboot -f
 
 The VM should boot normally.
 
-## 4. Factory reset — when you can't fix the OS in place
+## 4. Windows recovery — Safe Mode, WinRE, and Ctrl-Alt-Del
+
+The Linux paths above use GRUB's interactive menu — Windows has its own equivalents. **All of them go through the [browser console](/products/build/virtual-machines/quickstart-guides/open-browser-console)** because the VM's network is the thing you're trying to recover from.
+
+Open the console (VM detail page → **Console** button) and reboot the VM with one of:
+
+- **Power tab** → **Restart** in the dashboard
+- Inside the console: **Special-keys menu → Ctrl-Alt-Delete** (sends the chord through NoVNC since your browser intercepts the literal combo)
+
+Then you have three Windows-specific recovery paths:
+
+### Safe Mode
+
+Boot the VM into Windows with only essential drivers and services — the standard repair environment for "Windows boots but is unstable" (recent driver, recent update, login loop).
+
+1. **Reboot the VM** from the dashboard or via Ctrl-Alt-Del in the console
+2. Watch the console — as soon as the BIOS POST clears and you see the Windows logo, **immediately tap F8** repeatedly via the console keyboard. Some Windows versions need **Shift+F8** or **F11**; if F8 doesn't bring up the boot menu after a couple of tries, reboot and try Shift+F8 next time
+3. The **Advanced Boot Options** menu appears — pick **Safe Mode** (network-disabled) or **Safe Mode with Networking** (if you want SSH/agent access from inside Safe Mode for tooling)
+4. Sign in with the local Administrator account
+
+From Safe Mode you can uninstall a problem driver, roll back a Windows Update, disable a service that's preventing login, or run `sfc /scannow` to repair system files. Reboot normally when done.
+
+### WinRE — Windows Recovery Environment
+
+WinRE is the more powerful recovery layer — Startup Repair, System Restore, Command Prompt, Reset This PC. Three ways to reach it:
+
+| Path | When to use |
+|---|---|
+| **Three-failed-boot trigger** | Force-power-cycle the VM 3 times in a row (interrupt the boot before Windows finishes loading). On the 4th boot, Windows enters WinRE automatically. From the console: hold the dashboard's **Restart** action through 3 partial boots, then let it boot — WinRE shows up |
+| **F11 at boot** | On most Windows Server versions, **tap F11** during the Windows logo screen via the console keyboard. The Advanced Startup options appear |
+| **From inside Windows** | Settings → System → Recovery → **Advanced startup → Restart now**. Useful when Windows still boots but is misbehaving |
+
+WinRE's **Command Prompt** is where most repair work happens — `bootrec /fixmbr`, `bootrec /rebuildbcd`, `chkdsk /f`, `dism` to repair Windows components. **Startup Repair** does these automatically for the common cases.
+
+### Reset password
+
+For "I can sign in but I forgot the Administrator password" or "RDP works but auth keeps failing":
+
+The dashboard's **[Reset password](/products/build/virtual-machines/quickstart-guides/reset-password)** action handles this without any console / WinRE work — it sets a new Administrator password through the hypervisor's CONTEXT mechanism on the next reboot. Far simpler than booting into WinRE to manually edit the SAM hive.
+
+### Console session limit during recovery
+
+The browser console has a **1-hour session timeout**. Long Windows recoveries (DISM repair, full chkdsk, restoring from a system image) can run past that. If your session expires mid-recovery:
+
+- The recovery operation **continues running** inside the VM — your VNC viewer disconnected, but the OS isn't affected
+- **Close the console tab and re-open from the VM detail page** to get a fresh 1-hour session
+- Reconnect picks up wherever Windows is — same screen, same keyboard
+
+Plan for this: trigger the recovery operation, note the time, and reconnect every ~50 minutes to monitor progress.
+
+## 5. Factory reset — when you can't fix the OS in place
 
 [Factory reset](/products/build/virtual-machines/quickstart-guides/factory-reset) wipes the OS disk and reinstalls the **same** OS template fresh. Crucially, **factory reset preserves**:
 
@@ -115,7 +168,7 @@ The VM should boot normally.
 
 If your important data lives on attached volumes — not the OS disk — factory reset is fast and clean. If your data is on the OS disk, **don't** factory reset until you've tried path 4.
 
-## 5. Restore from backup via support
+## 6. Restore from backup via support
 
 If the OS disk is unrecoverable and your data was on it:
 

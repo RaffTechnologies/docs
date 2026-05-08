@@ -3,6 +3,8 @@ title: Update rules in a Firewall Group
 description: Open Edit Firewall Group from the row menu to change a group's name, description, inbound rules, or outbound rules — same dialog as Create, just prefilled with the existing rule set
 ---
 
+<sub>Updated May 8, 2026</sub>
+
 Edit Firewall Group is how you change anything about an existing custom Firewall Group — its name, description, inbound rules, or outbound rules. The dialog is the **same one used to create the group**, just prefilled with the current rule set; there's no separate read-only view. Use this page to modify a group that's already attached to one or more VMs without detaching it.
 
 <Warning>
@@ -13,7 +15,7 @@ Edit Firewall Group is how you change anything about an existing custom Firewall
 
 In **Networking → Firewall**, find the Firewall Group's row and click the `⋮` menu → **Edit Rules**.
 
-You can also reach Edit Rules from the [API Keys list](/products/manage/team-access/quickstart-guides/generate-api-key) — wait, scratch that. Edit Rules opens only from the **Firewall Groups list row** — not from the VM detail page (which only shows attach/detach), and not from the system Default Firewall (which is read-only and shows **View Rules** instead).
+You can also reach Edit Rules from the [API Keys list](/products/manage/team-projects/quickstart-guides/generate-api-key) — wait, scratch that. Edit Rules opens only from the **Firewall Groups list row** — not from the VM detail page (which only shows attach/detach), and not from the system Default Firewall (which is read-only and shows **View Rules** instead).
 
 ## The Edit Firewall Group dialog
 
@@ -80,7 +82,7 @@ This is the right pattern for **staging rule changes before production**: edit t
 
 ## Audit logging
 
-Every edit produces an `apikey.regenerated`-style audit-log entry — wait, that's API keys. Firewall edits log as `firewall.updated` (or the equivalent) capturing:
+Every edit produces an audit-log entry (in `<resource>.<verb>` form, e.g. `securitygroup.update`) capturing:
 
 - Who made the change (member ID + name, or API key ID)
 - When

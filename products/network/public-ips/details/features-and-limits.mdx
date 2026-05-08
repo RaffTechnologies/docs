@@ -3,6 +3,8 @@ title: Features & limits
 description: Public IP features, IPv4/IPv6 support, pricing for auto-assigned and reserved IPs, regional pools, and per-VM and per-account limits
 ---
 
+<sub>Updated May 6, 2026</sub>
+
 ## Features
 
 ### Address families
@@ -39,10 +41,12 @@ See [Auto-assigned vs reserved](/products/network/public-ips/concepts/reserved-v
 | **Auto-assigned, detached** | N/A — auto-assigned IPs are never detached without being released |
 | **Reserved IPv4** (attached or unattached) | **\$3.00 / month** (\$0.0069/hr) |
 | **Reserved IPv6** (attached or unattached) | **\$1.00 / month** (\$0.0023/hr) |
-| **Yearly lock-in** | \$36/yr (IPv4) / \$12/yr (IPv6) — same per-month rate |
-| **24-month lock-in** | \$72/2yr (IPv4) / \$24/2yr (IPv6) — same per-month rate |
+| **Yearly lock-in** | \$36/yr (IPv4) / \$12/yr (IPv6) |
+| **24-month lock-in** | \$72/2yr (IPv4) / \$24/2yr (IPv6) |
 | **Additional IPs beyond the dashboard limit** (support-only) | Same per-IP rate by family — IPv4 \$3/mo, IPv6 \$1/mo |
 | **Gateway IPs** (Platform Router, Firewall Appliance WAN) | Free with Platform Router; rolled into Firewall Appliance VM price |
+
+Yearly and 24-month durations are the **same effective per-month price as monthly** — they lock the rate (no surprise increases) but offer no volume discount today. For the picker walkthrough, see [Reserve a static IP → Billing Period](/products/network/public-ips/quickstart-guides/reserve-ip#3-billing-period).
 
 Reserved IPs accrue continuously whether attached or not. If you delete a reserved IP mid-cycle, the unused days are credited back to your account balance — same prorated-on-delete model as VMs and volumes. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
 

@@ -1,0 +1,74 @@
+---
+title: "Install the Raff CLI"
+description: "Install the raff binary via go install, build from source, or download a release. Single static Go binary; supports macOS, Linux, and Windows."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+The Raff CLI is a single static binary written in Go. There are three ways to install it.
+
+## Option 1 — `go install` (recommended for Go users)
+
+If you have Go 1.25+ on your system, this is the fastest path:
+
+```bash
+go install github.com/rafftechnologies/raff-cli/cmd/raff@latest
+```
+
+The binary lands in `$(go env GOPATH)/bin/raff`. Make sure that directory is in your `PATH`:
+
+```bash
+# macOS / Linux — add to your shell rc
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+Verify:
+
+```bash
+raff --version
+```
+
+To upgrade later, re-run the same `go install` command.
+
+## Option 2 — Build from source
+
+```bash
+git clone https://github.com/rafftechnologies/raff-cli.git
+cd raff-cli
+make install
+```
+
+Requires Go 1.25+. The `make install` target builds and copies the binary to `$(go env GOPATH)/bin`. Use `make build` instead if you want the binary in `./bin/raff` without installing globally.
+
+## Option 3 — Download a release binary
+
+Pre-built binaries for macOS (arm64, amd64), Linux (amd64, arm64), and Windows (amd64) are published to the [Releases page](https://github.com/rafftechnologies/raff-cli/releases) on each version bump.
+
+```bash
+# Example — macOS arm64
+curl -L https://github.com/rafftechnologies/raff-cli/releases/latest/download/raff-darwin-arm64 -o raff
+chmod +x raff
+sudo mv raff /usr/local/bin/raff
+```
+
+Adapt the URL for your platform.
+
+## Verify installation
+
+```bash
+raff --version
+raff --help
+```
+
+You should see the version and the top-level command list.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configure" icon="gear" href="/reference/cli/configure">
+    Set up your API key and default project.
+  </Card>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Start using the CLI to manage Virtual Machines.
+  </Card>
+</CardGroup>

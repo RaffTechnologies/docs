@@ -1,0 +1,159 @@
+---
+title: "raff_vm"
+description: "Manage Raff Virtual Machines with Terraform — pick template, plan, region, SSH keys, optional VPC and backup schedule. Required: name, template_id, pricing_id, region. Resizing is in-place via pricing_id change."
+---
+
+<sub>Updated May 8, 2026</sub>
+
+Manages a Raff **Virtual Machine** — Linux or Windows, with NVMe SSD disks, optional SSH keys / password, optional VPC attachment, and optional backup schedule. Pricing plans range from $3.99/mo (Premium 1 vCPU / 1 GiB) to $511.99/mo (Premium 32 vCPU / 128 GiB) — see the [Pricing page](/products/build/virtual-machines/details/pricing) for the full list.
+
+## Example — minimal
+
+```hcl
+resource "raff_vm" "web" {
+  name        = "web-01"
+  template_id = "<ubuntu-2404-template-uuid>"
+  pricing_id  = 9                 # Standard 2 vCPU / 4 GiB / 50 GiB ($4.99/mo)
+  region      = "us-east"
+  ssh_keys    = ["<ssh-key-id>"]
+}
+```
+
+## Example — full
+
+```hcl
+resource "raff_vm" "api" {
+  name        = "api-prod-01"
+  template_id = "<ubuntu-2404-template-uuid>"
+  pricing_id  = 10                  # Standard 4 vCPU / 8 GiB / 120 GiB
+  region      = "us-east"
+
+  # Auth — pick one
+  ssh_keys = ["<ssh-key-id-alice>", "<ssh-key-id-ci>"]
+  # password = var.vm_root_password   # alternative
+
+  # Extra block storage (in addition to the plan's base disk)
+  extra_storage      = 100   # GiB
+  extra_storage_type = "ext4"
+
+  # Backups
+  backup_type = "daily"
+  backup_time = "3am"
+  # backup_date = "Saturday"  # only used when backup_type = "weekly"
+
+  # Networking — opt into a shared VPC
+  vpc_id = raff_vpc.prod.id   # if vpc resource is added later
+
+  # Or create a VPC inline at the same time
+  # vpc_name = "prod-services"
+  # vpc_cidr = "10.7.0.0/24"
+
+  # Tags
+  tags = ["api", "prod", "team-platform"]
+
+  # Cleanup behavior on destroy
+  volume_action = "detach"   # "detach" (preserves volumes) or "delete"
+  delete_vpc    = false      # whether to delete attached VPC on destroy
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | VM name. Changing this renames the VM in place |
+| `template_id` | string (UUID) | OS template to install. Get from [List Templates](/api-reference/catalog/list-templates) |
+| `pricing_id` | int | Plan ID (1–13). Changing this **resizes** the VM (compute and storage). See [Pricing](/products/build/virtual-machines/details/pricing) for the full plan list |
+| `region` | string | Data center region — currently `us-east` only |
+
+### Optional — auth
+
+| Argument | Type | Description |
+|---|---|---|
+| `ssh_keys` | list(string) | SSH key IDs to install. Get key IDs from the dashboard's SSH Keys page |
+| `password` | string | Root (Linux) or Administrator (Windows) password. Mutually exclusive with `ssh_keys` for some templates |
+
+### Optional — storage
+
+| Argument | Type | Description |
+|---|---|---|
+| `extra_storage` | int | Extra block storage in GB, attached as a separate volume |
+| `extra_storage_type` | string | Filesystem for the extra volume — `ext4`, `xfs`, or `btrfs` (Linux) |
+
+### Optional — backups
+
+| Argument | Type | Description |
+|---|---|---|
+| `backup_type` | string | `none` (default), `daily`, or `weekly` |
+| `backup_time` | string | When the backup runs, e.g. `3am`, `8pm` (UTC) |
+| `backup_date` | string | Day of the week for weekly backups, e.g. `Saturday` |
+
+### Optional — networking
+
+| Argument | Type | Description |
+|---|---|---|
+| `vpc_id` | string (UUID) | Attach the VM to an existing VPC |
+| `vpc_name` | string | Create a new VPC inline at the same time as the VM (requires `vpc_cidr`) |
+| `vpc_cidr` | string | CIDR for the inline-created VPC. Allowed prefixes `/16`–`/28`, RFC 1918 + RFC 6598 ranges |
+
+### Optional — tags and lifecycle
+
+| Argument | Type | Description |
+|---|---|---|
+| `tags` | list(string) | Tags applied to the VM |
+| `volume_action` | string | On `terraform destroy`: `detach` (keep volumes, default) or `delete` (remove with the VM) |
+| `delete_vpc` | bool | On `terraform destroy`: also delete attached VPCs (subject to shared-VPC safety — see [Delete a VM](/products/build/virtual-machines/quickstart-guides/delete-vm)) |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | VM UUID |
+| `status` | Lifecycle state (`active`, `passive`, `provisioning`, etc.) |
+| `cpu` | Number of vCPUs (mirrors the chosen `pricing_id`) |
+| `ram` | RAM in GB |
+| `storage` | Base disk size in GB |
+| `added_storage` | Extra storage in GB (mirrors `extra_storage`) |
+| `total_storage` | Sum of base + added |
+| `template_name` | OS template name |
+| `template_version` | OS version (e.g. `24.04`) |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates VM, waits for `active` status, returns the UUID |
+| Change `name` | In-place rename |
+| Change `pricing_id` | **In-place resize** — VM reboots once. Plan compares old vs new, charge prorates against the current term |
+| Change `template_id` | **Reinstall** — wipes the OS disk, preserves attached volumes / IP / VPC / tags. See [Reinstall](/products/build/virtual-machines/quickstart-guides/reinstall) |
+| Change `region` | **Replacement** — Terraform destroys and recreates (regions are immutable on a VM) |
+| Change `tags`, `backup_*` | In-place updates |
+| `terraform destroy` | Deletes the VM. Volumes preserved by default (`volume_action = "detach"`); set to `"delete"` to also remove. VPCs preserved unless `delete_vpc = true` |
+
+## Importing existing VMs
+
+```bash
+terraform import raff_vm.web <vm-uuid>
+```
+
+Then write a matching `resource` block. Run `terraform plan` to confirm.
+
+## Permissions
+
+The API key used by Terraform needs `vm.create`, `vm.manage`, `vm.power`, and (for destroy) `vm.delete` in the project where the VM lives. The System role `Project Admin` grants all of these. For tighter-scoped automation, build a [Custom role](/products/manage/team-projects/concepts/roles-and-api-keys#custom-roles--when-to-build-one) with just the project-domain VM permissions you need.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_project" icon="folder" href="/reference/terraform/raff_project">
+    Project resource — set on raff_vm via project_id.
+  </Card>
+  <Card title="VM Pricing" icon="circle-dollar" href="/products/build/virtual-machines/details/pricing">
+    The full Standard / Premium plan list with pricing IDs.
+  </Card>
+  <Card title="Create a VM" icon="server" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
+    Dashboard equivalent — useful for understanding fields.
+  </Card>
+</CardGroup>

@@ -1,38 +1,137 @@
 ---
 title: OS templates
-description: Operating system images available for new VMs
+description: The Linux distros, BSD, and Windows Server images Raff provides at VM creation, plus the marketplace one-click apps that install software on top
 ---
 
-An **OS template** is a pre-built operating system image you select at VM creation. Templates determine the OS, kernel, and base packages on the VM's disk before any user data is written.
+<sub>Updated May 6, 2026</sub>
 
-## Stock templates
+An **OS template** is the pre-built operating system image you select when creating a VM. The template determines what's on the VM's disk **before** any of your code or config runs — kernel, init system, package manager, base packages, default users.
 
-Raff provides templates for major Linux distributions and Windows Server. The current set is returned by [List Templates](/api-reference/catalog/list-templates):
+Two kinds of templates ship with the platform:
 
-- Ubuntu (LTS releases)
-- Debian
-- CentOS / Rocky / AlmaLinux
-- Windows Server
+| Type | What it is |
+|---|---|
+| **OS** | A clean operating system (Ubuntu, Debian, Rocky, Windows Server, etc.). You install your software after the VM boots |
+| **Marketplace** | An OS template + pre-installed software, ready to use after the credentials prompt at create-time (Docker, WordPress, OPNsense, n8n, OpenClaw) |
 
-Each template has a UUID — the value you pass as `template_id` when creating a VM.
+Beyond these you can [save your own VM as a Custom Image](/products/build/virtual-machines/concepts/custom-images) and reuse it like an OS template.
 
-## Custom images
+## OS templates available today (`us-east`)
 
-You can save a configured VM's disk as a reusable custom image and create new VMs from it. This is the recommended way to:
+All Linux templates ship with `cloud-init` already configured for Raff's CONTEXT-disk pattern (SSH key + password injection at first boot). All Windows templates ship with `cloudbase-init` for the same.
 
-- Promote a VM from one region to another
-- Standardize a base configuration across many VMs
-- Roll back to a known-good state via reinstall
+### Ubuntu
 
-See [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image).
+| Version | When to pick |
+|---|---|
+| **Ubuntu 24.04** (LTS, x64) | **Recommended for new Linux workloads** — current LTS, supported through April 2029 |
+| **Ubuntu 22.04** (LTS, x64) | Existing fleets running 22.04. Supported through April 2027 |
+| **Ubuntu 20.04** (LTS, x64) | Legacy workloads only — 20.04 LTS standard support ended April 2025; still bootable for migrations |
+| **Ubuntu 24.10** (x64) | Interim release. Pick only if you specifically need newer kernel / userland features and are OK with the shorter support window |
+
+### Debian
+
+| Version | When to pick |
+|---|---|
+| **Debian 13** (x64) | Current stable. Pick this for new Debian workloads |
+| **Debian 12** (x64) | Previous stable, oldstable. Still widely used; pick when matching an existing fleet |
+| **Debian 11** (x64) | Legacy. Long-term support phase only |
+
+### RHEL family — AlmaLinux, Rocky Linux, CentOS Stream
+
+Three RHEL-compatible distros covering the same surface — same `dnf`/`rpm` ecosystem, same SELinux defaults, same admin patterns. Pick whichever fits your shop's preference.
+
+| Version | Notes |
+|---|---|
+| **AlmaLinux 9**, **Rocky Linux 9** | Recommended RHEL-9-compatible pick. Both are downstream rebuilds; effectively identical for most workloads |
+| **AlmaLinux 8**, **Rocky Linux 8** | RHEL-8-compatible. Use for matching existing RHEL 8 fleets |
+| **CentOS 9 Stream** (x64) | Upstream of RHEL — useful for testing what's coming in RHEL next; not recommended as a long-term production base since it's a rolling-release variant |
+
+### Fedora
+
+| Version | When to pick |
+|---|---|
+| **Fedora 42** (x64) | Latest. Newest userland and kernel; ~13-month support window |
+| **Fedora 41**, **Fedora 40** | Earlier Fedora releases for matching existing fleets |
+
+### Alpine
+
+| Version | When to pick |
+|---|---|
+| **Alpine 3.21** | Latest. Tiny base image (~5 MB), musl libc, ideal for container hosts and resource-constrained workloads |
+| **Alpine 3.20** | Previous release |
+
+Alpine is **not glibc-compatible** — some prebuilt binaries (Java, Node native modules, proprietary databases) don't run without rebuilding for musl. Pick another distro if your stack expects glibc.
+
+### Other Unix-like
+
+| Template | Notes |
+|---|---|
+| **OpenSUSE 15** | RPM-based with `zypper`; popular in European shops and SUSE-trained ops teams |
+| **FreeBSD 14** | Real BSD (not Linux) — different kernel, different package manager (`pkg`), `jails` instead of containers. Pick for ZFS workloads, network appliances, or BSD-shop preference |
+
+### Windows Server
+
+| Version | Edition | When to pick |
+|---|---|---|
+| **Windows Server 2025** | **Datacenter** | Newest, full feature set. Pick for production Windows workloads needing the latest |
+| **Windows Server 2025** | Standard | Most production Windows VMs. Cheaper-equivalent licensing than Datacenter |
+| **Windows Server 2022** | **Datacenter** | One generation back, full feature set |
+| **Windows Server 2022** | Standard | One generation back, mainstream |
+| **Windows Server 2019** | Standard | Legacy fleets. Mainstream support has ended; extended support to 2029 |
+
+**Datacenter vs Standard:** Datacenter unlocks Storage Spaces Direct, Software-Defined Networking, and unlimited Hyper-V VM hosting — features most cloud-VM customers don't need. **Pick Standard unless you specifically need a Datacenter feature.**
+
+## Marketplace templates
+
+Pre-installed apps on top of an OS image — usable straight after first boot once you fill in any credential fields the dialog asks for.
+
+| Template | Category | What it provides |
+|---|---|---|
+| **Docker on Ubuntu 24.04** | DevOps & Containers | Latest Docker Engine + Compose, ready to run containers immediately |
+| **WordPress on Ubuntu 24.04** | CMS and Website Platforms | WordPress + MySQL preconfigured. Asks for the MySQL root password and WordPress DB password at create-time |
+| **n8n on Ubuntu 24.04** | Automation & Workflow | n8n workflow automation engine, accessible via `http://<vm-ip>` after boot |
+| **OPNsense 26.1** | Network & Security | OPNsense firewall appliance — also surfaced as the [VPC Firewall Appliance gateway option](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) |
+| **OpenClaw on Ubuntu 24.04** | AI & Machine Learning | DevOps-focused AI agent — connects to an LLM provider, optionally to Telegram / Discord / Slack |
+
+Marketplace templates each ship a Get-Started **Guides** entry (linked from the VM detail page) that walks through first use.
+
+## Custom Images
+
+Beyond stock and marketplace, you can save any VM's OS disk as a **Custom Image** for reuse. This is how you:
+
+- Bake your own gold image with your packages / configs / certificates pre-installed
+- Roll back to a known-good state by reinstalling from a snapshot-saved image
+- Standardize a baseline across many VMs in your account
+
+See [Save VM disk as image](/api-reference/endpoint/save-vm-disk-as-image) for the API call. Custom Images appear under their own filter in the create-VM dialog's template picker.
+
+## Picking a template
+
+A short decision flow:
+
+| Need | Template |
+|---|---|
+| **General-purpose Linux**, recent LTS | **Ubuntu 24.04 LTS** |
+| **Stable, conservative Linux**, RHEL-shop preference | **AlmaLinux 9** or **Rocky Linux 9** |
+| **Stable Linux**, Debian preference | **Debian 13** |
+| **Tiny container host** | **Alpine 3.21** |
+| **Windows production workload** | **Windows Server 2025 Standard** |
+| **Match an existing fleet** | Same template + version that fleet runs |
+| **Pre-installed app** (Docker, WordPress, OPNsense, etc.) | The matching **Marketplace** template |
+
+If you don't have a strong preference, **start with Ubuntu 24.04 LTS** — broadest community support, recent kernel, current LTS through 2029.
 
 ## Related
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="Create a VM" icon="plus" href="/products/build/virtual-machines/quickstart-guides/create-a-vm">
     Pick a template and launch.
   </Card>
   <Card title="Reinstall a VM" icon="arrow-rotate-left" href="/products/build/virtual-machines/quickstart-guides/reinstall">
-    Re-image a VM with a different template.
+    Re-image with a different template.
+  </Card>
+  <Card title="Custom images" icon="copy" href="/products/build/virtual-machines/concepts/custom-images">
+    Save a configured VM as a reusable image.
   </Card>
 </CardGroup>
