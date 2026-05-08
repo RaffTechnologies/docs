@@ -56,7 +56,7 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
 ## Saving and editing
 
 <AccordionGroup>
-  <Accordion title="Save fails with "invalid port format"">
+  <Accordion title="Save fails with `invalid port format`">
     **What's happening:** the Ports field has a value the validator rejects.
 
     **Common mistakes:**
@@ -70,7 +70,7 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
     | A range with the second port lower than the first (e.g. `4000:3000`) | Reorder — `3000:4000` |
   </Accordion>
 
-  <Accordion title="Save fails with "invalid CIDR"">
+  <Accordion title="Save fails with `invalid CIDR`">
     **What's happening:** the Source / Destination IP field has a value the validator rejects.
 
     **Common mistakes:**
@@ -84,7 +84,7 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
     | A hostname (e.g. `office.example.com`) | Resolve to IP yourself; CIDR field doesn't accept names |
   </Accordion>
 
-  <Accordion title="Save fails with "too many rules"">
+  <Accordion title="Save fails with `too many rules`">
     **Limit:** **40 inbound rules + 40 outbound rules** per Firewall Group.
 
     **Fix:**
@@ -93,7 +93,7 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
     - **Use a Firewall Appliance** (OPNsense) inside a VPC for unlimited rule complexity; the public Default + your group apply to the public interface; OPNsense applies to anything routed through the VPC
   </Accordion>
 
-  <Accordion title="Save fails with "name already exists"">
+  <Accordion title="Save fails with `name already exists`">
     **Fix:** Firewall Group names are unique per account. Pick a different name. Renaming an existing group doesn't free its name for a new group while it exists — but if you're trying to delete-and-recreate, the name is freed once the old group is deleted.
   </Accordion>
 </AccordionGroup>

@@ -8,7 +8,7 @@ The most-seen issues with Raff public IPs and the fix that resolves each. Most c
 ## Auto-assign and reserve
 
 <AccordionGroup>
-  <Accordion title="Auto-assign returns "no IPs available in pool"">
+  <Accordion title="Auto-assign returns `no IPs available in pool`">
     **What's happening:** the regional pool's **Available in pool** stat is zero. The auto-assigner can't hand out an address it doesn't have.
 
     **Fix:**
@@ -88,7 +88,7 @@ The most-seen issues with Raff public IPs and the fix that resolves each. Most c
 ## Move and attach
 
 <AccordionGroup>
-  <Accordion title="Reserved IP can't be attached — "VM already has IPv4"">
+  <Accordion title="Reserved IP can't be attached — `VM already has IPv4`">
     **What's happening:** the target VM already holds a public IP of the same family. Raff allows only one IPv4 and one IPv6 per VM from the dashboard.
 
     **Fix:**
