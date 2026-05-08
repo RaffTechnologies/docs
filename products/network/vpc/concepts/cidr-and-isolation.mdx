@@ -3,7 +3,7 @@ title: VXLAN, CIDR, and isolation
 description: How Raff VPCs are isolated — every VPC is its own VXLAN segment with a unique VNI, which is why two VPCs can use the same CIDR and still never see each other
 ---
 
-<sub>Updated May 6, 2026</sub>
+<sub>Updated May 8, 2026</sub>
 
 A Raff VPC is a **VXLAN segment**. That's the one fact that explains everything else on this page — the CIDR rules, the overlap behavior, the MTU, the per-region scope. Read this once and the rest of the product makes sense.
 

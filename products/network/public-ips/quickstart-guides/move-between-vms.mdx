@@ -3,7 +3,7 @@ title: Move a reserved IP between VMs
 description: Detach a reserved public IP from one VM, attach it to another, without changing the IP itself — useful for blue/green deploys, failover, and partner-whitelist preservation
 ---
 
-<sub>Updated May 6, 2026</sub>
+<sub>Updated May 8, 2026</sub>
 
 A **reserved IP** can be moved from one VM to another without changing the address. Detach it from VM A, attach it to VM B — the IP stays the same, your DNS records stay valid, partner whitelists stay correct, and the only thing that changes is which server traffic lands on. This is the standard pattern for blue/green deploys, manual failover, and "promote a candidate VM by repointing the IP" workflows.
 
