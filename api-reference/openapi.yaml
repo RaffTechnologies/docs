@@ -10,7 +10,7 @@ info:
     ### API Key Authentication
     Include your API key in the `X-API-Key` header:
       ```
-      curl -H "X-API-Key: YOUR_API_KEY" https://api.raffcomputing.com/api/v1/vms
+      curl -H "X-API-Key: YOUR_API_KEY" https://api.rafftechnologies.com/api/v1/vms
       ```
 
     ## Catalog
@@ -29,8 +29,6 @@ info:
     url: https://rafftechnologies.com
 
 servers:
-  - url: https://api.raffcomputing.com
-    description: Local
   - url: https://api.rafftechnologies.com
     description: Production
 

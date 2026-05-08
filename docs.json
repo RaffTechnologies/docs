@@ -13,7 +13,7 @@
     "dark": "/logo/dark.svg"
   },
   "api": {
-    "baseUrl": "https://api.raffcomputing.com",
+    "baseUrl": "https://api.rafftechnologies.com",
     "auth": {
       "method": "key",
       "name": "X-API-Key"
