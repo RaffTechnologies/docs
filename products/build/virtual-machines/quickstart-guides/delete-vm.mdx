@@ -29,7 +29,7 @@ If you only care about specific files (not the whole VM), back them up to [Objec
 Open the VM detail page, click the **Destroy** tab (last tab in the secondary nav).
 
 <Frame>
-  ![VM detail page Destroy tab with the permanent-action warning and the red Destroy VM button](/images/products/build/virtual-machines/delete-vm-01-destroy-tab.png)
+  ![VM detail page Destroy tab with the permanent-action warning and the red Destroy VM button](/images/products/build/vm/delete/delete-vm-01-destroy-tab.png)
 </Frame>
 
 Click the red **Destroy VM** button to start the two-step confirmation.
@@ -39,7 +39,7 @@ Click the red **Destroy VM** button to start the two-step confirmation.
 Open the row's **⋮** menu and pick **Destroy** (in red, at the bottom).
 
 <Frame>
-  ![Instance list row Actions menu showing Destroy in red at the bottom](/images/products/build/virtual-machines/connect-via-ssh-01-actions-menu.png)
+  ![Instance list row Actions menu showing Destroy in red at the bottom](/images/products/build/vm/connect/connect-via-ssh-01-actions-menu.png)
 </Frame>
 
 This redirects you to the **Destroy** tab on the VM detail page — same confirmation flow as path **a**.
@@ -49,7 +49,7 @@ This redirects you to the **Destroy** tab on the VM detail page — same confirm
 In the Instances list, tick the checkbox on multiple VM rows. The bulk toolbar at the top shows **Delete Selected**.
 
 <Frame>
-  ![Instance list with two VMs checked and the bulk toolbar showing Stop 2 and Delete Selected](/images/products/build/virtual-machines/manage-power-02-bulk-select.png)
+  ![Instance list with two VMs checked and the bulk toolbar showing Stop 2 and Delete Selected](/images/products/build/vm/manage/manage-power-02-bulk-select.png)
 </Frame>
 
 Bulk delete uses the **same two-step confirmation** described below — the volume / VPC handling choices you make apply to **every** VM in the selection.
@@ -59,7 +59,7 @@ Bulk delete uses the **same two-step confirmation** described below — the volu
 A "Destroy VM" dialog opens. Type the VM's exact name to enable the **Confirm** button.
 
 <Frame>
-  ![Destroy VM dialog with the VM name field, a confirmation text input, and a Subscription Billing notice that remaining days return to your account balance](/images/products/build/virtual-machines/delete-vm-02-confirm-name.png)
+  ![Destroy VM dialog with the VM name field, a confirmation text input, and a Subscription Billing notice that remaining days return to your account balance](/images/products/build/vm/delete/delete-vm-02-confirm-name.png)
 </Frame>
 
 Two things on this screen:
@@ -74,7 +74,7 @@ Click **Confirm** to advance to step 2.
 The "Final Confirmation" dialog asks you to decide what happens to **attached volumes** and **attached VPCs** *along with* the VM. This is the part most users miss the first time — the choices you make here are made together with the VM destroy, in one operation.
 
 <Frame>
-  ![Final Confirmation dialog showing what will be deleted, attached volumes block, attached VPCs block with Keep VPCs and Delete VPCs (recommended) options, and a red Destroy VM button](/images/products/build/virtual-machines/delete-vm-03-final-confirmation.png)
+  ![Final Confirmation dialog showing what will be deleted, attached volumes block, attached VPCs block with Keep VPCs and Delete VPCs (recommended) options, and a red Destroy VM button](/images/products/build/vm/delete/delete-vm-03-final-confirmation.png)
 </Frame>
 
 ### Attached volumes
