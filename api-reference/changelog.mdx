@@ -40,6 +40,9 @@ All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progre
 - 🟢 **Added** — **API Keys** — `GET/POST /api/v1/api-keys`, `GET/PATCH/DELETE /api/v1/api-keys/{id}`, `POST /api/v1/api-keys/{id}/regenerate`. Full secret only returned once at create or regenerate.
 - 🟢 **Added** — **Invitations** — `POST /api/v1/invitations` (account), `POST /api/v1/projects/{id}/invitations` (project), `DELETE /api/v1/invitations/{id}` (cancel). Public spec deliberately omits `Invitation.token` since it's the acceptance secret.
 
+**Cross-cutting — wire/spec alignment**
+- 🔴 **Removed** — `vm_id` from VM responses, `vnet_id` / `vxlan_vni` / `router_vm_id` from VPC responses, `ip_group_id` / `subnet_id` / `vm_id` from floating IP responses, `network_id` / `mac` / `bridge` / `vxlan_vni` from VM network interface responses, and the legacy top-level `project_id` / `project_name` from API key responses. All are OpenNebula internal identifiers that the public spec already hid; the gateway response now matches the spec.
+
 ### April 30, 2026
 
 **Virtual Machines — API**

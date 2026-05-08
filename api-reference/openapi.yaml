@@ -1153,7 +1153,8 @@ paths:
       tags:
         - Networking
       summary: Get VPC
-      description: Get details of a single VPC.
+      description: |
+        Get details of a single VPC. The response wraps the core VPC fields under `data.vpc` and includes additional detail fields (`ip_range_start`, `ip_range_end`, `leases`) at the same level.
       operationId: getVPC
       parameters:
         - $ref: '#/components/parameters/VPCIDPath'
@@ -1169,7 +1170,7 @@ paths:
                   success:
                     type: boolean
                   data:
-                    $ref: '#/components/schemas/VPC'
+                    $ref: '#/components/schemas/VPCDetail'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -4739,6 +4740,44 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    VPCDetail:
+      type: object
+      description: |
+        Detail wrapper returned by `GET /api/v1/vpcs/{id}`. Contains the core VPC under `vpc`, plus the configured IP range and the current set of IP leases (one entry per attached network interface).
+      required:
+        - vpc
+      properties:
+        vpc:
+          $ref: '#/components/schemas/VPC'
+        ip_range_start:
+          type: string
+          description: First IP in the VPC's allocatable range
+          example: 10.0.1.10
+        ip_range_end:
+          type: string
+          description: Last IP in the VPC's allocatable range
+          example: 10.0.1.254
+        leases:
+          type: array
+          description: Active IP leases on the VPC. Empty when no VMs are attached.
+          items:
+            $ref: '#/components/schemas/VPCLease'
+
+    VPCLease:
+      type: object
+      description: A single IP lease on the VPC.
+      required:
+        - ip
+        - nic_id
+      properties:
+        ip:
+          type: string
+          description: Leased IP address
+          example: 10.0.1.42
+        nic_id:
+          type: integer
+          description: NIC interface ID on the leased VM. Pair with `GET /api/v1/vms/{id}/networks` to identify the owning interface.
 
     CreateVPCRequest:
       type: object

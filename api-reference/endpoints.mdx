@@ -1,0 +1,66 @@
+---
+title: All Endpoints
+description: Every endpoint in the Raff REST API, grouped by category
+---
+
+The Raff API has **113 endpoints across 15 categories**. Pick a group below to jump straight to its reference, or use the sidebar to drill down further.
+
+<CardGroup cols={2}>
+  <Card title="Catalog" icon="book-open" href="/api-reference/catalog/list-regions">
+    7 endpoints — regions, OS templates, and pricing for VMs, volumes, snapshots, backups, and IPs. No auth required.
+  </Card>
+  <Card title="Projects" icon="folder" href="/api-reference/projects/list-projects">
+    5 endpoints — create and manage projects to scope resources.
+  </Card>
+  <Card title="Virtual Machines" icon="server" href="/api-reference/endpoint/list-vms">
+    23 endpoints — VM lifecycle, power, resize, tags, and notes.
+  </Card>
+  <Card title="Networking" icon="network-wired" href="/api-reference/endpoint/list-vpcs">
+    24 endpoints — VPCs, floating IPs, firewalls, and VM network attachments.
+  </Card>
+  <Card title="Volumes" icon="hard-drive" href="/api-reference/volumes/list-volumes">
+    7 endpoints — block storage CRUD, attach, detach, resize.
+  </Card>
+  <Card title="Snapshots" icon="camera" href="/api-reference/snapshots/list-snapshots">
+    6 endpoints — VM and volume snapshots, restore, rename.
+  </Card>
+  <Card title="Backups" icon="clock-rotate-left" href="/api-reference/backups/list-backups">
+    5 endpoints — on-demand backup CRUD plus restore.
+  </Card>
+  <Card title="Backup Schedules" icon="calendar" href="/api-reference/backups/schedules/list-backup-schedules">
+    5 endpoints — daily and weekly backup schedules with retention.
+  </Card>
+  <Card title="SSH Keys" icon="key" href="/api-reference/ssh-keys/list-ssh-keys">
+    5 endpoints — account-level SSH keys for VM provisioning.
+  </Card>
+  <Card title="Members" icon="users" href="/api-reference/members/list-members">
+    5 endpoints — invite, list, update, remove account members.
+  </Card>
+  <Card title="Project Members" icon="user-group" href="/api-reference/project-members/list-project-members">
+    5 endpoints — same shape, scoped to a project.
+  </Card>
+  <Card title="Roles" icon="shield-halved" href="/api-reference/roles/list-roles">
+    5 endpoints — system + custom roles bundling permissions.
+  </Card>
+  <Card title="Permissions" icon="list-check" href="/api-reference/permissions/list-permissions">
+    1 endpoint — full permission catalog used by roles.
+  </Card>
+  <Card title="API Keys" icon="lock" href="/api-reference/api-keys/list-api-keys">
+    6 endpoints — create, list, rotate API keys for automation.
+  </Card>
+  <Card title="Invitations" icon="envelope" href="/api-reference/invitations/create-account-invitation">
+    3 endpoints — send and cancel email invitations.
+  </Card>
+</CardGroup>
+
+## Conventions
+
+Every endpoint shares the same auth, header, and response conventions:
+
+- **Auth:** `X-API-Key` header on all endpoints except `/api/v1/public/*` (catalog) and `/health`. See [Authentication](/authentication).
+- **Project scope:** mutating endpoints require `X-Project-ID` (header). List endpoints accept it optionally to filter to a single project.
+- **Pagination:** list endpoints support `?limit=` and `?offset=`.
+- **Response envelope:** `{success: true, data: ..., total: ...}` for lists, `{success: true, data: ...}` for single resources.
+- **Errors:** `{error: "...", message: "..."}` on 4xx and 5xx. Common statuses: 400 / 401 / 402 / 403 / 404 / 409 / 429.
+
+For the full list of headers, error codes, and rate limits, see the [Introduction](/api-reference/introduction).
