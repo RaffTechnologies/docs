@@ -325,7 +325,7 @@
             ]
           },
           {
-            "group": "API Reference",
+            "group": "REST API",
             "pages": [
               "api-reference/endpoints",
               {
@@ -511,7 +511,7 @@
                 ]
               },
               {
-                "group": "Team & Access",
+                "group": "Team & Projects",
                 "pages": [
                   {
                     "group": "Members",
