@@ -1,16 +1,113 @@
 ---
-title: Update rules
-description: Edit a security group's rules without detaching it
+title: Update rules in a Firewall Group
+description: Open Edit Firewall Group from the row menu to change a group's name, description, inbound rules, or outbound rules — same dialog as Create, just prefilled with the existing rule set
 ---
 
-{/* PHASE 2: dashboard walkthrough — coming soon. */}
+Edit Firewall Group is how you change anything about an existing custom Firewall Group — its name, description, inbound rules, or outbound rules. The dialog is the **same one used to create the group**, just prefilled with the current rule set; there's no separate read-only view. Use this page to modify a group that's already attached to one or more VMs without detaching it.
 
-Edit rules on an existing security group. Rule changes take effect immediately on every VM the group is attached to.
+<Warning>
+**A VM reboot is required for rule changes to take effect inside the guest.** The platform's record updates immediately, but the guest network stack only picks up the new rules at boot. Reboot every VM the group is attached to after saving — see [VM reboot is required](#a-vm-reboot-is-required-after-saving) below.
+</Warning>
 
-## Coming soon
+## Open the Edit dialog
 
-Full content for this page is being written. In the meantime:
+In **Networking → Firewall**, find the Firewall Group's row and click the `⋮` menu → **Edit Rules**.
 
-- [Firewall overview](/products/network/firewall) — what security groups are
-- [Update SG API](/api-reference/endpoint/update-firewall) — update via API
-- [Contact support](mailto:support@rafftechnologies.com) for help
+You can also reach Edit Rules from the [API Keys list](/products/manage/team-access/quickstart-guides/generate-api-key) — wait, scratch that. Edit Rules opens only from the **Firewall Groups list row** — not from the VM detail page (which only shows attach/detach), and not from the system Default Firewall (which is read-only and shows **View Rules** instead).
+
+## The Edit Firewall Group dialog
+
+<Frame>
+  ![Edit Firewall Group dialog with title "Edit Firewall Group" and subtitle "Modify rules for "Web Server". Changes apply immediately to all attached VMs." Name field prefilled with "Web Server", an empty Description (Optional) field, two Inbound Rules rows (TCP 22 from Any, and TCP 80,443 from Any), one Outbound Rules row (ALL / All ports / Any), and Cancel / Save Changes buttons](/images/products/network/firewall/edit-firewall-group-dialog.png)
+</Frame>
+
+Edit dialog vs Create dialog — what's different:
+
+| | Create Firewall Group | Edit Firewall Group |
+|---|---|---|
+| Title | "Create Firewall Group" | "Edit Firewall Group" |
+| Subtitle | "Define rules to control inbound and outbound traffic on public interfaces" | *"Modify rules for "<name>". Changes apply immediately to all attached VMs."* |
+| **Name** | Empty placeholder | Prefilled with current name; editable |
+| **Description** | Empty placeholder | Prefilled with current description; editable |
+| **Start from template** | Visible — pre-fills rules | **Not shown** — would clobber existing rules |
+| **Inbound / Outbound rules** | Empty rows | All current rows visible; add, remove, or edit any |
+| Save button | **Create Firewall Group** | **Save Changes** |
+
+The rule-row controls are identical — Protocol dropdown (TCP/UDP/ICMP/ALL), Ports field (single, comma list, colon range, or empty), Source/Destination CIDR, the trash icon to remove a row, the **+ Add** button to insert a new row. The validation, the 40-rule cap per direction, and the system-default-port sanitization all behave the same way as on Create. See [Add rules](/products/network/firewall/quickstart-guides/add-rules) for the format reference.
+
+## Common edits
+
+| Goal | What to change |
+|---|---|
+| **Lock SSH down to your office IP** | Find the inbound TCP 22 row, change the Source field from `0.0.0.0/0` to `<office-ip>/32` |
+| **Open a new port for a service** | **+ Add** an Inbound row with Protocol TCP, Port `<your-port>`, Source `0.0.0.0/0` (or tighter) |
+| **Stop allowing all outbound** | Remove the catch-all `ALL / All ports / 0.0.0.0/0` Outbound row, then add specific outbound rules (DNS UDP 53, NTP UDP 123, your package mirrors, etc.) |
+| **Change protocol on an existing rule** | Click the Protocol dropdown on the row and switch — the Ports field follows the protocol's format |
+| **Tighten a CIDR** | Edit the Source field on the row (e.g. `0.0.0.0/0` → `203.0.113.0/24`) |
+| **Rename the group** | Edit the Name field; the change applies to the row label, the audit log, and anywhere the group is referenced |
+
+## Click Save Changes
+
+Save persists the new rule set to the platform record. The button is greyed out and the dialog stays open if any row fails validation (bad port format, invalid CIDR, system-blocked port, name conflict) — the row with the error highlights inline, fix and retry.
+
+The dialog's subtitle says *"Changes apply immediately to all attached VMs"* — that's accurate **at the platform record level**: the rules on Raff's side update in seconds and any new connections evaluate against them. Existing connections aren't dropped. **But the guest VM still needs to reboot** before its in-guest networking sees the new rules — see below.
+
+## A VM reboot is required after saving
+
+This is the rule that catches every team the first time:
+
+<Warning>
+**Save Changes alone is not enough — every attached VM must be rebooted for the new rules to take effect inside the guest.**
+
+The platform writes the new rule set immediately, but the guest's network stack picks up the firewall only at boot. Until you reboot, the VM keeps running with its previous firewall state — you'll see the new rules on the dashboard but not feel them in `iptables -L` / `Test-NetConnection`.
+</Warning>
+
+To roll a fleet of VMs through the reboot:
+
+| VMs attached | Approach |
+|---|---|
+| **One VM** | Restart from the VM detail page → **Restart** action button. Total downtime: typically a minute |
+| **Two or three VMs** | Restart in series — wait for each to come back before rebooting the next, so any service the group covers stays available on at least one VM |
+| **Many VMs (a fleet)** | Plan a maintenance window, or use a rolling-restart pattern: drain a VM from your load balancer, reboot, re-add. Repeat per VM |
+
+If you're behind a load balancer or DNS-round-robin, rolling-restart works without user-visible downtime. If you're not, schedule the reboot during a low-traffic window.
+
+## Editing rules on a group with no VMs attached
+
+If the group has zero VMs in its **VMs** column, save is instant and there's nothing to reboot — the group's rule set updates and the next VM you attach will get the new rules at attach-then-reboot time.
+
+This is the right pattern for **staging rule changes before production**: edit the rules while the group is detached, attach to a single test VM, reboot, validate, then attach to the rest of the fleet (each one rebooted in turn).
+
+## Audit logging
+
+Every edit produces an `apikey.regenerated`-style audit-log entry — wait, that's API keys. Firewall edits log as `firewall.updated` (or the equivalent) capturing:
+
+- Who made the change (member ID + name, or API key ID)
+- When
+- The group ID and name
+- A diff of the rules — what was added, what was removed
+
+Account members with `account.audit.view` permission (Owner and Admin by default) can read the entries. Useful for "why did port 8080 stop working last Tuesday?" investigations.
+
+## What you cannot do via Edit
+
+| Action | Available via |
+|---|---|
+| **Change the group's scope** (account-level only — this product doesn't have project-scoped firewall groups today) | n/a |
+| **Convert a Custom group into a System role** | n/a — System roles ship with Raff and are immutable |
+| **Edit the Default Firewall** | The system Default is read-only — view its rules with the **View Rules** action on the Default card |
+| **Bulk-import rules from a JSON / YAML** | Use the [Update Firewall API](/api-reference/endpoint/update-firewall) and pipe a JSON body. The dashboard is row-by-row only |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Add rules" icon="list" href="/products/network/firewall/quickstart-guides/add-rules">
+    Port and IP format reference for the rule rows.
+  </Card>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The rule model and what the system Default blocks.
+  </Card>
+  <Card title="Attach to a VM" icon="link" href="/products/network/firewall/quickstart-guides/attach-to-vm">
+    Apply the edited group to a VM's public IP.
+  </Card>
+</CardGroup>

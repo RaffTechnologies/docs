@@ -1,16 +1,89 @@
 ---
-title: Delete a security group
-description: Permanently remove a security group
+title: Delete a Firewall Group
+description: Permanently remove a custom Firewall Group from the row menu — the action is blocked while VMs are attached, and any attached VMs need to be rebooted afterward
 ---
 
-{/* PHASE 2: dashboard walkthrough — coming soon. */}
+Deleting a Firewall Group permanently removes the rule set from your account. The action is in the row's `⋮` menu and asks for a one-click confirmation — there's no soft-delete or recovery window. Use this when a group's no longer needed (decommissioned service, retired environment, replaced by a different group).
 
-Delete a security group after detaching it from every VM that uses it.
+## Before you delete
 
-## Coming soon
+| Rule | Why |
+|---|---|
+| **Detach the group from every VM first** | The Delete action is blocked while any VM has the group attached. The dashboard surfaces this as a disabled menu item or a blocked confirmation. Detach via the VM detail page → Network tab → IP card → **Detach** firewall, on every attached VM, before retrying the delete |
+| **The system Default Firewall cannot be deleted** | The `Raff Default Firewall` card has no `⋮` menu and no Delete option. It's immutable. This page only covers Custom Firewall Groups |
+| **Plan for a reboot** | Once the group is deleted, every VM it was previously attached to needs a reboot for the change to fully take effect inside the guest. (Detach + delete = two changes; one reboot covers both) |
 
-Full content for this page is being written. In the meantime:
+## 1. Open the row menu
 
-- [Firewall overview](/products/network/firewall) — what security groups are
-- [Delete SG API](/api-reference/endpoint/delete-firewall-group) — delete via API
-- [Contact support](mailto:support@rafftechnologies.com) for help
+In **Networking → Firewall**, find the group's row in **Your Firewall Groups** and click the `⋮` on the right.
+
+The menu has three actions on a Custom group: **Edit Rules**, **Assign to VM**, and **Delete** (red). Click **Delete**.
+
+## 2. Confirm the delete
+
+<Frame>
+  ![Delete Firewall Group confirmation dialog with a warning icon, title "Delete Firewall Group", body "Are you sure you want to delete Web Server? This action cannot be undone.", and Cancel / Delete (red) buttons](/images/products/network/firewall/delete-firewall-group-dialog.png)
+</Frame>
+
+The confirmation dialog spells out the cost: *"Are you sure you want to delete **<group name>**? This action cannot be undone."*
+
+Click the red **Delete** to proceed, or **Cancel** to back out.
+
+## What happens after delete
+
+| Effect | Notes |
+|---|---|
+| **The group disappears from the Firewall Groups list** | Immediate — no soft-delete, no recovery |
+| **Any VM it was attached to has its `Firewall: <group>` field flip back to `None`** | Detach happens as part of the delete, but only if you didn't detach first |
+| **Audit-log entry recorded** | `firewall.deleted` (or the equivalent) — captures who deleted, when, the group ID and name. Visible to members with `account.audit.view` |
+| **VMs need a reboot** | The platform record updates immediately, but each affected VM keeps using its previous firewall state until reboot |
+
+## Reboot the VMs
+
+If the group was attached to any VMs at delete time, reboot each of them so the guest networking actually drops the old rules. From the VM detail page → **Restart** action button (or `sudo reboot` / `shutdown /r /t 0` from inside the guest).
+
+If you detached the group from all VMs in advance (the recommended path), the reboots can happen on each VM's own schedule — the group is already gone, the VMs just don't yet know it.
+
+## When delete is blocked
+
+If the menu item shows the Delete action greyed or the confirmation refuses to proceed:
+
+| Blocker | Fix |
+|---|---|
+| **Group is attached to one or more VMs** | Open each VM's Network tab and Detach the firewall, then retry. The VMs column on the Firewall row tells you the count |
+| **Trying to delete the Default Firewall** | Not possible — the system Default is permanent. Use a Custom group with `Deny All` rules attached over it for lockdown patterns |
+| **Custom role missing the right permission** | Account permission `account.firewall.delete` (or whichever maps to it in your account's role catalog) is required. Owner and Admin have it; ask the Owner or grant via Custom role |
+
+## Replacing a Firewall Group instead of deleting
+
+If you want to replace one group with another (e.g. swap `web-prod-v1` for `web-prod-v2` on a fleet of VMs) without a window where the VMs are unprotected:
+
+1. **Create the replacement group** with the new rule set
+2. **Attach the replacement** to every VM that has the old group — each VM now has both
+3. **Reboot every VM** so the new rules take effect alongside the old (the union of rules applies briefly)
+4. **Detach the old group** from every VM
+5. **Delete the old group** (now unattached, the Delete action is unblocked)
+6. **Reboot every VM again** so the old group's rules are dropped
+
+This adds two reboots per VM but means there's no moment when a VM has zero rules. For most workloads, the simpler swap (detach old → attach new → reboot once) is enough — there's a brief moment between detach and attach where only the system Default Firewall applies, which is usually fine.
+
+## What you cannot do today
+
+- **Recover a deleted Firewall Group** — once deleted, it's gone. Recreate from scratch
+- **Bulk-delete groups** — one at a time from the row menu (or via the API)
+- **Delete the Default Firewall** — system Default is immutable
+- **Schedule a delete for later** — delete is immediate
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Update rules" icon="pen" href="/products/network/firewall/quickstart-guides/update-rules">
+    Edit a group instead of deleting it.
+  </Card>
+  <Card title="Attach to a VM" icon="link" href="/products/network/firewall/quickstart-guides/attach-to-vm">
+    Detach a group as the prerequisite to deleting.
+  </Card>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model behind the rules you're deleting.
+  </Card>
+</CardGroup>

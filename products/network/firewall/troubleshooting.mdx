@@ -1,16 +1,186 @@
 ---
 title: Troubleshooting
-description: Common Firewall Group issues and how to recover
+description: Common Firewall problems — rules saved but not applied (the reboot trap), Default-blocked ports rejected silently, port forwarding stops working after a group attach, locked-out-by-firewall recovery, save errors and rule-format gotchas
 ---
 
-{/* PHASE 2: expand with rule-precedence surprises, locked-out scenarios. */}
+The most-seen issues with Raff Firewall and the fix that resolves each. The single most common mistake — by a wide margin — is **forgetting to reboot the VM after a firewall change**, so that one is on top. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
-Common problems with Firewall and how to resolve them. If your issue isn't listed, contact [support](mailto:support@rafftechnologies.com).
+## The reboot rule
 
-## Coming soon
+<AccordionGroup>
+  <Accordion title="I edited / attached / detached a Firewall Group and the rules don't seem to apply">
+    **What's happening:** the platform record updated, but the VM's guest network stack hasn't picked up the change.
 
-Detailed troubleshooting entries are being written. For now, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+    **Why:** Firewall rules apply to a VM at boot. The dashboard immediately reflects the new state, but every attached VM keeps running with its previous firewall rules until you reboot it.
 
-- The Firewall Group ID and the affected VM ID
-- The exact error message and timestamp
-- Steps you've already tried
+    **Fix:** reboot every affected VM:
+    - **VM detail page → Restart** action button — the simplest path
+    - **Inside the guest** — `sudo reboot` (Linux) or `shutdown /r /t 0` (Windows)
+
+    Test from outside the VM after the reboot — `nmap -p <port> <ip>`, `curl https://<ip>:<port>`, etc. You should see the new rule's effect now.
+
+    For fleets behind a load balancer, roll the reboots through the fleet so service stays available.
+  </Accordion>
+
+  <Accordion title="I rebooted but the rules still don't apply">
+    **Possible causes:**
+
+    1. **The Firewall Group isn't actually attached to that VM.** Open the VM's detail page → Network tab → check the IP card's `Firewall:` field. If it says `None`, the group isn't attached. Click **Attach** to fix.
+    2. **You're testing from inside the VPC.** Internal traffic to the VM's public IP can take a different code path; firewall rules only apply to public-internet traffic. Test from your laptop or a VM in another account/region.
+    3. **Guest-OS firewall is also blocking.** `ufw status` (Ubuntu/Debian), `firewalld` (RHEL/CentOS), or Windows Firewall might be blocking on top of the Raff firewall. Open the port in the guest too.
+    4. **Wrong protocol.** TCP rule won't match UDP traffic and vice versa. Confirm your client is using the protocol the rule allows.
+    5. **System Default Firewall is blocking** — see below.
+  </Accordion>
+</AccordionGroup>
+
+## System Default Firewall blocks
+
+<AccordionGroup>
+  <Accordion title="My rule for TCP 135 / 139 / 445 / 5985-5986 / UDP 137-138 disappeared on save">
+    **What's happening:** Raff actively strips these ports from any inbound rule you save. The system Default Firewall blocks them on every public interface and the platform won't let you punch a hole.
+
+    **Why:** these are well-known Windows-network attack vectors (MS-RPC, SMB / WannaCry, NetBIOS, WinRM). Allowing them on a public IP is almost never what you want.
+
+    **Fix:** if you genuinely need one of these ports:
+    - **Run the service inside a VPC** instead of on a public IP, then deploy a [Firewall Appliance](/products/network/vpc/quickstart-guides/manage-vpc#firewall-appliance-499-or-999--month) (OPNsense) as the VPC's gateway and configure inbound rules there. The system Default doesn't apply to private interfaces, and OPNsense can allow whatever you want.
+    - **Tunnel over a different port** — run SMB inside a WireGuard tunnel on a different port, expose only the WireGuard endpoint
+  </Accordion>
+
+  <Accordion title="My port range rule (e.g., `130:200`) was saved with gaps in it">
+    **What's happening:** the platform sanitized the range to remove ports the system Default blocks. A rule of `130:200` is saved as `130:134,136:138,140:200` — ports 135 and 139 carved out.
+
+    **Fix:** that's working as designed. The sanitization is honest about what's actually allowed; if you tried to save `130:200`, traffic to 135 and 139 was never going to reach the VM anyway. The saved form just makes the actual behavior visible.
+  </Accordion>
+</AccordionGroup>
+
+## Saving and editing
+
+<AccordionGroup>
+  <Accordion title="Save fails with "invalid port format"">
+    **What's happening:** the Ports field has a value the validator rejects.
+
+    **Common mistakes:**
+
+    | What you typed | What to type instead |
+    |---|---|
+    | `3000-4000` (AWS-style hyphen) | `3000:4000` (Raff uses colon for ranges) |
+    | `80, 443` (space after comma) | `80,443` (no spaces) |
+    | `0` or negative | A port between 1 and 65535 |
+    | `http` / `https` (protocol names) | `80` / `443` (port numbers) |
+    | A range with the second port lower than the first (e.g. `4000:3000`) | Reorder — `3000:4000` |
+  </Accordion>
+
+  <Accordion title="Save fails with "invalid CIDR"">
+    **What's happening:** the Source / Destination IP field has a value the validator rejects.
+
+    **Common mistakes:**
+
+    | What you typed | What to type instead |
+    |---|---|
+    | `1.2.3.4` (no prefix) | `1.2.3.4/32` for a single IP, or `1.2.3.0/24` for a /24 |
+    | `1.2.3.4/0` (zero prefix on a non-zero address) | `0.0.0.0/0` if you mean "any" |
+    | `1.2.3.4/33` | Max prefix is `/32` for IPv4, `/128` for IPv6 |
+    | `1.2.3.4/255.255.255.0` (netmask) | Use CIDR notation: `1.2.3.0/24` |
+    | A hostname (e.g. `office.example.com`) | Resolve to IP yourself; CIDR field doesn't accept names |
+  </Accordion>
+
+  <Accordion title="Save fails with "too many rules"">
+    **Limit:** **40 inbound rules + 40 outbound rules** per Firewall Group.
+
+    **Fix:**
+    - **Combine rules where you can** — `80,443` in one row instead of two; `3000:4000` instead of forty single-port rules
+    - **Split into multiple Firewall Groups** if you genuinely need more — attach all of them to the same VM IP. The allow lists union, so two groups of 40 = 80 effective rules
+    - **Use a Firewall Appliance** (OPNsense) inside a VPC for unlimited rule complexity; the public Default + your group apply to the public interface; OPNsense applies to anything routed through the VPC
+  </Accordion>
+
+  <Accordion title="Save fails with "name already exists"">
+    **Fix:** Firewall Group names are unique per account. Pick a different name. Renaming an existing group doesn't free its name for a new group while it exists — but if you're trying to delete-and-recreate, the name is freed once the old group is deleted.
+  </Accordion>
+</AccordionGroup>
+
+## Locked out
+
+<AccordionGroup>
+  <Accordion title="I attached a Deny All / SSH-restricted group and now I can't SSH in">
+    **What's happening:** you tightened the inbound rules, rebooted, and your SSH client is now blocked along with everything else.
+
+    **Recovery — three paths:**
+
+    1. **VNC console** — every VM has a built-in browser console that bypasses the network entirely. From the VM detail page → **Console** action. Log in with the VM's password (or reset the password first if you don't know it). From the console, fix the firewall: detach the restrictive group with `raff-cli firewall detach …`, or if you don't have the CLI in the VM, use the dashboard from another browser tab.
+    2. **Detach the restrictive group from the dashboard** — VM detail page → Network tab → IP card → **Detach** firewall. **Then reboot the VM.** The system Default Firewall is still applied (which allows SSH); you should regain access on the next boot.
+    3. **Attach an SSH-only group** — create / pick a Firewall Group with at least `TCP 22 from 0.0.0.0/0` (or your office IP), attach it to the VM, reboot. Now SSH works again, then iterate on the rules from a stable baseline.
+
+    **Going forward:** test restrictive firewall changes on a single VM first; keep the dashboard-and-VNC tabs open during the test reboot in case you lock yourself out.
+  </Accordion>
+
+  <Accordion title="My RDP / SSH stops working after a firewall edit">
+    **Same root cause as above** — your edit removed (or restricted) the rule that was allowing your management traffic. Add back an inbound rule for the management protocol (TCP 22 SSH, TCP 3389 RDP) from your client IP, save, reboot.
+
+    Common gotchas:
+
+    - **Your office's public IP changed.** Most ISPs give residential / office customers dynamic IPs. The CIDR you whitelisted six months ago may not be your current egress IP. Check `curl ifconfig.me` from your client and update the rule's Source field
+    - **You're connecting via VPN** — the source IP is the VPN's egress, not your local IP. Whitelist the VPN range
+    - **You disabled the rule** rather than removing it (or vice versa) — the dashboard doesn't have a per-rule "disable" toggle; rules are either present (allow) or absent (deny). Add the rule back fresh
+  </Accordion>
+</AccordionGroup>
+
+## Attach, detach, delete
+
+<AccordionGroup>
+  <Accordion title="Delete is greyed out / blocked">
+    **What's happening:** the group is still attached to one or more VMs.
+
+    **Fix:** the **VMs** column on the Firewall Groups row tells you the count. Open each attached VM's **Network** tab → click **Detach** next to the IP's Firewall field. After detaching from every VM, the row's `⋮` menu unblocks Delete.
+
+    See [Delete a Firewall Group](/products/network/firewall/quickstart-guides/delete-firewall-group) for the full flow.
+  </Accordion>
+
+  <Accordion title="Assign to VM picker is empty">
+    **What's happening:** no VMs in the dashboard's selected region have a public IP, or every VM in the region already has this exact group attached.
+
+    **Possible reasons:**
+
+    1. **VMs without a public IP can't have a Firewall Group attached.** Firewall Groups apply to public traffic only; VPC-only VMs aren't in the picker. To filter VPC traffic, deploy a Firewall Appliance gateway on the VPC instead
+    2. **All VMs in the region already have this group.** The picker filters out duplicates
+    3. **Wrong region selected** — switch the top-bar region selector
+
+    The empty state is rare; if you expected to see VMs, double-check the region and the "VMs without public IPs" angle.
+  </Accordion>
+</AccordionGroup>
+
+## Port forwarding interaction
+
+<AccordionGroup>
+  <Accordion title="Port forwarding stops working after I attached a Firewall Group to my Platform Router VM">
+    **What's happening:** Platform Router (or Firewall Appliance) is itself a VM. If you attach a restrictive Firewall Group to its public IP, the inbound port-forwarding rules can't actually deliver traffic.
+
+    **Fix:** the Platform Router gateway is best left **without a Custom Firewall Group** — the system Default Firewall already covers the dangerous Windows ports, and port forwarding handles the application-level routing. If you genuinely want firewalling in front of port forwarding, deploy a **Firewall Appliance** (OPNsense) instead — it's designed for this case and has full rule-set capability that port-forwarding doesn't conflict with.
+
+    See [Manage a VPC → Port Fwd](/products/network/vpc/quickstart-guides/manage-vpc#port-fwd-tab--public-port-forwarding) for the gateway model.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- **The Firewall Group ID and name**
+- **The VM ID** that's affected
+- **What you expect to work and what's actually happening** — exact ports, source IPs, protocols
+- **Whether you've rebooted the VM** since the firewall change (this resolves ~80% of tickets — try it first)
+
+Same-day response in business hours; faster for production-impacting issues.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Inbound vs outbound" icon="lightbulb" href="/products/network/firewall/concepts/inbound-vs-outbound">
+    The model behind the rules.
+  </Card>
+  <Card title="Add rules" icon="list" href="/products/network/firewall/quickstart-guides/add-rules">
+    Port and IP format reference.
+  </Card>
+  <Card title="Update rules" icon="pen" href="/products/network/firewall/quickstart-guides/update-rules">
+    Edit an existing group's rules.
+  </Card>
+</CardGroup>
