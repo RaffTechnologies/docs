@@ -31,7 +31,7 @@ Open the VM detail page either way:
 The detail page opens on the **Graphs** tab by default.
 
 <Frame>
-  ![VM detail page on the Graphs tab with the VM Information side panel and time-range selector](/images/products/build/vm/concepts/monitoring-01-graphs-overview.png)
+  ![VM detail page on the Graphs tab with the VM Information side panel and time-range selector](/images/products/compute/vm/concepts/monitoring-01-graphs-overview.png)
 </Frame>
 
 The time-range selector at the top of the tab applies to every chart at once: **30m / 1h / 2h / 6h / 24h / 7d / 1m / All**. Pick a wider range for trend analysis, narrower for live troubleshooting. The **Refresh** button forces an immediate re-fetch; otherwise charts auto-refresh.
@@ -67,7 +67,7 @@ What the shape tells you:
 Used and Free memory in MB, summing to the VM's total RAM.
 
 <Frame>
-  ![Memory Usage graph showing Used (red) and Free (green) MB stacked over time, with a sharp drop indicating an OOM event or restart](/images/products/build/vm/concepts/monitoring-02-memory.png)
+  ![Memory Usage graph showing Used (red) and Free (green) MB stacked over time, with a sharp drop indicating an OOM event or restart](/images/products/compute/vm/concepts/monitoring-02-memory.png)
 </Frame>
 
 What to watch for:
@@ -82,7 +82,7 @@ Note: "Used" includes the OS page cache, which Linux happily fills. Treat it as 
 RX (receive) and TX (transmit) per network interface, in KB/s. Each interface is numbered (`0`, `1`, …). Typically `0` is the public NIC and `1` is the VPC NIC, but labelling depends on attachment order — verify on the **Network** tab.
 
 <Frame>
-  ![Network Traffic graph with RX and TX series for two interfaces over time](/images/products/build/vm/concepts/monitoring-03-network.png)
+  ![Network Traffic graph with RX and TX series for two interfaces over time](/images/products/compute/vm/concepts/monitoring-03-network.png)
 </Frame>
 
 Use it to:
@@ -96,7 +96,7 @@ Use it to:
 Read and Write in KB/s on the **boot disk** (attached volumes have their own metrics).
 
 <Frame>
-  ![Disk Throughput graph with Read and Write KB/s over time, showing a single read spike during a one-off load](/images/products/build/vm/concepts/monitoring-04-disk.png)
+  ![Disk Throughput graph with Read and Write KB/s over time, showing a single read spike during a one-off load](/images/products/compute/vm/concepts/monitoring-04-disk.png)
 </Frame>
 
 What to watch for:
