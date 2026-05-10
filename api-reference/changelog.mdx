@@ -61,6 +61,9 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 **Reference — site**
 - 🔵 **Updated** — Terraform Registry sidebar collapsed from 7 noisy buckets to a single `Virtual Machines` subcategory. (terraform-provider-raff v0.1.5)
 
+**Catalog — CLI / Terraform**
+- 🟣 **Fixed** — `category` filter on `raff template list` (CLI v0.3.7) and `data.raff_templates` (terraform-provider-raff v0.1.10) — flag help, schema description, and README/Registry examples all incorrectly claimed values like `linux` / `windows`. The real enum is `os` (Linux/Windows OS templates) or `marketplace` (pre-baked apps); OS family (`linux` / `windows` / `alpine` / etc.) lives on the `os_type` response field with no API-level filter today.
+
 ---
 
 **Compute — CLI**
