@@ -1,19 +1,94 @@
 ---
 title: "API Changelog"
-description: "Track all changes to the Raff Cloud API"
+description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
 # API Changelog
 
-All changes to the Raff Cloud public API. Current version: **v1.0.0** (in progress).
+All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 🟢 Added · 🔵 Updated · 🟡 Deprecated · 🔴 Removed · 🟣 Fixed
 
 ---
 
-## v1.0.0 (In Progress)
+## v1.0.0 (Beta)
+
+### May 10, 2026
+
+**Virtual Machines — API**
+- 🟢 **Added** — `mac` field on `VMNetwork` — `GET /api/v1/vms/{id}/networks`. Stable per-NIC MAC address. The backend already returned it; spec now documents it so generated clients expose it.
+
+**Volumes — API**
+- 🟣 **Fixed** — `pricing_id` now auto-derived from `volume_type` + `region` on `POST /api/v1/volumes`. The public spec never required customers to supply it, but the billing middleware did — every CLI/Terraform/curl request was returning 400 until you looked it up out-of-band.
+- 🟣 **Fixed** — `filesystem_type` is now honored. A wire-mapping bug in vm-service was discarding the value and validating `volume_type` (e.g. `nvme`) as if it were a filesystem, rejecting all valid `ext4` / `xfs` / `""` combinations with "filesystem_type must be empty (manual), ext4, or xfs".
+- 🔵 **Updated** — pricing_id required-error now points at `raff pricing vm` (CLI) and `data.raff_vm_pricing` (Terraform) alongside the HTTP path.
+
+**Billing — API**
+- 🟣 **Fixed** — Add-payment-method (`POST /api/v1/billing/payment-methods`) now returns 503 if Airwallex's payment-source linking step fails, instead of saving an unusable row that looked like a working primary card. Customers no longer end up with a dashboard-confirmed card that fails the first time the API tries to charge it.
+- 🟣 **Fixed** — "Payment method not configured for automatic billing" error correctly identifies the affected row (filters by `provider_type` and non-empty source ID) instead of firing on any active payment row.
+- 🔵 **Updated** — Error messages link to `app.rafftechnologies.com` regardless of environment (was hardcoded to a local-dev hostname).
+
+**Virtual Machines — CLI**
+- 🟢 **Added** — `raff vm create --no-vpc` — create a VM with only a public IP, no VPC at all. (raff-cli v0.3.5)
+- 🟢 **Added** — `MAC` column on `raff vm networks`. (raff-cli v0.3.6)
+- 🔵 **Updated** — `raff vm create --help` long help spells out all four networking modes (existing VPC / new VPC / no VPC / auto VPC). (raff-cli v0.3.4)
+- 🔵 **Updated** — `raff vm get` shows base disk and attached volumes as separate rows (was a single collapsed "Storage" row). (raff-cli v0.3.4)
+- 🔵 **Updated** — `vm networks` public-pool NICs show `(public pool)` instead of an empty `NETWORK` cell. (raff-cli v0.3.4)
+
+**Volumes — CLI**
+- 🔵 **Updated** — `raff volume create --type` help enumerates `nvme` (was a misleading "e.g. standard"). (raff-cli v0.3.3)
+- 🔵 **Updated** — `raff pricing volume` table view shows the `ID` column. (raff-cli v0.3.3)
+
+**Networking — CLI**
+- 🔵 **Updated** — Security-group attachment count now labeled "Attached VMs" everywhere (was inconsistent — `VMS` in list, `Attached NICs` in get). (raff-cli v0.3.4)
+- 🔴 **Removed** — Unexplained `SIZE` column from `raff sg get` rules subtable. (raff-cli v0.3.4)
+
+**Virtual Machines — Terraform**
+- 🟢 **Added** — `data "raff_vm_networks"` — list NICs for a VM with MAC, IP, gateway, and security-group binding. (terraform-provider-raff v0.1.8)
+- 🟢 **Added** — `skip_vpc` argument on `raff_vm`. (terraform-provider-raff v0.1.7)
+- 🔵 **Updated** — `raff_vm` schema descriptions for `vpc_id` / `vpc_name` / `vpc_cidr` / `delete_vpc` / `volume_action` rewritten to spell out the actual contract instead of one-liners. (terraform-provider-raff v0.1.6)
+- 🔵 **Updated** — `volume_type = "nvme"` in README and Registry index examples (was an invalid `"standard"`). (terraform-provider-raff v0.1.4)
+
+**Networking — Terraform**
+- 🟢 **Added** — `data "raff_vpc_cidr_suggestions"` — fetch a non-overlapping CIDR for declarative VPC sizing. (terraform-provider-raff v0.1.9)
+- 🟢 **Added** — `data "raff_security_group_templates"` — look up template IDs to pass to `raff_security_group.template_id`. (terraform-provider-raff v0.1.9)
+
+**Team & Access — Terraform**
+- 🟢 **Added** — `data "raff_permissions"` — read-only catalog of permission identifiers; supports `scope` filter (`account` / `project`). (terraform-provider-raff v0.1.9)
+
+**Reference — site**
+- 🔵 **Updated** — Terraform Registry sidebar collapsed from 7 noisy buckets to a single `Virtual Machines` subcategory. (terraform-provider-raff v0.1.5)
+
+---
+
+**Compute — CLI**
+- 🟢 **Added** — `raff volume list|get|create|delete|resize|attach|detach` — documentation page for block storage volume commands.
+- 🟢 **Added** — `raff snapshot list|get|create|rename|restore|delete` — documentation page for VM and volume snapshots.
+- 🟢 **Added** — `raff backup list|get|create|restore|delete` and `raff backup schedule list|get|create|update|delete` — documentation page for backups and recurring schedules.
+
+**Networking — Terraform**
+- 🟢 **Added** — `raff_vpc` documentation page — VPC resource, CIDR immutability, gateway computed attrs.
+- 🟢 **Added** — `raff_ip` documentation page — floating IP reservation.
+- 🟢 **Added** — `raff_security_group` documentation page — firewall rulesets with nested `rule` blocks and template seeding.
+
+**Compute — Terraform**
+- 🟢 **Added** — `raff_volume`, `raff_snapshot`, `raff_backup`, `raff_backup_schedule` documentation pages — covering immutability rules, retention semantics, and the "don't manage schedule-created backups" guidance.
+
+**Team & Access — CLI**
+- 🟢 **Added** — `raff ssh-key`, `raff api-key`, `raff member`, `raff role`, `raff permission`, `raff invitation` documentation pages — full coverage of IAM commands.
+- 🟢 **Added** — `raff project member` subcommands documented under `raff project` — list, get, add, update, remove.
+
+**Team & Access — Terraform**
+- 🟢 **Added** — `raff_ssh_key`, `raff_api_key`, `raff_role`, `raff_member`, `raff_project_member` documentation pages — including the `secret` returned-once warning on `raff_api_key` and the composite ID format on `raff_project_member`.
+
+**Catalog — CLI / Terraform**
+- 🟢 **Added** — `raff region`, `raff template`, `raff pricing` (CLI) and a consolidated `data-sources` page (Terraform) covering `raff_regions`, `raff_templates`, and the `*_pricing` family.
+
+**Reference — site**
+- 🔵 **Updated** — Reference tab CLI and Terraform groups in `docs.json` reorganized to expose every command group and resource in the sidebar.
+- 🔵 **Updated** — `reference/cli/introduction.mdx` and `reference/terraform/introduction.mdx` refreshed with the full surface — coverage table now lists every resource group instead of the original 5–7.
 
 ### May 8, 2026
 
