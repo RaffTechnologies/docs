@@ -26,6 +26,10 @@
   "metadata": {
     "timestamp": true
   },
+  "redirects": [
+    { "source": "/products/storage/:slug*", "destination": "/products/store/:slug*" },
+    { "source": "/products/networking/:slug*", "destination": "/products/network/:slug*" }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -600,19 +604,9 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Dashboard",
-          "href": "https://app.rafftechnologies.com",
-          "icon": "gauge"
-        },
-        {
           "anchor": "Changelog",
           "href": "/api-reference/changelog",
           "icon": "clock-rotate-left"
-        },
-        {
-          "anchor": "Support",
-          "href": "mailto:support@rafftechnologies.com",
-          "icon": "envelope"
         }
       ]
     }
@@ -635,10 +629,10 @@
       {
         "header": "Company",
         "items": [
-          { "label": "About", "href": "https://rafftechnologies.com/about" },
+          { "label": "About", "href": "https://rafftechnologies.com/about-us" },
           { "label": "Blog", "href": "https://rafftechnologies.com/blog" },
           { "label": "Pricing", "href": "https://rafftechnologies.com/pricing" },
-          { "label": "Status", "href": "https://status.rafftechnologies.com" }
+          { "label": "Status", "href": "https://rafftechnologies.com/status" }
         ]
       },
       {
@@ -651,19 +645,23 @@
         ]
       },
       {
-        "header": "Support",
+        "header": "Application",
         "items": [
-          { "label": "Help Center", "href": "mailto:support@rafftechnologies.com" },
-          { "label": "Contact", "href": "mailto:support@rafftechnologies.com" },
-          { "label": "FAQ", "href": "https://rafftechnologies.com/faq" }
+          { "label": "Dashboard", "href": "https://app.rafftechnologies.com" },
+          { "label": "Sign in", "href": "https://app.rafftechnologies.com/auth/sign-in" },
+          { "label": "Sign up", "href": "https://app.rafftechnologies.com/auth/sign-up" },
+          { "label": "Marketplace", "href": "https://marketplace.rafftechnologies.com" }
         ]
       },
       {
-        "header": "Legal",
+        "header": "Support",
         "items": [
-          { "label": "Terms of Service", "href": "https://rafftechnologies.com/terms" },
-          { "label": "Privacy Policy", "href": "https://rafftechnologies.com/privacy" },
-          { "label": "SLA", "href": "https://rafftechnologies.com/sla" }
+          { "label": "Tickets", "href": "https://help.rafftechnologies.com" },
+          { "label": "Contact", "href": "mailto:support@rafftechnologies.com" },
+          { "label": "FAQ", "href": "https://rafftechnologies.com/faq" },
+          { "label": "Terms of Service", "href": "https://app.rafftechnologies.com/legal#terms-of-service" },
+          { "label": "Privacy Policy", "href": "https://app.rafftechnologies.com/legal#privacy-policy" },
+          { "label": "SLA", "href": "https://app.rafftechnologies.com/legal#service-level-agreement" }
         ]
       }
     ],
