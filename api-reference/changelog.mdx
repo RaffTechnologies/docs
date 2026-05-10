@@ -64,6 +64,10 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 **Catalog — CLI / Terraform**
 - 🟣 **Fixed** — `category` filter on `raff template list` (CLI v0.3.7) and `data.raff_templates` (terraform-provider-raff v0.1.10) — flag help, schema description, and README/Registry examples all incorrectly claimed values like `linux` / `windows`. The real enum is `os` (Linux/Windows OS templates) or `marketplace` (pre-baked apps); OS family (`linux` / `windows` / `alpine` / etc.) lives on the `os_type` response field with no API-level filter today.
 
+**Virtual Machines — Terraform**
+- 🟣 **Fixed** — `raff_vm` Create now waits for the VM to reach `active` before returning. Previously `terraform apply` returned as soon as the API accepted the request, so `public_ipv4` / `private_ipv4` were empty until the customer ran `terraform refresh`. Default timeout 15 minutes; override with `timeouts { create = "20m" }`. (terraform-provider-raff v0.1.11)
+- 🔵 **Updated** — `volume_action` description on `raff_vm` rewritten to clarify it only governs volumes **not** under Terraform management (attached out-of-band via dashboard / CLI). Volumes managed by `raff_volume` in the same config are destroyed by Terraform independently. (terraform-provider-raff v0.1.11)
+
 ---
 
 **Compute — CLI**
