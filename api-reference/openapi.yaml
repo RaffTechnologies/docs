@@ -4522,6 +4522,10 @@ components:
           type: string
           description: IP address assigned to the interface (IPv4 or IPv6 depending on `type`).
           example: "10.0.1.42"
+        mac:
+          type: string
+          description: MAC address of the interface. Stable for the lifetime of the VM — useful for static DHCP, packet captures, and disambiguating multiple NICs in scripts.
+          example: "02:00:5e:00:53:0a"
         gateway:
           type: string
           description: Gateway IP for this interface.
