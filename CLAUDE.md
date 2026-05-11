@@ -57,7 +57,7 @@ The Products tab uses **nested sub-groups** in `docs.json`: pillar group → pro
 
 ### Overview page (`index.mdx`)
 ```
-1. Frontmatter — title is always "Overview"; the sidebar shows the product name as the group header above it.
+1. Frontmatter — `title` is the full product name (e.g. "Virtual Machines") so the HTML `<title>` tag is unique site-wide; `sidebarTitle: Overview` keeps the sidebar label short. Same rule applies to every page: `title` must be unique site-wide; use `sidebarTitle` for short sidebar text. (Mintlify uses the same field for `<title>` and `<h1>` and auto-appends " - Raff" — keep titles ≤ ~50 chars and front-load the product name.)
 2. Updated date — <sub>Updated MONTH DAY, YEAR</sub>
 3. One paragraph — what it is, key specs, who it's for. Direct, no marketing.
 4. Hero <Frame> — /images/products/<pillar>/<product>/hero.png; alt text prefixed with "TODO:" until the real screenshot is dropped in.
