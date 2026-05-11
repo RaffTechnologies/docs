@@ -1,22 +1,52 @@
 ---
 title: "Raff Terraform Provider"
-description: "Provision and manage Raff Platform resources declaratively with HashiCorp Terraform. Supports raff_project and raff_vm resources today; more coming as the public API surface grows."
+description: "Provision and manage Raff resources declaratively with HashiCorp Terraform. 14 resources spanning compute, storage, networking, and IAM, plus 25+ data sources for discovery and pricing."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
 The **Raff Terraform Provider** lets you define your Raff infrastructure as code — versioned in git, reviewed in PRs, applied with `terraform apply`. The provider talks to the same public API as the dashboard and the [CLI](/reference/cli/introduction); the difference is the workflow: declarative state instead of imperative commands.
 
 For one-off operations and shell-driven workflows, use the [CLI](/reference/cli/introduction). For everything that should be reproducible and code-reviewable — production VMs, project structure, customer multi-tenancy — use Terraform.
 
+<Card title="View on Terraform Registry" icon="hashicorp" href="https://registry.terraform.io/providers/RaffTechnologies/raff/latest">
+  registry.terraform.io/providers/RaffTechnologies/raff/latest — auto-generated schema docs for every resource and data source, plus version history.
+</Card>
+
 ## Resources
+
+### Compute
 
 | Resource | What it manages |
 |---|---|
-| [`raff_project`](/reference/terraform/raff_project) | A project — the access-control container for VMs and other resources |
-| [`raff_vm`](/reference/terraform/raff_vm) | A virtual machine, with its OS template, plan, networking, backup schedule, and tags |
+| [`raff_vm`](/reference/terraform/raff_vm) | A virtual machine — OS template, plan, networking, backup schedule, tags |
+| [`raff_volume`](/reference/terraform/raff_volume) | A block storage volume (NVMe SSD), attachable to a VM |
+| [`raff_snapshot`](/reference/terraform/raff_snapshot) | Point-in-time snapshot of a VM disk or volume |
+| [`raff_backup`](/reference/terraform/raff_backup) | One-shot VM backup |
+| [`raff_backup_schedule`](/reference/terraform/raff_backup_schedule) | Recurring backup policy with retention |
 
-More resources land as the public API expands. For features not yet in the provider, drop down to the [public API](/api-reference/endpoints) directly via Terraform's `http` data source or a `null_resource` with `local-exec`.
+### Networking
+
+| Resource | What it manages |
+|---|---|
+| [`raff_vpc`](/reference/terraform/raff_vpc) | Virtual private cloud — RFC 1918 / RFC 6598, /16–/28 |
+| [`raff_ip`](/reference/terraform/raff_ip) | Reserved floating IP (IPv4 or IPv6) |
+| [`raff_security_group`](/reference/terraform/raff_security_group) | Firewall ruleset attached to VM NICs |
+
+### Team & access control
+
+| Resource | What it manages |
+|---|---|
+| [`raff_project`](/reference/terraform/raff_project) | A project — the access-control container |
+| [`raff_member`](/reference/terraform/raff_member) | Account-level member (invite by email or add an existing user / API key) |
+| [`raff_project_member`](/reference/terraform/raff_project_member) | Project-scoped member |
+| [`raff_role`](/reference/terraform/raff_role) | Custom IAM role with a permission set |
+| [`raff_ssh_key`](/reference/terraform/raff_ssh_key) | Registered SSH public key |
+| [`raff_api_key`](/reference/terraform/raff_api_key) | API key (secret returned once at create — lock down state) |
+
+### Data sources
+
+Every resource has a singular (by ID) and plural (list) data source — see the **Data sources** section at the bottom of each resource page. Catalog/lookup data sources (regions, OS templates, pricing) live on the [Catalog data sources](/reference/terraform/data-sources) page.
 
 ## Quick start
 
@@ -24,7 +54,8 @@ More resources land as the public API expands. For features not yet in the provi
 terraform {
   required_providers {
     raff = {
-      source = "rafftechnologies/raff"
+      source  = "RaffTechnologies/raff"
+      version = "~> 0.1"
     }
   }
 }
@@ -40,12 +71,17 @@ resource "raff_project" "prod" {
   default_region = "us-east"
 }
 
+resource "raff_ssh_key" "alice" {
+  name       = "alice@laptop"
+  public_key = file("~/.ssh/id_ed25519.pub")
+}
+
 resource "raff_vm" "web" {
   name        = "web-01"
   template_id = "<ubuntu-template-uuid>"
   pricing_id  = 9                          # Standard 2 vCPU / 4 GiB / 50 GiB
   region      = "us-east"
-  ssh_keys    = ["<ssh-key-id>"]
+  ssh_keys    = [raff_ssh_key.alice.id]
   tags        = ["web", "prod"]
 }
 ```
@@ -58,7 +94,7 @@ terraform apply
 
 ## Authentication
 
-The provider takes an API key via either the `api_key` block argument or the `RAFF_API_KEY` environment variable. The same precedence as the [CLI](/reference/cli/configure#authentication-precedence): block argument > env var.
+The provider takes an API key via either the `api_key` block argument or the `RAFF_API_KEY` environment variable. Same precedence as the [CLI](/reference/cli/configure#authentication-precedence): block argument > env var.
 
 ```bash
 export RAFF_API_KEY="raff_<your-key>"
@@ -87,7 +123,7 @@ provider "raff" {
 
 ## What's covered
 
-The provider tracks the customer-facing public API. Anything documented in the [API Reference](/api-reference/endpoints) is a candidate for Terraform exposure; current coverage is `raff_project` + `raff_vm`. Network resources (VPC, Public IPs, Firewall) are managed via the [CLI](/reference/cli/introduction) or [API](/api-reference/endpoints) today; Terraform support will follow as the resources stabilize.
+The provider tracks the customer-facing public API. Every resource group exposed by the API has a Terraform resource and matching data sources today: compute, storage, networking, identity. Kubernetes and Object Storage are still rolling out at the API level and will land in the provider once those endpoints stabilize.
 
 ## Versioning and upgrades
 
@@ -97,7 +133,7 @@ The provider follows semantic versioning. Major-version bumps may include breaki
 terraform {
   required_providers {
     raff = {
-      source  = "rafftechnologies/raff"
+      source  = "RaffTechnologies/raff"
       version = "~> 0.1"
     }
   }
@@ -110,19 +146,22 @@ terraform {
   <Card title="Install the provider" icon="download" href="/reference/terraform/install">
     Registry installation, local development, and version pinning.
   </Card>
-  <Card title="raff_project" icon="folder" href="/reference/terraform/raff_project">
-    Manage projects.
-  </Card>
   <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
     Manage Virtual Machines.
   </Card>
+  <Card title="raff_volume" icon="cube" href="/reference/terraform/raff_volume">
+    Block storage volumes.
+  </Card>
+  <Card title="raff_vpc" icon="network-wired" href="/reference/terraform/raff_vpc">
+    Private networks.
+  </Card>
+  <Card title="Catalog data sources" icon="magnifying-glass" href="/reference/terraform/data-sources">
+    Regions, templates, pricing.
+  </Card>
+  <Card title="Terraform Registry" icon="hashicorp" href="https://registry.terraform.io/providers/RaffTechnologies/raff/latest">
+    Auto-generated schema docs.
+  </Card>
   <Card title="CLI" icon="terminal" href="/reference/cli/introduction">
     Imperative alternative for non-IaC workflows.
-  </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/endpoints">
-    The HTTP API behind the provider.
-  </Card>
-  <Card title="Generate an API key" icon="key" href="/products/manage/team-projects/quickstart-guides/generate-api-key">
-    Create a scoped key for Terraform.
   </Card>
 </CardGroup>

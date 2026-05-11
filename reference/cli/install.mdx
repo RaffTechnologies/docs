@@ -1,72 +1,82 @@
 ---
-title: "Install the Raff CLI"
-description: "Install the raff binary via go install, build from source, or download a release. Single static Go binary; supports macOS, Linux, and Windows."
+title: "Installing raff"
+description: "Install the raff binary by downloading a release from GitHub or building from source. Single static Go binary; supports macOS, Linux, and Windows."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
-The Raff CLI is a single static binary written in Go. There are three ways to install it.
+The Raff CLI is a single static binary written in Go. Most users grab a pre-built release from GitHub; if you have a Go toolchain you can build from source.
 
-## Option 1 — `go install` (recommended for Go users)
+<Card title="View on GitHub" icon="github" href="https://github.com/RaffTechnologies/raff-cli">
+  github.com/RaffTechnologies/raff-cli — source, releases, issues, and the changelog.
+</Card>
 
-If you have Go 1.25+ on your system, this is the fastest path:
+## Downloading a Release from GitHub
+
+Visit the [Releases page](https://github.com/RaffTechnologies/raff-cli/releases) for archives matching your OS / architecture. Builds are published for `linux`, `macos`, `windows` × `amd64`, `arm64`.
+
+### Quickest — auto-detect the latest version
 
 ```bash
-go install github.com/rafftechnologies/raff-cli/cmd/raff@latest
+# Linux x86_64
+curl -sL "https://api.github.com/repos/RaffTechnologies/raff-cli/releases/latest" \
+  | grep "browser_download_url.*linux_x86_64.tar.gz" \
+  | cut -d'"' -f4 | xargs curl -sL | tar -xzv
+sudo mv raff /usr/local/bin/
 ```
 
-The binary lands in `$(go env GOPATH)/bin/raff`. Make sure that directory is in your `PATH`:
+Replace `linux_x86_64` with `linux_arm64`, `macos_x86_64`, or `macos_arm64` as needed.
+
+### Pinning to a specific version
+
+Replace `0.3.4` below with the version you want from the [Releases page](https://github.com/RaffTechnologies/raff-cli/releases).
 
 ```bash
-# macOS / Linux — add to your shell rc
-export PATH="$(go env GOPATH)/bin:$PATH"
+# Linux x86_64
+curl -sL https://github.com/RaffTechnologies/raff-cli/releases/download/v0.3.4/raff_0.3.4_linux_x86_64.tar.gz | tar -xzv
+sudo mv raff /usr/local/bin/
+
+# macOS arm64 (Apple Silicon)
+curl -sL https://github.com/RaffTechnologies/raff-cli/releases/download/v0.3.4/raff_0.3.4_macos_arm64.tar.gz | tar -xzv
+sudo mv raff /usr/local/bin/
 ```
 
-Verify:
+For Windows, download the matching `.zip` from the Releases page in your browser, extract `raff.exe`, then follow [How to: Add Tool Locations to the PATH Environment Variable](https://learn.microsoft.com/en-us/previous-versions/office/developer/sharepoint-2010/ee537574(v=office.14)) to put it on your `PATH`.
+
+Verify the install:
 
 ```bash
 raff --version
 ```
 
-To upgrade later, re-run the same `go install` command.
+## Building the Development Version from Source
 
-## Option 2 — Build from source
+If you have a Go environment configured, you can install the development version of `raff` from the command line:
 
 ```bash
-git clone https://github.com/rafftechnologies/raff-cli.git
+go install github.com/RaffTechnologies/raff-cli/cmd/raff@latest
+```
+
+This installs **the CLI** (the `raff` binary) — not the [`raff-go` SDK library](https://github.com/RaffTechnologies/raff-go). The path ends in `cmd/raff` because that's the CLI's `main` package inside the `raff-cli` repo. The binary lands in `$(go env GOPATH)/bin/raff` — make sure that directory is in your `PATH`.
+
+While the development version is a good way to take a peek at the latest features before they're released, be aware that it may have bugs. Officially released versions will generally be more stable.
+
+Or build from a clone:
+
+```bash
+git clone https://github.com/RaffTechnologies/raff-cli.git
 cd raff-cli
-make install
+make build       # produces ./bin/raff
+make install     # installs into $GOBIN
 ```
 
-Requires Go 1.25+. The `make install` target builds and copies the binary to `$(go env GOPATH)/bin`. Use `make build` instead if you want the binary in `./bin/raff` without installing globally.
-
-## Option 3 — Download a release binary
-
-Pre-built binaries for macOS (arm64, amd64), Linux (amd64, arm64), and Windows (amd64) are published to the [Releases page](https://github.com/rafftechnologies/raff-cli/releases) on each version bump.
-
-```bash
-# Example — macOS arm64
-curl -L https://github.com/rafftechnologies/raff-cli/releases/latest/download/raff-darwin-arm64 -o raff
-chmod +x raff
-sudo mv raff /usr/local/bin/raff
-```
-
-Adapt the URL for your platform.
-
-## Verify installation
-
-```bash
-raff --version
-raff --help
-```
-
-You should see the version and the top-level command list.
+Requires Go 1.25+.
 
 ## Next steps
 
 <CardGroup cols={2}>
   <Card title="Configure" icon="gear" href="/reference/cli/configure">
-    Set up your API key and default project.
+    Authenticate and set up profiles.
   </Card>
   <Card title="VM commands" icon="server" href="/reference/cli/vm">
     Start using the CLI to manage Virtual Machines.

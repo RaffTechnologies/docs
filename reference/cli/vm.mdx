@@ -90,18 +90,24 @@ Update VM metadata. Currently rename-only.
 ## delete
 
 ```bash
-raff vm delete <vm-id> [--force]
+raff vm delete <vm-id> \
+  [--volume-action detach|delete] \
+  [--delete-vpc] \
+  [--force]
 ```
 
-Delete the VM. With `--force`, skips the confirmation prompt — required in scripts.
+Delete the VM. By default, attached volumes detach (preserved) and VPCs are kept — pass `--volume-action delete` to also remove volumes and `--delete-vpc` to remove VPCs (shared VPCs are auto-preserved if other VMs still use them). Pass `--force` to skip the confirmation prompt — required in scripts. The dashboard exposes the same options as a two-step confirmation dialog; see [Delete a VM](/products/build/virtual-machines/quickstart-guides/delete-vm) for the full rules.
 
 ## bulk-delete
 
 ```bash
-raff vm bulk-delete --vm-ids <id1,id2,id3> [--keep-volumes] [--keep-vpcs]
+raff vm bulk-delete --ids <id1,id2,id3> \
+  [--volume-action detach|delete] \
+  [--delete-vpc] \
+  [--force]
 ```
 
-Delete multiple VMs in one call. By default, attached volumes detach (preserved), and shared VPCs are kept if other VMs still use them. Pass `--keep-volumes false` to also delete volumes; `--keep-vpcs false` to also delete VPCs (subject to the shared-VPC safety rule — see [Delete a VM](/products/build/virtual-machines/quickstart-guides/delete-vm)).
+Delete multiple VMs in one call. Required: `--ids`. By default, attached volumes detach (preserved) and VPCs are kept; pass `--volume-action delete` to also remove volumes, and `--delete-vpc` to remove VPCs no longer in use. Shared VPCs are auto-preserved if other VMs still use them — see [Delete a VM](/products/build/virtual-machines/quickstart-guides/delete-vm).
 
 ## Power commands
 

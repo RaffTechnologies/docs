@@ -1,0 +1,94 @@
+---
+title: "raff role"
+description: "Manage IAM roles from the CLI — list system + custom roles, create custom roles with a permission set, update, delete. System roles (Owner, Admin, etc.) are immutable."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff role` command group manages IAM roles. **System roles** (Owner, Admin, Operator, Member, etc.) are immutable and managed by the platform; only **custom roles** can be created here. Every subcommand supports `--output json` for scripting. Alias: `raff roles`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List roles |
+| [`get`](#get) | Show details for one role |
+| [`create`](#create) | Create a custom role |
+| [`update`](#update) | Update a custom role |
+| [`delete`](#delete) | Delete a custom role |
+
+---
+
+## list
+
+```bash
+raff role list [--scope account|project] [--output table|json]
+```
+
+List roles, optionally filtered by scope. Output columns: `ID`, `NAME`, `SLUG`, `SCOPE`, `SYSTEM`, `PERMISSIONS` (count).
+
+## get
+
+```bash
+raff role get <role-id>
+```
+
+Show full role details — name, slug, scope, system flag, description, full permission list.
+
+## create
+
+```bash
+raff role create \
+  --name <name> \
+  --slug <slug> \
+  --scope account|project \
+  --permission <perm-name> [--permission ...] \
+  [--description <text>]
+```
+
+Create a custom role. Required: `--name`, `--slug`, `--scope`, at least one `--permission`. Pass `--permission` multiple times to add several permissions. Discover permission names via [`raff permission list --scope <scope>`](/reference/cli/permission#list).
+
+```bash
+# Account-scoped read-only role
+raff role create --name "Auditor" --slug auditor --scope account \
+  --permission account.audit.read \
+  --permission billing.read \
+  --description "Read-only access for compliance"
+
+# Project-scoped VM operator
+raff role create --name "VM Operator" --slug vm-operator --scope project \
+  --permission vm.read --permission vm.power
+```
+
+## update
+
+```bash
+raff role update <role-id> \
+  [--name <name>] \
+  [--description <text>] \
+  [--permission <perm-name>]...
+```
+
+Update a custom role. At least one flag must be provided. Passing `--permission` replaces the entire permission set; omit to keep current permissions.
+
+## delete
+
+```bash
+raff role delete <role-id> [--force]
+```
+
+Delete a custom role. System roles cannot be deleted. Pass `--force` to skip the confirmation prompt.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Permission commands" icon="list-check" href="/reference/cli/permission">
+    Browse the permission catalog.
+  </Card>
+  <Card title="raff_role (Terraform)" icon="cube" href="/reference/terraform/raff_role">
+    Declarative role management.
+  </Card>
+  <Card title="Member commands" icon="users" href="/reference/cli/member">
+    Assign roles to members.
+  </Card>
+</CardGroup>

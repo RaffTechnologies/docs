@@ -1,0 +1,98 @@
+---
+title: "raff_snapshot"
+description: "Capture point-in-time snapshots of VMs or volumes with Terraform. Once taken, the source binding is immutable — only the name can be updated. Restore is imperative; use the CLI."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a Raff **snapshot** — a point-in-time capture of a VM disk or a volume. Once taken, the source binding (`resource_type`, `vm_id`, `volume_id`) is immutable — Terraform owns the snapshot's lifecycle (rename, delete). Restore is an imperative operation; use [`raff snapshot restore`](/reference/cli/snapshot#restore) when you need it.
+
+## Example — VM snapshot
+
+```hcl
+resource "raff_snapshot" "pre_upgrade" {
+  name          = "web-01-pre-upgrade"
+  resource_type = "vm"
+  vm_id         = raff_vm.web.id
+}
+```
+
+## Example — volume snapshot
+
+```hcl
+resource "raff_snapshot" "data_weekly" {
+  name          = "data-01-2026-05-10"
+  resource_type = "volume"
+  volume_id     = raff_volume.data.id
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Snapshot name. Updates trigger a rename |
+| `resource_type` | string | Source type: `vm` or `volume`. ForceNew |
+
+### Optional (one required, depending on `resource_type`)
+
+| Argument | Type | Description |
+|---|---|---|
+| `vm_id` | string (UUID) | Source VM UUID. Required when `resource_type = "vm"`. ForceNew |
+| `volume_id` | int | Source volume ID. Required when `resource_type = "volume"`. ForceNew |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Snapshot ID |
+| `size` | Snapshot size (string, e.g. `"50 GB"`) |
+| `status` | Empty when saved-but-not-in-use; `active` when the source is currently reverted to this snapshot (cannot be deleted in this state) |
+| `created_at` | RFC3339 timestamp |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Captures a new snapshot |
+| Change `name` | In-place rename |
+| Change `resource_type` / `vm_id` / `volume_id` | **Replacement** — snapshots are immutable; Terraform destroys and recreates |
+| `terraform destroy` | Deletes the snapshot. Fails if `status = "active"` — restore the source elsewhere first |
+
+## Importing existing snapshots
+
+```bash
+terraform import raff_snapshot.pre_upgrade <snapshot-id>
+```
+
+## Permissions
+
+The API key needs `snapshot.create`, `snapshot.manage`, and `snapshot.delete` in the project. The system role `Project Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single snapshot by ID
+data "raff_snapshot" "pre_upgrade" {
+  id = 17
+}
+
+# All snapshots in the current project
+data "raff_snapshots" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_backup" icon="shield" href="/reference/terraform/raff_backup">
+    Heavier-weight backup with retention.
+  </Card>
+  <Card title="raff_volume" icon="cube" href="/reference/terraform/raff_volume">
+    Block storage volumes.
+  </Card>
+  <Card title="CLI: raff snapshot" icon="terminal" href="/reference/cli/snapshot">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

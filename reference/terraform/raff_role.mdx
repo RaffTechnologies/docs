@@ -1,0 +1,112 @@
+---
+title: "raff_role"
+description: "Manage custom IAM roles with Terraform. System roles (Owner, Admin, etc.) are immutable; only custom roles can be created. Permissions are diffed as a set."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a **custom IAM role**. System roles (Owner, Admin, Operator, Member) are immutable and managed by the platform — they cannot be created, updated, or deleted via Terraform. The `permissions` attribute is a set; reordering does not produce a diff.
+
+## Example — account-scoped read-only
+
+```hcl
+resource "raff_role" "auditor" {
+  name        = "Auditor"
+  slug        = "auditor"
+  scope       = "account"
+  description = "Read-only access for compliance reviews"
+
+  permissions = [
+    "account.audit.read",
+    "billing.read",
+    "members.read",
+  ]
+}
+```
+
+## Example — project-scoped VM operator
+
+```hcl
+resource "raff_role" "vm_operator" {
+  name  = "VM Operator"
+  slug  = "vm-operator"
+  scope = "project"
+
+  permissions = [
+    "vm.read",
+    "vm.power",
+  ]
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Display name. Updates rename in place |
+| `slug` | string | URL-safe identifier. ForceNew |
+| `scope` | string | `account` or `project`. ForceNew |
+| `permissions` | set(string) | Permission names. Browse via [`raff permission list --scope <scope>`](/reference/cli/permission#list) |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `description` | string | Free-form description |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Role UUID |
+| `is_system` | `true` for system roles, `false` for custom |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the custom role |
+| Change `name`, `description`, `permissions` | In-place update |
+| Change `slug`, `scope` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the role. Members assigned to it must be reassigned first |
+
+## Importing existing roles
+
+```bash
+terraform import raff_role.auditor <role-uuid>
+```
+
+## Permissions
+
+The API key managing roles needs `role.create`, `role.manage`, and `role.delete` at the account level. The system role `Account Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single role by UUID
+data "raff_role" "owner" {
+  id = "<role-uuid>"
+}
+
+# All roles, optionally filtered by scope
+data "raff_roles" "account" {
+  scope = "account"
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_member" icon="users" href="/reference/terraform/raff_member">
+    Account-scoped members get account-scoped roles.
+  </Card>
+  <Card title="raff_project_member" icon="folder-tree" href="/reference/terraform/raff_project_member">
+    Project-scoped members get project-scoped roles.
+  </Card>
+  <Card title="CLI: raff permission list" icon="list-check" href="/reference/cli/permission">
+    Browse the permission catalog.
+  </Card>
+</CardGroup>

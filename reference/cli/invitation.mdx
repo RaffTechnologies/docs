@@ -1,0 +1,73 @@
+---
+title: "raff invitation"
+description: "Send and cancel email invitations from the CLI — for account-level access or project-level access. Pending invites show up via list until accepted, expired, or cancelled."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff invitation` command group sends email invitations to grant account or project access, lists pending invitations, and cancels them. Every subcommand supports `--output json` for scripting. Aliases: `raff invitations`, `raff invite`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List pending invitations |
+| [`create-account`](#create-account) | Invite to the account |
+| [`create-project`](#create-project) | Invite to the current project |
+| [`cancel`](#cancel) | Cancel a pending invitation |
+
+---
+
+## list
+
+```bash
+raff invitation list [--project-id <uuid>] [--output table|json]
+```
+
+List pending invitations. Without `--project-id`, lists pending account invites; with it, lists pending project invites for that project. Output columns: `INVITATION ID`, `EMAIL`, `ROLE`, `SCOPE`, `EXPIRES`.
+
+```bash
+# Pending account invites
+raff invitation list
+
+# Pending invites for a specific project
+raff invitation list --project-id <project-uuid>
+```
+
+## create-account
+
+```bash
+raff invitation create-account --email <email> --role-id <account-role-uuid>
+```
+
+Send an invitation to join the account. Required: `--email`, `--role-id`. The role must be account-scoped — find via [`raff role list --scope account`](/reference/cli/role#list).
+
+## create-project
+
+```bash
+raff invitation create-project --email <email> --role-id <project-role-uuid>
+```
+
+Send an invitation to join the current project (taken from `--project-id` global flag, `RAFF_PROJECT_ID`, or active profile). Required: `--email`, `--role-id`. The role must be project-scoped.
+
+## cancel
+
+```bash
+raff invitation cancel <invitation-id>
+```
+
+Cancel a pending invitation. The recipient's accept link stops working immediately.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Member commands" icon="users" href="/reference/cli/member">
+    Account-level members and direct adds.
+  </Card>
+  <Card title="Project member commands" icon="folder-tree" href="/reference/cli/project#member-subcommands">
+    Project-scoped members.
+  </Card>
+  <Card title="Role commands" icon="shield-halved" href="/reference/cli/role">
+    Get a role-id to invite with.
+  </Card>
+</CardGroup>

@@ -1,0 +1,106 @@
+---
+title: "raff_api_key"
+description: "Create a Raff API key with Terraform. The plaintext secret is returned ONCE on create and stored in the secret attribute (sensitive). Lock down your Terraform state."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Creates a Raff **API key**. The plaintext secret is returned **once** on create and stored in the `secret` attribute (sensitive). Anyone with read access to your Terraform state can use the key — store state in a backend with strict access controls (S3 + KMS, Terraform Cloud, etc.) and never commit `terraform.tfstate` to git.
+
+## Example — minimal
+
+```hcl
+resource "raff_api_key" "ci" {
+  name = "ci-deploy"
+}
+```
+
+## Example — full
+
+```hcl
+resource "raff_api_key" "ci" {
+  name            = "ci-deploy"
+  rate_limit_tier = "standard"             # or "high" (requires approval)
+  expires_at      = "2026-12-31T23:59:59Z"  # RFC3339
+  is_active       = true
+}
+
+# Use the secret to drive a downstream provider
+provider "raff" {
+  alias   = "ci"
+  api_key = raff_api_key.ci.secret
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Display name |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `rate_limit_tier` | string | `standard` (default, 30 RPS) or `high` (100 RPS, requires support approval) |
+| `expires_at` | string | Expiration in RFC3339. Omit for never-expires |
+| `is_active` | bool | Defaults to `true`. Set to `false` to suspend without revoking |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | API key UUID |
+| `key_prefix` | First 13 characters of the key (e.g. `raff_pub_17d70fcf`) |
+| `secret` | **Sensitive.** Full plaintext API key. Returned only on create — never re-fetchable |
+| `created_at` | RFC3339 timestamp |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the key. `secret` is returned once and saved to state |
+| Change `name`, `rate_limit_tier`, `is_active`, `expires_at` | In-place update |
+| `terraform destroy` | Permanently revokes the key |
+
+There is no managed re-fetch of `secret` after create. If you lose the secret, the only recovery is to revoke and recreate the key. **Note:** the provider does not yet expose `regenerate` as a resource action — use [`raff api-key regenerate`](/reference/cli/api-key#regenerate) when rotation is needed.
+
+## Importing existing keys
+
+```bash
+terraform import raff_api_key.ci <key-uuid>
+```
+
+After import, `secret` will be empty in state — the API key works, but Terraform cannot supply the secret to a downstream provider. Use the CLI to rotate and capture the new secret.
+
+## Permissions
+
+The API key managing other API keys needs `api_key.create`, `api_key.manage`, and `api_key.delete` at the account level. The system role `Account Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single API key by UUID (no secret)
+data "raff_api_key" "ci" {
+  id = raff_api_key.ci.id
+}
+
+# All API keys (no secrets)
+data "raff_api_keys" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_role" icon="shield-halved" href="/reference/terraform/raff_role">
+    Custom roles assigned to API keys via raff_member.
+  </Card>
+  <Card title="raff_member" icon="users" href="/reference/terraform/raff_member">
+    Grant the key account-level access.
+  </Card>
+  <Card title="CLI: raff api-key" icon="terminal" href="/reference/cli/api-key">
+    Imperative equivalent (incl. regenerate).
+  </Card>
+</CardGroup>

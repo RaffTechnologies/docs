@@ -1,20 +1,24 @@
 ---
 title: "Reference"
-description: "Manage resources programmatically with APIs, CLIs, and infrastructure-as-code tools."
+description: "Manage Raff resources programmatically with the REST API, the CLI, or Terraform. The public API is in **Beta** (v1.0.0)."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
-Use the Raff reference tools to automate infrastructure, integrate with your workflows, and manage resources at scale.
+Drive Raff infrastructure programmatically — REST API, CLI, or Terraform. All three talk to the same public API and use the same `X-API-Key` auth and role-based scoping.
+
+<Note>
+The Raff public API is currently in **Beta** (v1.0.0). The endpoint surface is stable; minor backward-compatible changes may land before GA. Track them in the [API Changelog](/api-reference/changelog).
+</Note>
 
 <CardGroup cols={3}>
-  <Card title="APIs" icon="code" href="/api-reference/endpoints">
-    Create, manage, and monitor cloud resources through the Raff REST API.
+  <Card title="REST API" icon="code" href="/api-reference/endpoints">
+    Full HTTP API with an interactive playground.
   </Card>
   <Card title="CLI" icon="terminal" href="/reference/cli/introduction">
-    Control your infrastructure from the command line. **Coming soon.**
+    Single static `raff` binary — one-off ops, scripts, CI/CD.
   </Card>
   <Card title="Terraform" icon="cube" href="/reference/terraform/introduction">
-    Provision and manage resources with infrastructure as code. **Coming soon.**
+    Declarative IaC for production and code review.
   </Card>
 </CardGroup>

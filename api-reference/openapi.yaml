@@ -3992,7 +3992,7 @@ components:
       in: path
       required: true
       description: |
-        Security group ID (UUID). Get it from the `security_group_id` field of `GET /api/v1/vms/{id}/networks`, or list all account security groups via `GET /api/v1/security-groups` (coming soon).
+        Security group ID (UUID). Get it from the `security_group_id` field of `GET /api/v1/vms/{id}/networks`, or list all account security groups via `GET /api/v1/security-groups`.
       schema:
         type: string
         format: uuid

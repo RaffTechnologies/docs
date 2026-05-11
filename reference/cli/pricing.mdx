@@ -1,0 +1,82 @@
+---
+title: "raff pricing"
+description: "Browse the public pricing catalog from the CLI — VM plans, volume / backup / snapshot per-GB rates, floating IP family rates."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff pricing` command group browses Raff's public pricing catalog. Use it to discover plan IDs (for `raff vm create --pricing-id`), per-GB storage rates (for cost forecasting), and floating IP rates. Output supports `--output json` for scripting.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`vm`](#vm) | List VM pricing plans |
+| [`volume`](#volume) | Show per-GB volume pricing |
+| [`backup`](#backup) | Show per-GB backup storage pricing |
+| [`snapshot`](#snapshot) | Show per-GB snapshot storage pricing |
+| [`ip`](#ip) | Show floating IP pricing |
+
+---
+
+## vm
+
+```bash
+raff pricing vm [--region <region>] [--vm-type standard|premium] [--output table|json]
+```
+
+List VM plans. Output columns: `ID`, `TYPE`, `REGION`, `vCPU`, `RAM`, `SSD`, `TRANSFER`, `$/HR`, `$/MO`. The `ID` is what you pass to `raff vm create --pricing-id`.
+
+```bash
+# All standard plans
+raff pricing vm --vm-type standard
+
+# Cheapest plan that meets your minimums
+raff pricing vm --output json | jq 'sort_by(.monthly_price) | .[0]'
+```
+
+## volume
+
+```bash
+raff pricing volume [--region <region>] [--output table|json]
+```
+
+Show per-GB block storage pricing. Output: per-GB hourly + monthly rates for the requested (or default) region.
+
+## backup
+
+```bash
+raff pricing backup [--region <region>] [--output table|json]
+```
+
+Show per-GB backup storage pricing.
+
+## snapshot
+
+```bash
+raff pricing snapshot [--region <region>] [--output table|json]
+```
+
+Show per-GB snapshot storage pricing.
+
+## ip
+
+```bash
+raff pricing ip [--output table|json]
+```
+
+Show floating IP pricing by family (IPv4, IPv6). Output columns: `FAMILY`, `$/HR`, `$/MO`, `$/YR`, `$/24MO`.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Use --pricing-id with raff vm create.
+  </Card>
+  <Card title="Region commands" icon="globe" href="/reference/cli/region">
+    Discover region codes.
+  </Card>
+  <Card title="data.raff_*_pricing (Terraform)" icon="cube" href="/reference/terraform/data-sources">
+    Same data, declarative.
+  </Card>
+</CardGroup>

@@ -1,0 +1,43 @@
+---
+title: "raff region"
+description: "List Raff datacenter regions from the CLI. Region codes are required when creating VMs, volumes, VPCs, and reserved IPs."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff region` command group lists Raff datacenter regions. Region codes (e.g. `us-east`) are needed for `--region` flags on VMs, volumes, VPCs, and reserved IPs. Output supports `--output json` for scripting. Alias: `raff regions`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List available regions |
+
+---
+
+## list
+
+```bash
+raff region list [--output table|json]
+```
+
+List every available datacenter region. Output columns: `CODE`, `NAME`, `COUNTRY`, `DEFAULT`. The `DEFAULT` column flags the project's default region (used when `--region` is omitted on creates).
+
+```bash
+raff region list
+raff region list --output json | jq -r '.[].code'
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Template commands" icon="layer-group" href="/reference/cli/template">
+    OS templates available per region.
+  </Card>
+  <Card title="Pricing commands" icon="circle-dollar" href="/reference/cli/pricing">
+    Pricing varies by region.
+  </Card>
+  <Card title="data.raff_regions (Terraform)" icon="cube" href="/reference/terraform/data-sources">
+    Same data, declarative.
+  </Card>
+</CardGroup>

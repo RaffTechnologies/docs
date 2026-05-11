@@ -1,0 +1,103 @@
+---
+title: "raff_backup_schedule"
+description: "Recurring backup policy for a Raff VM with Terraform — daily or weekly, with retention. The schedule auto-prunes old backups; never manage them via raff_backup."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a **recurring backup schedule** for a VM. The schedule auto-prunes backups older than `keep_count`, so backups it creates **must not** be managed via [`raff_backup`](/reference/terraform/raff_backup) — that fights the retention engine. For one-shot backups, use `raff_backup`.
+
+## Example — daily
+
+```hcl
+resource "raff_backup_schedule" "api_nightly" {
+  vm_id      = raff_vm.api.id
+  frequency  = "daily"
+  time       = "03:00"
+  keep_count = 14
+}
+```
+
+## Example — weekly
+
+```hcl
+resource "raff_backup_schedule" "web_weekly" {
+  vm_id       = raff_vm.web.id
+  frequency   = "weekly"
+  day_of_week = "Saturday"
+  time        = "04:00"
+  keep_count  = 4
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `vm_id` | string (UUID) | Source VM. ForceNew — point at a different schedule's VM by replacing the resource |
+| `frequency` | string | `daily` or `weekly` |
+| `time` | string | Time of day, e.g. `08:00` or `8am` |
+| `keep_count` | int | Number of backups to retain before auto-pruning |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `day_of_week` | string | Day of week (Monday–Sunday). Required when `frequency = "weekly"` |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Schedule ID |
+| `name` | Auto-generated schedule name |
+| `runtime` | Next scheduled run time |
+| `region` | Region (mirrors the source VM's region) |
+| `price_per_hour` | Hourly price in USD for the storage the schedule's backups consume |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the schedule. The first backup runs at the next `time` slot |
+| Change `frequency`, `time`, `day_of_week`, `keep_count` | In-place update |
+| Change `vm_id` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the schedule. Existing backups it created remain — delete via `raff backup delete` if no longer needed |
+
+## Importing existing schedules
+
+```bash
+terraform import raff_backup_schedule.api_nightly <schedule-id>
+```
+
+## Permissions
+
+The API key needs `vm.backup` in the project. The system role `Project Admin` grants this.
+
+## Data sources
+
+```hcl
+# Single schedule by ID
+data "raff_backup_schedule" "api_nightly" {
+  id = 9
+}
+
+# All schedules in the current project
+data "raff_backup_schedules" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_backup" icon="shield" href="/reference/terraform/raff_backup">
+    One-shot backup (don't combine with schedule-created backups).
+  </Card>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Compute resource the schedule is attached to.
+  </Card>
+  <Card title="CLI: raff backup schedule" icon="terminal" href="/reference/cli/backup">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

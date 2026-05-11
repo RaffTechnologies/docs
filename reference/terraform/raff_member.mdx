@@ -1,0 +1,110 @@
+---
+title: "raff_member"
+description: "Manage an account-level Raff member with Terraform — invite by email, add an existing user, or grant API-key access. The three identifiers are mutually exclusive."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages an **account-level member**. Use exactly one of `email`, `target_user_id`, or `api_key_id` to identify the member at create time — they are mutually exclusive (`ExactlyOneOf` is enforced at plan time). Inviting by email creates a pending member that becomes active when the recipient accepts the invitation.
+
+## Example — invite by email
+
+```hcl
+resource "raff_member" "alice" {
+  email   = "alice@example.com"
+  role_id = data.raff_roles.account.roles[0].id    # e.g. "Admin"
+}
+```
+
+## Example — add an existing user
+
+```hcl
+resource "raff_member" "bob" {
+  target_user_id = "<bob-user-uuid>"
+  role_id        = "<operator-role-uuid>"
+}
+```
+
+## Example — grant CI key account-level access
+
+```hcl
+resource "raff_member" "ci" {
+  api_key_id = raff_api_key.ci.id
+  role_id    = raff_role.vm_operator.id
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `role_id` | string (UUID) | Role to assign. Must be account-scoped |
+
+### One of (mutually exclusive)
+
+| Argument | Type | Description |
+|---|---|---|
+| `email` | string | Email to invite. Creates a pending member. ForceNew |
+| `target_user_id` | string (UUID) | Existing account user. ForceNew |
+| `api_key_id` | string (UUID) | API key to grant account access. ForceNew |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `status` | string | `active` or `suspended`. `pending` is set automatically for invited members until they accept |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Member UUID |
+| `role_name` | Display name of the assigned role |
+| `created_at` | RFC3339 timestamp |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Adds (or invites) the member |
+| Change `role_id`, `status` | In-place update |
+| Change `email`, `target_user_id`, `api_key_id` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Removes the member from the account |
+
+## Importing existing members
+
+```bash
+terraform import raff_member.alice <member-uuid>
+```
+
+## Permissions
+
+The API key needs `members.manage` at the account level. The system role `Account Admin` grants this.
+
+## Data sources
+
+```hcl
+# Single account member by UUID
+data "raff_member" "alice" {
+  id = raff_member.alice.id
+}
+
+# All account members
+data "raff_members" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_project_member" icon="folder-tree" href="/reference/terraform/raff_project_member">
+    Project-scoped membership.
+  </Card>
+  <Card title="raff_role" icon="shield-halved" href="/reference/terraform/raff_role">
+    Roles assigned via role_id.
+  </Card>
+  <Card title="CLI: raff member" icon="terminal" href="/reference/cli/member">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

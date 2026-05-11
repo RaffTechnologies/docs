@@ -1,0 +1,90 @@
+---
+title: "raff_ssh_key"
+description: "Register an SSH public key on a Raff account with Terraform. The key material is immutable; rename in place. Linux VMs accept these via raff_vm.ssh_keys."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Registers an **SSH public key** for use when creating Linux VMs. The key string itself is immutable; rename in place. The detected algorithm is exposed as `key_type`.
+
+## Example — from a file
+
+```hcl
+resource "raff_ssh_key" "alice" {
+  name       = "alice@laptop"
+  public_key = file("~/.ssh/id_ed25519.pub")
+}
+```
+
+## Example — inline
+
+```hcl
+resource "raff_ssh_key" "ci" {
+  name       = "ci-deploy"
+  public_key = "ssh-ed25519 AAAAC3Nz... ci@deploy"
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Display name. Updates rename in place |
+| `public_key` | string | Full SSH public key string. ForceNew |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | SSH key UUID |
+| `key_type` | Detected algorithm — `ed25519`, `rsa`, etc. |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Registers the key |
+| Change `name` | In-place rename |
+| Change `public_key` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the key from the registry. Existing VMs that already received the key keep it on disk |
+
+## Importing existing keys
+
+```bash
+terraform import raff_ssh_key.alice <key-uuid>
+```
+
+## Permissions
+
+The API key needs `ssh_key.create`, `ssh_key.manage`, and `ssh_key.delete` at the account level. The system role `Account Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single key by UUID
+data "raff_ssh_key" "alice" {
+  id = raff_ssh_key.alice.id
+}
+
+# All keys, optionally filtered by name substring
+data "raff_ssh_keys" "team" {
+  name = "team-"
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Reference key IDs in raff_vm.ssh_keys.
+  </Card>
+  <Card title="raff_api_key" icon="key" href="/reference/terraform/raff_api_key">
+    API keys for programmatic access.
+  </Card>
+  <Card title="CLI: raff ssh-key" icon="terminal" href="/reference/cli/ssh-key">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

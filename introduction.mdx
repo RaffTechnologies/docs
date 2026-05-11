@@ -1,13 +1,35 @@
 ---
 title: Introduction
-description: Welcome to the Raff API documentation
+description: "Build against Raff with the REST API, the CLI, or Terraform — pick the flavor that fits your workflow."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
+
+<Note>
+The Raff public API is currently in **Beta** (v1.0.0). The endpoint surface is stable; minor backward-compatible changes may land before GA. Track them in the [API Changelog](/api-reference/changelog).
+</Note>
 
 ## What is Raff?
 
-Raff is a developer-friendly cloud for running virtual machines, block storage, object storage, managed Kubernetes, and VPC networking — all behind a single REST API and a clean dashboard. Deploy in seconds and pay only for what you provision.
+Raff is a developer-friendly cloud for running virtual machines, block storage, object storage, managed Kubernetes, and VPC networking. This **Reference** tab is for driving Raff programmatically — REST API, CLI, or Terraform.
+
+For product guides and dashboard tutorials, see the [**Products**](/products) tab.
+
+## Pick your interface
+
+<CardGroup cols={3}>
+  <Card title="REST API" icon="code" href="/api-reference/endpoints">
+    Full HTTP API with an interactive playground. Auth via `X-API-Key`.
+  </Card>
+  <Card title="CLI" icon="terminal" href="/reference/cli/introduction">
+    Single static `raff` binary. Right for one-off ops, scripts, and CI/CD.
+  </Card>
+  <Card title="Terraform" icon="hashicorp" href="/reference/terraform/introduction">
+    Declarative IaC. Right for production, code-review, multi-tenancy.
+  </Card>
+</CardGroup>
+
+All three talk to the same public API and use the same API-key auth, the same role-based scoping, and the same resources.
 
 ## Base URL
 
@@ -15,33 +37,24 @@ Raff is a developer-friendly cloud for running virtual machines, block storage, 
 https://api.rafftechnologies.com
 ```
 
-## Key Features
-
-<CardGroup cols={2}>
-  <Card title="Virtual Machines" icon="server" href="/api-reference/endpoint/list-vms">
-    Create and manage VMs with flexible CPU, RAM, and storage configurations.
-  </Card>
-  <Card title="Flexible billing" icon="wallet">
-    Pay-as-you-go or fixed-price subscriptions — both billed from your account balance. No long-term commitments.
-  </Card>
-  <Card title="VPC Networking" icon="network-wired">
-    Automatic VPC setup for secure private networking between your VMs.
-  </Card>
-  <Card title="API-First" icon="code">
-    Full REST API with an interactive playground. Automate everything via API keys.
-  </Card>
-</CardGroup>
-
 ## Getting Started
 
 <Steps>
-  <Step title="Get your API key">
-    Open the [Raff Dashboard](https://app.rafftechnologies.com), click **API Keys** in the sidebar, then **Create API Key**. Copy the key immediately — it's only shown once.
+  <Step title="Get an API key">
+    Open the [Raff Dashboard](https://app.rafftechnologies.com), click **Team & Projects → API Keys**, then **Create API Key**. Copy the secret immediately — it's only shown once.
   </Step>
-  <Step title="Make your first API call">
-    Follow the [Quickstart guide](/quickstart) to list your VMs and create your first virtual machine.
+  <Step title="Pick your interface and authenticate">
+    - **API**: set the `X-API-Key` header on every request — see [Authentication](/authentication).
+    - **CLI**: install with [`go install` or a release binary](/reference/cli/install), then run [`raff configure`](/reference/cli/configure).
+    - **Terraform**: declare the [provider](/reference/terraform/install) and pass `api_key` (or set `RAFF_API_KEY`).
   </Step>
-  <Step title="Explore the API">
-    Browse the [API Reference](/api-reference/endpoints) for all available endpoints with interactive examples.
+  <Step title="Make your first call">
+    - **API**: follow the [Quickstart](/quickstart) to list VMs and create one with `curl`.
+    - **CLI**: `raff vm list` then `raff vm create --name … --template-id … --pricing-id … --region us-east`.
+    - **Terraform**: copy the [Terraform quick start](/reference/terraform/introduction#quick-start) and run `terraform apply`.
   </Step>
 </Steps>
+
+## Documentation index
+
+Fetch the complete documentation index at: [https://docs.rafftechnologies.com/llms.txt](https://docs.rafftechnologies.com/llms.txt). Use this file to discover all available pages before exploring further.

@@ -1,0 +1,53 @@
+---
+title: "raff template"
+description: "List OS templates available for VM creation from the CLI. Template UUIDs are required for raff vm create --template-id and raff_vm.template_id."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff template` command group lists OS templates available for VM creation — Linux distributions (Ubuntu, Debian, CentOS, etc.), Windows Server versions, and pre-built application images. Output supports `--output json` for scripting. Alias: `raff templates`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List OS templates |
+
+---
+
+## list
+
+```bash
+raff template list \
+  [--category linux|windows|app] \
+  [--vm-type standard|premium] \
+  [--region <region>] \
+  [--output table|json]
+```
+
+List OS templates, optionally filtered. Output columns: `ID`, `NAME`, `VERSION`, `OS`, `CATEGORY`, `REGION`, `MIN CPU/RAM/DISK`. The minimums are the smallest plan that can run the template — pick a `pricing_id` at or above these.
+
+```bash
+# Every Linux template
+raff template list --category linux
+
+# Windows templates compatible with premium plans
+raff template list --category windows --vm-type premium
+
+# Filter to a specific region
+raff template list --region us-east --output json | jq '.[] | {id, name}'
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Pass template ID via raff vm create --template-id.
+  </Card>
+  <Card title="Pricing commands" icon="circle-dollar" href="/reference/cli/pricing">
+    Pick a plan that meets the template's minimums.
+  </Card>
+  <Card title="data.raff_templates (Terraform)" icon="cube" href="/reference/terraform/data-sources">
+    Same data, declarative.
+  </Card>
+</CardGroup>

@@ -1,42 +1,78 @@
 ---
 title: "raff configure"
-description: "Set up the CLI's API credentials, base URL, and default project. Supports multiple profiles for switching between accounts or environments."
+description: "Authenticate the CLI and set default values. Stores credentials in ~/.raff/config.yaml; supports multiple profiles, env-var overrides, and per-command flag overrides."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
-`raff configure` writes a YAML config file at `~/.raff/config.yaml` containing your API key, the API base URL, and an optional default project ID. The CLI reads this on every command unless overridden by env vars or flags.
+`raff configure` walks you through writing a YAML config at `~/.raff/config.yaml` (`%USERPROFILE%\.raff\config.yaml` on Windows). The CLI reads this on every command unless overridden by environment variables or per-command flags.
 
-## Run interactively
+## Authenticating with Raff
+
+To use `raff`, you need an API key. Generate one in the dashboard at [rafftechnologies.com](https://rafftechnologies.com) under **Team & Projects → API Keys**.
+
+Run the configure command to set up a profile:
 
 ```bash
 raff configure
 ```
 
-The command prompts for:
+You'll be prompted for three fields, each with the existing value as the default (just press Enter to keep it):
 
-- **API key** — paste an `raff_<suffix>` key from the [API Keys](/products/manage/team-projects/quickstart-guides/generate-api-key) page
-- **API base URL** — defaults to `https://api.rafftechnologies.com` (production); change only if you're testing against a non-prod environment
-- **Default project ID** — optional but useful; lets you skip `--project-id` on every command. Get it from `raff project list` after configuring
-
-## Multiple profiles
-
-Use `--profile <name>` to keep separate credentials for different accounts or environments:
-
-```bash
-# Default profile (used when no --profile flag)
-raff configure
-
-# Named profile
-raff configure --profile staging
-
-# Use the profile on a command
-raff vm list --profile staging
+```
+API URL [https://api.rafftechnologies.com]:
+API Key [...]: raff_pub_xxx
+Default Project ID (optional) [...]: 11111111-2222-3333-4444-555555555555
 ```
 
-The config file ends up looking like:
+When you finish, you'll see:
+
+```
+Profile "default" saved to /home/you/.raff/config.yaml
+```
+
+The active profile becomes the one you just configured. Subsequent `raff` commands read credentials from this file.
+
+<Note>
+`configure` does not currently validate the key against the API — it just saves to disk. The first real call (e.g. `raff project list`) will surface an auth error if the key is wrong.
+</Note>
+
+## Switching between multiple profiles
+
+`raff` supports multiple profiles in the same config file so you can keep separate keys (e.g. staging vs production):
+
+```bash
+raff configure                    # writes/updates the "default" profile
+raff configure --profile staging  # writes/updates the "staging" profile and makes it active
+raff configure --profile default  # switch back to "default" (just press Enter through the prompts)
+```
+
+Other commands (`vm list`, `vpc list`, …) **do not** take a `--profile` flag — they always use whichever profile is set as `current-profile` in `~/.raff/config.yaml`. To use a non-active profile for a single command, override with environment variables:
+
+```bash
+RAFF_API_KEY=raff_pub_yyy RAFF_PROJECT_ID=<staging-project-uuid> raff vm list
+```
+
+Or with command-line flags:
+
+```bash
+raff vm list --api-key raff_pub_yyy --project-id <staging-project-uuid>
+```
+
+## Configuring Default Values
+
+The `raff` configuration file stores your API key and default values for command flags. The file is created automatically the first time you run `raff configure`.
+
+| OS | Config path |
+|---|---|
+| Linux | `~/.raff/config.yaml` |
+| macOS | `~/.raff/config.yaml` |
+| Windows | `%USERPROFILE%\.raff\config.yaml` |
+
+The file ends up looking like:
 
 ```yaml
+current-profile: default
 profiles:
   default:
     api_url: https://api.rafftechnologies.com
@@ -48,11 +84,21 @@ profiles:
     project_id: <your-staging-default-project-id>
 ```
 
-You can edit `~/.raff/config.yaml` directly if you prefer.
+You can edit it directly if you prefer — `current-profile` selects which profile every command (other than `configure`) uses.
 
-## Environment variables (skip the config file)
+## Authentication precedence
 
-For CI/CD or one-off shells, env vars work without configuring anything:
+Every command resolves credentials in this exact order:
+
+1. **CLI flag** — `--api-key`, `--api-url`, `--project-id` on the command line
+2. **Environment variable** — `RAFF_API_KEY`, `RAFF_API_URL`, `RAFF_PROJECT_ID`
+3. **Config file** — the profile named in `current-profile` in `~/.raff/config.yaml`
+
+If a credential isn't set in any of those, the command fails with a clear error. The CLI never prompts for credentials mid-command — that's a one-time `configure` thing.
+
+## CI/CD without a config file
+
+For CI/CD where there's no interactive shell, env vars work without configuring anything:
 
 ```bash
 export RAFF_API_KEY="raff_<your-key>"
@@ -61,18 +107,6 @@ export RAFF_PROJECT_ID="<your-default-project-id>"
 
 raff vm list
 ```
-
-Env vars override the config file but are themselves overridden by CLI flags.
-
-## Authentication precedence
-
-Every command resolves credentials in this exact order:
-
-1. **CLI flag** — `--api-key`, `--api-url`, `--project-id` on the command line
-2. **Environment variable** — `RAFF_API_KEY`, `RAFF_API_URL`, `RAFF_PROJECT_ID`
-3. **Config file** — selected profile (or `default` if no `--profile`) in `~/.raff/config.yaml`
-
-If a credential isn't set in any of those, the command fails with a clear error. The CLI never prompts for credentials mid-command — that's a one-time configure thing.
 
 ## Verify your setup
 

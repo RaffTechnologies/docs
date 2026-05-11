@@ -1,0 +1,49 @@
+---
+title: "raff permission"
+description: "Browse the IAM permission catalog from the CLI — every permission name available to assign to a role, optionally filtered by scope (account or project)."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff permission` command group is a read-only catalog of every permission available in Raff. Use it to discover permission names when building a custom role with [`raff role create`](/reference/cli/role#create). Output supports `--output json` for scripting. Alias: `raff permissions`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List all permissions |
+
+---
+
+## list
+
+```bash
+raff permission list [--scope account|project] [--output table|json]
+```
+
+List the permission catalog. Output columns: `NAME`, `CATEGORY`, `SCOPE`, `DESCRIPTION`. Filter by scope to see only account-domain or project-domain permissions — this is helpful when building a role: account-scoped roles only accept account-domain permissions, project-scoped roles only accept project-domain permissions.
+
+```bash
+# Every permission
+raff permission list
+
+# Just project-domain (for building project roles)
+raff permission list --scope project
+
+# JSON for scripting
+raff permission list --scope project --output json | jq -r '.[].name'
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Role commands" icon="shield-halved" href="/reference/cli/role">
+    Build a custom role from the permission catalog.
+  </Card>
+  <Card title="raff_role (Terraform)" icon="cube" href="/reference/terraform/raff_role">
+    Declarative role management.
+  </Card>
+  <Card title="Member commands" icon="users" href="/reference/cli/member">
+    Assign roles to members.
+  </Card>
+</CardGroup>

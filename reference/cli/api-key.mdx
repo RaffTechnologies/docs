@@ -1,0 +1,96 @@
+---
+title: "raff api-key"
+description: "Manage API keys from the CLI — create, update, regenerate, and revoke. The plaintext secret is returned only once at create or regenerate; copy it immediately."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff api-key` command group manages API keys for the account. Each key has a name, a rate-limit tier, an optional expiration, and an active flag. The plaintext secret is returned **once** at create or regenerate — it cannot be retrieved later. Every subcommand supports `--output json` for scripting. Aliases: `raff api-keys`, `raff key`, `raff keys`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List API keys |
+| [`get`](#get) | Show details for one key (no secret) |
+| [`create`](#create) | Create a new API key (returns the secret once) |
+| [`update`](#update) | Update a key's metadata |
+| [`regenerate`](#regenerate) | Rotate the secret (returns the new secret once) |
+| [`revoke`](#revoke) | Permanently revoke a key |
+
+---
+
+## list
+
+```bash
+raff api-key list [--output table|json]
+```
+
+List API keys for the account. Output columns: `ID`, `NAME`, `PREFIX`, `ACTIVE`, `EXPIRES`. Secrets are never returned by list.
+
+## get
+
+```bash
+raff api-key get <key-id>
+```
+
+Show key metadata — ID, name, prefix, active flag, expiration. The secret is never returned by get.
+
+## create
+
+```bash
+raff api-key create \
+  --name <name> \
+  [--rate-limit-tier standard|high] \
+  [--expires-at <RFC3339>]
+```
+
+Create a new API key. Required: `--name`. The plaintext secret is printed once — copy it immediately. The default rate-limit tier is `standard`; `high` requires support approval.
+
+```bash
+raff api-key create --name "ci-deploy" \
+  --rate-limit-tier standard \
+  --expires-at 2026-12-31T23:59:59Z
+```
+
+## update
+
+```bash
+raff api-key update <key-id> \
+  [--name <new-name>] \
+  [--rate-limit-tier standard|high] \
+  [--active true|false] \
+  [--expires-at <RFC3339>]
+```
+
+Update one or more metadata fields. At least one flag must be provided. Use `--active false` to suspend a key without revoking — re-enable later by setting `--active true`.
+
+## regenerate
+
+```bash
+raff api-key regenerate <key-id>
+```
+
+Rotate the secret. The new secret is printed once; the old secret stops working immediately.
+
+## revoke
+
+```bash
+raff api-key revoke <key-id> [--force]
+```
+
+Permanently revoke the key. Any client using it will fail immediately. Pass `--force` to skip the confirmation prompt.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_api_key (Terraform)" icon="cube" href="/reference/terraform/raff_api_key">
+    Declarative API key management.
+  </Card>
+  <Card title="Role commands" icon="shield-halved" href="/reference/cli/role">
+    Roles control what a key can do.
+  </Card>
+  <Card title="Configure CLI auth" icon="gear" href="/reference/cli/configure">
+    Where to put the secret after creating it.
+  </Card>
+</CardGroup>

@@ -1,0 +1,91 @@
+---
+title: "raff_backup"
+description: "Take an on-demand backup of a Raff VM with Terraform. Async — the resource returns once the backup record exists. For recurring backups, use raff_backup_schedule."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Captures a single **on-demand backup** of a VM. The source VM is immutable — backups cannot move between VMs. The call is async: the resource returns as soon as the backup record exists. For recurring policies use [`raff_backup_schedule`](/reference/terraform/raff_backup_schedule) instead — schedule-managed backups are auto-pruned and **must not** be managed via `raff_backup`.
+
+## Example
+
+```hcl
+resource "raff_backup" "pre_release" {
+  vm_id = raff_vm.api.id
+  name  = "api-pre-v3.0-release"
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `vm_id` | string (UUID) | Source VM. ForceNew — backup the new VM instead of moving |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Display name. Defaults to a timestamped name set by the API. ForceNew |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Backup UUID |
+| `status` | Lifecycle status — `pending`, `creating`, `ready`, `restoring`, `failed` |
+| `storage_size` | Backup size in GB |
+| `region` | Region |
+| `expire_date` | Expiration timestamp (when the backup is auto-deleted) |
+| `account_id` / `project_id` | Owning account / project UUIDs |
+| `created_at` | RFC3339 timestamp |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Queues a backup. Returns immediately with the backup record |
+| Change any input | **Replacement** — backups are immutable |
+| `terraform destroy` | Deletes the backup |
+
+The `status` field starts at `pending` / `creating` and progresses to `ready` asynchronously. If you need to wait for `ready` before continuing, poll the [data source](#data-sources) or use the CLI.
+
+## Importing existing backups
+
+```bash
+terraform import raff_backup.pre_release <backup-uuid>
+```
+
+## Permissions
+
+The API key needs `vm.backup` in the project (covers create, manage, delete on backups). The system role `Project Admin` grants this.
+
+## Data sources
+
+```hcl
+# Single backup by UUID
+data "raff_backup" "pre_release" {
+  id = "<backup-uuid>"
+}
+
+# All backups in the current project, optionally filtered by VM
+data "raff_backups" "for_api" {
+  vm_id = raff_vm.api.id
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_backup_schedule" icon="clock" href="/reference/terraform/raff_backup_schedule">
+    Recurring backups with retention.
+  </Card>
+  <Card title="raff_snapshot" icon="camera" href="/reference/terraform/raff_snapshot">
+    Lighter-weight point-in-time snapshots.
+  </Card>
+  <Card title="CLI: raff backup" icon="terminal" href="/reference/cli/backup">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

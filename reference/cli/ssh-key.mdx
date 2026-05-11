@@ -1,0 +1,84 @@
+---
+title: "raff ssh-key"
+description: "Manage SSH keys from the CLI — register, rename, and delete public keys used when creating Linux VMs."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff ssh-key` command group manages SSH public keys registered on your account. Linux VMs accept these keys at create time via `--ssh-keys`. Every subcommand supports `--output json` for scripting. Alias: `raff ssh-keys`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List SSH keys |
+| [`get`](#get) | Show details for one SSH key |
+| [`create`](#create) | Register a new SSH public key |
+| [`update`](#update) | Rename a key |
+| [`delete`](#delete) | Delete a key |
+
+---
+
+## list
+
+```bash
+raff ssh-key list [--output table|json]
+```
+
+List SSH keys for the account. Output columns: `ID`, `NAME`, `TYPE`, `FINGERPRINT`.
+
+## get
+
+```bash
+raff ssh-key get <key-id>
+```
+
+Show full key details including the full public key string.
+
+## create
+
+```bash
+raff ssh-key create --name <name> (--public-key "<key-string>" | --public-key-file <path>)
+```
+
+Register an SSH public key. Required: `--name`. One of `--public-key` or `--public-key-file` must be provided.
+
+```bash
+# From a file (most common)
+raff ssh-key create --name "alice@laptop" \
+  --public-key-file ~/.ssh/id_ed25519.pub
+
+# Inline
+raff ssh-key create --name "ci-deploy" \
+  --public-key "ssh-ed25519 AAAA... ci@deploy"
+```
+
+## update
+
+```bash
+raff ssh-key update <key-id> --name <new-name>
+```
+
+Rename a key. The key material itself is immutable — to rotate, register a new key and delete the old one.
+
+## delete
+
+```bash
+raff ssh-key delete <key-id> [--force]
+```
+
+Delete a key. Pass `--force` to skip the confirmation prompt. Existing VMs that already received the key keep it — deleting from the registry removes future use only.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_ssh_key (Terraform)" icon="cube" href="/reference/terraform/raff_ssh_key">
+    Declarative SSH key management.
+  </Card>
+  <Card title="API key commands" icon="key" href="/reference/cli/api-key">
+    Manage API keys.
+  </Card>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    Pass keys at VM create with --ssh-keys.
+  </Card>
+</CardGroup>

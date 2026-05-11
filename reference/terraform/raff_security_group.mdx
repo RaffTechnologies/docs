@@ -1,0 +1,135 @@
+---
+title: "raff_security_group"
+description: "Manage Raff security groups (firewalls) with Terraform — named inbound/outbound rule sets you attach to VM NICs. Updates replace the entire rule set; reboot required for VMs to pick up new rules."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a Raff **security group** — a named set of inbound/outbound rules that attach to VM NICs. A reboot is required for VMs to pick up rule changes inside the guest. Rules are nested blocks; updating the rule list replaces the entire set on the API side.
+
+## Example — built from scratch
+
+```hcl
+resource "raff_security_group" "web" {
+  name        = "web-public"
+  description = "HTTP/HTTPS open to the world, SSH from office"
+
+  rule {
+    rule_type = "inbound"
+    protocol  = "TCP"
+    range     = "80"
+  }
+
+  rule {
+    rule_type = "inbound"
+    protocol  = "TCP"
+    range     = "443"
+  }
+
+  rule {
+    rule_type = "inbound"
+    protocol  = "TCP"
+    range     = "22"
+    ip        = "203.0.113.0"
+    size      = 24
+  }
+
+  # Default-allow outbound (all)
+  rule {
+    rule_type = "outbound"
+    protocol  = "ALL"
+  }
+}
+```
+
+## Example — seeded from a template
+
+```hcl
+resource "raff_security_group" "web" {
+  name        = "web-public"
+  template_id = "<web-server-template-uuid>"
+}
+```
+
+Templates copy a curated rule set at create time; you can then add explicit `rule` blocks to merge in extras. Get template IDs via [`raff security-group templates`](/reference/cli/security-group#templates).
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Security group name. Updates rename in place |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `description` | string | Free-form description |
+| `template_id` | string (UUID) | Seed from a template at create time. Template rules are copied, then merged with any explicit `rule` blocks. ForceNew |
+| `rule` | list of blocks | Inbound/outbound rules. Updates replace the entire set |
+
+### `rule` block
+
+| Argument | Type | Description |
+|---|---|---|
+| `rule_type` | string (required) | Direction — `inbound` or `outbound` |
+| `protocol` | string (required) | `TCP`, `UDP`, `ICMP`, `ICMPV6`, or `ALL` |
+| `range` | string | Port or port range — single (`80`) or range (`8000:9000`). Empty for ICMP/ALL |
+| `ip` | string | Source/destination IP. Empty means any |
+| `size` | int | CIDR block size paired with `ip` (e.g. `24` for `/24`) |
+| `icmp_type` | int | ICMP message type (only for `ICMP` / `ICMPV6`) |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Security group UUID |
+| `project_id` | Owning project UUID |
+| `vm_count` | Number of VM NICs currently using this security group |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the security group |
+| Change `name`, `description`, `rule` | In-place update. Attached VMs need a reboot to apply rule changes inside the guest |
+| Change `template_id` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the security group. Detach from VMs first |
+
+## Importing existing security groups
+
+```bash
+terraform import raff_security_group.web <sg-uuid>
+```
+
+## Permissions
+
+The API key needs `security_group.create`, `security_group.manage`, and `security_group.delete` in the project. The system role `Project Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single security group by UUID
+data "raff_security_group" "web" {
+  id = raff_security_group.web.id
+}
+
+# All security groups in the current project
+data "raff_security_groups" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Attach security groups via the CLI or dashboard.
+  </Card>
+  <Card title="raff_vpc" icon="network-wired" href="/reference/terraform/raff_vpc">
+    Private networks the rules apply to.
+  </Card>
+  <Card title="CLI: raff security-group" icon="terminal" href="/reference/cli/security-group">
+    Imperative equivalent (incl. templates).
+  </Card>
+</CardGroup>

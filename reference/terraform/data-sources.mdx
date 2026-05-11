@@ -1,0 +1,126 @@
+---
+title: "Catalog data sources"
+description: "Terraform data sources for Raff catalog/lookup endpoints — regions, OS templates, and pricing for VMs, volumes, backups, snapshots, and floating IPs."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Catalog data sources let you discover region codes, OS templates, and pricing dynamically — useful for picking the cheapest plan that meets your minimums, finding the latest Ubuntu LTS template, or driving region selection from data.
+
+For resource-specific data sources (`data.raff_vm`, `data.raff_vms`, `data.raff_volume`, `data.raff_volumes`, etc.) see the **Data sources** section at the bottom of each resource page — they pair singular (by ID) and plural (list) lookups.
+
+## raff_regions
+
+```hcl
+data "raff_regions" "all" {}
+
+output "default_region" {
+  value = [for r in data.raff_regions.all.regions : r.code if r.is_default][0]
+}
+```
+
+Lists every datacenter region. Each entry has `code`, `name`, `country_code`, `flag`, `is_default`.
+
+## raff_templates
+
+```hcl
+data "raff_templates" "ubuntu" {
+  category = "linux"
+  region   = "us-east"
+}
+
+# Pick the latest Ubuntu LTS
+locals {
+  ubuntu_24 = [
+    for t in data.raff_templates.ubuntu.templates :
+    t if t.os_type == "ubuntu" && t.version == "24.04"
+  ][0]
+}
+
+resource "raff_vm" "web" {
+  template_id = local.ubuntu_24.id
+  pricing_id  = 9
+  name        = "web-01"
+  region      = "us-east"
+}
+```
+
+Lists OS templates available for VM creation. Filters: `category` (`linux`, `windows`, `app`), `vm_type` (`standard`, `premium`), `region`.
+
+Each entry has `id`, `name`, `version`, `os_type`, `category`, `region`, `is_windows`, `min_cpu`, `min_ram`, `min_storage`, `description`. The `min_*` fields are the smallest plan that can run the template — pick a `pricing_id` at or above these.
+
+## raff_vm_pricing
+
+```hcl
+data "raff_vm_pricing" "us_east" {
+  region  = "us-east"
+  vm_type = "standard"
+}
+
+# Cheapest plan that meets requirements
+locals {
+  cheapest = [
+    for p in data.raff_vm_pricing.us_east.plans :
+    p if p.vcpu >= 2 && p.memory_gib >= 4
+  ][0]
+}
+
+resource "raff_vm" "api" {
+  pricing_id = local.cheapest.id
+  # ...
+}
+```
+
+Lists VM pricing plans. Filters: `region`, `vm_type`. Each plan has `id`, `vm_type`, `region`, `vcpu`, `memory_gib`, `ssd_gib`, `transfer_gib`, `price_per_hour`, `monthly_price`, `yearly_price`, `twenty_four_month_price`.
+
+The `id` is the integer to pass as `pricing_id` on `raff_vm`.
+
+## raff_volume_pricing / raff_backup_pricing / raff_snapshot_pricing
+
+```hcl
+data "raff_volume_pricing" "us_east" {
+  region = "us-east"
+}
+
+output "volume_cost_per_month" {
+  # cost for 100 GB
+  value = data.raff_volume_pricing.us_east.price_per_gb_month * 100
+}
+```
+
+Per-GB storage pricing for volumes, backups, and snapshots respectively. All three share the same schema:
+
+| Attribute | Type |
+|---|---|
+| `region` (input, optional) | string |
+| `price_per_gb_hour` | float |
+| `price_per_gb_month` | float |
+| `effective_region` | string |
+
+`effective_region` is the region the price applies to (matches `region` if you set it, otherwise the project default).
+
+## raff_ip_pricing
+
+```hcl
+data "raff_ip_pricing" "current" {}
+
+output "ipv4_monthly" {
+  value = data.raff_ip_pricing.current.ipv4[0].monthly_price
+}
+```
+
+Floating IP pricing by family. Returns `ipv4` and `ipv6` as single-element lists; each has `price_per_hour`, `monthly_price`, `yearly_price`, `twenty_four_month_price`.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Drive pricing_id from raff_vm_pricing.
+  </Card>
+  <Card title="raff_volume" icon="cube" href="/reference/terraform/raff_volume">
+    Forecast cost via raff_volume_pricing.
+  </Card>
+  <Card title="CLI: raff pricing" icon="terminal" href="/reference/cli/pricing">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

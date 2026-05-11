@@ -1,9 +1,9 @@
 ---
 title: "Raff CLI"
-description: "Manage Raff Platform resources from your terminal — VMs, projects, VPCs, public IPs, firewalls. The CLI uses the same public API as the dashboard, with the same role-based authorization model."
+description: "Manage Raff resources from your terminal — VMs, volumes, snapshots, backups, VPCs, public IPs, firewalls, SSH keys, API keys, and team & access control. The CLI uses the same public API as the dashboard, with the same role-based authorization model."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
 The **Raff CLI** (`raff`) is a single static binary that wraps the Raff public API for terminal use. Same API key auth as the dashboard, same role-based scoping, same resources — just driven from the command line. It's the right tool for one-off operations, scripted workflows, and CI/CD pipelines.
 
@@ -14,11 +14,20 @@ For declarative infrastructure (commit your VM and project definitions to git), 
 | Resource | Commands |
 |---|---|
 | **Configure** | `raff configure` — set API key, base URL, default project |
-| **Virtual Machines** | `raff vm` — list, get, create, update, delete, bulk-delete, start, stop, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, attach IP, detach IP, attach firewall, attach VPC, manage tags, manage notes, list networks |
-| **Projects** | `raff project` — list, get, create, update, delete |
-| **VPCs** | `raff vpc` — list, get, create, update, delete, cidr-suggestions |
-| **Public IPs** | `raff ip` — list, get, reserve, release, change |
-| **Firewalls** | `raff security-group` — list, templates, get, create, delete |
+| **Virtual Machines** | [`raff vm`](/reference/cli/vm) — full lifecycle: create, delete, power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP / firewall / VPC attach-detach, tags, notes, networks |
+| **Volumes** | [`raff volume`](/reference/cli/volume) — list, get, create, delete, resize, attach, detach |
+| **Snapshots** | [`raff snapshot`](/reference/cli/snapshot) — list, get, create, rename, restore, delete |
+| **Backups** | [`raff backup`](/reference/cli/backup) — backups + recurring schedules with retention |
+| **VPCs** | [`raff vpc`](/reference/cli/vpc) — list, get, create, update, delete, cidr-suggestions |
+| **Public IPs** | [`raff ip`](/reference/cli/ip) — list, get, reserve, release, change |
+| **Firewalls** | [`raff security-group`](/reference/cli/security-group) — list, templates, get, create, update, delete |
+| **SSH Keys** | [`raff ssh-key`](/reference/cli/ssh-key) — register, list, rename, delete |
+| **API Keys** | [`raff api-key`](/reference/cli/api-key) — create, regenerate, revoke |
+| **Projects** | [`raff project`](/reference/cli/project) — list, get, create, update, delete + members |
+| **Members** | [`raff member`](/reference/cli/member) — account-level membership |
+| **Roles & Permissions** | [`raff role`](/reference/cli/role), [`raff permission`](/reference/cli/permission) — IAM |
+| **Invitations** | [`raff invitation`](/reference/cli/invitation) — send + cancel |
+| **Catalog / lookup** | [`raff region`](/reference/cli/region), [`raff template`](/reference/cli/template), [`raff pricing`](/reference/cli/pricing) — discovery for required IDs |
 
 Every command supports `--output json` for parseable output (default is human-readable tables). Every command honors the same auth precedence: CLI flag > env var > config file.
 
@@ -26,7 +35,7 @@ Every command supports `--output json` for parseable output (default is human-re
 
 ```bash
 # Install
-go install github.com/rafftechnologies/raff-cli/cmd/raff@latest
+go install github.com/RaffTechnologies/raff-cli/cmd/raff@latest
 
 # Configure (writes to ~/.raff/config.yaml)
 raff configure
@@ -89,7 +98,7 @@ The JSON shape matches the [public API response schema](/api-reference/endpoints
 
 ## What's covered
 
-The CLI tracks the public API surface. Anything documented in the [API Reference](/api-reference/endpoints) is available through the CLI with one exception: low-traffic admin endpoints aren't exposed (admin-service has its own internal tooling). For the customer-facing surface — VMs, projects, VPCs, IPs, firewalls — there's full parity.
+The CLI tracks the public API surface — everything in the [API Reference](/api-reference/endpoints) is available through the CLI. Admin-only endpoints (admin-service has its own internal tooling) are not exposed; this is by design. Customer-facing parity is full.
 
 ## Where to go next
 
@@ -101,15 +110,15 @@ The CLI tracks the public API surface. Anything documented in the [API Reference
     Set up API key, profiles, and defaults.
   </Card>
   <Card title="VM commands" icon="server" href="/reference/cli/vm">
-    The full set of Virtual Machines commands with examples.
+    The full set of VM commands with examples.
+  </Card>
+  <Card title="Volume commands" icon="cube" href="/reference/cli/volume">
+    Block storage management.
+  </Card>
+  <Card title="Backup commands" icon="shield" href="/reference/cli/backup">
+    Backups + recurring schedules.
   </Card>
   <Card title="Project commands" icon="folder" href="/reference/cli/project">
     Create and manage projects.
-  </Card>
-  <Card title="VPC commands" icon="network-wired" href="/reference/cli/vpc">
-    Private networks and CIDR suggestions.
-  </Card>
-  <Card title="Public IP commands" icon="globe" href="/reference/cli/ip">
-    Reserve, attach, swap, release public addresses.
   </Card>
 </CardGroup>

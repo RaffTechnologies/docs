@@ -1,0 +1,89 @@
+---
+title: "raff member"
+description: "Manage account-level members from the CLI — invite by email, add an existing user, grant API-key access, update roles or status, remove. For project-scoped membership, see raff project member."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff member` command group manages account-level membership — users who can sign into the account itself, separate from project-level access. To manage who can act inside a specific project, see [`raff project member`](/reference/cli/project#member-subcommands). Every subcommand supports `--output json` for scripting. Alias: `raff members`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List account members |
+| [`get`](#get) | Show details for one member |
+| [`add`](#add) | Add a member (by email, existing user, or API key) |
+| [`update`](#update) | Update a member's role or status |
+| [`remove`](#remove) | Remove a member from the account |
+
+---
+
+## list
+
+```bash
+raff member list [--status pending|active|suspended] [--output table|json]
+```
+
+List account members. Output columns: `ID`, `EMAIL`, `STATUS`, `ROLE`. Filter by status to find pending invites.
+
+## get
+
+```bash
+raff member get <member-id>
+```
+
+## add
+
+```bash
+raff member add --role-id <uuid> \
+  ( --email <email> | --target-user-id <uuid> | --api-key-id <uuid> )
+```
+
+Add a member. Required: `--role-id` plus exactly one of:
+
+- `--email` — invite a new user; creates a pending member until they accept
+- `--target-user-id` — add an existing account user directly
+- `--api-key-id` — grant account-level access to an existing API key
+
+The role must be account-scoped (find via [`raff role list --scope account`](/reference/cli/role#list)).
+
+```bash
+# Invite by email
+raff member add --email alice@example.com --role-id <admin-role-uuid>
+
+# Grant a CI API key account-level access
+raff member add --api-key-id <ci-key-uuid> --role-id <operator-role-uuid>
+```
+
+## update
+
+```bash
+raff member update <member-id> \
+  [--role-id <uuid>] \
+  [--status active|suspended]
+```
+
+Update a member's role or status. At least one flag must be provided. Suspended members keep their role assignment but cannot sign in.
+
+## remove
+
+```bash
+raff member remove <member-id> [--force]
+```
+
+Remove a member from the account. Pass `--force` to skip the confirmation prompt.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_member (Terraform)" icon="cube" href="/reference/terraform/raff_member">
+    Declarative account-level members.
+  </Card>
+  <Card title="Project member commands" icon="folder-tree" href="/reference/cli/project#member-subcommands">
+    Project-scoped membership.
+  </Card>
+  <Card title="Invitation commands" icon="envelope" href="/reference/cli/invitation">
+    List and cancel pending invitations.
+  </Card>
+</CardGroup>

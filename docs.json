@@ -583,10 +583,22 @@
               "reference/cli/install",
               "reference/cli/configure",
               "reference/cli/vm",
-              "reference/cli/project",
+              "reference/cli/volume",
+              "reference/cli/snapshot",
+              "reference/cli/backup",
               "reference/cli/vpc",
               "reference/cli/ip",
-              "reference/cli/security-group"
+              "reference/cli/security-group",
+              "reference/cli/ssh-key",
+              "reference/cli/api-key",
+              "reference/cli/project",
+              "reference/cli/member",
+              "reference/cli/role",
+              "reference/cli/permission",
+              "reference/cli/invitation",
+              "reference/cli/region",
+              "reference/cli/template",
+              "reference/cli/pricing"
             ]
           },
           {
@@ -595,7 +607,20 @@
               "reference/terraform/introduction",
               "reference/terraform/install",
               "reference/terraform/raff_project",
-              "reference/terraform/raff_vm"
+              "reference/terraform/raff_vm",
+              "reference/terraform/raff_volume",
+              "reference/terraform/raff_snapshot",
+              "reference/terraform/raff_backup",
+              "reference/terraform/raff_backup_schedule",
+              "reference/terraform/raff_vpc",
+              "reference/terraform/raff_ip",
+              "reference/terraform/raff_security_group",
+              "reference/terraform/raff_ssh_key",
+              "reference/terraform/raff_api_key",
+              "reference/terraform/raff_role",
+              "reference/terraform/raff_member",
+              "reference/terraform/raff_project_member",
+              "reference/terraform/data-sources"
             ]
           }
         ]
@@ -640,6 +665,8 @@
         "items": [
           { "label": "Docs Home", "href": "/introduction" },
           { "label": "API Reference", "href": "/api-reference/endpoints" },
+          { "label": "CLI", "href": "/reference/cli/introduction" },
+          { "label": "Terraform Provider", "href": "https://registry.terraform.io/providers/RaffTechnologies/raff/latest" },
           { "label": "Quickstart", "href": "/quickstart" },
           { "label": "Products", "href": "/products" }
         ]

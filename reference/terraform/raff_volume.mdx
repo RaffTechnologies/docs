@@ -1,0 +1,112 @@
+---
+title: "raff_volume"
+description: "Manage Raff block storage volumes with Terraform. NVMe SSD volumes, sized in GB, attached to a single VM at a time. Resize is in-place; reattach is in-place."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a Raff **block storage volume** — NVMe SSD, sized in GB, region-pinned, attached to one VM at a time. Volumes can be created standalone and attached later, or attached at create time.
+
+## Example — minimal
+
+```hcl
+resource "raff_volume" "data" {
+  name        = "data-01"
+  size        = 100
+  volume_type = "nvme"
+  region      = "us-east"
+}
+```
+
+## Example — attached to a VM
+
+```hcl
+resource "raff_volume" "data" {
+  name            = "data-01"
+  size            = 250
+  volume_type     = "nvme"
+  region          = "us-east"
+  filesystem_type = "ext4"        # only used on first attach
+  vm_id           = raff_vm.api.id
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | Volume display name. Updates rename in place |
+| `size` | int | Size in GB. Updates trigger an in-place resize (must be larger than current — volumes cannot shrink) |
+| `volume_type` | string | Storage class. Currently `nvme` |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `region` | string | Region. Defaults to the project's default region. ForceNew |
+| `filesystem_type` | string | Filesystem laid down on first attach (Linux only) — `ext4`, `xfs`, or `btrfs`. Defaults to `ext4`. ForceNew |
+| `vm_id` | string (UUID) | VM to attach the volume to. Updating triggers detach-then-reattach (volume and VM must be in the same region) |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Volume ID |
+| `status` | Lifecycle state |
+| `price_per_hour` | Hourly price in USD |
+| `account_id` | Owning account UUID |
+| `project_id` | Owning project UUID |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates volume, optionally attaches to `vm_id` |
+| Change `name` | In-place rename |
+| Change `size` | **In-place resize** — must grow, never shrink |
+| Change `vm_id` | In-place detach (from old) then attach (to new) |
+| Change `region`, `volume_type`, `filesystem_type` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the volume. Detach the VM first if still attached |
+
+## Importing existing volumes
+
+```bash
+terraform import raff_volume.data <volume-id>
+```
+
+## Permissions
+
+The API key needs `volume.create`, `volume.manage`, and `volume.delete` in the project. The system role `Project Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single volume by ID
+data "raff_volume" "data" {
+  id = 42
+}
+
+# All volumes in the current project
+data "raff_volumes" "all" {}
+
+output "volume_count" {
+  value = length(data.raff_volumes.all.volumes)
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Compute resource volumes attach to.
+  </Card>
+  <Card title="raff_snapshot" icon="camera" href="/reference/terraform/raff_snapshot">
+    Point-in-time volume snapshots.
+  </Card>
+  <Card title="CLI: raff volume" icon="terminal" href="/reference/cli/volume">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

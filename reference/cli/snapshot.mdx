@@ -1,0 +1,108 @@
+---
+title: "raff snapshot"
+description: "Manage VM and volume snapshots from the CLI — list, get, create, rename, restore, delete. Snapshots are point-in-time captures of a VM disk or volume; restoring overwrites the source."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff snapshot` command group covers point-in-time snapshots of VM disks and volumes. Snapshots are stored separately from the source and can be restored back over the source disk. Every subcommand supports `--output json` for scripting. Aliases: `raff snapshots`, `raff snap`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List snapshots, optionally filtered |
+| [`get`](#get) | Show details for one snapshot |
+| [`create`](#create) | Capture a snapshot of a VM or volume |
+| [`rename`](#rename) | Rename a snapshot |
+| [`restore`](#restore) | Restore the source from a snapshot |
+| [`delete`](#delete) | Delete a snapshot |
+
+---
+
+## list
+
+```bash
+raff snapshot list [--vm-id <vm-uuid>] [--volume-id <id>] [--type vm|volume] [--output table|json]
+```
+
+List snapshots in the current project. Filter by source VM, source volume, or snapshot type. Output columns: `ID`, `NAME`, `SIZE`, `TYPE`, `SOURCE`, `STATUS`, `CREATED`.
+
+```bash
+# Every snapshot in the project
+raff snapshot list
+
+# Only VM snapshots
+raff snapshot list --type vm
+
+# Snapshots of a specific VM
+raff snapshot list --vm-id <vm-uuid>
+```
+
+## get
+
+```bash
+raff snapshot get <snapshot-id> [--output table|json]
+```
+
+Show full details for one snapshot.
+
+## create
+
+```bash
+raff snapshot create \
+  --name <name> \
+  --resource-type vm|volume \
+  [--resource-id <vm-uuid>] \
+  [--volume-id <volume-id>]
+```
+
+Capture a snapshot. Required: `--name`, `--resource-type`. Pass `--resource-id <vm-uuid>` for VM snapshots, `--volume-id <id>` for volume snapshots.
+
+```bash
+# Snapshot a VM disk
+raff snapshot create --name "pre-upgrade" \
+  --resource-type vm --resource-id <vm-uuid>
+
+# Snapshot a volume
+raff snapshot create --name "data-01-2026-05-10" \
+  --resource-type volume --volume-id 42
+```
+
+## rename
+
+```bash
+raff snapshot rename <snapshot-id> --name <new-name>
+```
+
+## restore
+
+```bash
+raff snapshot restore <snapshot-id> [--force]
+```
+
+Restore the source VM or volume from this snapshot. **The current disk state is overwritten.** Pass `--force` to skip the confirmation prompt.
+
+While the source is reverted to a snapshot, that snapshot's status reads `active` and it cannot be deleted. Saved-but-not-in-use snapshots have an empty status.
+
+## delete
+
+```bash
+raff snapshot delete <snapshot-id> [--force]
+```
+
+Delete a snapshot. Pass `--force` to skip the confirmation prompt. Cannot delete a snapshot whose status is `active` — the source is currently reverted to it.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Backup commands" icon="shield" href="/reference/cli/backup">
+    Managed backups with retention.
+  </Card>
+  <Card title="raff_snapshot (Terraform)" icon="cube" href="/reference/terraform/raff_snapshot">
+    Declarative snapshot management.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoints">
+    The HTTP API behind the CLI.
+  </Card>
+</CardGroup>

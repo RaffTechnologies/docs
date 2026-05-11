@@ -3,9 +3,13 @@ title: "Install the Raff Terraform Provider"
 description: "Install the provider from the Terraform Registry, build from source for local development, or pin a specific version. Works with Terraform 1.0+ and OpenTofu."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
-The Raff Terraform Provider is published to the [Terraform Registry](https://registry.terraform.io/) under `rafftechnologies/raff`. For most users, declaring it in your `required_providers` block is the only "install" step needed — Terraform downloads it on first `terraform init`.
+The Raff Terraform Provider is published on the Terraform Registry. For most users, declaring it in your `required_providers` block is the only "install" step needed — Terraform downloads it on first `terraform init`.
+
+<Card title="View on Terraform Registry" icon="hashicorp" href="https://registry.terraform.io/providers/RaffTechnologies/raff/latest">
+  registry.terraform.io/providers/RaffTechnologies/raff/latest — auto-generated schema docs for every resource and data source, plus version history.
+</Card>
 
 ## Standard install (Terraform Registry)
 
@@ -15,7 +19,7 @@ In any new or existing Terraform module:
 terraform {
   required_providers {
     raff = {
-      source  = "rafftechnologies/raff"
+      source  = "RaffTechnologies/raff"
       version = "~> 0.1"
     }
   }
@@ -53,18 +57,18 @@ Useful when you're contributing to the provider, testing a pre-release fix, or n
 
 ```bash
 # Clone
-git clone https://github.com/rafftechnologies/terraform-provider-raff.git
+git clone https://github.com/RaffTechnologies/terraform-provider-raff.git
 cd terraform-provider-raff
 
 # Build
 go build -o terraform-provider-raff
 
 # Install to local Terraform plugin path
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/rafftechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)
-cp terraform-provider-raff ~/.terraform.d/plugins/registry.terraform.io/rafftechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)/
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)
+cp terraform-provider-raff ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)/
 ```
 
-Now any Terraform module that requires `rafftechnologies/raff` 0.1.0 will use your local build instead of the registry version.
+Now any Terraform module that requires `RaffTechnologies/raff` 0.1.0 will use your local build instead of the registry version.
 
 To switch back to the registry version, delete the local plugin file and re-run `terraform init -upgrade`.
 
@@ -74,7 +78,7 @@ To switch back to the registry version, delete the local plugin file and re-run 
 terraform providers
 ```
 
-Should list `rafftechnologies/raff` with the resolved version.
+Should list `RaffTechnologies/raff` with the resolved version.
 
 ```bash
 terraform plan

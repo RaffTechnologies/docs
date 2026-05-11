@@ -1,0 +1,135 @@
+---
+title: "raff backup"
+description: "Manage VM backups and recurring backup schedules from the CLI — on-demand backups (create, restore, delete) and schedules (daily/weekly with retention)."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff backup` command group covers managed backups of VMs — full point-in-time copies of the VM's disk, stored separately from the VM. Restoring overwrites the source VM's current disk state. Schedules manage their own retention and auto-prune older backups. Every subcommand supports `--output json` for scripting. Alias: `raff backups`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List backups |
+| [`get`](#get) | Show details for one backup |
+| [`create`](#create) | Take an on-demand backup |
+| [`restore`](#restore) | Restore a VM from a backup |
+| [`delete`](#delete) | Delete a backup |
+| [`schedule list`](#schedule-list) / [`get`](#schedule-get) / [`create`](#schedule-create) / [`update`](#schedule-update) / [`delete`](#schedule-delete) | Manage recurring schedules |
+
+---
+
+## list
+
+```bash
+raff backup list [--vm-id <vm-uuid>] [--status pending|creating|ready|restoring|failed] [--output table|json]
+```
+
+List backups in the current project. The `--status` filter is applied client-side. Output columns: `ID`, `NAME`, `SOURCE VM`, `SIZE`, `STATUS`, `CREATED`.
+
+```bash
+raff backup list
+raff backup list --vm-id <vm-uuid>
+raff backup list --status ready
+```
+
+## get
+
+```bash
+raff backup get <backup-id> [--output table|json]
+```
+
+Show full details — source VM, size, status, expiration date.
+
+## create
+
+```bash
+raff backup create --vm-id <vm-uuid> [--name <custom-name>]
+```
+
+Take an on-demand backup of a VM. The call returns immediately with the backup record and a queued status; backups run asynchronously. Poll with `raff backup get` to wait for `ready`. If `--name` is omitted, the API generates a timestamped name.
+
+## restore
+
+```bash
+raff backup restore <backup-id> [--force]
+```
+
+Restore the source VM from this backup. **The current disk state is overwritten.** Pass `--force` to skip the confirmation prompt — required in scripts.
+
+## delete
+
+```bash
+raff backup delete <backup-id> [--force]
+```
+
+Delete a backup. Pass `--force` to skip the confirmation prompt. Backups created by a schedule are managed by the retention engine — don't manually delete them or you'll fight the schedule.
+
+## schedule list
+
+```bash
+raff backup schedule list [--output table|json]
+```
+
+List recurring backup schedules in the current project. Output columns: `ID`, `NAME`, `SOURCE VM`, `FREQUENCY`, `KEEP`, `RUNTIME`. Alias: `raff backup schedules list`.
+
+## schedule get
+
+```bash
+raff backup schedule get <schedule-id>
+```
+
+## schedule create
+
+```bash
+raff backup schedule create \
+  --vm-id <vm-uuid> \
+  --frequency daily|weekly \
+  --time <HH:MM-or-8am> \
+  --keep <n> \
+  [--day Monday..Sunday]
+```
+
+Create a recurring backup schedule. Required: `--vm-id`, `--frequency`. `--day` is required when frequency is `weekly`. `--time` defaults to `08:00`; `--keep` defaults to `7` and controls how many backups are retained before auto-pruning.
+
+```bash
+# Nightly, keep last 14
+raff backup schedule create --vm-id <vm-uuid> \
+  --frequency daily --time 03:00 --keep 14
+
+# Weekly Saturday, keep last 4
+raff backup schedule create --vm-id <vm-uuid> \
+  --frequency weekly --day Saturday --time 04:00 --keep 4
+```
+
+## schedule update
+
+```bash
+raff backup schedule update <schedule-id> \
+  [--frequency daily|weekly] [--time <time>] [--day <day>] [--keep <n>]
+```
+
+Update one or more schedule fields. At least one flag must be provided.
+
+## schedule delete
+
+```bash
+raff backup schedule delete <schedule-id> [--force]
+```
+
+Delete a schedule. Existing backups it created remain in the project — delete them manually if you no longer need them.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Snapshot commands" icon="camera" href="/reference/cli/snapshot">
+    Lighter-weight point-in-time snapshots.
+  </Card>
+  <Card title="raff_backup_schedule (Terraform)" icon="cube" href="/reference/terraform/raff_backup_schedule">
+    Declarative recurring backups.
+  </Card>
+  <Card title="raff_backup (Terraform)" icon="shield" href="/reference/terraform/raff_backup">
+    Declarative one-shot backups.
+  </Card>
+</CardGroup>

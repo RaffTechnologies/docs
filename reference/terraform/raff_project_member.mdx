@@ -1,0 +1,102 @@
+---
+title: "raff_project_member"
+description: "Add an account user or API key to a Raff project with Terraform. Project-scoped roles only. ID is composite — <project_id>/<member_id>."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Adds an **existing account user (or API key) to a project** with a project-scoped role. For account-level invitations use [`raff_member`](/reference/terraform/raff_member) instead. Account Owners have implicit access to every project — don't manage them via this resource.
+
+## Example — add a user to a project
+
+```hcl
+resource "raff_project_member" "alice_in_prod" {
+  project_id     = raff_project.prod.id
+  target_user_id = "<alice-user-uuid>"
+  role_id        = raff_role.vm_operator.id
+}
+```
+
+## Example — add a CI key to a project
+
+```hcl
+resource "raff_project_member" "ci_in_prod" {
+  project_id = raff_project.prod.id
+  api_key_id = raff_api_key.ci.id
+  role_id    = raff_role.vm_operator.id
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `project_id` | string (UUID) | Project to add to. ForceNew |
+| `role_id` | string (UUID) | Role to assign. Must be project-scoped |
+
+### One of (mutually exclusive)
+
+| Argument | Type | Description |
+|---|---|---|
+| `target_user_id` | string (UUID) | Existing account user. ForceNew |
+| `api_key_id` | string (UUID) | API key to grant project access. ForceNew |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `status` | string | `active` or `suspended` |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Composite ID — `<project_id>/<member_id>` |
+| `email` | Member's email |
+| `role_name` | Display name of the assigned role |
+| `created_at` | RFC3339 timestamp |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Adds the member to the project |
+| Change `role_id`, `status` | In-place update |
+| Change `project_id`, `target_user_id`, `api_key_id` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Removes the member from the project (account-level access unaffected) |
+
+## Importing existing project members
+
+```bash
+terraform import raff_project_member.alice_in_prod <project-uuid>/<member-uuid>
+```
+
+## Permissions
+
+The API key needs `project.members.manage` in the target project. The system role `Project Admin` grants this.
+
+## Data sources
+
+```hcl
+# All members of a project, optionally filtered
+data "raff_project_members" "prod" {
+  project_id = raff_project.prod.id
+  status     = "active"
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_member" icon="users" href="/reference/terraform/raff_member">
+    Account-level membership.
+  </Card>
+  <Card title="raff_project" icon="folder" href="/reference/terraform/raff_project">
+    The project to add into.
+  </Card>
+  <Card title="CLI: raff project member" icon="terminal" href="/reference/cli/project#member-subcommands">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

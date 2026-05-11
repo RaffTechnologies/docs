@@ -3,7 +3,7 @@ title: "raff project"
 description: "Manage projects from the CLI — list, get, create, update, delete. Projects are the container for VMs, volumes, IPs, VPCs, buckets, and access control."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated May 10, 2026</sub>
 
 The `raff project` command group manages projects — the access-control unit that owns every resource. See [Team & Projects — Projects](/products/manage/team-projects#projects--the-unit-of-access-control) for the model.
 
@@ -16,6 +16,7 @@ The `raff project` command group manages projects — the access-control unit th
 | [`create`](#create) | Create a new project |
 | [`update`](#update) | Rename or change description |
 | [`delete`](#delete) | Delete an empty project |
+| [`member list`](#member-list) / [`get`](#member-get) / [`add`](#member-add) / [`update`](#member-update) / [`remove`](#member-remove) | Manage project-scoped members |
 
 ---
 
@@ -66,6 +67,50 @@ raff project delete <project-id>
 
 Delete an empty project. Fails if any resources still belong to it. The `Default` project cannot be deleted, ever — see [Edit or delete a project](/products/manage/team-projects/quickstart-guides/delete-a-project) for the rules.
 
+## Member subcommands
+
+`raff project member` manages project-scoped members. The project is taken from `--project-id` (global flag), `RAFF_PROJECT_ID`, or the active profile — same precedence as every other project-scoped command. Account Owners have implicit access via their account-level role and don't need to be added explicitly. Alias: `raff project members`.
+
+### member list
+
+```bash
+raff project member list [--status pending|active|suspended] [--output table|json]
+```
+
+List members of the current project. Output columns: `ID`, `EMAIL`, `STATUS`, `ROLE`.
+
+### member get
+
+```bash
+raff project member get <member-id>
+```
+
+### member add
+
+```bash
+raff project member add --role-id <project-role-uuid> \
+  ( --target-user-id <uuid> | --api-key-id <uuid> )
+```
+
+Add an existing account user (or API key) to the current project. Required: `--role-id` plus one of `--target-user-id` / `--api-key-id` (mutually exclusive). For brand-new users, send an account invitation first via [`raff invitation create-account`](/reference/cli/invitation#create-account), or invite directly to a project via [`raff invitation create-project`](/reference/cli/invitation#create-project).
+
+### member update
+
+```bash
+raff project member update <member-id> \
+  [--role-id <uuid>] [--status active|suspended]
+```
+
+Update a project member's role or status. At least one flag must be provided.
+
+### member remove
+
+```bash
+raff project member remove <member-id> [--force]
+```
+
+Remove a member from the current project. Pass `--force` to skip the confirmation prompt. The member's account-level access is unaffected.
+
 ## Permission notes
 
 | Command | Required permission |
@@ -74,6 +119,8 @@ Delete an empty project. Fails if any resources still belong to it. The `Default
 | `create` | `account.projects.create` (Owner, Admin) |
 | `update` | `account.projects.manage` (Owner, Admin) |
 | `delete` | `account.projects.delete` (**Owner only by default**; Admin does NOT include this) |
+| `member list`, `member get` | `project.members.view` (project-scoped) |
+| `member add`, `member update`, `member remove` | `project.members.manage` (project-scoped — Project Admin) |
 
 If you get `403 Forbidden`, the key's role doesn't include the permission for that action.
 

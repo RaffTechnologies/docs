@@ -1,0 +1,94 @@
+---
+title: "raff_ip"
+description: "Reserve a Raff floating IP with Terraform — IPv4 or IPv6, region-pinned. The IP is held by the project until the resource is destroyed."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Reserves a Raff **floating IP** — a public IP that's held by the project and can be attached/detached/swapped between VMs. The IP is reserved until the resource is destroyed. To attach a reserved IP to a VM, use [`raff vm ip attach`](/reference/cli/vm#ip-attach) (the public API supports attach/detach but not via a Terraform attachment resource yet).
+
+## Example — minimal
+
+```hcl
+resource "raff_ip" "web" {}
+```
+
+That's enough — defaults to IPv4 in the project's default region.
+
+## Example — explicit
+
+```hcl
+resource "raff_ip" "web" {
+  type           = "ipv4"
+  region         = "us-east"
+  billing_period = "monthly"
+}
+```
+
+## Argument reference
+
+All arguments are optional. All are ForceNew — change one and Terraform releases the old IP and reserves a new one (which will be a different IP address).
+
+| Argument | Type | Description |
+|---|---|---|
+| `type` | string | IP family — `ipv4` (default) or `ipv6` |
+| `region` | string | Region. Defaults to the project's default region |
+| `billing_period` | string | Subscription billing period. Ignored for PAYG accounts |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Floating IP UUID |
+| `ip_address` | The reserved IP address |
+| `status` | `free` (not attached) or `in-use` (attached to a VM) |
+| `reserved` | `true` while held by the project |
+| `account_id` / `project_id` | Owning account / project UUIDs |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Reserves a new IP from the regional pool |
+| Change any input | **Replacement** — release + reserve (the IP address changes) |
+| `terraform destroy` | Releases the IP back to the regional pool |
+
+## Importing existing IPs
+
+```bash
+terraform import raff_ip.web <ip-uuid>
+```
+
+## Permissions
+
+The API key needs `ip.reserve`, `ip.manage`, and `ip.release` in the project. The system role `Project Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single floating IP by UUID
+data "raff_ip" "web" {
+  id = raff_ip.web.id
+}
+
+# All floating IPs in the current project
+data "raff_ips" "all" {
+  type   = "ipv4"
+  status = "free"
+}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Compute the IP can be attached to.
+  </Card>
+  <Card title="CLI: raff ip" icon="terminal" href="/reference/cli/ip">
+    Imperative equivalent (incl. attach/detach/swap).
+  </Card>
+  <Card title="CLI: raff vm ip attach" icon="link" href="/reference/cli/vm#ip-attach">
+    Attach a reserved IP to a VM.
+  </Card>
+</CardGroup>

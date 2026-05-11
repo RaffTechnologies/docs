@@ -1,0 +1,106 @@
+---
+title: "raff_vpc"
+description: "Manage Raff VPCs (Virtual Private Clouds) with Terraform — RFC 1918 / RFC 6598 ranges, /16–/28 prefixes, region-pinned. CIDR is immutable; rename and description update in place."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+Manages a Raff **VPC** — a private network that VMs in the same project and region can attach to and reach each other on internal IPs. CIDR is immutable once created; rename and description update in place.
+
+## Example — minimal
+
+```hcl
+resource "raff_vpc" "prod" {
+  name   = "prod-services"
+  cidr   = "10.7.0.0/24"
+  region = "us-east"
+}
+```
+
+## Example — with description
+
+```hcl
+resource "raff_vpc" "prod" {
+  name        = "prod-services"
+  cidr        = "10.7.0.0/16"
+  region      = "us-east"
+  description = "Shared private network for the production tier"
+}
+```
+
+## Argument reference
+
+### Required
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string | VPC name. Updates rename in place |
+| `cidr` | string | CIDR block. RFC 1918 (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) or RFC 6598 (`100.64.0.0/10`). Allowed prefix lengths: `/16` to `/28`. ForceNew |
+
+### Optional
+
+| Argument | Type | Description |
+|---|---|---|
+| `region` | string | Region. Defaults to `us-east`. ForceNew |
+| `description` | string | Free-form description |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | VPC UUID |
+| `account_id` / `project_id` | Owning account / project UUIDs |
+| `gateway` | Gateway IP for the VPC |
+| `gateway_type` | Gateway type |
+| `dns` | DNS server IP |
+| `router_public_ip` | Public IP of the VPC router (for outbound traffic) |
+| `router_status` | Router lifecycle status |
+| `status` | VPC lifecycle status |
+| `total_ips` | Total addressable IPs in the CIDR |
+| `used_ips` | IPs currently in use |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the VPC and its router |
+| Change `name`, `description` | In-place update |
+| Change `cidr`, `region` | **Replacement** — destroy + recreate |
+| `terraform destroy` | Deletes the VPC. Fails if VMs are still attached — detach them first |
+
+## Importing existing VPCs
+
+```bash
+terraform import raff_vpc.prod <vpc-uuid>
+```
+
+## Permissions
+
+The API key needs `vpc.create`, `vpc.manage`, and `vpc.delete` in the project. The system role `Project Admin` grants all of these.
+
+## Data sources
+
+```hcl
+# Single VPC by UUID
+data "raff_vpc" "prod" {
+  id = "<vpc-uuid>"
+}
+
+# All VPCs in the current project
+data "raff_vpcs" "all" {}
+```
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    Attach VMs via vpc_id.
+  </Card>
+  <Card title="raff_security_group" icon="shield-halved" href="/reference/terraform/raff_security_group">
+    Firewall rules for VPC traffic.
+  </Card>
+  <Card title="CLI: raff vpc" icon="terminal" href="/reference/cli/vpc">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

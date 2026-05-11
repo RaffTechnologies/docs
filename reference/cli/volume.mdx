@@ -1,0 +1,113 @@
+---
+title: "raff volume"
+description: "Manage block storage volumes from the CLI — list, get, create, delete, resize, attach, detach. NVMe SSD volumes attach to one VM at a time and live in a specific region."
+---
+
+<sub>Updated May 10, 2026</sub>
+
+The `raff volume` command group manages block storage volumes — NVMe SSD volumes you can attach to a VM, detach, resize up, and snapshot. Every subcommand supports `--output json` for scripting. Aliases: `raff volumes`, `raff vol`.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List volumes in the project |
+| [`get`](#get) | Show details for one volume |
+| [`create`](#create) | Create a new volume |
+| [`delete`](#delete) | Delete a volume |
+| [`resize`](#resize) | Grow a volume |
+| [`attach`](#attach) | Attach a volume to a VM |
+| [`detach`](#detach) | Detach a volume from its VM |
+
+---
+
+## list
+
+```bash
+raff volume list [--region <region>] [--vm-id <vm-uuid>] [--output table|json]
+```
+
+List volumes in the current project. Output columns: `ID`, `NAME`, `SIZE`, `TYPE`, `STATUS`, `REGION`, `ATTACHED VM`.
+
+```bash
+raff volume list
+raff volume list --vm-id <vm-uuid>
+raff volume list --output json | jq '.[] | {id, name, status}'
+```
+
+## get
+
+```bash
+raff volume get <volume-id> [--output table|json]
+```
+
+Show full details for one volume — size, type, status, region, attached VM (if any).
+
+## create
+
+```bash
+raff volume create \
+  --name <name> \
+  --size <gb> \
+  --type nvme \
+  [--region <region>] \
+  [--filesystem ext4|xfs|btrfs] \
+  [--vm-id <vm-uuid>]
+```
+
+Create a volume. Required: `--name`, `--size`, `--type`. Pass `--vm-id` to attach at create time — the VM must be in the same region. `--filesystem` is the filesystem laid down on first attach (Linux only); defaults to `ext4`.
+
+```bash
+# Standalone — attach later
+raff volume create --name data-01 --size 100 --type nvme --region us-east
+
+# Create and attach to a VM
+raff volume create --name data-01 --size 100 --type nvme \
+  --region us-east --vm-id <vm-uuid>
+```
+
+## delete
+
+```bash
+raff volume delete <volume-id> [--force]
+```
+
+Delete a volume. Pass `--force` to skip the confirmation prompt — required in scripts. Detach the volume first if it's still attached.
+
+## resize
+
+```bash
+raff volume resize <volume-id> --new-size <gb>
+```
+
+Grow a volume. The new size must be larger than the current size — volumes cannot shrink. Filesystem expansion inside the guest is not automatic; see [Resize a volume](/products/store/volumes/quickstart-guides/resize-volume) for the `growpart` / `resize2fs` steps.
+
+## attach
+
+```bash
+raff volume attach <volume-id> --vm-id <vm-uuid>
+```
+
+Attach a volume to a VM. Volume and VM must be in the same region. Inside the guest, attached volumes appear as `/dev/vdb`, `/dev/vdc`, etc. (`/dev/vda` is the OS disk).
+
+## detach
+
+```bash
+raff volume detach <volume-id>
+```
+
+Detach the volume from its current VM. The volume remains in the project and can be reattached later.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Snapshot commands" icon="camera" href="/reference/cli/snapshot">
+    Capture a point-in-time snapshot of a volume.
+  </Card>
+  <Card title="raff_volume (Terraform)" icon="cube" href="/reference/terraform/raff_volume">
+    Declarative volume management.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoints">
+    The HTTP API behind the CLI.
+  </Card>
+</CardGroup>
