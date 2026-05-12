@@ -120,14 +120,14 @@ Each of these triggers the AI to call the MCP server, retrieve the relevant docs
 
 A few things to set expectations:
 
-- **Not an execution endpoint.** The MCP server exposes Raff's *docs*, not Raff's *API*. It cannot create VMs, charge your account, or change anything in your account. To execute actions, your AI tool calls the [public REST API](/api-reference/introduction) directly using your API key.
+- **Not an execution endpoint.** The MCP server exposes Raff's *docs*, not Raff's *API*. It cannot create VMs, charge your account, or change anything in your account. To execute actions, your AI tool calls the [public REST API](/api-reference/endpoints) directly using your API key.
 - **Not authenticated.** Anyone with the URL can read the docs through it — exactly what's true of the public docs site itself. There's no customer-specific data behind the endpoint.
-- **Not a substitute for the API.** Use MCP for *answering questions about Raff*; use the [REST API](/api-reference/introduction) (or [`raff-go`](/reference/cli/install) / [`raff-cli`](/reference/cli/introduction) / [Terraform](/reference/terraform/introduction)) for *doing things in Raff*.
+- **Not a substitute for the API.** Use MCP for *answering questions about Raff*; use the [REST API](/api-reference/endpoints) (or [`raff-go`](/reference/cli/install) / [`raff-cli`](/reference/cli/introduction) / [Terraform](/reference/terraform/introduction)) for *doing things in Raff*.
 
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+  <Card title="API Reference" icon="code" href="/api-reference/endpoints">
     Use the REST API directly — what the AI calls when it needs to do something, not just read about it.
   </Card>
   <Card title="CLI Reference" icon="terminal" href="/reference/cli/introduction">
