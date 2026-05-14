@@ -489,7 +489,9 @@
                       "api-reference/backups/create-backup",
                       "api-reference/backups/get-backup",
                       "api-reference/backups/delete-backup",
-                      "api-reference/backups/restore-backup"
+                      "api-reference/backups/delete-backup-chain",
+                      "api-reference/backups/restore-backup",
+                      "api-reference/backups/reset-backup-chain"
                     ]
                   },
                   {

@@ -2801,6 +2801,75 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/backups/{id}/chain:
+    delete:
+      tags:
+        - Backups
+      summary: Delete backup series
+      description: |
+        Delete an entire backup series — every restore point that the given backup
+        belongs to. The series is identified by passing the UUID of **any** backup
+        row in it; all sibling restore points (and the underlying storage) are
+        removed in one call.
+
+        Use this when a single restore point can't be removed on its own because
+        it has older restore points it depends on. The single-backup
+        [Delete backup](/api-reference/virtual-machines/delete-backup) endpoint
+        returns a clear error in that case and points here.
+      operationId: deleteBackupChain
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of any backup row in the series to remove.
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Backup series deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/backups/reset-chain:
+    post:
+      tags:
+        - Backups
+      summary: Reset backup series
+      description: |
+        Start a fresh backup series for the VM. The current series is closed —
+        existing restore points remain restorable until you delete them — and
+        the next backup creates a new independent baseline.
+
+        Use when a series has grown long and you want a clean baseline for
+        future backups without losing the restore points you already have.
+      operationId: resetBackupChain
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: VM UUID
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '202':
+          description: New baseline queued — the next backup will start a fresh series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/backup-schedules:
     get:
       tags:
@@ -5710,7 +5779,10 @@ components:
           description: Backup display name
         storage_size:
           type: integer
-          description: Backup size in GB
+          description: |
+            Backup size in **MB**. For incremental restore points this is the per-increment delta;
+            for legacy standalone backups it is the full image size. Display in MB up to 1024,
+            else convert to GB (`storage_size / 1024`). Pricing math: `(storage_size / 1024) * price_per_gb`.
         status:
           type: string
           description: |
@@ -5727,6 +5799,22 @@ components:
           type: string
           format: date-time
           description: When the backup will be auto-pruned (only set when retention applies)
+        increment_id:
+          type: integer
+          nullable: true
+          description: |
+            Restore-point position within an incremental backup series.
+
+            - `null` — legacy standalone backup (no series).
+            - `0` — first restore point of a series.
+            - `1`, `2`, … — subsequent restore points in the same series.
+
+            Backups that share the same series are deleted together. Deleting a single
+            restore point that has older points in its series triggers a series-wide delete.
+            Use [Delete backup series](/api-reference/virtual-machines/delete-backup-series)
+            to remove a whole series explicitly, or
+            [Reset backup series](/api-reference/virtual-machines/reset-backup-series)
+            to start a fresh baseline on the next backup.
         created_at:
           type: string
           format: date-time

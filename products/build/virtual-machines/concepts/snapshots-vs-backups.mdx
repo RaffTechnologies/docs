@@ -41,6 +41,18 @@ Snapshots are the manual tool. They're cheap, fast, and capture exactly the mome
 
 Backups are the always-on tool. They run on a schedule whether or not you remember to do anything. The first 3 backups per VM are free, so most production VMs get one for free.
 
+## How backups are stored: incremental series
+
+Each VM has a **backup series**. The first backup in the series is a full baseline; every subsequent backup stores only the blocks that changed since the previous one. You see each backup as a separate restore point in the dashboard and list response — pick any date, restore to it.
+
+Three things to know:
+
+- **Sizes are small after the first one.** A daily backup on a quiet VM is often a few MB. You're billed only for what's actually stored.
+- **Restore points in a series depend on each other.** To delete the oldest restore point without losing the newer ones, you need to delete the whole series (or wait for retention to age it out). The dashboard's "Delete" button on a single restore point will surface this and offer to delete the whole series in one click.
+- **You can start a fresh series whenever you want.** Use [Reset Backup Series](/api-reference/backups/reset-backup-chain) — it closes the current series and the next backup will create a new baseline. Existing restore points stay restorable until you delete them.
+
+Customers used to scheduled snapshots will recognize this model — `Backup` rows in the API now include an `increment_id` field so you can see the series structure programmatically. Legacy backups taken before this feature shipped have `increment_id: null` and behave exactly as they did before (standalone, no series).
+
 ## RPO and RTO targets
 
 If you're sizing your protection strategy:

@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated May 10, 2026</sub>
+<sub>Updated May 14, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,15 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### May 14, 2026
+
+**Virtual Machines — API**
+- 🔵 **Updated** — Backups now run as **incremental backup series** instead of one full image per call. Only changed blocks are stored after the first baseline, cutting storage and transfer dramatically. Existing backups taken before this change keep working unchanged — they restore identically to today.
+- 🔵 **Updated** — `storage_size` on `Backup` is now **MB** (was GB). Incremental restore points are often a few MB; the previous integer-GB column rounded them up to 1 GB and overstated both display and billing. Existing rows have been backfilled (`old_value_in_GB * 1024`) so customer-visible amounts stay consistent. Clients should display in MB up to 1024, else convert to GB.
+- 🟢 **Added** — `increment_id` field on `Backup` — `GET /api/v1/backups`. Position of a restore point within an incremental series; `null` for legacy standalone backups.
+- 🟢 **Added** — **Delete backup series** — `DELETE /api/v1/backups/{id}/chain`. Removes every restore point in a series in one call. Use this when [Delete backup](/api-reference/virtual-machines/delete-backup) reports that older points depend on the one being deleted.
+- 🟢 **Added** — **Reset backup series** — `POST /api/v1/vms/{id}/backups/reset-chain`. Starts a fresh baseline on the next backup; existing restore points stay restorable.
 
 ### May 10, 2026
 
