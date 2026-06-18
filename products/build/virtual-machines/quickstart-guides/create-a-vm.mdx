@@ -132,8 +132,8 @@ Enable a recurring backup schedule.
   ![Backup plan: Daily or Weekly, with billing rules and free tier](/images/products/compute/vm/create/create-a-vm-06-backup-plan.png)
 </Frame>
 
-- **3 backups always free, rolling.** When a new backup runs, the oldest of the 3 is auto-deleted, so you always keep the 3 most recent at no charge. Same behaviour for Daily and Weekly schedules.
-- **\$0.05/GB/mo** for any backup you choose to keep beyond the free 3.
+- **Shared free-storage pool.** Backups and snapshots share one account pool — 50 GB free plus 10% (Standard) or 15% (Premium) of each VM's disk. Same for Daily and Weekly schedules.
+- **\$0.05/GB/mo** for combined backup + snapshot storage above the pool.
 - **Daily and Weekly cost the same per GB** — pricing is by storage, not by frequency. Pick by your RPO: Daily = up to 24h of data loss in a worst case, Weekly = up to 7 days.
 
 ## 9. Quantity, tags, hostnames

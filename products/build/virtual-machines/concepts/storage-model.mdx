@@ -54,8 +54,8 @@ Manual, on-demand point-in-time copies of a VM disk or a volume.
 Scheduled or on-demand copies, governed by a retention policy.
 
 - Configured per-VM with a Daily / Weekly schedule and a retention window (1-365 days). See [Enable backups](/products/build/virtual-machines/quickstart-guides/enable-backups).
-- The first 3 backups per VM are **free, rolling** — when a 4th appears, the oldest of the 3 auto-deletes.
-- Beyond the free 3: \$0.05/GB/month.
+- Backup + snapshot storage shares a **free pool per account** (50 GB + 10–15% of each VM's disk).
+- Above the pool: \$0.05/GB/month on the combined excess only.
 - Crucially: **backups survive VM delete** as long as the retention is still active. This is the only mechanism for true post-delete recovery.
 
 For when to use which, see [Snapshots vs Backups](/products/build/virtual-machines/concepts/snapshots-vs-backups).
@@ -103,7 +103,7 @@ Reading the matrix:
 | Base disk | Bundled in the plan price |
 | Block volumes | Per GB stored — subscription term or hourly |
 | Snapshots | Per GB-hour |
-| Backups | Per GB-month (after free 3 per VM) |
+| Backups | Per GB-month above the shared free pool |
 | Custom images | Per GB stored |
 | Object Storage (orthogonal — for files, not disks) | Per GB stored |
 

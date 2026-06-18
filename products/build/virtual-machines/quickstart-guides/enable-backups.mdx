@@ -94,7 +94,7 @@ Add as many schedules as you need on the same VM — they run independently. A c
 | Short-cycle | Daily | 7 days | Recover from yesterday's bad deploy |
 | Long-cycle | Weekly | 90 days | Quarterly compliance, deep recovery |
 
-Both run; both bill independently against the rolling free tier and per-GB rate.
+Both run; their storage counts together against your shared free pool, with the per-GB rate applied only above it.
 
 ## Manage existing schedules
 
@@ -110,8 +110,8 @@ Frequency, time, and retention can be edited any time — no need to delete and 
 
 ## Pricing
 
-- **First 3 backups per VM are free, rolling.** When a 4th backup runs, the oldest of the 3 is auto-deleted, so you keep the 3 most recent at no charge.
-- **\$0.05/GB/month** for any backup retained beyond the free 3.
+- **Shared free-storage pool.** Backups and snapshots draw from one account pool: 50 GB free, plus 10% (Standard) or 15% (Premium) of each VM's disk. The pool shrinks when a VM is deleted but never below 50 GB.
+- **\$0.05/GB/month** for combined backup + snapshot storage **above** the pool — you're billed only for the excess.
 - **Daily and Weekly cost the same per GB** — pricing is by storage, not by frequency. Pick by your recovery point objective: Daily = up to 24 hours of data loss in a worst case, Weekly = up to 7 days.
 - The **Estimated Monthly Cost** column on the VM Backups view projects what a full month at the current storage would cost.
 
@@ -124,8 +124,8 @@ Charges accrue continuously and settle at the **end of each calendar month**, wi
 | Trigger | Manual *or* scheduled | Manual only |
 | Schedule | Yes (Daily / Weekly) | None |
 | Retention policy | Configurable (1 - 365 days) | Until you delete it |
-| Free tier | 3 backups per VM, rolling | None |
-| Pricing | \$0.05/GB/month after free tier | Per GB-hour |
+| Free tier | Shared account pool (backups + snapshots) | Shared account pool (backups + snapshots) |
+| Pricing | \$0.05/GB/month above the pool | \$0.05/GB/month above the pool |
 | Best for | Routine protection | Restore points before risky changes |
 
 ## Next steps

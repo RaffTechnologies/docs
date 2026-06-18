@@ -136,10 +136,24 @@ PAYG accounts (enterprise / SMB on request) follow a different cycle — usage a
 | **Plan** (CPU, RAM, base disk) | Subscription term or hourly |
 | **Outbound bandwidth** | **Unlimited — included on every plan, no per-GB charge** |
 | **Block storage volumes** | Subscription term or hourly |
-| **Snapshots** | Per GB stored |
-| **Backups** | Per GB stored (first 3 backups per VM are free) |
+| **Snapshots** | Per GB stored, against the shared free pool |
+| **Backups** | Per GB stored, against the shared free pool |
 | **Object Storage** | Per GB stored |
 | **Public IPs** | Per IP, separately billed |
+
+## Free backup & snapshot storage pool
+
+Backups and snapshots share **one free-storage pool per account**:
+
+- **50 GB free** to start.
+- Every VM you run grows the pool: **+10%** of its disk for Standard
+  (general-purpose) plans, **+15%** for Premium (CPU-optimized) plans.
+- Deleting a VM (or shrinking its disk) shrinks the pool by the same amount;
+  it never drops below the 50 GB base.
+
+Your combined backup + snapshot storage is free up to the pool size. You're
+billed only for GB **above** the pool, at $0.05/GB/month. A typical VM's
+7-day daily + weekly backup cycle fits comfortably inside the free pool.
 
 ## Live rates
 

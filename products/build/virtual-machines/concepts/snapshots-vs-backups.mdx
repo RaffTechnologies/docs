@@ -17,11 +17,11 @@ Snapshots and backups both capture a VM's disk state, but they're built for diff
 |---|---|---|
 | **When taken** | On-demand, manually | Automated, on a schedule |
 | **Schedule** | None | `daily` or `weekly` (with chosen time / day) |
-| **Retention** | Until you delete it (or until the VM is deleted) | Configurable per schedule; first 3 backups per VM are free |
+| **Retention** | Until you delete it (or until the VM is deleted) | Configurable per schedule |
 | **Restore time (RTO target)** | Fast — minutes for typical OS disks; restore creates a fresh VM disk from the snapshot | Similar — minutes |
 | **Data freshness (RPO)** | As fresh as the moment you clicked "Snapshot" | At most one schedule interval (e.g. 24 hours behind for daily) |
 | **Best for** | One-off "known good" states; before risky changes | Routine protection without remembering to act |
-| **Pricing** | Per-GB stored, billed continuously | Per-GB stored, plus the schedule. First 3 backups per VM free |
+| **Pricing** | Per-GB stored, against the shared free pool | Per-GB stored, against the shared free pool, plus the schedule |
 
 ## When to use a snapshot
 
@@ -39,7 +39,7 @@ Snapshots are the manual tool. They're cheap, fast, and capture exactly the mome
 - **Any VM where data loss between manual snapshots would matter** — backups give you a guaranteed safety net even when nobody's paying attention
 - **VMs you'd want to restore to a point-in-time** — backups are dated; pick the right day, restore from it
 
-Backups are the always-on tool. They run on a schedule whether or not you remember to do anything. The first 3 backups per VM are free, so most production VMs get one for free.
+Backups are the always-on tool. They run on a schedule whether or not you remember to do anything. Backups and snapshots draw from a shared free-storage pool (50 GB + 10–15% of each VM's disk), so a typical VM's routine backup cycle stays free.
 
 ## How backups are stored: incremental series
 

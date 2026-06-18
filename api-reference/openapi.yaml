@@ -5501,6 +5501,10 @@ components:
           enum: [us-east]
           description: Region this plan is available in
           example: us-east
+        out_of_stock:
+          type: boolean
+          description: Whether this plan is currently sold out. Informational only — the plan is still listed and can be ordered.
+          example: false
 
     StoragePricing:
       type: object
