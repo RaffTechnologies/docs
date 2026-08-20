@@ -22,6 +22,8 @@ info:
     - `GET /api/v1/public/pricing/snapshot` — snapshot storage pricing
     - `GET /api/v1/public/pricing/backup` — backup storage pricing
     - `GET /api/v1/public/pricing/ip` — IP address pricing
+    - `GET /api/v1/public/pricing/database` — managed database pricing (plans, high availability, read replicas, extra storage)
+    - `GET /api/v1/public/pricing/kubernetes` — managed Kubernetes pricing (worker node plans, HA control plane, storage nodes)
 
   version: 1.0.0
   contact:
@@ -43,7 +45,12 @@ tags:
   - name: Projects
     description: Organize resources into projects for billing and access control
   - name: Virtual Machines
-    description: Create, manage, and control virtual machines
+  - name: Functions
+    description: Deploy and manage serverless functions
+  - name: Raff Apps
+    description: Push-to-deploy web services, private services, workers, cron jobs, and one-off jobs on the Raff PaaS — with custom domains, environment variables, autoscaling, and per-second billing with spend caps
+  - name: Managed Databases
+    description: Fully managed PostgreSQL and Valkey databases with private VPC networking, automatic backups, and metrics
   - name: Networking
     description: Attach and detach VPCs, floating IPs, and security groups to VM network interfaces
   - name: Snapshots
@@ -131,10 +138,10 @@ paths:
             enum: [os, marketplace]
         - name: vm_type
           in: query
-          description: Filter by VM type. When `standard`, Windows templates are excluded.
+          description: Filter by VM type. Windows templates are only returned for `windows`; `standard` and `premium` exclude them.
           schema:
             type: string
-            enum: [standard, premium]
+            enum: [standard, premium, windows]
         - name: region
           in: query
           description: Filter by region
@@ -177,7 +184,7 @@ paths:
           description: Filter by VM type
           schema:
             type: string
-            enum: [standard, premium]
+            enum: [standard, premium, windows]
         - name: region
           in: query
           description: Filter by region
@@ -318,6 +325,83 @@ paths:
                     $ref: '#/components/schemas/IPPricing'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/pricing/database:
+    get:
+      tags:
+        - Catalog
+      summary: List managed database pricing
+      description: Returns managed database plans plus high availability, read replica, and extra storage pricing. High availability multiplies the plan price — an HA plan costs `price_per_month * (1 + price_multiplier)`.
+      operationId: listDatabasePricing
+      security: []
+      parameters:
+        - name: engine
+          in: query
+          description: Filter by database engine
+          schema:
+            $ref: '#/components/schemas/DatabaseEngine'
+      responses:
+        '200':
+          description: Managed database pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabasePricingPlan'
+                  ha_pricing:
+                    type: array
+                    description: High availability pricing per engine
+                    items:
+                      $ref: '#/components/schemas/DatabaseHAPricing'
+                  replica_pricing:
+                    type: array
+                    description: Read replica pricing per engine
+                    items:
+                      $ref: '#/components/schemas/DatabaseReplicaPricing'
+                  storage_pricing:
+                    type: array
+                    description: Extra storage pricing per engine
+                    items:
+                      $ref: '#/components/schemas/DatabaseStoragePricing'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/public/pricing/kubernetes:
+    get:
+      tags:
+        - Catalog
+      summary: List managed Kubernetes pricing
+      description: Returns worker node plans plus HA control plane and storage node pricing. The standard control plane is free — `ha_pricing` is the optional highly available control plane.
+      operationId: listKubernetesPricing
+      security: []
+      responses:
+        '200':
+          description: Managed Kubernetes pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sNodePlan'
+                  ha_pricing:
+                    $ref: '#/components/schemas/K8sHAPricing'
+                  storage_pricing:
+                    $ref: '#/components/schemas/K8sStoragePricing'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /api/v1/projects:
     get:
@@ -1714,7 +1798,9 @@ paths:
         - not be currently attached to another VM
         - have `reserved: true`
 
-        No new billing — you're already paying for the reserved IP.
+        No new billing on attach — you're already paying for the reserved IP.
+
+        A VM can hold up to **4 public IPv4 addresses**. The first IPv4 on a VM becomes its primary address; additional IPv4s must be reserved IPs attached with `ip_id`.
 
         ## Option B — auto-assign a new IP (use `type`)
 
@@ -1722,11 +1808,11 @@ paths:
         - `type: IPv4` (default if omitted)
         - `type: IPv6`
 
-        A new IP is allocated and billed to your account from the moment of attach. Detach to release it back to the pool.
+        Auto-assign is available only while the VM has no public IP of that family, and the IP is included with the VM at no extra charge. It is not reserved: detaching releases it back to the shared pool.
 
         ## Notes
 
-        - VM must not already have a public IP of the same family (detach first).
+        - Auto-assign (`type`) fails if the VM already has a public IP of the same family — attach a reserved IP (`ip_id`) to add more IPv4s, up to 4 total.
         - Optionally pass `security_groups` (UUID array) to apply security groups to the new NIC.
       operationId: attachVMIP
       parameters:
@@ -1762,8 +1848,8 @@ paths:
         - Networking
       summary: Detach floating IP from VM
       description: |
-        Detach a floating IP from a VM. The IP returns to your reserved pool (or is released, for auto-assigned IPs).
-        Use the `nic_id` from `GET /api/v1/vms/{id}/networks`.
+        Detach a floating IP from a VM. A reserved IP returns to your reserved pool and **continues to be billed** until you release it via `DELETE /api/v1/ips/{id}/reserve`. An auto-assigned IP is released back to the shared pool.
+        Use the `nic_id` from `GET /api/v1/vms/{id}/networks`. If you detach the VM's primary IPv4 while other IPv4s remain attached, the lowest-numbered remaining IPv4 becomes the new primary.
       operationId: detachVMIP
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
@@ -4007,6 +4093,2964 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/databases/engines:
+    get:
+      tags:
+        - Managed Databases
+      summary: List database engines
+      description: |
+        The database engine catalog: each engine with its display name, supported versions, and whether it is available to create. Engines listed with `available: false` (MySQL) are planned but cannot be created yet.
+      operationId: listDatabaseEngines
+      responses:
+        '200':
+          description: Engine catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  engines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseEngineInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/databases/plans:
+    get:
+      tags:
+        - Managed Databases
+      summary: List database plans
+      description: |
+        Pricing tiers for managed databases, plus the high availability, read replica, and extra storage pricing. Use the plan `id` as `plan_id` when creating or scaling a database.
+
+        The same catalog is available without authentication at `GET /api/v1/public/pricing/database`.
+      operationId: listDatabasePlans
+      parameters:
+        - name: engine
+          in: query
+          description: Filter plans by engine
+          schema:
+            $ref: '#/components/schemas/DatabaseEngine'
+      responses:
+        '200':
+          description: Plans and add-on pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabasePricingPlan'
+                  ha_pricing:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseHAPricing'
+                  replica_pricing:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseReplicaPricing'
+                  storage_pricing:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseStoragePricing'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/databases:
+    get:
+      tags:
+        - Managed Databases
+      summary: List databases
+      description: List all managed databases for the authenticated account.
+      operationId: listDatabases
+      responses:
+        '200':
+          description: List of databases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  databases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Database'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Managed Databases
+      summary: Create database
+      description: |
+        Create a managed database. Provisioning is asynchronous — the database is created in status `pending` and moves through `deploying` to `running`; poll `GET /api/v1/databases/{database_id}` for progress.
+
+        ## Networking
+
+        Databases live on private VPC networking by default. Set `vpc_id` to place the private endpoint (`{database_id}.db.raffusercloud.com`) inside an existing VPC, or attach a VPC later via `POST /api/v1/databases/{database_id}/vpc`. Public access is optional and off by default. TLS is always required.
+
+        ## Engines
+
+        - **PostgreSQL** — pooled endpoint on port 6432 (PgBouncer, transaction mode) plus a direct endpoint on 5432. Nightly base backup with continuous WAL archiving for point-in-time restore.
+        - **Valkey** — single TLS endpoint on port 6379. Nightly RDB snapshots plus on-demand snapshots. No read replicas — high availability adds a standby with automatic Sentinel failover.
+
+        ## Pricing
+
+        The plan sets the base price. High availability adds 70% of the tier price; storage above the tier allotment is $0.12/GB/month. See `GET /api/v1/public/pricing/database` for the full catalog.
+      operationId: createDatabase
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatabaseRequest'
+      responses:
+        '201':
+          description: Database created (status `pending` while provisioning)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+
+  /api/v1/databases/{database_id}:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get database
+      description: Get details of a managed database.
+      operationId: getDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Database details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Managed Databases
+      summary: Rename database
+      description: Update the display name of a database. Connection endpoints are based on the immutable `database_id` and do not change.
+      operationId: updateDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDatabaseRequest'
+      responses:
+        '200':
+          description: Updated database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Managed Databases
+      summary: Delete database
+      description: |
+        Permanently delete a managed database and its backups. This cannot be undone.
+
+        If the database has an active subscription, the remaining prepaid balance is refunded pro-rata to your account balance.
+      operationId: deleteDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Deletion started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/scale:
+    post:
+      tags:
+        - Managed Databases
+      summary: Scale database
+      description: |
+        Change the plan, storage, high availability, or read replica count of a running database.
+
+        - **Plan** — the new plan must be the same engine. Its included storage sets a floor: storage never shrinks below the new tier's allotment.
+        - **Storage** — `storage_gb` can only grow. Omit (or `0`) to keep the current size.
+        - **High availability** — set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged.
+        - **Read replicas** — `replica_count` is always applied: pass your current count when you are not changing it. PostgreSQL only; Valkey rejects a count above 0.
+      operationId: scaleDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScaleDatabaseRequest'
+      responses:
+        '200':
+          description: Updated database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/connection:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get connection details
+      description: |
+        Connection details for the database: host, port, username, database name, and a ready-to-use connection URI.
+
+        The `password` field is empty unless you pass `reveal=true`. TLS is always required.
+      operationId: getDatabaseConnection
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: reveal
+          in: query
+          description: Set to `true` to include the password in the response and connection URI
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Connection details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                  - $ref: '#/components/schemas/DatabaseConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/credentials/rotate:
+    post:
+      tags:
+        - Managed Databases
+      summary: Rotate credentials
+      description: |
+        Generate a new password for the database user. Existing connections keep working until they disconnect; new connections must use the new password. Fetch it via `GET /api/v1/databases/{database_id}/connection?reveal=true`.
+      operationId: rotateDatabaseCredentials
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Credentials rotated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/vpc:
+    post:
+      tags:
+        - Managed Databases
+      summary: Connect database to VPC
+      description: |
+        Attach a database created without a VPC to one of your VPCs. The private endpoint `{database_id}.db.raffusercloud.com` becomes reachable from inside that VPC.
+      operationId: connectDatabaseVPC
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectDatabaseVPCRequest'
+      responses:
+        '200':
+          description: Database connected to the VPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/public-access:
+    post:
+      tags:
+        - Managed Databases
+      summary: Set public access
+      description: |
+        Open or close public access to the database.
+
+        When enabled, the database is reachable at `{database_id}.public.db.raffusercloud.com` on a port assigned from the reserved range 25060–26060 (`public_port` on the database object). For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint. TLS is always required.
+
+        `allowlist` restricts which source CIDRs may connect. Omit it to keep the stored list; pass `[]` to allow all sources. Re-post `enabled: true` with a new `allowlist` to update the restriction in place.
+      operationId: setDatabasePublicAccess
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatabasePublicAccessRequest'
+      responses:
+        '200':
+          description: Updated database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/metrics:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get metrics
+      description: |
+        Latest usage snapshot: CPU, memory, storage, connections, and replication lag. Metrics refresh about every 60 seconds; zero values mean not measured yet.
+      operationId: getDatabaseMetrics
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Latest metrics snapshot
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                  - $ref: '#/components/schemas/DatabaseMetrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/metrics/history:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get metrics history
+      description: Time-series metrics over a window, bucketed for charting.
+      operationId: getDatabaseMetricsHistory
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: window_hours
+          in: query
+          description: History window in hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Metric points, oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  points:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseMetricsPoint'
+                  bucket_seconds:
+                    type: integer
+                    description: Seconds each point covers
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/slow-queries:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get slow queries
+      description: |
+        The slowest recent queries.
+
+        - **PostgreSQL** — aggregated statistics from `pg_stat_statements`: each row is one normalized query with its call count, mean, and total time.
+        - **Valkey** — individual slow commands from `SLOWLOG`: `calls` is 1 per entry and `rows` is not applicable.
+
+        `collecting` indicates whether statistics collection is active yet.
+      operationId: getDatabaseSlowQueries
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: limit
+          in: query
+          description: Maximum number of entries to return
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Slow query entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  queries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseSlowQuery'
+                  collecting:
+                    type: boolean
+                    description: Whether slow-query statistics are being collected
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/logs:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get logs
+      description: Recent engine log lines, newest last.
+      operationId: getDatabaseLogs
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: tail
+          in: query
+          description: Number of log lines to return
+          schema:
+            type: integer
+            default: 200
+      responses:
+        '200':
+          description: Log lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lines:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/extensions:
+    get:
+      tags:
+        - Managed Databases
+      summary: List extensions
+      description: |
+        The PostgreSQL extension allowlist with the installed state of each extension. Valkey has no extensions — the list is empty.
+      operationId: listDatabaseExtensions
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Extension catalog with installed state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  extensions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseExtension'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Managed Databases
+      summary: Enable or disable extension
+      description: Install or remove a PostgreSQL extension from the allowlist. PostgreSQL only.
+      operationId: setDatabaseExtension
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetDatabaseExtensionRequest'
+      responses:
+        '200':
+          description: Extension updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/backups:
+    get:
+      tags:
+        - Managed Databases
+      summary: List backups
+      description: |
+        All backups for the database: nightly automatic backups (`base`) and on-demand backups (`on_demand`).
+      operationId: listDatabaseBackups
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  backups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseBackup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Managed Databases
+      summary: Create backup
+      description: |
+        Start an on-demand backup — a base backup for PostgreSQL, an RDB snapshot for Valkey. The backup runs asynchronously; poll the list until its status is `completed`.
+      operationId: createDatabaseBackup
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '201':
+          description: Backup started (status `running`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  backup:
+                    $ref: '#/components/schemas/DatabaseBackup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/resume:
+    post:
+      tags:
+        - Managed Databases
+      summary: Resume a paused database
+      description: |
+        Wake a free-tier database that was suspended for idleness (no client
+        connections for 7 days). The database returns through `deploying` and
+        reaches `running` in about a minute; all data is preserved.
+      operationId: resumeDatabase
+      parameters:
+        - name: database_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Database short ID
+      responses:
+        '200':
+          description: Resume started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  database:
+                    $ref: '#/components/schemas/ManagedDatabase'
+        '400':
+          description: The database is not paused
+        '404':
+          description: Database not found
+
+  /api/v1/databases/{database_id}/restore:
+    post:
+      tags:
+        - Managed Databases
+      summary: Restore to a new database
+      description: |
+        Restore a database into a NEW instance. In-place restore is not supported — it would destroy the backup timeline it restores from — so `clone_to_new` must be `true`.
+
+        Choose the restore point with `backup_id` (a specific completed backup) or, for PostgreSQL, `pitr_timestamp` (any point in time covered by continuous WAL archiving). Omit both to restore the latest available state.
+
+        The clone inherits the source's plan, storage, VPC, and project, starts with no read replicas, and bills pay-as-you-go. High availability is an explicit choice via `ha_enabled` — never inherited. If `new_name` is taken, the platform auto-suffixes it (`-2`, `-3`, …).
+
+        The clone provisions asynchronously; poll `GET /api/v1/databases/{new_database_id}` like any create.
+      operationId: restoreDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreDatabaseRequest'
+      responses:
+        '200':
+          description: Restore started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  new_database_id:
+                    type: string
+                    description: Short ID of the new database being created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions:
+    get:
+      tags:
+        - Functions
+      summary: List functions
+      description: List all serverless functions for the authenticated account.
+      operationId: listFunctions
+      parameters:
+        - name: status
+          in: query
+          description: "Filter by status: `pending`, `building`, `live`, `paused`, `error`."
+          schema:
+            type: string
+            enum: [pending, building, live, paused, error]
+      responses:
+        '200':
+          description: List of functions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      functions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Function'
+                      total:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Functions
+      summary: Create function
+      description: |
+        Create a serverless function. The function serves at
+        `https://{slug}.fn.raffusercloud.com` — the slug is your name plus a
+        short random suffix, so names never collide across accounts.
+
+        Functions unlock after your first top-up of $5 or more (the money
+        stays in your balance). Deploy code afterwards with a source upload
+        and a deployment, or use a starter template.
+
+        Timeouts above 3600s require `extended_timeout: true` (max 86400s /
+        24h). Long runs bill wall-clock memory while they execute — there is
+        no extra fee.
+      operationId: createFunction
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFunctionRequest'
+      responses:
+        '201':
+          description: Function created (status `pending` until first deployment)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      function:
+                        $ref: '#/components/schemas/Function'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Account not funded — Functions unlock after the first top-up of $5 or more
+        '409':
+          description: A function with this name already exists in the account
+
+  /api/v1/functions/usage:
+    get:
+      tags:
+        - Functions
+      summary: Get usage & estimated charge
+      description: |
+        Current calendar-month usage across the account's two paid meters
+        (memory GB-seconds and active-CPU vCPU-seconds), the monthly free
+        tier remaining, AI Lambda-conversions used, and the estimated charge
+        month-to-date (only usage beyond the free tier bills). Requests and
+        egress are free and never metered for billing.
+      operationId: getFunctionsUsage
+      parameters:
+        - name: function_id
+          in: query
+          description: Scope to one function (pre-free-tier view; the free tier is account-wide)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usage summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FunctionsUsage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/spend-settings:
+    get:
+      tags:
+        - Functions
+      summary: Get spend cap settings
+      description: |
+        The monthly spend cap is ON by default ($50/month). At the cap your
+        functions pause — they stop serving instead of charging you — and
+        resume automatically next month or when you raise the cap.
+      operationId: getFunctionsSpendSettings
+      responses:
+        '200':
+          description: Spend cap settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      settings:
+                        $ref: '#/components/schemas/FunctionsSpendSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags:
+        - Functions
+      summary: Update spend cap settings
+      operationId: updateFunctionsSpendSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                monthly_cap_usd:
+                  type: number
+                  description: Monthly maximum in USD (0–1,000,000)
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      settings:
+                        $ref: '#/components/schemas/FunctionsSpendSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/import/lambda:
+    post:
+      tags:
+        - Functions
+      summary: Convert AWS Lambda source
+      description: |
+        Convert AWS Lambda handler code to a Raff function. Stateless —
+        nothing is stored; review the output, then create a function and
+        deploy the returned files.
+
+        Two modes:
+
+        - `rewrite` (default) — AI rewrites the handler to a portable
+          standard handler (FastAPI / Web Fetch / net/http). Every guess is
+          flagged in `warnings`. 5 free per calendar month, then $0.30 per
+          conversion from your balance. Up to 64KB of source.
+        - `adapter` — your code ships unchanged plus a small static shim that
+          presents API-Gateway-style events. Instant, free, unlimited.
+
+        Config always maps deterministically: memory/timeout, env vars to
+        `raff_toml`, EventBridge `rate()` schedules to cron trigger
+        proposals. IAM, VPC, layers and stream sources are listed in
+        `out_of_scope` with alternatives.
+      operationId: convertLambda
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertLambdaRequest'
+      responses:
+        '200':
+          description: Conversion result (review before deploying)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ConvertLambdaResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI rewrite requires a funded account (adapter mode works without)
+
+  /api/v1/functions/{function_id}:
+    get:
+      tags:
+        - Functions
+      summary: Get function
+      description: Fetch one function by ID, URL slug, or name.
+      operationId: getFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Function details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      function:
+                        $ref: '#/components/schemas/Function'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Functions
+      summary: Update function settings
+      description: |
+        Partially update runtime settings (memory, timeout, extended
+        timeout, scale bounds, description). When the function is live the
+        change rolls out as a new revision with zero downtime.
+      operationId: updateFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFunctionRequest'
+      responses:
+        '200':
+          description: Updated function
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      function:
+                        $ref: '#/components/schemas/Function'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Functions
+      summary: Delete function
+      description: |
+        Delete a function and all its revisions. Deletion is asynchronous;
+        the function's name and URL are released once it completes.
+      operationId: deleteFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Deletion accepted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/pause:
+    post:
+      tags:
+        - Functions
+      summary: Pause function
+      description: Stop serving traffic. The image and revisions are kept; resume any time.
+      operationId: pauseFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Function paused
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/resume:
+    post:
+      tags:
+        - Functions
+      summary: Resume function
+      description: Re-deploy the current revision and start serving again.
+      operationId: resumeFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Function resuming (status `building` until live)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/source-upload:
+    post:
+      tags:
+        - Functions
+      summary: Request source upload URL
+      description: |
+        Returns a presigned URL to PUT a source zip (max 100MB). After
+        uploading, start a deployment with the returned `source_blob_key`.
+      operationId: requestFunctionSourceUpload
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Presigned upload slot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FunctionSourceUpload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/deployments:
+    get:
+      tags:
+        - Functions
+      summary: List deployments
+      operationId: listFunctionDeployments
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Deployments, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      deployments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionDeployment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Functions
+      summary: Create deployment
+      description: |
+        Build and roll out new source. Provide exactly one source:
+
+        - `source_blob_key` — from a completed source upload
+        - `template` — a starter template id (`python`, `typescript`, `node`, `go`)
+        - `files` — inline source files (small console edits)
+
+        Functions connected to GitHub deploy their branch head when no
+        source is given. Buildpacks detect the language; a `Dockerfile` at
+        the source root switches to a container build. The container must
+        listen on the `PORT` environment variable.
+      operationId: createFunctionDeployment
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFunctionDeploymentRequest'
+      responses:
+        '201':
+          description: Deployment queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      deployment:
+                        $ref: '#/components/schemas/FunctionDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/deployments/{deployment_id}:
+    get:
+      tags:
+        - Functions
+      summary: Get deployment
+      operationId: getFunctionDeployment
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deployment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      deployment:
+                        $ref: '#/components/schemas/FunctionDeployment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/deployments/{deployment_id}/logs:
+    get:
+      tags:
+        - Functions
+      summary: Get build logs
+      operationId: getFunctionDeploymentLogs
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Build log lines (poll until `complete`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      lines:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionBuildLogLine'
+                      complete:
+                        type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/revisions:
+    get:
+      tags:
+        - Functions
+      summary: List revisions
+      description: Immutable deploy history. Roll back to any revision instantly — revisions are free.
+      operationId: listFunctionRevisions
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Revisions, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      revisions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionRevision'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/rollback:
+    post:
+      tags:
+        - Functions
+      summary: Roll back to a revision
+      description: Re-deploys the target revision's image — no rebuild, zero downtime.
+      operationId: rollbackFunction
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision_id]
+              properties:
+                revision_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Rollback deployment queued
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/source:
+    get:
+      tags:
+        - Functions
+      summary: Get revision source
+      description: Download URL (and inline files for small sources) of a revision's source zip.
+      operationId: getFunctionSource
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: revision_id
+          in: query
+          description: Defaults to the current revision
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Source download
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      download_url:
+                        type: string
+                      files:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionSourceFile'
+                      inline_truncated:
+                        type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/logs:
+    get:
+      tags:
+        - Functions
+      summary: Get runtime logs
+      description: Stdout/stderr of the running function (14-day retention, included free).
+      operationId: listFunctionLogs
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: since
+          in: query
+          description: RFC3339 start time (default one hour ago)
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [info, warn, error, debug]
+        - name: q
+          in: query
+          description: Substring filter
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 500
+            maximum: 1000
+      responses:
+        '200':
+          description: Log lines, oldest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      lines:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionLogLine'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/metrics:
+    get:
+      tags:
+        - Functions
+      summary: Get metrics
+      description: Invocations, latency percentiles and error rate (included free).
+      operationId: getFunctionMetrics
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: window
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d]
+            default: 1h
+      responses:
+        '200':
+          description: Metric series + summary numbers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FunctionMetrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/invocations:
+    get:
+      tags:
+        - Functions
+      summary: List recent invocations
+      operationId: listFunctionInvocations
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Recent requests, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      invocations:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionInvocation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/env:
+    get:
+      tags:
+        - Functions
+      summary: List environment variables
+      description: Secret values are masked; use the reveal endpoint to read them.
+      operationId: listFunctionEnvVars
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Environment variables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      env_vars:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionEnvVar'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - Functions
+      summary: Set environment variable
+      description: |
+        Create or update one variable. Live functions roll the change out as
+        a new revision with zero downtime. Keys prefixed `PORT`, `K_` or
+        `RAFF_` are reserved.
+      operationId: setFunctionEnvVar
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, value]
+              properties:
+                key:
+                  type: string
+                value:
+                  type: string
+                is_secret:
+                  type: boolean
+      responses:
+        '200':
+          description: Variable set (response includes the config redeploy when one was started)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/env/reveal:
+    get:
+      tags:
+        - Functions
+      summary: List environment variables with values
+      description: Returns secret values in cleartext. Requires manage permission; access is audited.
+      operationId: revealFunctionEnvVars
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Environment variables with values
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      env_vars:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionEnvVar'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/env/{key}:
+    delete:
+      tags:
+        - Functions
+      summary: Delete environment variable
+      operationId: deleteFunctionEnvVar
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Variable deleted (config redeploy rolls it out when live)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/triggers:
+    get:
+      tags:
+        - Functions
+      summary: List triggers
+      operationId: listFunctionTriggers
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Triggers (HTTP is always on and not listed)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      triggers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionTrigger'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Functions
+      summary: Create trigger
+      description: |
+        Schedule or subscribe the function. `cron` uses a 5-field expression
+        with an optional IANA `timezone`; `once` fires a single time at
+        `run_at`; `s3` fires on Object Storage bucket events (optionally
+        filtered by key prefix/suffix). Deliveries are signed CloudEvents
+        (HMAC `X-Raff-Signature`) with 3 retry attempts. Triggers are free.
+      operationId: createFunctionTrigger
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFunctionTriggerRequest'
+      responses:
+        '201':
+          description: Trigger created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      trigger:
+                        $ref: '#/components/schemas/FunctionTrigger'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/triggers/{trigger_id}:
+    patch:
+      tags:
+        - Functions
+      summary: Update trigger
+      operationId: updateFunctionTrigger
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: trigger_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                cron_expression:
+                  type: string
+                timezone:
+                  type: string
+                run_at:
+                  type: string
+                  format: date-time
+                payload_json:
+                  type: string
+      responses:
+        '200':
+          description: Trigger updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Functions
+      summary: Delete trigger
+      operationId: deleteFunctionTrigger
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: trigger_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Trigger deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/bindings:
+    get:
+      tags:
+        - Functions
+      summary: List bindings
+      operationId: listFunctionBindings
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      responses:
+        '200':
+          description: Bindings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      bindings:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionBinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Functions
+      summary: Create binding
+      description: |
+        Wire a Raff-managed resource into the function. A binding mints a
+        scoped credential (its own database role / S3 key — independent of the
+        resource's main credentials) and injects it as read-only system env
+        vars (`{PREFIX}_URL`, `{PREFIX}_HOST`, … for databases;
+        `{PREFIX}_ENDPOINT`, `{PREFIX}_ACCESS_KEY`, … for buckets). Database
+        bindings connect over Raff's private service fabric — traffic never
+        leaves the platform network. Live functions roll a zero-downtime
+        config redeploy.
+      operationId: createFunctionBinding
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFunctionBindingRequest'
+      responses:
+        '200':
+          description: Binding created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      binding:
+                        $ref: '#/components/schemas/FunctionBinding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/functions/{function_id}/bindings/{binding_id}:
+    delete:
+      tags:
+        - Functions
+      summary: Delete binding
+      description: Revokes the scoped credential and removes its env vars.
+      operationId: deleteFunctionBinding
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: binding_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Binding deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/bindings/{binding_id}/rotate:
+    post:
+      tags:
+        - Functions
+      summary: Rotate binding credentials
+      description: |
+        Mints a fresh credential and refreshes the injected env vars; the old
+        credential stops working immediately. Zero-downtime redeploy.
+      operationId: rotateFunctionBinding
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: binding_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      binding:
+                        $ref: '#/components/schemas/FunctionBinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/functions/{function_id}/trigger-runs:
+    get:
+      tags:
+        - Functions
+      summary: List trigger runs
+      description: Delivery history for the function's triggers (30-day retention).
+      operationId: listFunctionTriggerRuns
+      parameters:
+        - $ref: '#/components/parameters/FunctionRef'
+        - name: trigger_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Runs, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      runs:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionTriggerRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/public/functions/runtimes:
+    get:
+      tags:
+        - Functions
+      summary: List runtimes (public)
+      description: The managed runtime catalog. No authentication required.
+      operationId: listFunctionRuntimes
+      security: []
+      responses:
+        '200':
+          description: Available runtimes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      runtimes:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionRuntimeInfo'
+
+  /api/v1/public/pricing/functions:
+    get:
+      tags:
+        - Functions
+      summary: Get Functions pricing (public)
+      description: |
+        Two paid meters — memory (GB-seconds, wall-clock) and active CPU
+        (vCPU-seconds) — plus the monthly account-wide free tier. Requests,
+        egress, scheduling, logs and metrics are free. No authentication
+        required.
+      operationId: getFunctionsPricing
+      security: []
+      responses:
+        '200':
+          description: Active pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      pricing:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FunctionsPricing'
+
+  /api/v1/apps/tiers:
+    get:
+      tags:
+        - Raff Apps
+      summary: List Apps tiers
+      description: The Apps pricing catalog — compute sizes and prices. No authentication required.
+      operationId: listAppTiers
+      security: []
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available tiers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tiers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppTier'
+
+  /api/v1/apps/services:
+    get:
+      tags:
+        - Raff Apps
+      summary: List app services
+      description: List app services for the authenticated account.
+      operationId: listAppServices
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: service_type
+          in: query
+          description: "Filter by type: `web`, `private`, `worker`, `cron`, or `job`."
+          schema:
+            type: string
+            enum: [web, private, worker, cron, job]
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of app services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  services:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppService'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Raff Apps
+      summary: Create app service
+      description: |
+        Create an app service. Provisioning is asynchronous — the service is
+        created in status `pending` and moves through `building` and
+        `deploying` to `live`; poll `GET /api/v1/apps/services/{service_id}`
+        for progress.
+
+        Choose a `service_type`: `web` (public HTTPS URL), `private`
+        (in-cluster only), `worker` (long-running, no URL), `cron`
+        (scheduled), or `job` (one-off). Pick a `source_type`: `git` (a
+        connected GitHub repo), `image` (a prebuilt image), `template` (a
+        starter), or `compose`. Deploy code afterwards with a source upload
+        and a deployment, or set `deploy_now` for image sources.
+      operationId: createAppService
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppServiceRequest'
+      responses:
+        '201':
+          description: App service created (status `pending` while provisioning)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+                  deployment_id:
+                    type: string
+                    format: uuid
+                    description: Set when a deployment was queued at create time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+        '403':
+          $ref: '#/components/responses/BillingValidationFailed'
+        '409':
+          description: A service with this name already exists in the project
+
+  /api/v1/apps/services/{service_id}:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get app service
+      operationId: getAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: App service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Raff Apps
+      summary: Delete app service
+      description: |
+        Delete an app service. Deletion is asynchronous; the name and URL are
+        released once it completes.
+      operationId: deleteAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Deletion accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accepted:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/pause:
+    post:
+      tags:
+        - Raff Apps
+      summary: Pause app service
+      description: Scale the service to zero and stop billing for replicas. Cron services are suspended.
+      operationId: pauseAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Paused service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/resume:
+    post:
+      tags:
+        - Raff Apps
+      summary: Resume app service
+      description: Bring a paused service back to its configured replica count.
+      operationId: resumeAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Resumed service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/scale:
+    post:
+      tags:
+        - Raff Apps
+      summary: Scale app service
+      description: |
+        Update the replica count, autoscaling bounds, or scale-to-zero. Live
+        services apply the change with no downtime.
+      operationId: scaleAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScaleAppServiceRequest'
+      responses:
+        '200':
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/source-upload:
+    post:
+      tags:
+        - Raff Apps
+      summary: Request source upload URL
+      description: |
+        Get a presigned URL to upload a source tarball (gzipped). After the
+        upload completes, create a deployment with the returned `blob_key`.
+      operationId: requestAppSourceUpload
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Presigned upload slot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  upload_url:
+                    type: string
+                  blob_key:
+                    type: string
+                  expires_in_seconds:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/deployments:
+    get:
+      tags:
+        - Raff Apps
+      summary: List deployments
+      operationId: listAppDeployments
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Deployments, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppDeployment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Raff Apps
+      summary: Create deployment
+      description: |
+        Build and roll out a new deployment. Provide a `source_blob_key` from
+        a completed source upload, or an `image_ref` for a prebuilt image.
+        Git-connected services deploy their branch head when neither is given.
+      operationId: createAppDeployment
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppDeploymentRequest'
+      responses:
+        '201':
+          description: Deployment queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployment:
+                    $ref: '#/components/schemas/AppDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/deployments/{deployment_id}:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get deployment
+      operationId: getAppDeployment
+      parameters:
+        - $ref: '#/components/parameters/AppDeploymentIDPath'
+      responses:
+        '200':
+          description: Deployment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployment:
+                    $ref: '#/components/schemas/AppDeployment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/deployments/{deployment_id}/logs:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get deployment build logs
+      operationId: getAppDeploymentLogs
+      parameters:
+        - $ref: '#/components/parameters/AppDeploymentIDPath'
+      responses:
+        '200':
+          description: Build log lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppBuildLogLine'
+                  complete:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/rollback:
+    post:
+      tags:
+        - Raff Apps
+      summary: Roll back to a deployment
+      description: |
+        Pin the service back to an earlier deployment's image. Creates a new
+        deployment from the target's digest and config snapshot.
+      operationId: rollbackAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_deployment_id]
+              properties:
+                target_deployment_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Rollback deployment queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deployment:
+                    $ref: '#/components/schemas/AppDeployment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/logs:
+    get:
+      tags:
+        - Raff Apps
+      summary: List runtime logs
+      operationId: listAppLogs
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+        - name: level
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 200
+      responses:
+        '200':
+          description: Runtime log lines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppLogLine'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/metrics:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get service metrics
+      operationId: getAppServiceMetrics
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+        - name: window
+          in: query
+          description: "Time window, e.g. `1h`, `24h`."
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Metric series
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  series:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppMetricSeries'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/env:
+    get:
+      tags:
+        - Raff Apps
+      summary: List environment variables
+      description: Secret values are masked; use the reveal endpoint to read them.
+      operationId: listAppEnvVars
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Environment variables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  env_vars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEnvVar'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - Raff Apps
+      summary: Set environment variable
+      description: |
+        Create or update one variable. By default the change rolls out to
+        running replicas. Set `redeploy: false` to defer it to the next deploy.
+      operationId: setAppEnvVar
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, value]
+              properties:
+                key:
+                  type: string
+                value:
+                  type: string
+                is_secret:
+                  type: boolean
+                redeploy:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Variable set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  env_vars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEnvVar'
+                  deployment_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/services/{service_id}/env/bulk:
+    put:
+      tags:
+        - Raff Apps
+      summary: Bulk set environment variables
+      description: Upsert many variables at once (an `.env` paste).
+      operationId: bulkSetAppEnvVars
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vars]
+              properties:
+                vars:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                      is_secret:
+                        type: boolean
+                redeploy:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Variables set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  env_vars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEnvVar'
+                  deployment_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/services/{service_id}/env/reveal:
+    get:
+      tags:
+        - Raff Apps
+      summary: List environment variables with values
+      description: Returns secret values in cleartext. Requires manage permission; access is audited.
+      operationId: revealAppEnvVars
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Environment variables with values
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  env_vars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEnvVar'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/services/{service_id}/env/{key}:
+    delete:
+      tags:
+        - Raff Apps
+      summary: Delete environment variable
+      operationId: deleteAppEnvVar
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Variable deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  env_vars:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEnvVar'
+                  deployment_id:
+                    type: string
+                    format: uuid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/domains:
+    get:
+      tags:
+        - Raff Apps
+      summary: List custom domains
+      operationId: listAppCustomDomains
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Custom domains
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  domains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppCustomDomain'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Raff Apps
+      summary: Add custom domain
+      description: |
+        Attach a custom domain to a web service. The response carries the DNS
+        records to create — a CNAME to `cname_target` and a verification TXT
+        record. Verification and TLS issuance run automatically once the DNS
+        resolves.
+      operationId: addAppCustomDomain
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain:
+                  type: string
+      responses:
+        '201':
+          description: Domain added (status `pending_dns`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  domain:
+                    $ref: '#/components/schemas/AppCustomDomain'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/domains/{domain_id}:
+    delete:
+      tags:
+        - Raff Apps
+      summary: Delete custom domain
+      operationId: deleteAppCustomDomain
+      parameters:
+        - $ref: '#/components/parameters/AppDomainIDPath'
+      responses:
+        '200':
+          description: Domain removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accepted:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/domains/{domain_id}/retry:
+    post:
+      tags:
+        - Raff Apps
+      summary: Retry domain verification
+      description: Re-check DNS and re-attempt certificate issuance for a domain.
+      operationId: retryAppDomainVerification
+      parameters:
+        - $ref: '#/components/parameters/AppDomainIDPath'
+      responses:
+        '200':
+          description: Verification re-queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  domain:
+                    $ref: '#/components/schemas/AppCustomDomain'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/jobs/run:
+    post:
+      tags:
+        - Raff Apps
+      summary: Trigger a manual job run
+      description: Start a run of a cron or one-off job service now.
+      operationId: runAppJob
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '201':
+          description: Run started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  run:
+                    $ref: '#/components/schemas/AppJobRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/jobs/runs:
+    get:
+      tags:
+        - Raff Apps
+      summary: List job runs
+      operationId: listAppJobRuns
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Run history, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppJobRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/jobs/runs/{run_id}/cancel:
+    post:
+      tags:
+        - Raff Apps
+      summary: Cancel a job run
+      operationId: cancelAppJobRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Run canceled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  run:
+                    $ref: '#/components/schemas/AppJobRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/usage:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get Apps usage
+      description: Month-to-date replica-hours and estimated charge per service.
+      operationId: getAppsUsage
+      parameters:
+        - name: service_id
+          in: query
+          description: Scope to a single service (omit for all services).
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: current
+      responses:
+        '200':
+          description: Usage and estimated charge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppUsage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/spend-settings:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get spend cap settings
+      operationId: getAppSpendSettings
+      responses:
+        '200':
+          description: Spend cap settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  settings:
+                    $ref: '#/components/schemas/AppSpendSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags:
+        - Raff Apps
+      summary: Update spend cap settings
+      description: |
+        Set the account's monthly Apps spend cap. When the cap is reached
+        services pause automatically until the next period or the cap is raised.
+      operationId: updateAppSpendSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled, monthly_cap_usd]
+              properties:
+                enabled:
+                  type: boolean
+                monthly_cap_usd:
+                  type: number
+                cap_action:
+                  type: string
+                  enum: [pause]
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  settings:
+                    $ref: '#/components/schemas/AppSpendSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/public/pricing/apps:
+    get:
+      tags:
+        - Raff Apps
+      summary: Get Apps pricing (public)
+      description: The Apps tier catalog — compute sizes and prices. No authentication required.
+      operationId: getAppsPricing
+      security: []
+      responses:
+        '200':
+          description: Available tiers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tiers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppTier'
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -4015,6 +7059,43 @@ components:
       name: X-API-Key
       description: API key for authentication. Each key is bound to a specific account.
   parameters:
+    FunctionRef:
+      name: function_id
+      in: path
+      required: true
+      description: Function ID, short id (`fn-…`), URL slug, or name
+      schema:
+        type: string
+    DatabaseIDPath:
+      name: database_id
+      in: path
+      required: true
+      description: Database ID (UUID) or short id (the `database_id` field, e.g. `a1b2c3d4`)
+      schema:
+        type: string
+    AppServiceRef:
+      name: service_id
+      in: path
+      required: true
+      description: App service ID (UUID) or short id (the `service_id` field)
+      schema:
+        type: string
+    AppDeploymentIDPath:
+      name: deployment_id
+      in: path
+      required: true
+      description: Deployment ID (UUID)
+      schema:
+        type: string
+        format: uuid
+    AppDomainIDPath:
+      name: domain_id
+      in: path
+      required: true
+      description: Custom domain ID (UUID)
+      schema:
+        type: string
+        format: uuid
     VMIDPath:
       name: id
       in: path
@@ -4611,6 +7692,10 @@ components:
           type: string
           format: uuid
           description: ID of the security group attached to this NIC, if any.
+        is_primary:
+          type: boolean
+          description: True for the VM's primary public IPv4 interface. A VM has at most one primary IPv4; additional public IPv4s report `false`.
+          example: true
 
     AttachVPCRequest:
       type: object
@@ -4635,12 +7720,12 @@ components:
           type: string
           format: uuid
           description: |
-            ID of a previously reserved IP. The IP must belong to the same account, be reserved, and not already attached to another VM. No new billing — you're already paying for the reserved IP.
+            ID of a previously reserved IP. The IP must belong to the same account, be reserved, and not already attached to another VM. No new billing on attach — you're already paying for the reserved IP. Use this to add up to 4 public IPv4 addresses to a VM.
         type:
           type: string
           enum: [IPv4, IPv6]
           description: |
-            IP family to auto-allocate. Used only when `ip_id` is omitted. Defaults to `IPv4`. A new IP is allocated from the pool and billed to your account from the moment of attach.
+            IP family to auto-allocate. Used only when `ip_id` is omitted. Defaults to `IPv4`. Available only while the VM has no public IP of that family; the IP is included with the VM at no extra charge and is released back to the pool on detach.
         security_groups:
           type: array
           items:
@@ -5493,7 +8578,7 @@ components:
           example: 400.00
         vm_type:
           type: string
-          enum: [standard, premium]
+          enum: [standard, premium, windows]
           description: VM type
           example: standard
         region:
@@ -5565,6 +8650,214 @@ components:
           type: number
           description: 24-month commitment price in USD
           example: 70.00
+
+    DatabasePricingPlan:
+      type: object
+      required:
+        - id
+        - engine
+        - name
+        - vcpu
+        - memory_gib
+        - storage_gib
+        - price_per_hour
+        - price_per_month
+        - region
+      properties:
+        id:
+          type: integer
+          description: Plan ID
+          example: 5
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        name:
+          type: string
+          description: Plan name
+          example: 1 vCPU
+        vcpu:
+          type: integer
+          description: Number of vCPU cores
+          example: 1
+        memory_gib:
+          type: integer
+          description: RAM in GiB
+          example: 1
+        storage_gib:
+          type: integer
+          description: Included SSD storage in GiB
+          example: 25
+        price_per_hour:
+          type: number
+          description: Hourly price in USD
+          example: 0.010945
+        price_per_month:
+          type: number
+          description: Monthly price in USD
+          example: 7.99
+        region:
+          type: string
+          enum: [us-east]
+          description: Region this plan is available in
+          example: us-east
+        is_free_tier:
+          type: boolean
+          description: |
+            Free plan — one per account, no HA or replicas, fixed storage,
+            pauses after 7 idle days (resume keeps all data).
+          example: false
+        memory_mib:
+          type: integer
+          description: RAM override in MiB for sub-GiB plans (free Valkey = 512). 0 means `memory_gib` applies.
+          example: 0
+        max_connections:
+          type: integer
+          description: Client connection limit enforced by the engine. 0 means the engine default.
+          example: 100
+
+    DatabaseHAPricing:
+      type: object
+      description: High availability pricing for one engine. An HA plan costs `price_per_month * (1 + price_multiplier)`.
+      properties:
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        price_multiplier:
+          type: number
+          description: Fraction of the plan price added for high availability
+          example: 0.7
+
+    DatabaseReplicaPricing:
+      type: object
+      description: Read replica pricing for one engine.
+      properties:
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        price_multiplier:
+          type: number
+          description: Multiplier applied to the replica base price
+          example: 1.0
+        price_per_month:
+          type: number
+          description: Monthly price per read replica in USD
+          example: 29.99
+
+    DatabaseStoragePricing:
+      type: object
+      description: Extra storage pricing for one engine.
+      properties:
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        price_per_gb_month:
+          type: number
+          description: Price per GB per month in USD
+          example: 0.12
+        min_gb:
+          type: integer
+          description: Minimum storage in GB
+          example: 10
+        max_gb:
+          type: integer
+          description: Maximum storage in GB
+          example: 10000
+
+    K8sNodePlan:
+      type: object
+      required:
+        - id
+        - name
+        - vcpu
+        - memory_gib
+        - ssd_gib
+        - price_per_hour
+        - price_per_month
+        - region
+      properties:
+        id:
+          type: integer
+          description: Node plan ID
+          example: 11
+        name:
+          type: string
+          description: Node plan name
+          example: K8s Starter
+        vcpu:
+          type: integer
+          description: Number of vCPU cores per node
+          example: 1
+        memory_gib:
+          type: integer
+          description: RAM in GiB per node
+          example: 2
+        ssd_gib:
+          type: integer
+          description: NVMe SSD storage in GiB per node
+          example: 50
+        transfer_gib:
+          type: integer
+          description: Monthly data transfer in GiB (0 means unmetered)
+          example: 0
+        price_per_hour:
+          type: number
+          description: Hourly price per node in USD (pay-as-you-go)
+          example: 0.013875
+        price_per_month:
+          type: number
+          description: Monthly price per node in USD
+          example: 9.99
+        total_price:
+          type: number
+          description: Monthly price per node in USD (same as price_per_month)
+          example: 9.99
+        yearly_price:
+          type: number
+          description: Yearly commitment price in USD (0 if not offered)
+          example: 0
+        twenty_four_month_price:
+          type: number
+          description: 24-month commitment price in USD (0 if not offered)
+          example: 0
+        region:
+          type: string
+          enum: [us-east]
+          description: Region this plan is available in
+          example: us-east
+
+    K8sHAPricing:
+      type: object
+      description: Optional highly available control plane pricing. The standard control plane is free.
+      properties:
+        price_per_hour:
+          type: number
+          description: Hourly price in USD
+          example: 0.0411
+        price_per_month:
+          type: number
+          description: Monthly price in USD
+          example: 30.00
+
+    K8sStoragePricing:
+      type: object
+      description: Per-GB pricing for dedicated NVMe storage nodes.
+      properties:
+        per_gb_month:
+          type: number
+          description: Price per GB per month in USD
+          example: 0.08
+        per_gb_hour:
+          type: number
+          description: Price per GB per hour in USD
+          example: 0.00010959
+        min_gb:
+          type: integer
+          description: Minimum storage node size in GB
+          example: 100
+        max_gb:
+          type: integer
+          description: Maximum storage node size in GB
+          example: 1000
+        default_gb:
+          type: integer
+          description: Default storage node size in GB
+          example: 100
 
     Project:
       type: object
@@ -5885,6 +9178,24 @@ components:
         created_at:
           type: string
           format: date-time
+        enabled:
+          type: boolean
+          description: Whether the schedule is active. Disabled schedules never run.
+        next_run_at:
+          type: string
+          format: date-time
+          description: Next time this schedule runs (UTC).
+        last_run_at:
+          type: string
+          format: date-time
+          description: Last time this schedule ran. Absent if it has never run.
+        last_run_status:
+          type: string
+          enum: [succeeded, failed, skipped]
+          description: Outcome of the most recent run. Absent if it has never run.
+        consecutive_failures:
+          type: integer
+          description: Consecutive failed runs. Resets to 0 on the next successful run.
 
     CreateBackupScheduleRequest:
       type: object
@@ -5912,8 +9223,9 @@ components:
           description: Day of week. Required when `type` is `weekly`.
         keep_count:
           type: integer
-          minimum: 1
-          description: Number of backups to retain before auto-pruning
+          minimum: 2
+          maximum: 100
+          description: Number of backups to retain before auto-pruning (2-100)
 
     UpdateBackupScheduleRequest:
       type: object
@@ -5930,7 +9242,8 @@ components:
           description: Required when `type` is `weekly`.
         keep_count:
           type: integer
-          minimum: 1
+          minimum: 2
+          maximum: 100
 
     SSHKey:
       type: object
@@ -6459,6 +9772,1501 @@ components:
           type: string
           format: uuid
           description: 'Role the invitee will receive on acceptance. Must be `scope: account` for account invites or `scope: project` for project invites.'
+
+    Function:
+      type: object
+      description: A serverless function. Handlers are standard (ASGI / Web Fetch / net/http / any container listening on $PORT) — nothing Raff-specific.
+      properties:
+        id:
+          type: string
+          format: uuid
+        function_id:
+          type: string
+          description: Short reference id, e.g. `fn-a1b2c3d4`
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Display name, unique within the account
+        slug:
+          type: string
+          description: URL label — the name plus a short random suffix (never collides across accounts)
+        description:
+          type: string
+        runtime:
+          type: string
+          enum: [python, node, go, docker]
+        handler_kind:
+          type: string
+          description: "`asgi`, `fetch`, `net_http` or `container`"
+        region:
+          type: string
+          enum: [us-east]
+        memory_mb:
+          type: integer
+          description: "One of: 128, 256, 512, 1024, 2048, 4096"
+        timeout_seconds:
+          type: integer
+          description: Up to 3600, or 86400 with `extended_timeout`
+        extended_timeout:
+          type: boolean
+        min_scale:
+          type: integer
+          description: 0 = scale to zero (idle bills nothing); ≥1 keeps warm instances at 30% of the memory rate
+        max_scale:
+          type: integer
+        source_type:
+          type: string
+          enum: [console, cli, github]
+        repo_full_name:
+          type: string
+          description: GitHub source only
+        repo_branch:
+          type: string
+        repo_root_dir:
+          type: string
+        url:
+          type: string
+          description: "`https://{slug}.fn.raffusercloud.com` — HTTPS with automatic TLS"
+        status:
+          type: string
+          enum: [pending, building, live, paused, error, deleting]
+        status_message:
+          type: string
+        current_revision_number:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateFunctionRequest:
+      type: object
+      required: [name, runtime]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+          description: Optional URL label base (a random suffix is always appended)
+        description:
+          type: string
+        runtime:
+          type: string
+          enum: [python, node, go, docker]
+        region:
+          type: string
+          enum: [us-east]
+        memory_mb:
+          type: integer
+          default: 256
+        timeout_seconds:
+          type: integer
+          default: 300
+        extended_timeout:
+          type: boolean
+          description: Allow timeouts up to 86400s (24h)
+        min_scale:
+          type: integer
+          default: 0
+        max_scale:
+          type: integer
+          default: 20
+        source_type:
+          type: string
+          enum: [console, cli, github]
+
+    UpdateFunctionRequest:
+      type: object
+      description: All fields optional — only provided fields change.
+      properties:
+        description:
+          type: string
+        memory_mb:
+          type: integer
+        timeout_seconds:
+          type: integer
+        extended_timeout:
+          type: boolean
+        min_scale:
+          type: integer
+        max_scale:
+          type: integer
+
+    FunctionDeployment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision_id:
+          type: string
+          format: uuid
+          description: Set when the deployment succeeds
+        channel:
+          type: string
+          enum: [console, cli, github]
+        status:
+          type: string
+          enum: [queued, building, deploying, ready, failed]
+        commit_sha:
+          type: string
+        error:
+          type: string
+        build_duration_ms:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreateFunctionDeploymentRequest:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [console, cli]
+        source_blob_key:
+          type: string
+          description: From a completed source upload
+        template:
+          type: string
+          enum: [python, typescript, node, go]
+          description: Deploy a starter template instead of uploaded source
+        files:
+          type: array
+          description: Inline source files (small edits)
+          items:
+            $ref: '#/components/schemas/FunctionSourceFile'
+        message:
+          type: string
+
+    FunctionRevision:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        revision_number:
+          type: integer
+        commit_sha:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [active, superseded, failed]
+        is_current:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    FunctionSourceUpload:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          description: Presigned URL — PUT the zip here (Content-Type application/zip)
+        source_blob_key:
+          type: string
+        expires_in_seconds:
+          type: integer
+
+    FunctionSourceFile:
+      type: object
+      required: [name, content]
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+
+    FunctionBuildLogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        step:
+          type: string
+        message:
+          type: string
+
+    FunctionLogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warn, error, debug]
+        message:
+          type: string
+        stream:
+          type: string
+          enum: [stdout, stderr]
+
+    FunctionMetrics:
+      type: object
+      properties:
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                enum: [invocations, p50_ms, p95_ms, errors]
+              points:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timestamp:
+                      type: string
+                      format: date-time
+                    value:
+                      type: number
+        invocations_total:
+          type: integer
+        error_rate_pct:
+          type: number
+        p50_ms:
+          type: number
+        p95_ms:
+          type: number
+
+    FunctionInvocation:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        method:
+          type: string
+        path:
+          type: string
+        status:
+          type: integer
+        duration_ms:
+          type: number
+
+    FunctionsUsage:
+      type: object
+      properties:
+        memory_gb_seconds:
+          type: number
+        warm_gb_seconds:
+          type: number
+        cpu_seconds:
+          type: number
+        request_count:
+          type: integer
+          description: Informational — requests are free
+        free_gb_seconds_remaining:
+          type: number
+        free_vcpu_seconds_remaining:
+          type: number
+        estimated_cost_usd:
+          type: number
+          description: Month-to-date, after the free tier
+        ai_conversions:
+          type: integer
+          description: AI Lambda-rewrites used this calendar month
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        as_of:
+          type: string
+          format: date-time
+          description: Metering watermark (near-real-time)
+
+    FunctionsSpendSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        monthly_cap_usd:
+          type: number
+        cap_action:
+          type: string
+          enum: [pause]
+        paused_by_cap:
+          type: boolean
+
+    FunctionTrigger:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        trigger_type:
+          type: string
+          enum: [cron, once, s3]
+        enabled:
+          type: boolean
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        run_at:
+          type: string
+          format: date-time
+        next_run_at:
+          type: string
+          format: date-time
+        payload_json:
+          type: string
+        bucket_id:
+          type: string
+          format: uuid
+          description: Source bucket (`s3` type)
+        s3_events:
+          type: array
+          items:
+            type: string
+          description: "Subscribed events, e.g. s3:ObjectCreated:*, s3:ObjectRemoved:*"
+        key_prefix:
+          type: string
+        key_suffix:
+          type: string
+        last_run_at:
+          type: string
+          format: date-time
+        last_status:
+          type: string
+          enum: [ok, failed, '']
+        created_at:
+          type: string
+          format: date-time
+
+    CreateFunctionTriggerRequest:
+      type: object
+      required: [trigger_type]
+      properties:
+        trigger_type:
+          type: string
+          enum: [cron, once, s3]
+        cron_expression:
+          type: string
+          description: 5-field cron (required for `cron`)
+        timezone:
+          type: string
+          description: IANA name, default UTC
+        run_at:
+          type: string
+          format: date-time
+          description: Required for `once`
+        payload_json:
+          type: string
+          description: JSON merged into the CloudEvent data (cron/once)
+        bucket_id:
+          type: string
+          format: uuid
+          description: Required for `s3` — an Object Storage bucket you own
+        s3_events:
+          type: array
+          items:
+            type: string
+          description: "Default s3:ObjectCreated:*; also s3:ObjectRemoved:*"
+        key_prefix:
+          type: string
+          description: Only objects whose key starts with this fire the trigger
+        key_suffix:
+          type: string
+          description: Only objects whose key ends with this fire the trigger
+
+    FunctionTriggerRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        trigger_id:
+          type: string
+          format: uuid
+        scheduled_for:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [dispatching, ok, failed]
+        attempts:
+          type: integer
+        response_status:
+          type: integer
+        duration_ms:
+          type: integer
+        error:
+          type: string
+        finished_at:
+          type: string
+          format: date-time
+
+    FunctionEnvVar:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          description: Empty for secrets unless fetched via the reveal endpoint
+        is_secret:
+          type: boolean
+        is_system:
+          type: boolean
+          description: Managed by the platform (e.g. bindings) — read-only
+        binding_id:
+          type: string
+          format: uuid
+          description: Owning binding for system vars
+        updated_at:
+          type: string
+          format: date-time
+
+    FunctionBinding:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        binding_type:
+          type: string
+          enum: [database, bucket]
+        resource_id:
+          type: string
+          format: uuid
+        resource_name:
+          type: string
+        env_prefix:
+          type: string
+        injected_keys:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [provisioning, active, rotating, error, deleting]
+        status_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateFunctionBindingRequest:
+      type: object
+      required: [binding_type, resource_id]
+      properties:
+        binding_type:
+          type: string
+          enum: [database, bucket]
+        resource_id:
+          type: string
+          format: uuid
+          description: A managed database or Object Storage bucket you own
+        env_prefix:
+          type: string
+          description: Env key prefix (default DATABASE / STORAGE)
+
+    ConvertLambdaRequest:
+      type: object
+      required: [lambda_runtime, files]
+      properties:
+        lambda_runtime:
+          type: string
+          description: "AWS runtime id, e.g. `python3.12`, `nodejs20.x`, `go1.x`"
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunctionSourceFile'
+        handler:
+          type: string
+          description: "Lambda handler, e.g. `lambda_function.handler`"
+        memory_mb:
+          type: integer
+        timeout_seconds:
+          type: integer
+        env_vars:
+          type: object
+          additionalProperties:
+            type: string
+        trigger_config_json:
+          type: string
+          description: Optional EventBridge/S3/FunctionURL config to map
+        mode:
+          type: string
+          enum: [rewrite, adapter]
+          default: rewrite
+          description: "`rewrite` = AI portable-handler rewrite; `adapter` = run unchanged via a static shim (free)"
+
+    ConvertLambdaResult:
+      type: object
+      properties:
+        runtime:
+          type: string
+          enum: [python, node, go]
+        converted_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FunctionSourceFile'
+        raff_toml:
+          type: string
+          description: Mapped configuration (review before deploying)
+        proposed_triggers:
+          type: array
+          items:
+            type: string
+          description: Ready-made trigger payloads mapped from EventBridge schedules
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Every guess or behavior difference — review before deploying
+        out_of_scope:
+          type: array
+          items:
+            type: string
+          description: Items that are not migrated, with alternatives
+        free_remaining_month:
+          type: integer
+        conversion_price:
+          type: number
+        charged:
+          type: boolean
+
+    FunctionRuntimeInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [python, node, go, docker]
+        label:
+          type: string
+        handler_kind:
+          type: string
+        signature:
+          type: string
+        available:
+          type: boolean
+        detect_hint:
+          type: string
+
+    FunctionsPricing:
+      type: object
+      properties:
+        name:
+          type: string
+        region:
+          type: string
+        price_per_gb_second:
+          type: number
+          description: Memory, wall-clock
+        price_per_vcpu_second:
+          type: number
+          description: Active CPU actually consumed
+        warm_rate_multiplier:
+          type: number
+          description: Warm instances (min_scale) bill at this fraction of the memory rate
+        free_gb_seconds:
+          type: integer
+          description: Monthly account-wide free tier
+        free_vcpu_seconds:
+          type: integer
+        price_per_ai_conversion:
+          type: number
+          description: Lambda import AI rewrite, beyond the free allowance
+        free_ai_conversions:
+          type: integer
+          description: Per account per calendar month
+
+    AppService:
+      type: object
+      description: An app service on the Raff PaaS — a web service, private service, worker, cron job, or one-off job.
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          description: Short reference id used in URLs
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Display name, unique within the project
+        slug:
+          type: string
+          description: URL label — the name plus a short random suffix
+        description:
+          type: string
+        service_type:
+          type: string
+          enum: [web, private, worker, cron, job]
+        source_type:
+          type: string
+          enum: [git, image, template, compose]
+        builder:
+          type: string
+          enum: [buildpacks, dockerfile, image]
+        repo_full_name:
+          type: string
+          description: GitHub source only (owner/name)
+        repo_branch:
+          type: string
+        repo_root_dir:
+          type: string
+        dockerfile_path:
+          type: string
+        image_ref:
+          type: string
+          description: Prebuilt image source only
+        start_command:
+          type: string
+        tier_id:
+          type: integer
+          description: Pricing tier ID (see `GET /api/v1/apps/tiers`)
+        tier_name:
+          type: string
+        replicas:
+          type: integer
+        autoscaling_enabled:
+          type: boolean
+        min_replicas:
+          type: integer
+        max_replicas:
+          type: integer
+        autoscaling_metric:
+          type: string
+        autoscaling_target:
+          type: integer
+        scale_to_zero:
+          type: boolean
+        http_port:
+          type: integer
+        health_check_path:
+          type: string
+        cron_schedule:
+          type: string
+          description: Cron services only
+        cron_timezone:
+          type: string
+        region:
+          type: string
+        url:
+          type: string
+          description: Public HTTPS endpoint (web services; automatic TLS)
+        internal_host:
+          type: string
+          description: In-cluster hostname (private services)
+        status:
+          type: string
+          enum: [pending, building, deploying, live, paused, suspended, error, deleting, deleted]
+        status_message:
+          type: string
+        paused_by_cap:
+          type: boolean
+          description: True when a spend cap paused the service
+        billing_type:
+          type: string
+          enum: [payg, subscription]
+        current_deployment_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateAppServiceRequest:
+      type: object
+      required: [name, service_type]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        service_type:
+          type: string
+          enum: [web, private, worker, cron, job]
+        source_type:
+          type: string
+          enum: [git, image, template, compose]
+        builder:
+          type: string
+          enum: [buildpacks, dockerfile, image]
+        image_ref:
+          type: string
+          description: Prebuilt image reference (for source_type `image`)
+        repo_full_name:
+          type: string
+          description: GitHub repo (owner/name) for source_type `git`
+        repo_branch:
+          type: string
+        repo_root_dir:
+          type: string
+        dockerfile_path:
+          type: string
+        start_command:
+          type: string
+        tier_id:
+          type: integer
+        replicas:
+          type: integer
+        autoscaling_enabled:
+          type: boolean
+        min_replicas:
+          type: integer
+        max_replicas:
+          type: integer
+        scale_to_zero:
+          type: boolean
+        http_port:
+          type: integer
+        health_check_path:
+          type: string
+        cron_schedule:
+          type: string
+        cron_timezone:
+          type: string
+        region:
+          type: string
+        deploy_now:
+          type: boolean
+          description: Queue a deployment immediately (prebuilt-image services)
+
+    ScaleAppServiceRequest:
+      type: object
+      properties:
+        replicas:
+          type: integer
+        autoscaling_set:
+          type: boolean
+          description: Set true to apply the autoscaling fields
+        autoscaling_enabled:
+          type: boolean
+        min_replicas:
+          type: integer
+        max_replicas:
+          type: integer
+        autoscaling_metric:
+          type: string
+        autoscaling_target:
+          type: integer
+        scale_to_zero:
+          type: boolean
+
+    AppTier:
+      type: object
+      description: One Apps pricing tier — compute size and price.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        vcpu:
+          type: number
+        memory_mib:
+          type: integer
+        ephemeral_gib:
+          type: integer
+        price_per_hour:
+          type: number
+        price_per_month:
+          type: number
+        yearly_price:
+          type: number
+        region:
+          type: string
+
+    AppDeployment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          format: uuid
+        deployment_number:
+          type: integer
+        channel:
+          type: string
+          enum: [console, git_push, cli, compose, rollback]
+        status:
+          type: string
+          enum: [queued, building, deploying, live, superseded, failed, canceled]
+        rollback_of:
+          type: string
+          format: uuid
+          description: Set when this deployment is a rollback
+        image_digest:
+          type: string
+        commit_sha:
+          type: string
+        commit_message:
+          type: string
+        error:
+          type: string
+        build_duration_ms:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreateAppDeploymentRequest:
+      type: object
+      description: Provide a source_blob_key or an image_ref. Git-connected services deploy their branch head when neither is given.
+      properties:
+        channel:
+          type: string
+          enum: [console, git_push, cli, compose]
+        source_blob_key:
+          type: string
+          description: Blob key from a completed source upload
+        image_ref:
+          type: string
+          description: Prebuilt image reference
+
+    AppEnvVar:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          description: Empty for secrets unless fetched via the reveal endpoint
+        is_secret:
+          type: boolean
+        is_system:
+          type: boolean
+          description: Managed by the platform (e.g. bindings) — read-only
+
+    AppCustomDomain:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          format: uuid
+        domain:
+          type: string
+        status:
+          type: string
+          enum: [pending_dns, verifying, dns_verified, issuing_cert, active, error]
+        status_message:
+          type: string
+        cname_target:
+          type: string
+          description: CNAME record to create at your DNS provider
+        verification_txt_name:
+          type: string
+          description: TXT record name for domain ownership verification
+        verification_txt_value:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_checked_at:
+          type: string
+          format: date-time
+
+    AppJobRun:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          format: uuid
+        deployment_id:
+          type: string
+          format: uuid
+        trigger:
+          type: string
+          enum: [schedule, manual]
+        status:
+          type: string
+        exit_code:
+          type: integer
+        error:
+          type: string
+        scheduled_for:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+
+    AppLogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+        message:
+          type: string
+        stream:
+          type: string
+          description: "`stdout` or `stderr`"
+        component:
+          type: string
+
+    AppBuildLogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          type: string
+        component:
+          type: string
+        stream:
+          type: string
+
+    AppMetricSeries:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            type: number
+        timestamps:
+          type: array
+          items:
+            type: string
+            format: date-time
+
+    AppUsage:
+      type: object
+      properties:
+        success:
+          type: boolean
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service_id:
+                type: string
+              service_name:
+                type: string
+              tier_id:
+                type: integer
+              replica_hours:
+                type: number
+              estimated_cost_usd:
+                type: number
+        total_estimated_cost_usd:
+          type: number
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    AppSpendSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        monthly_cap_usd:
+          type: number
+        cap_action:
+          type: string
+          enum: [pause]
+        paused_by_cap:
+          type: boolean
+
+    Database:
+      type: object
+      description: |
+        A managed database instance. The private endpoint `{database_id}.db.raffusercloud.com` lives inside the attached VPC; public access is optional. TLS is always required.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique database identifier
+        database_id:
+          type: string
+          description: Short reference id used in URLs and DNS hostnames, e.g. `a1b2c3d4`
+        project_id:
+          type: string
+          format: uuid
+          description: Project this database belongs to
+        name:
+          type: string
+          description: Display name
+          example: orders-db
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        engine_version:
+          type: string
+          description: Engine major version
+          example: "16"
+        status:
+          type: string
+          enum: [pending, deploying, running, warning, suspended, failed, deleting, deleted]
+          description: |
+            Lifecycle status. Creation: `pending` → `deploying` → `running`. `warning` means running with a degraded component; `suspended` means a free-tier database paused for idleness (resume any time — data is kept); `failed` means provisioning or a scale operation failed.
+        status_message:
+          type: string
+          description: Human-readable detail for `warning` and `failed` states
+        region:
+          type: string
+          enum: [us-east]
+          description: Data center region
+          example: us-east
+        plan_id:
+          type: integer
+          description: Pricing plan ID (see `GET /api/v1/databases/plans`)
+          example: 5
+        storage_gb:
+          type: integer
+          description: Provisioned storage in GB. Storage above the plan's included allotment bills at $0.12/GB/month.
+          example: 25
+        ha_enabled:
+          type: boolean
+          description: |
+            High availability — a standby that takes over automatically on failure (Sentinel failover for Valkey). Adds 70% of the plan price.
+        replica_count:
+          type: integer
+          description: Number of read replicas (PostgreSQL only; always 0 for Valkey)
+          example: 0
+        vpc_id:
+          type: string
+          format: uuid
+          description: VPC the private endpoint is attached to (empty if not yet connected)
+        public_access:
+          type: boolean
+          description: Whether public access is enabled
+        connection_host:
+          type: string
+          description: Private endpoint hostname, resolvable inside the attached VPC
+          example: a1b2c3d4.db.raffusercloud.com
+        connection_port:
+          type: integer
+          description: "Private endpoint port. PostgreSQL: 6432 pooled (PgBouncer, transaction mode), 5432 direct. Valkey: 6379 (TLS)."
+          example: 6432
+        billing_type:
+          type: string
+          enum: [payg, subscription]
+          description: Billing type for this database
+          example: payg
+        subscription_id:
+          type: string
+          format: uuid
+          description: Subscription ID if billing_type is subscription
+        price_per_hour:
+          type: number
+          description: Hourly billing rate in USD
+          example: 0.010945
+        monthly_price:
+          type: number
+          description: Monthly price in USD
+          example: 7.99
+        public_port:
+          type: integer
+          description: |
+            Public port from the reserved range 25060–26060; `0` when public access is off. For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint.
+          example: 25060
+        public_dns_hostname:
+          type: string
+          description: Public endpoint hostname (empty when public access is off)
+          example: a1b2c3d4.public.db.raffusercloud.com
+        public_allowlist:
+          type: array
+          items:
+            type: string
+          description: Source CIDRs allowed on the public endpoint. Empty = allow all sources.
+          example: ["203.0.113.0/24"]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDatabaseRequest:
+      type: object
+      required:
+        - name
+        - plan_id
+      properties:
+        name:
+          type: string
+          description: Display name, unique within the account
+          example: orders-db
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        engine_version:
+          type: string
+          description: Engine major version from the engine catalog. Omit for the default version.
+          example: "16"
+        plan_id:
+          type: integer
+          description: Pricing plan ID from `GET /api/v1/databases/plans`
+          example: 5
+        storage_gb:
+          type: integer
+          description: Storage in GB. Omit to use the plan's included allotment; storage above it bills at $0.12/GB/month.
+        ha_enabled:
+          type: boolean
+          default: false
+          description: Enable high availability (+70% of the plan price)
+        replica_count:
+          type: integer
+          default: 0
+          description: Read replicas (PostgreSQL only; Valkey rejects a count above 0)
+        region:
+          type: string
+          enum: [us-east]
+          default: us-east
+          description: Data center region
+        vpc_id:
+          type: string
+          format: uuid
+          description: VPC to place the private endpoint in. Omit to create without VPC connectivity and attach one later via `POST /api/v1/databases/{database_id}/vpc`.
+        public_access:
+          type: boolean
+          default: false
+          description: Enable public access at create time
+        engine_config:
+          type: object
+          additionalProperties:
+            type: string
+          description: Engine configuration overrides (allowlisted keys only)
+
+    UpdateDatabaseRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: New display name
+          example: orders-db-v2
+
+    ScaleDatabaseRequest:
+      type: object
+      properties:
+        plan_id:
+          type: integer
+          description: New plan ID (same engine). Omit or `0` to keep the current plan.
+        storage_gb:
+          type: integer
+          description: New storage size in GB. Grows only — never below the plan's included allotment. Omit or `0` to keep the current size.
+        set_ha:
+          type: boolean
+          default: false
+          description: Set to `true` to apply the `has_ha` value. When `false` or omitted, high availability is unchanged.
+        has_ha:
+          type: boolean
+          description: Desired high availability state. Only applied when `set_ha` is `true`.
+        replica_count:
+          type: integer
+          description: Desired read replica count. Always applied — pass your current count when not changing it. PostgreSQL only.
+
+    ConnectDatabaseVPCRequest:
+      type: object
+      required:
+        - vpc_id
+      properties:
+        vpc_id:
+          type: string
+          format: uuid
+          description: VPC to attach the database's private endpoint to
+
+    DatabasePublicAccessRequest:
+      type: object
+      required:
+        - enabled
+      properties:
+        enabled:
+          type: boolean
+          description: Enable or disable public access
+        allowlist:
+          type: array
+          items:
+            type: string
+          description: Source CIDRs allowed to connect. Omit to keep the stored list; pass `[]` to allow all sources.
+          example: ["203.0.113.0/24"]
+
+    SetDatabaseExtensionRequest:
+      type: object
+      required:
+        - name
+        - enabled
+      properties:
+        name:
+          type: string
+          description: Extension name from the allowlist (see `GET /api/v1/databases/{database_id}/extensions`)
+          example: pgvector
+        enabled:
+          type: boolean
+          description: "`true` to install, `false` to remove"
+
+    RestoreDatabaseRequest:
+      type: object
+      required:
+        - clone_to_new
+      properties:
+        clone_to_new:
+          type: boolean
+          description: Must be `true` — restores always create a new database; in-place restore is not supported
+        backup_id:
+          type: string
+          format: uuid
+          description: Restore from this completed backup. Omit to use `pitr_timestamp` or the latest state.
+        pitr_timestamp:
+          type: string
+          format: date-time
+          description: Point-in-time restore target (RFC 3339). PostgreSQL only — Valkey restores from snapshots via `backup_id`.
+        new_name:
+          type: string
+          description: Name for the new database. Defaults to `{source-name}-restored`; auto-suffixed (`-2`, `-3`, …) if taken.
+        ha_enabled:
+          type: boolean
+          default: false
+          description: Enable high availability on the new database (+70% of the plan price). Never inherited from the source.
+
+    DatabaseConnection:
+      type: object
+      properties:
+        host:
+          type: string
+          description: Endpoint hostname
+          example: a1b2c3d4.db.raffusercloud.com
+        port:
+          type: integer
+          description: Endpoint port
+          example: 6432
+        username:
+          type: string
+          description: Database user
+        password:
+          type: string
+          description: Password — empty unless the request was made with `reveal=true`
+        database_name:
+          type: string
+          description: Default database name
+        connection_uri:
+          type: string
+          description: Ready-to-use connection URI (includes the password only when revealed)
+        ca_cert:
+          type: string
+          description: >-
+            PEM CA bundle your client must trust, for engines whose certificates
+            come from a private CA (currently Kafka). Empty for other engines.
+
+    DatabaseMetrics:
+      type: object
+      description: Latest usage snapshot, refreshed about every 60 seconds. Zero values mean not measured yet.
+      properties:
+        cpu_used_millicores:
+          type: integer
+          description: CPU in use, millicores
+        cpu_capacity_millicores:
+          type: integer
+          description: CPU capacity, millicores
+        mem_used_bytes:
+          type: integer
+          description: Memory in use, bytes
+        mem_capacity_bytes:
+          type: integer
+          description: Memory capacity, bytes
+        storage_used_bytes:
+          type: integer
+          description: Storage in use, bytes
+        storage_capacity_bytes:
+          type: integer
+          description: Storage capacity, bytes
+        connections_active:
+          type: integer
+          description: Active client connections
+        connections_max:
+          type: integer
+          description: Connection limit
+        replication_lag_bytes:
+          type: integer
+          description: Standby/replica lag in bytes (0 without HA or replicas)
+        archive_lag_bytes:
+          type: integer
+          description: WAL archiving lag in bytes (PostgreSQL)
+        metrics_updated_at:
+          type: string
+          format: date-time
+          description: When this snapshot was taken
+
+    DatabaseMetricsPoint:
+      type: object
+      description: One bucketed point in the metrics history.
+      properties:
+        recorded_at:
+          type: string
+          format: date-time
+        cpu_used_millicores:
+          type: integer
+        cpu_capacity_millicores:
+          type: integer
+        mem_used_bytes:
+          type: integer
+        mem_capacity_bytes:
+          type: integer
+        storage_used_bytes:
+          type: integer
+        storage_capacity_bytes:
+          type: integer
+        connections_active:
+          type: integer
+        connections_max:
+          type: integer
+        replication_lag_bytes:
+          type: integer
+        archive_lag_bytes:
+          type: integer
+
+    DatabaseEngine:
+      type: string
+      enum: [postgres, mysql, valkey, clickhouse, kafka]
+      description: >-
+        Database engine identifier. Defaults to `postgres` on create; the live
+        catalog (including availability and versions) is
+        `GET /api/v1/databases/engines`.
+      example: postgres
+
+    DatabaseEngineInfo:
+      type: object
+      properties:
+        engine:
+          $ref: '#/components/schemas/DatabaseEngine'
+        display_name:
+          type: string
+          example: PostgreSQL
+        available:
+          type: boolean
+          description: Whether this engine can be created. MySQL is listed but not yet available.
+        versions:
+          type: array
+          items:
+            type: string
+          description: Supported major versions
+          example: ["16", "15"]
+
+    DatabaseExtension:
+      type: object
+      description: A PostgreSQL extension from the allowlist.
+      properties:
+        name:
+          type: string
+          description: Extension name, used with `POST /api/v1/databases/{database_id}/extensions`
+          example: pgvector
+        display_name:
+          type: string
+        description:
+          type: string
+        installed:
+          type: boolean
+          description: Whether the extension is currently installed
+        version:
+          type: string
+          description: Installed version (empty when not installed)
+
+    DatabaseSlowQuery:
+      type: object
+      description: |
+        One slow-query entry. PostgreSQL rows are `pg_stat_statements` aggregates per normalized query; Valkey rows are individual slow commands from `SLOWLOG` (`calls` is 1, `rows` is not applicable).
+      properties:
+        query:
+          type: string
+          description: Normalized query text (PostgreSQL) or the slow command (Valkey)
+        calls:
+          type: integer
+          description: Number of executions aggregated into this entry
+        mean_ms:
+          type: number
+          description: Mean execution time in milliseconds
+        total_ms:
+          type: number
+          description: Total execution time in milliseconds
+        rows:
+          type: integer
+          description: Total rows returned or affected (PostgreSQL)
+
+    DatabaseBackup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Backup identifier — use as `backup_id` when restoring
+        database_id:
+          type: string
+          format: uuid
+          description: Database this backup belongs to
+        backup_type:
+          type: string
+          enum: [base, on_demand]
+          description: "`base` = nightly automatic backup; `on_demand` = manually requested"
+        status:
+          type: string
+          enum: [running, completed, failed]
+          description: Only `completed` backups are restorable
+        size_bytes:
+          type: integer
+          description: Backup size in bytes (0 while running)
+        s3_path:
+          type: string
+          description: Object storage location of the backup artifact
+        backup_timestamp:
+          type: string
+          format: date-time
+          description: Consistency point of the backup
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          description: When the backup leaves retention
+          nullable: true
 
   responses:
     BadRequest:

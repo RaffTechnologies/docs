@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated May 25, 2026</sub>
+<sub>Updated August 20, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,51 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### August 20, 2026
+
+**Virtual Machines — API**
+- 🔵 **Updated** — **Attach floating IP** now supports multiple public IPv4s — `POST /api/v1/vms/{id}/ip` with `ip_id` accepts additional reserved IPv4s, up to 4 per VM. Auto-assign (`type`) is unchanged: available only while the VM has no public IP of that family.
+- 🔵 **Updated** — **List VM networks** — `GET /api/v1/vms/{id}/networks` returns `is_primary`, marking the VM's primary public IPv4 interface.
+- 🔵 **Updated** — **Detach floating IP** — `DELETE /api/v1/vms/{id}/ip/{nic_id}`: detaching the primary IPv4 while other IPv4s remain promotes the lowest-numbered remaining IPv4 to primary. Clarified billing: reserved IPs keep billing until released; auto-assigned IPs are free and return to the shared pool.
+
+### July 28, 2026
+
+**Managed Databases — API**
+- 🟢 **Added** — **Free tier** for PostgreSQL, MySQL and Valkey — plans with `is_free_tier: true` in `GET /api/v1/databases/plans` cost $0 (one per account, fixed storage, no HA or replicas, daily backups with 3-day retention). Free databases pause after 7 idle days: status becomes `suspended` and all data is kept.
+- 🟢 **Added** — **Resume a paused database** — `POST /api/v1/databases/{id}/resume` wakes a `suspended` database; it returns through `deploying` and reaches `running` in about a minute.
+- 🔵 **Updated** — **`GET /api/v1/databases/plans`** returns `max_connections` (the client connection limit each plan enforces) and `memory_mib` (RAM for sub-GiB plans, e.g. free Valkey = 512). The database `status` enum gains `suspended`.
+
+### July 20, 2026
+
+**Managed Databases — API**
+- 🟢 **Added** — **MySQL, ClickHouse, and Apache Kafka engines** — the `engine` field on `POST /api/v1/databases` (and everywhere it appears) now accepts `mysql`, `clickhouse`, and `kafka` alongside `postgres` and `valkey`. Check live availability and versions with `GET /api/v1/databases/engines`.
+- 🔵 **Updated** — **`engine` is now a shared `DatabaseEngine` enum** across all database endpoints and schemas; the engine catalog entry schema is named `DatabaseEngineInfo`. No wire-format change — request and response JSON are unchanged.
+- 🔵 **Updated** — **`GET /api/v1/databases/{id}/connection`** returns `ca_cert` (PEM CA bundle) for engines with a private certificate authority — currently Kafka. Empty for other engines.
+
+### July 12, 2026
+
+**Virtual Machines — API**
+- 🔵 **Updated** — **Backup schedules now report run state** — `GET /api/v1/backup-schedules` and `GET /api/v1/backup-schedules/{id}` return `enabled`, `next_run_at`, `last_run_at`, `last_run_status`, and `consecutive_failures`. Use these to verify backups are running and alert on repeated failures. Existing fields are unchanged.
+- 🔵 **Updated** — **Minimum `keep_count` is now 2** on `POST /api/v1/backup-schedules` and `PATCH /api/v1/backup-schedules/{id}`. A retention of 1 does not work reliably with incremental backups. Existing schedules with `keep_count: 1` keep working; the next update must set 2 or more.
+
+### July 8, 2026
+
+**Raff Apps — API**
+- 🟢 **Added** — **Raff Apps (PaaS)** — push-to-deploy app services on `/api/v1/apps`. Create web services, private services, workers, cron jobs, and one-off jobs; manage deployments (`POST .../deployments`), rollbacks (`POST .../rollback`), environment variables (`.../env`), custom domains (`.../domains`), scaling (`.../scale`), pause/resume, runtime and build logs, metrics, job runs, usage (`GET /api/v1/apps/usage`), and spend caps (`.../spend-settings`).
+- 🟢 **Added** — **List Apps tiers** — `GET /api/v1/apps/tiers` and public `GET /api/v1/public/pricing/apps`. Compute sizes and prices; no authentication required.
+
+**Raff Apps — CLI**
+- 🟢 **Added** — `raff apps` command group: `tiers`, `list`, `get`, `create`, `delete`, `deploy`, `rollback`, `scale`, `pause`, `resume`, `logs`, `deployments`, `env` (list/set/delete), `domains` (list/add/delete), and `usage`.
+
+**Raff Apps — Terraform**
+- 🟢 **Added** — `raff_app_service` resource, plus `raff_app_service`, `raff_app_services`, and `raff_app_tiers` data sources.
+
+### July 6, 2026
+
+**Catalog — API**
+- 🟢 **Added** — **List managed database pricing** — `GET /api/v1/public/pricing/database`. Plans per engine (`postgres`, `valkey`) plus high availability, read replica, and extra storage pricing. Optional `engine` query filter.
+- 🟢 **Added** — **List managed Kubernetes pricing** — `GET /api/v1/public/pricing/kubernetes`. Worker node plans plus HA control plane and NVMe storage node pricing.
 
 ### May 25, 2026
 
