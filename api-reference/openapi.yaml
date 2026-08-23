@@ -4770,7 +4770,7 @@ paths:
                 type: object
                 properties:
                   database:
-                    $ref: '#/components/schemas/ManagedDatabase'
+                    $ref: '#/components/schemas/Database'
         '400':
           description: The database is not paused
         '404':
