@@ -45,6 +45,8 @@ tags:
   - name: Projects
     description: Organize resources into projects for billing and access control
   - name: Virtual Machines
+  - name: Kubernetes
+    description: Managed Kubernetes clusters — HA control planes, autoscaling node pools, kubeconfig access
   - name: Functions
     description: Deploy and manage serverless functions
   - name: Raff Apps
@@ -7051,6 +7053,787 @@ paths:
                     items:
                       $ref: '#/components/schemas/AppTier'
 
+  # ---------------------------------------------------------------------------
+  # Kubernetes — managed clusters
+  # ---------------------------------------------------------------------------
+
+  /api/v1/k8s/versions:
+    get:
+      tags:
+        - Kubernetes
+      summary: List Kubernetes versions
+      description: Kubernetes versions available for new clusters. Use `id` as `k8s_version_id` when creating a cluster.
+      operationId: listK8sVersions
+      security: []
+      responses:
+        '200':
+          description: Available versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sVersion'
+
+  /api/v1/k8s/node-plans:
+    get:
+      tags:
+        - Kubernetes
+      summary: List Kubernetes node plans
+      description: Worker node plans plus HA control-plane and storage-node pricing. Same data as `GET /api/v1/public/pricing/kubernetes`.
+      operationId: listK8sNodePlans
+      security: []
+      responses:
+        '200':
+          description: Node plans and pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sNodePlan'
+                  ha_pricing:
+                    $ref: '#/components/schemas/K8sHAPricing'
+                  storage_pricing:
+                    $ref: '#/components/schemas/K8sStoragePricing'
+
+  /api/v1/k8s/clusters:
+    get:
+      tags:
+        - Kubernetes
+      summary: List Kubernetes clusters
+      description: |
+        List clusters for the authenticated account, newest first.
+
+        Pass `X-Project-ID` to scope the list to a single project. When omitted, returns clusters across every project the API key has access to.
+      operationId: listK8sClusters
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Page size (max 200)
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of clusters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clusters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sCluster'
+                  total:
+                    type: integer
+                    description: Total clusters matching the filter (before pagination)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+        - Kubernetes
+      summary: Create Kubernetes cluster
+      description: |
+        Create a managed Kubernetes cluster. Provisioning is asynchronous — the response returns immediately with `pending` status; the cluster is usable when `ready` is `true` (typically 8–12 minutes).
+
+        API-created clusters are billed pay-as-you-go per node-hour. Accounts on subscription billing cannot create clusters through the API yet and receive `402` — use the dashboard instead.
+
+        Retries are safe with an `Idempotency-Key` header: a repeated request with the same key returns the cluster created by the first request instead of provisioning a second one.
+      operationId: createK8sCluster
+      parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Any unique string (max 128 chars). Reuse the same value when retrying a failed or timed-out request.
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateK8sClusterRequest'
+      responses:
+        '201':
+          description: Cluster accepted for provisioning (status `pending`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cluster:
+                    $ref: '#/components/schemas/K8sCluster'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
+
+  /api/v1/k8s/clusters/stats:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get cluster utilization stats
+      description: Batch utilization snapshot for one or more clusters (CPU, memory, pods, node readiness). Values refresh every 60 seconds.
+      operationId: getK8sClusterStats
+      parameters:
+        - name: ids
+          in: query
+          required: false
+          description: Comma-separated cluster IDs. Omit for all account clusters.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Utilization per cluster
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sClusterStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/k8s/clusters/{cluster_id}:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get Kubernetes cluster
+      operationId: getK8sCluster
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Cluster details including node pools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cluster:
+                    $ref: '#/components/schemas/K8sCluster'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Kubernetes
+      summary: Rename Kubernetes cluster
+      operationId: renameK8sCluster
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  description: New cluster name (1–63 lowercase letters, digits or hyphens)
+                  example: prod-eu
+      responses:
+        '200':
+          description: Cluster renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cluster:
+                    $ref: '#/components/schemas/K8sCluster'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Kubernetes
+      summary: Delete Kubernetes cluster
+      description: |
+        Delete a cluster and all its infrastructure (nodes, networking, reserved IPs, DNS). Deletion is asynchronous.
+
+        If teardown cannot be completed, the cluster remains visible with status `delete_failed` and nothing is removed — repeat the delete to retry.
+      operationId: deleteK8sCluster
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Deletion started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/kubeconfig:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get kubeconfig
+      description: |
+        Download the cluster's admin kubeconfig. Grants full cluster-admin access — store it like a password.
+      operationId: getK8sKubeconfig
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Kubeconfig for kubectl
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  kubeconfig:
+                    type: string
+                    description: kubeconfig YAML
+                  api_endpoint:
+                    type: string
+                    example: https://q7z7zg.k8s.raffusercloud.com:6443
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/ha:
+    post:
+      tags:
+        - Kubernetes
+      summary: Upgrade to HA control plane
+      description: |
+        Promote a single-master cluster to a 3-master highly available control plane. The flat HA fee starts accruing once enabled.
+
+        Available for pay-as-you-go clusters; subscription clusters upgrade through the dashboard checkout and receive `409` here.
+      operationId: upgradeK8sClusterHA
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: HA upgrade started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cluster already HA, or subscription-billed (upgrade via dashboard)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/k8s/clusters/{cluster_id}/pools:
+    get:
+      tags:
+        - Kubernetes
+      summary: List node pools
+      operationId: listK8sNodePools
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Node pools with their nodes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  node_pools:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sNodePool'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Kubernetes
+      summary: Add node pool
+      description: |
+        Add a node pool. Nodes deploy asynchronously; the pool is `running` once every node has joined.
+
+        Available for pay-as-you-go clusters; subscription clusters add pools through the dashboard checkout and receive `409` here.
+      operationId: addK8sNodePool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddK8sNodePoolRequest'
+      responses:
+        '201':
+          description: Node pool created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  node_pool:
+                    $ref: '#/components/schemas/K8sNodePool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Subscription-billed cluster — add the pool via the dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/k8s/clusters/{cluster_id}/pools/{pool_id}:
+    patch:
+      tags:
+        - Kubernetes
+      summary: Update node pool
+      description: Update a pool's autoscaling bounds, labels and taints. Labels and taints are applied to the pool's Kubernetes nodes within a minute.
+      operationId: updateK8sNodePool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/K8sPoolIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateK8sNodePoolRequest'
+      responses:
+        '200':
+          description: Updated node pool
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  node_pool:
+                    $ref: '#/components/schemas/K8sNodePool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Kubernetes
+      summary: Delete node pool
+      description: |
+        Remove a pool and all its nodes. Each node is cordoned and drained (PodDisruptionBudgets are honoured) before its VM is terminated, one at a time; the operation runs asynchronously and stops — with the pool intact — if a node cannot be emptied.
+
+        The last pool of a cluster cannot be deleted, and the cluster keeps at least 2 worker nodes.
+      operationId: deleteK8sNodePool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/K8sPoolIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Pool deletion started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/pools/{pool_id}/scale:
+    post:
+      tags:
+        - Kubernetes
+      summary: Scale node pool
+      description: |
+        Set the pool's node count (2–20). Scale-up deploys new nodes; scale-down cordons and drains the newest nodes first — honouring PodDisruptionBudgets, never force-deleting — then removes their VMs. Both run asynchronously; watch the pool's `status` and `status_message`.
+
+        Scale-up on a subscription-billed cluster goes through the dashboard checkout and receives `409` here; scale-down works for every cluster.
+      operationId: scaleK8sNodePool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/K8sPoolIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_count]
+              properties:
+                node_count:
+                  type: integer
+                  minimum: 2
+                  maximum: 20
+                  example: 3
+      responses:
+        '200':
+          description: Scaling started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  new_node_count:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Pool busy (already scaling), or subscription-billed scale-up (use the dashboard)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/k8s/clusters/{cluster_id}/nodes:
+    get:
+      tags:
+        - Kubernetes
+      summary: List cluster nodes
+      description: All nodes of the cluster (control plane, workers, storage, gateway) merged with live Kubernetes state when reachable.
+      operationId: listK8sClusterNodes
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Cluster nodes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sClusterNode'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/events:
+    get:
+      tags:
+        - Kubernetes
+      summary: List cluster events
+      description: Lifecycle events (provisioning steps, scaling, autoscaling, warnings), newest first.
+      operationId: listK8sClusterEvents
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Cluster events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sClusterEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/metrics:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get cluster metrics
+      description: Live utilization (CPU, memory, pods, per-node breakdown) plus a 24-hour control-plane health summary. Values refresh every 60 seconds.
+      operationId: getK8sClusterMetrics
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Cluster metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cpu_used_millicores:
+                    type: integer
+                  cpu_capacity_millicores:
+                    type: integer
+                  mem_used_bytes:
+                    type: integer
+                  mem_capacity_bytes:
+                    type: integer
+                  pod_count:
+                    type: integer
+                  pod_capacity:
+                    type: integer
+                  nodes_ready:
+                    type: integer
+                  nodes_total:
+                    type: integer
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sNodeMetrics'
+                  control_plane:
+                    $ref: '#/components/schemas/K8sControlPlaneHealth'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          description: Cluster unreachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/k8s/clusters/{cluster_id}/firewall:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get cluster firewall
+      description: The security group protecting the cluster's public gateway, and the account's security groups available to assign.
+      operationId: getK8sClusterFirewall
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Firewall state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/K8sFirewallState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Kubernetes
+      summary: Assign cluster firewall
+      operationId: assignK8sClusterFirewall
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [security_group_id]
+              properties:
+                security_group_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Security group assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Kubernetes
+      summary: Reset cluster firewall
+      description: Detach the custom security group and restore the platform baseline.
+      operationId: resetK8sClusterFirewall
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Firewall reset to baseline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/metallb-pool:
+    get:
+      tags:
+        - Kubernetes
+      summary: Get MetalLB address pool
+      operationId: getK8sMetalLBPool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: MetalLB pool state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  pool:
+                    $ref: '#/components/schemas/K8sMetalLBPool'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Kubernetes
+      summary: Resize MetalLB address pool
+      description: Set how many private IPs MetalLB can hand to `LoadBalancer` services.
+      operationId: updateK8sMetalLBPool
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [size]
+              properties:
+                size:
+                  type: integer
+                  example: 16
+      responses:
+        '200':
+          description: Updated pool
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  pool:
+                    $ref: '#/components/schemas/K8sMetalLBPool'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/tcp-ports:
+    get:
+      tags:
+        - Kubernetes
+      summary: List TCP port forwards
+      description: L4 forwards published on the cluster's public gateway (created when exposing an app over TCP).
+      operationId: listK8sTcpPorts
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Active TCP forwards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  forwards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/K8sTcpForward'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/tcp-ports/{port}:
+    delete:
+      tags:
+        - Kubernetes
+      summary: Delete TCP port forward
+      operationId: deleteK8sTcpPort
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: port
+          in: path
+          required: true
+          description: Public port of the forward
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Forward removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -7179,6 +7962,21 @@ components:
         type: string
         format: uuid
 
+    K8sClusterIDPath:
+      name: cluster_id
+      in: path
+      required: true
+      description: Cluster ID (short id, e.g. `q7z7zg`)
+      schema:
+        type: string
+    K8sPoolIDPath:
+      name: pool_id
+      in: path
+      required: true
+      description: Node pool ID
+      schema:
+        type: string
+        format: uuid
   schemas:
     DeleteVMRequest:
       type: object
@@ -11268,6 +12066,547 @@ components:
           description: When the backup leaves retention
           nullable: true
 
+    K8sVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        version:
+          type: string
+          example: v1.33+rke2r1
+        display_name:
+          type: string
+          example: Kubernetes 1.33
+        is_default:
+          type: boolean
+
+    K8sCluster:
+      type: object
+      required: [id, cluster_id, name, status, ready]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Internal UUID
+        cluster_id:
+          type: string
+          description: Short cluster ID used in URLs and the API endpoint hostname
+          example: q7z7zg
+        name:
+          type: string
+          example: prod
+        status:
+          type: string
+          enum: [pending, deploying, running, warning, failed, deleting, delete_failed, deleted]
+          description: |
+            - `pending` / `deploying` — provisioning
+            - `running` — control plane up
+            - `warning` — degraded (see `status_message`)
+            - `failed` — provisioning failed; infrastructure was torn down (see `status_message`)
+            - `deleting` — teardown in progress
+            - `delete_failed` — teardown incomplete; nothing removed — retry the delete
+        status_message:
+          type: string
+          description: Human-readable detail for warning/failed/delete_failed
+        ready:
+          type: boolean
+          description: '`true` when the cluster is running and no node pool is mid-operation — safe to use without interpreting `status`'
+        dns_domain:
+          type: string
+          example: q7z7zg.k8s.raffusercloud.com
+        api_endpoint:
+          type: string
+          example: https://q7z7zg.k8s.raffusercloud.com:6443
+        k8s_version:
+          type: string
+          example: v1.33.4+rke2r1
+        k8s_version_id:
+          type: integer
+        region:
+          type: string
+          enum: [us-east]
+        master_count:
+          type: integer
+          description: 1, or 3 with an HA control plane
+        worker_count:
+          type: integer
+          description: Total worker nodes across all pools
+        master_cpu:
+          type: integer
+        master_ram:
+          type: integer
+          description: MB
+        worker_cpu:
+          type: integer
+        worker_ram:
+          type: integer
+          description: MB
+        ha_enabled:
+          type: boolean
+        firewall_enabled:
+          type: boolean
+        longhorn_enabled:
+          type: boolean
+          description: Dedicated storage nodes with Longhorn block storage
+        traefik_enabled:
+          type: boolean
+        metallb_enabled:
+          type: boolean
+        billing_type:
+          type: string
+          enum: [payg, subscription]
+        project_id:
+          type: string
+          format: uuid
+        price_per_hour:
+          type: number
+          format: double
+          description: Current hourly price (workers + storage + HA fee; control plane is free)
+        price_per_month:
+          type: number
+          format: double
+        vpc_id:
+          type: string
+          description: Dedicated VPC the cluster runs in
+        private_vip:
+          type: string
+          description: Cluster gateway IP inside the VPC
+          example: 10.1.0.254
+        node_pools:
+          type: array
+          items:
+            $ref: '#/components/schemas/K8sNodePool'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateK8sClusterRequest:
+      type: object
+      required: [name, node_pools]
+      properties:
+        name:
+          type: string
+          description: 1–63 lowercase letters, digits or hyphens; unique within the account
+          example: prod
+        k8s_version_id:
+          type: integer
+          description: From [List Kubernetes versions](#tag/Kubernetes/operation/listK8sVersions). Omit for the default version.
+          example: 1
+        node_pools:
+          type: array
+          minItems: 1
+          description: At least one pool with at least 2 nodes in total
+          items:
+            $ref: '#/components/schemas/K8sNodePoolInput'
+        ha_enabled:
+          type: boolean
+          description: 3-master highly available control plane (flat monthly fee)
+          default: false
+        firewall_enabled:
+          type: boolean
+          description: Attach the platform baseline firewall to the public gateway
+          default: true
+        firewall_security_group_id:
+          type: string
+          format: uuid
+          description: Use one of your security groups instead of the baseline
+        storage_node_count:
+          type: integer
+          enum: [0, 2, 3]
+          description: Dedicated Longhorn storage nodes (0 disables in-cluster block storage)
+          default: 0
+        storage_node_disk_gb:
+          type: integer
+          description: Data disk per storage node; required when `storage_node_count` > 0. Bounds from [List Kubernetes node plans](#tag/Kubernetes/operation/listK8sNodePlans) `storage_pricing`.
+          example: 100
+        traefik_enabled:
+          type: boolean
+          description: Install the Traefik ingress controller
+          default: false
+        metallb_enabled:
+          type: boolean
+          description: Install MetalLB for `LoadBalancer` services
+          default: false
+        cluster_cidr:
+          type: string
+          description: Pod network override (private IPv4, /12–/24)
+          default: 10.42.0.0/16
+        service_cidr:
+          type: string
+          description: Service network override (private IPv4, /12–/24)
+          default: 10.43.0.0/16
+        region:
+          type: string
+          enum: [us-east]
+          default: us-east
+
+    K8sNodePoolInput:
+      type: object
+      required: [name, node_count, plan_id]
+      properties:
+        name:
+          type: string
+          description: 1–63 lowercase letters, digits or hyphens; unique within the cluster
+          example: default-pool
+        node_count:
+          type: integer
+          minimum: 2
+          maximum: 20
+          example: 3
+        plan_id:
+          type: integer
+          description: Worker plan from [List Kubernetes node plans](#tag/Kubernetes/operation/listK8sNodePlans)
+          example: 11
+        min_nodes:
+          type: integer
+          description: Autoscaler floor
+        max_nodes:
+          type: integer
+          description: Autoscaler ceiling
+        autoscale_enabled:
+          type: boolean
+          default: false
+        labels:
+          type: string
+          description: 'JSON object of Kubernetes labels applied to the pool''s nodes, e.g. `{"workload":"web"}`'
+        taints:
+          type: string
+          description: 'JSON array of taints, e.g. `[{"key":"gpu","value":"true","effect":"NoSchedule"}]`'
+
+    AddK8sNodePoolRequest:
+      type: object
+      required: [name, node_count]
+      properties:
+        name:
+          type: string
+          example: pool-2
+        node_count:
+          type: integer
+          minimum: 2
+          maximum: 20
+        plan_id:
+          type: integer
+          description: Omit to inherit the cluster's worker plan
+        min_nodes:
+          type: integer
+        max_nodes:
+          type: integer
+        autoscale_enabled:
+          type: boolean
+        labels:
+          type: string
+        taints:
+          type: string
+
+    UpdateK8sNodePoolRequest:
+      type: object
+      properties:
+        min_nodes:
+          type: integer
+        max_nodes:
+          type: integer
+        autoscale_enabled:
+          type: boolean
+        labels:
+          type: string
+        taints:
+          type: string
+
+    K8sNodePool:
+      type: object
+      required: [id, name, node_count, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        cluster_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        node_count:
+          type: integer
+          description: Target node count
+        actual_node_count:
+          type: integer
+          description: Nodes that currently exist (differs from `node_count` while scaling)
+        min_nodes:
+          type: integer
+        max_nodes:
+          type: integer
+        autoscale_enabled:
+          type: boolean
+        plan_id:
+          type: integer
+        cpu:
+          type: integer
+        ram:
+          type: integer
+          description: GB
+        disk:
+          type: integer
+          description: GB
+        labels:
+          type: string
+        taints:
+          type: string
+        status:
+          type: string
+          enum: [pending, provisioning, running, scaling, failed, deleting, deleted]
+          description: '`scaling`/`deleting` are asynchronous — watch `status_message` for the outcome (e.g. a drain blocked by a PodDisruptionBudget)'
+        status_message:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/K8sNode'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    K8sNode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pool_id:
+          type: string
+          format: uuid
+        cluster_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+          enum: [vnf, master, worker, storage]
+          description: '`vnf` is the cluster''s network gateway'
+        status:
+          type: string
+          enum: [pending, provisioning, running, not_ready, cordoned, failed, deleting, deleted]
+          description: '`running` means the kubelet reports Ready; `cordoned` = unschedulable (drain or manual cordon); `not_ready` = joined but failing health checks'
+        cpu:
+          type: integer
+        ram:
+          type: integer
+          description: GB
+        disk:
+          type: integer
+          description: GB
+        ip_address:
+          type: string
+        price_per_hour:
+          type: number
+          format: double
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    K8sClusterNode:
+      allOf:
+        - $ref: '#/components/schemas/K8sNode'
+        - type: object
+          properties:
+            has_live_data:
+              type: boolean
+              description: Live Kubernetes state was reachable for this node
+            live_name:
+              type: string
+              description: Kubernetes node name
+            ready:
+              type: boolean
+            kubelet_version:
+              type: string
+            os_image:
+              type: string
+            cpu_used_millicores:
+              type: integer
+            cpu_capacity_millicores:
+              type: integer
+            mem_used_bytes:
+              type: integer
+            mem_capacity_bytes:
+              type: integer
+
+    K8sNodeMetrics:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Kubernetes node name
+        internal_ip:
+          type: string
+        roles:
+          type: string
+          example: control-plane,etcd
+        ready:
+          type: boolean
+        cpu_used_millicores:
+          type: integer
+        cpu_capacity_millicores:
+          type: integer
+        mem_used_bytes:
+          type: integer
+        mem_capacity_bytes:
+          type: integer
+
+    K8sControlPlaneHealth:
+      type: object
+      description: 24-hour control-plane health summary, sampled every minute. Absent until the first sample after the cluster starts running.
+      properties:
+        sampled_at:
+          type: string
+          format: date-time
+        etcd_p99_ms:
+          type: number
+          format: double
+          description: 99th-percentile etcd request latency over the last minute (healthy clusters sit under 15 ms; sustained values above 100 ms degrade the control plane)
+        etcd_p99_ms_max_24h:
+          type: number
+          format: double
+        apiserver_5xx_24h:
+          type: integer
+        restarts_apiserver_24h:
+          type: integer
+        restarts_etcd_24h:
+          type: integer
+        restarts_scheduler_24h:
+          type: integer
+        restarts_controller_24h:
+          type: integer
+        restarts_cilium_op_24h:
+          type: integer
+        leader_changes_24h:
+          type: integer
+          description: Scheduler + controller-manager restarts — lost leader leases
+        not_ready_minutes_24h:
+          type: integer
+        nodes_not_ready:
+          type: integer
+
+    K8sClusterStats:
+      type: object
+      properties:
+        cluster_id:
+          type: string
+          description: Short cluster ID
+        has_data:
+          type: boolean
+        cpu_used_millicores:
+          type: integer
+        cpu_capacity_millicores:
+          type: integer
+        mem_used_bytes:
+          type: integer
+        mem_capacity_bytes:
+          type: integer
+        pod_count:
+          type: integer
+        nodes_ready:
+          type: integer
+        nodes_total:
+          type: integer
+        metrics_updated_at:
+          type: string
+          format: date-time
+
+    K8sClusterEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          example: scale_completed
+        message:
+          type: string
+          example: Node pool default-pool scaled from 2 to 3 nodes
+        progress:
+          type: integer
+          description: 0–100 during provisioning
+        created_at:
+          type: string
+          format: date-time
+
+    K8sFirewallState:
+      type: object
+      properties:
+        success:
+          type: boolean
+        enabled:
+          type: boolean
+        default_name:
+          type: string
+          description: Platform baseline security group
+          example: raff-default-secure
+        assigned_sg_id:
+          type: string
+          format: uuid
+          description: Custom security group currently assigned (absent when on the baseline)
+        assigned_name:
+          type: string
+        available:
+          type: array
+          description: Your security groups that can be assigned
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              inbound_rules:
+                type: integer
+              outbound_rules:
+                type: integer
+
+    K8sMetalLBPool:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        found:
+          type: boolean
+          description: The address pool exists in the cluster
+        addresses:
+          type: string
+          example: 10.1.0.238-10.1.0.253
+        size:
+          type: integer
+        max_size:
+          type: integer
+
+    K8sTcpForward:
+      type: object
+      properties:
+        index:
+          type: integer
+        public_port:
+          type: integer
+        protocol:
+          type: string
+          example: tcp
+        backend_ip:
+          type: string
+        backend_port:
+          type: integer
+        endpoint:
+          type: string
+          description: Public address of the forward
+          example: 23.26.4.133:5432
   responses:
     BadRequest:
       description: Invalid request parameters

@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated August 20, 2026</sub>
+<sub>Updated August 23, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,15 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### August 23, 2026
+
+**Kubernetes — API**
+
+- 🟢 **Added** — **Managed Kubernetes** — full public API: clusters (`GET/POST /api/v1/k8s/clusters`, get/rename/delete, `GET …/kubeconfig`, `POST …/ha`), node pools (list/add/update/delete/scale), versions and node plans, nodes, events, metrics (including a 24h control-plane health summary), utilization stats, firewall, MetalLB pool and TCP forwards
+- 🟢 **Added** — `Idempotency-Key` header on `POST /api/v1/k8s/clusters` — retries return the original cluster instead of provisioning twice
+- 🟢 **Added** — pagination (`limit`, `offset`) on `GET /api/v1/k8s/clusters`; derived `ready` on clusters and `actual_node_count` on node pools
+- 🔴 **Removed** — legacy `POST /api/v1/k8s/clusters/{id}/scale` (use the node-pool scale endpoint) and the internal `vm_id` field on node objects
 
 ### August 20, 2026
 
