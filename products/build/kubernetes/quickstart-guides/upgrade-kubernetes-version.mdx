@@ -16,9 +16,15 @@ Clusters upgrade in place: control-plane nodes one at a time, then workers drain
   </Step>
   <Step title="Choose a version and upgrade">
     Pick the target version and click **Upgrade**. Confirm the dialog — on a single-master cluster it warns about the brief API interruption.
+    <Frame>
+      ![TODO: Kubernetes version card in Settings — current version, target select, and automatic-upgrade mode](/images/products/build/kubernetes/version-card.png)
+    </Frame>
   </Step>
   <Step title="Watch the progress">
     The header shows an **Upgrading** badge and the **Activity** feed reports each node as it moves to the new version ("2 of 5 nodes upgraded"). A 5-node cluster typically takes 5–15 minutes.
+    <Frame>
+      ![TODO: Cluster header with the Upgrading badge and Activity feed showing per-node upgrade progress](/images/products/build/kubernetes/upgrade-progress.png)
+    </Frame>
   </Step>
 </Steps>
 

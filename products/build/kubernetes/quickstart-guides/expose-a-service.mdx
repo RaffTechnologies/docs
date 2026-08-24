@@ -24,7 +24,11 @@ Every cluster also gets a wildcard subdomain under `<cluster-id>.k8s.raffuserclo
 
 ## Option 2 — App Hub expose (simplest)
 
-For apps installed from App Hub, click **Expose** — the platform creates the ingress and TLS certificate for you at `https://<app>.<cluster-id>.k8s.raffusercloud.com`, or forwards a raw TCP port (e.g. PostgreSQL 5432) on the public IP.
+For apps installed from App Hub, click **Expose** — the platform creates the ingress and TLS certificate for you at `https://<app>.<cluster-id>.k8s.raffusercloud.com`, or forwards a raw TCP port (e.g. PostgreSQL 5432) on the public IP. Without an expose, the app stays private to the cluster.
+
+<Frame>
+  ![TODO: App Hub Expose dialog — public HTTPS URL and TCP port options](/images/products/build/kubernetes/expose-app.png)
+</Frame>
 
 ## Option 3 — MetalLB (LoadBalancer services)
 

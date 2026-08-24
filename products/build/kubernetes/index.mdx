@@ -7,7 +7,9 @@ icon: dharmachakra
 
 <sub>Updated August 24, 2026</sub>
 
-Raff Kubernetes gives you a production Kubernetes cluster in about ten minutes: we run and monitor the control plane, you get an admin kubeconfig and deploy with the standard tools. The single-master control plane is free; you pay per worker node. High availability (3 masters) is a paid option at \$30/month. Clusters run RKE2 with Cilium networking inside a dedicated VPC, behind a managed gateway with a public IP.
+Raff Kubernetes is a managed Kubernetes service. Pick a worker plan and a node count; 10–20 minutes later you have a running cluster and an admin kubeconfig. We operate the control plane, keep it monitored, and roll out version upgrades in place — you deploy with the tools you already use: kubectl, Helm, your CI.
+
+The control plane is free — you pay only for worker nodes, from \$9.99/month each. High availability (3 masters and a redundant gateway) is a flat \$30/month. Every cluster runs RKE2 with Cilium networking in its own VPC, behind a managed gateway with a dedicated public IP.
 
 <Frame>
   ![Kubernetes cluster overview in the Raff dashboard — live node, pod, CPU, memory and control-plane health cards](/images/products/build/kubernetes/hero.png)
@@ -33,7 +35,7 @@ Raff Kubernetes gives you a production Kubernetes cluster in about ten minutes: 
 
 <CardGroup cols={2}>
   <Card title="Create a cluster" icon="circle-plus" href="/products/build/kubernetes/quickstart-guides/create-a-cluster">
-    From zero to a running cluster in ~10 minutes
+    From zero to a running cluster in 10–20 minutes
   </Card>
   <Card title="Connect with kubectl" icon="terminal" href="/products/build/kubernetes/quickstart-guides/connect-with-kubectl">
     Download the kubeconfig and run your first commands
