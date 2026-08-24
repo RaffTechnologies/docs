@@ -117,6 +117,7 @@
                       "products/build/kubernetes/quickstart-guides/add-a-node-pool",
                       "products/build/kubernetes/quickstart-guides/scale-a-node-pool",
                       "products/build/kubernetes/quickstart-guides/upgrade-to-ha",
+                      "products/build/kubernetes/quickstart-guides/upgrade-kubernetes-version",
                       "products/build/kubernetes/quickstart-guides/install-an-app",
                       "products/build/kubernetes/quickstart-guides/expose-a-service",
                       "products/build/kubernetes/quickstart-guides/view-logs-and-metrics",
@@ -524,6 +525,9 @@
                       "api-reference/kubernetes/delete-cluster",
                       "api-reference/kubernetes/get-kubeconfig",
                       "api-reference/kubernetes/upgrade-to-ha",
+                      "api-reference/kubernetes/get-cluster-upgrades",
+                      "api-reference/kubernetes/upgrade-cluster-version",
+                      "api-reference/kubernetes/update-cluster-maintenance",
                       "api-reference/kubernetes/list-kubernetes-versions",
                       "api-reference/kubernetes/list-node-plans"
                     ]
@@ -678,6 +682,7 @@
               "reference/cli/install",
               "reference/cli/configure",
               "reference/cli/vm",
+              "reference/cli/kubernetes",
               "reference/cli/volume",
               "reference/cli/snapshot",
               "reference/cli/backup",

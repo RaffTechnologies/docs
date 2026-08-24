@@ -1,0 +1,165 @@
+---
+title: "raff kubernetes"
+description: "Manage Kubernetes clusters from the CLI — list, get, create, delete, rename, kubeconfig, nodes, node pools, HA upgrade, version upgrades, and maintenance windows."
+---
+
+<sub>Updated August 24, 2026</sub>
+
+The `raff kubernetes` command group (alias: `raff k8s`) covers every managed Kubernetes operation in the public API. Each subcommand supports `--output json` for scripting.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List all clusters in the project |
+| [`get`](#get) | Show details for one cluster |
+| [`create`](#create) | Create a cluster (pay-as-you-go accounts) |
+| [`delete`](#delete) | Delete a cluster and all its infrastructure |
+| [`rename`](#rename) | Rename a cluster |
+| [`kubeconfig`](#kubeconfig) | Print or save the cluster's kubeconfig |
+| [`nodes`](#nodes) | List the cluster's nodes with live status |
+| [`pool list/add/scale/delete`](#node-pools) | Manage node pools |
+| [`upgrade-ha`](#upgrade-ha) | Promote to a 3-master HA control plane |
+| [`upgrade`](#upgrade) | Upgrade the Kubernetes version (rolling, in place) |
+| [`maintenance`](#maintenance) | Set the upgrade mode and maintenance window |
+| [`versions`](#versions) | List available Kubernetes versions |
+| [`plans`](#plans) | List worker node plans with pricing |
+
+---
+
+## list
+
+```bash
+raff kubernetes list [--output table|json]
+```
+
+## get
+
+```bash
+raff kubernetes get <cluster-id> [--output table|json]
+```
+
+Shows status, version, endpoint, HA, node counts, and pricing for one cluster.
+
+## create
+
+```bash
+raff kubernetes create --name <name> --plan <plan-id> [--nodes 2] [--version <version-id>] [--ha] [--wait] [--idempotency-key <key>]
+```
+
+| Flag | Description |
+|---|---|
+| `--name` | Cluster name (1–63 lowercase letters, digits or hyphens). Required. |
+| `--plan` | Worker node plan ID — see [`plans`](#plans). Required. |
+| `--nodes` | Worker node count for the default pool (2–20). Default 2. |
+| `--version` | Kubernetes version ID — see [`versions`](#versions). Default: platform default. |
+| `--ha` | HA control plane (3 masters, flat monthly fee). |
+| `--wait` | Block until the cluster is running (8–12 minutes). |
+| `--idempotency-key` | A retried create with the same key returns the same cluster. |
+
+API creates are available on pay-as-you-go accounts; subscription accounts create clusters from the dashboard.
+
+```bash
+raff kubernetes create --name prod-cluster --plan 1 --nodes 3 --ha --wait
+```
+
+## delete
+
+```bash
+raff kubernetes delete <cluster-id> [--force] [--wait]
+```
+
+Deletes the cluster and all its infrastructure — nodes, gateway, VPC, and floating IP. `--force` skips the confirmation prompt; `--wait` blocks until deletion completes.
+
+## rename
+
+```bash
+raff kubernetes rename <cluster-id> <new-name>
+```
+
+The API endpoint and DNS stay the same.
+
+## kubeconfig
+
+```bash
+raff kubernetes kubeconfig <cluster-id> [--save <path>]
+```
+
+Prints the kubeconfig to stdout, or writes it to a file (mode 0600) with `--save`:
+
+```bash
+raff kubernetes kubeconfig zk7x9m --save ~/.kube/raff-zk7x9m.yaml
+export KUBECONFIG=~/.kube/raff-zk7x9m.yaml
+kubectl get nodes
+```
+
+## nodes
+
+```bash
+raff kubernetes nodes <cluster-id>
+```
+
+Lists every node (gateway, control plane, workers, storage) with role, status, and IP.
+
+## Node pools
+
+```bash
+raff kubernetes pool list <cluster-id>
+raff kubernetes pool add <cluster-id> --name <name> --plan <plan-id> [--nodes 2]
+raff kubernetes pool scale <cluster-id> <pool-id> <node-count>
+raff kubernetes pool delete <cluster-id> <pool-id> [--force]
+```
+
+Scale-down and pool deletion drain nodes first — workloads are evicted respecting PodDisruptionBudgets before a node is removed. Additional pools use the same plan as the cluster's existing pools.
+
+## upgrade-ha
+
+```bash
+raff kubernetes upgrade-ha <cluster-id> [--force]
+```
+
+Promotes a single-master cluster to a 3-master HA control plane with a redundant gateway pair. Cannot be reversed.
+
+## upgrade
+
+```bash
+# List available targets
+raff kubernetes upgrade <cluster-id>
+
+# Start an upgrade
+raff kubernetes upgrade <cluster-id> --version <version-id> [--confirm-single-master]
+```
+
+Rolling in-place upgrade: control-plane nodes one at a time, then workers drained one at a time. On a non-HA cluster the Kubernetes API is briefly interrupted — pass `--confirm-single-master` to accept that. Minor versions upgrade sequentially; upgrades cannot be rolled back.
+
+Progress appears in the cluster's Activity feed; `raff kubernetes get` shows the version once complete.
+
+## maintenance
+
+```bash
+raff kubernetes maintenance <cluster-id> [--mode manual|auto_patch|auto_minor] [--day 0-6] [--start 0-23]
+```
+
+| Flag | Description |
+|---|---|
+| `--mode` | `manual` — you start upgrades. `auto_patch` — patches apply automatically in the window. `auto_minor` — minors too, after a stability period. |
+| `--day` | Maintenance day: 0 (Sunday) to 6 (Saturday). |
+| `--start` | Window start hour (UTC); the window is 4 hours. |
+
+Only the flags you pass change; the rest keep their values.
+
+## versions
+
+```bash
+raff kubernetes versions
+```
+
+Lists the Kubernetes versions offered for new clusters, with the version ID used by `create --version`.
+
+## plans
+
+```bash
+raff kubernetes plans
+```
+
+Lists worker node plans with vCPU, memory, and monthly price. Every worker has a 25 GiB root disk.

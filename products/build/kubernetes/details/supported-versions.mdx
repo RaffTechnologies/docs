@@ -1,15 +1,46 @@
 ---
 title: Kubernetes supported versions
 sidebarTitle: Supported versions
-description: Which Kubernetes releases you can run, and how new versions arrive
+description: Which Kubernetes releases you can run, and how new versions and upgrades arrive
 ---
 
 <sub>Updated August 24, 2026</sub>
 
 | Version | Distribution | Status |
 |---|---|---|
-| **v1.33** | RKE2 (v1.33.4+rke2r1) | Default — all new clusters |
+| **v1.33** | RKE2 (v1.33.4+rke2r1) | Default — new clusters |
+| **v1.34** | RKE2 (v1.34.9+rke2r1) | Available as an upgrade target |
+| **v1.35** | RKE2 (v1.35.7+rke2r1) | Available as an upgrade target |
 
-One release is offered at a time. **In-place upgrades are not available yet**: when a new version ships, the path is to create a new cluster on it and migrate workloads (a blue/green switch behind your ingress/DNS). In-place, drain-based rolling upgrades with maintenance windows are on the roadmap; existing clusters keep running their version until you migrate.
+The current list is always available from [List Kubernetes Versions](/api-reference/kubernetes/list-kubernetes-versions), and the upgrade targets for your cluster from [Get cluster upgrades](/api-reference/kubernetes/get-cluster-upgrades).
 
-The current list is always available from [List Kubernetes Versions](/api-reference/kubernetes/list-kubernetes-versions).
+## How versions are offered
+
+Up to three Kubernetes minor versions are offered at a time. When a new upstream release ships, we validate it on our infrastructure before it appears in your dashboard — first as an upgrade target, later as a creation option. The oldest version is then retired on a schedule (see below).
+
+Within a minor version we pin one specific patch release (for example v1.34.9). When a newer patch is validated, the pin moves and the new patch becomes the upgrade target for that line.
+
+## In-place upgrades
+
+Clusters upgrade in place from the dashboard (Settings → Kubernetes version), the [API](/api-reference/kubernetes/upgrade-cluster-version), or the CLI. Upgrades are rolling:
+
+- Control-plane nodes upgrade one at a time. On an HA cluster the Kubernetes API stays available throughout; on a single-master cluster the API is briefly interrupted while the master restarts.
+- Workers are cordoned and drained before upgrading, one at a time. Workloads with more than one replica keep serving.
+- Minor versions upgrade sequentially (1.33 → 1.34 → 1.35, no skipping). Patch upgrades within a minor are always allowed.
+- Upgrades cannot be rolled back.
+
+Upgrades are free — the price of the cluster does not change.
+
+## Automatic upgrades and maintenance windows
+
+Each cluster has an upgrade mode:
+
+- **Manual** (default) — you start every upgrade yourself.
+- **Auto-patch** — patch releases apply automatically inside your maintenance window, with a notice email about 72 hours before.
+- **Auto-minor** — new minor versions also apply automatically, after a stability period following their release.
+
+The maintenance window is a weekly 4-hour slot (day + start hour, UTC) you can change in cluster Settings. It is not downtime: upgrades are rolling and workloads keep running.
+
+## End of life
+
+When a version approaches end of life, account owners are emailed 60 days and again 14 days before the date. Clusters still on the version at end of life are upgraded to the next minor automatically in their maintenance window, regardless of upgrade mode.
