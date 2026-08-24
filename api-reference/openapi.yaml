@@ -7375,6 +7375,161 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/v1/k8s/clusters/{cluster_id}/upgrades:
+    get:
+      tags:
+        - Kubernetes
+      summary: List available version upgrades
+      description: |
+        The Kubernetes versions this cluster can upgrade to right now — patch releases of its current minor and the next minor (Kubernetes upgrades one minor at a time) — plus the cluster's upgrade state, mode and maintenance window.
+      operationId: listK8sClusterUpgrades
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Upgrade state and available targets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  current_version:
+                    type: string
+                    example: v1.33.4+rke2r1
+                  upgrade_status:
+                    type: string
+                    enum: [idle, scheduled, upgrading, failed]
+                  target_version:
+                    type: string
+                    description: Set while an upgrade is in flight or failed
+                  upgrade_mode:
+                    type: string
+                    enum: [manual, auto_patch, auto_minor]
+                  maintenance_day:
+                    type: integer
+                    description: 0 (Sunday) to 6 (Saturday)
+                  maintenance_start:
+                    type: integer
+                    description: Window start hour (UTC); the window is 4 hours
+                  available:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version_id:
+                          type: integer
+                        version:
+                          type: string
+                          example: v1.34+rke2r1
+                        rke2_version:
+                          type: string
+                          example: v1.34.6+rke2r1
+                        is_minor:
+                          type: boolean
+                          description: true for a minor hop, false for a patch
+                        is_default:
+                          type: boolean
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/k8s/clusters/{cluster_id}/upgrade:
+    post:
+      tags:
+        - Kubernetes
+      summary: Start a version upgrade
+      description: |
+        Start an in-place Kubernetes upgrade to one of the versions from [List available version upgrades](#tag/Kubernetes/operation/listK8sClusterUpgrades). The upgrade is rolling: control-plane nodes one at a time, then workers drained first (PodDisruptionBudgets honoured). HA clusters upgrade with no API interruption; single-master clusters have a brief interruption and require `confirm_single_master: true`. Progress appears in the cluster events; upgrades are free.
+      operationId: upgradeK8sClusterVersion
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version_id]
+              properties:
+                version_id:
+                  type: integer
+                  description: Target from List available version upgrades
+                confirm_single_master:
+                  type: boolean
+                  description: Required true on non-HA clusters
+      responses:
+        '200':
+          description: Upgrade started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid target (skew policy, unknown version, downgrade)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          description: Pre-flight refused (busy pool, unconfirmed single-master)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/k8s/clusters/{cluster_id}/maintenance:
+    patch:
+      tags:
+        - Kubernetes
+      summary: Set upgrade mode and maintenance window
+      description: |
+        `manual` (default) — you start upgrades yourself. `auto_patch` — patch releases are applied automatically in the maintenance window (notice email ~72h before). `auto_minor` — minors too, after a stability period. The window is 4 hours from `maintenance_start` (UTC) on `maintenance_day`.
+      operationId: updateK8sClusterMaintenance
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upgrade_mode]
+              properties:
+                upgrade_mode:
+                  type: string
+                  enum: [manual, auto_patch, auto_minor]
+                maintenance_day:
+                  type: integer
+                  minimum: 0
+                  maximum: 6
+                  description: 0 (Sunday) to 6 (Saturday)
+                maintenance_start:
+                  type: integer
+                  minimum: 0
+                  maximum: 23
+                  description: Window start hour (UTC)
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid mode or window
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/k8s/clusters/{cluster_id}/pools:
     get:
       tags:

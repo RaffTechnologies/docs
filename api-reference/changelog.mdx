@@ -15,6 +15,14 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 ## v1.0.0 (Beta)
 
+### August 24, 2026
+
+**Kubernetes — API**
+
+- 🟢 **Added** — **Version upgrades** — `GET /api/v1/k8s/clusters/{id}/upgrades` (available targets, upgrade state, maintenance settings) and `POST /api/v1/k8s/clusters/{id}/upgrade` (in-place rolling upgrade: control-plane nodes one at a time, workers drained; free)
+- 🟢 **Added** — **Maintenance settings** — `PATCH /api/v1/k8s/clusters/{id}/maintenance`: `upgrade_mode` (`manual`, `auto_patch`, `auto_minor`) and a weekly 4-hour maintenance window (`maintenance_day`, `maintenance_start` UTC)
+- 🔵 **Updated** — node plans (`ssd_gib`) now state the actual 25 GB node root disk; worker plans are priced on vCPU/RAM, persistent storage is the storage-node product
+
 ### August 23, 2026
 
 **Kubernetes — API**
