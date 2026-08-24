@@ -140,6 +140,7 @@
                     "pages": [
                       "products/build/kubernetes/details/features-and-limits",
                       "products/build/kubernetes/details/pricing",
+                      "products/build/kubernetes/details/sla",
                       "products/build/kubernetes/details/supported-versions"
                     ]
                   },

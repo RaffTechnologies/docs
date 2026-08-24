@@ -1,0 +1,37 @@
+---
+title: Kubernetes SLA
+sidebarTitle: SLA
+description: 99.90% monthly uptime commitment for managed Kubernetes, and how service credits work
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Managed Kubernetes carries a **99.90% monthly uptime commitment**, measured per calendar month.
+
+## What is covered
+
+| Component | Commitment |
+|---|---|
+| Worker & storage nodes | Covered as Virtual Machines under the platform SLA (99.90%) |
+| Managed endpoint & ingress path | 99.90% — applies to clusters with the **High Availability** option, where the endpoint is a redundant gateway pair with automatic failover |
+| Non-HA clusters | The endpoint is a single managed instance, covered at the infrastructure (VM) level without a separate endpoint-path commitment |
+
+For production workloads, [enable HA](/products/build/kubernetes/quickstart-guides/upgrade-to-ha) — that is the configuration the commitment is designed around.
+
+## Service credits
+
+If monthly uptime falls below the commitment, you receive credits on the affected service, applied against future invoices:
+
+| Monthly uptime | Credit |
+|---|---|
+| 99.90% – 99.0% | 10% |
+| 99.0% – 95.0% | 25% |
+| Below 95.0% | 100% |
+
+## Exclusions
+
+Announced maintenance, factors outside Raff infrastructure, and workload-level issues inside the cluster (for example your own Ingress or application configuration).
+
+## Support
+
+All managed services include **24/7 support**; a support phone line is available for urgent situations — contact us to set it up.

@@ -10,7 +10,17 @@ Every cluster sits behind a managed gateway with one public IP. Ports **80 and 4
 
 ## Option 1 — Traefik ingress (HTTP/HTTPS)
 
-If the cluster was created with **Traefik**, standard `Ingress` resources work out of the box: create an Ingress for your Service and point DNS (or use the cluster's `*.k8s.raffusercloud.com` domain) at the cluster IP.
+If the cluster was created with **Traefik**, it is the standard IngressClass and plain Kubernetes `Ingress` resources work as-is — the recommended production shape is **Services as `ClusterIP` + Traefik Ingress** through the managed endpoint; no separate load balancer is needed.
+
+**Custom domains & TLS:** point your domain's A record at the cluster endpoint and use the cluster's cert-manager/Let's Encrypt issuer for automatic certificates:
+
+```yaml
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: raff-letsencrypt
+```
+
+Every cluster also gets a wildcard subdomain under `<cluster-id>.k8s.raffusercloud.com` out of the box.
 
 ## Option 2 — App Hub expose (simplest)
 
