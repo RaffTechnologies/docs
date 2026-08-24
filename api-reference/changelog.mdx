@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated August 24, 2026</sub>
+<sub>Updated August 25, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### August 25, 2026
+
+**Kubernetes — API**
+
+- 🔵 **Updated** — **Create cluster** now works on subscription accounts — `POST /api/v1/k8s/clusters` validates the saved payment method, creates the monthly subscription, and charges it automatically (previously `402`; same behavior as VM creation). Terraform and CLI creates work on subscription accounts as a result.
 
 ### August 24, 2026
 

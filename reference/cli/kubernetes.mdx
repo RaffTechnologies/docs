@@ -13,7 +13,7 @@ The `raff kubernetes` command group (alias: `raff k8s`) covers every managed Kub
 |---|---|
 | [`list`](#list) | List all clusters in the project |
 | [`get`](#get) | Show details for one cluster |
-| [`create`](#create) | Create a cluster (pay-as-you-go accounts) |
+| [`create`](#create) | Create a cluster |
 | [`delete`](#delete) | Delete a cluster and all its infrastructure |
 | [`rename`](#rename) | Rename a cluster |
 | [`kubeconfig`](#kubeconfig) | Print or save the cluster's kubeconfig |
@@ -57,7 +57,7 @@ raff kubernetes create --name <name> --plan <plan-id> [--nodes 2] [--version <ve
 | `--wait` | Block until the cluster is running (10–20 minutes). |
 | `--idempotency-key` | A retried create with the same key returns the same cluster. |
 
-API creates are available on pay-as-you-go accounts; subscription accounts create clusters from the dashboard.
+Creates follow the account's billing mode: pay-as-you-go bills hourly; on a subscription account the CLI create charges the saved payment method for the monthly subscription automatically.
 
 ```bash
 raff kubernetes create --name prod-cluster --plan 1 --nodes 3 --ha --wait

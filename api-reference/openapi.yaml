@@ -7165,7 +7165,7 @@ paths:
       description: |
         Create a managed Kubernetes cluster. Provisioning is asynchronous — the response returns immediately with `pending` status; the cluster is usable when `ready` is `true` (typically 8–12 minutes).
 
-        API-created clusters are billed pay-as-you-go per node-hour. Accounts on subscription billing cannot create clusters through the API yet and receive `402` — use the dashboard instead.
+        API-created clusters follow the account's billing mode: pay-as-you-go accounts bill per node-hour; subscription accounts are billed monthly — the API validates the saved payment method, creates the subscription, and charges it automatically (same behavior as VM creation).
 
         Retries are safe with an `Idempotency-Key` header: a repeated request with the same key returns the cluster created by the first request instead of provisioning a second one.
       operationId: createK8sCluster

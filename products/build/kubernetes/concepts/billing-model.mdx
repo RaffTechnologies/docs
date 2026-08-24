@@ -10,7 +10,7 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 ## Two billing modes
 
-- **Pay-as-you-go** — every worker/storage node bills per hour at its plan's hourly rate while it exists. Clusters created through the [API](/api-reference/kubernetes/create-cluster) are always pay-as-you-go.
+- **Pay-as-you-go** — every worker/storage node bills per hour at its plan's hourly rate while it exists. Clusters created through the [API](/api-reference/kubernetes/create-cluster) follow the account's billing mode — on a subscription account the API creates and charges the monthly subscription automatically.
 - **Subscription** — created through the dashboard checkout; the cluster's node set is a monthly commitment. Growing the cluster (scale-up, new pool, HA upgrade) goes through checkout for the pro-rated difference; shrinking credits the remainder back to your balance. Deleting the cluster converts the unused subscription value to account balance automatically.
 
 ## Autoscaling and billing
