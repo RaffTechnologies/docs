@@ -15,7 +15,21 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 ## Autoscaling and billing
 
-On subscription clusters the committed base never changes from autoscaling: nodes the autoscaler adds above the base are metered hourly as overage and drop off when it scales back down. On pay-as-you-go, autoscaling changes the hourly total.
+Autoscaling never changes your subscription price. It only adds temporary hourly charges while extra nodes exist.
+
+**Subscription cluster.** Your monthly price covers the node count you committed to at checkout (the *base*). When the autoscaler adds nodes above the base, each extra node bills **per hour, at the node plan's hourly rate**, only while it exists. When the autoscaler removes it, the charge stops. Your monthly subscription price stays the same in both directions.
+
+Example: you committed a pool of 2 nodes on the \$9.99/month Starter plan (subscription: \$19.98/month).
+
+| Event | What bills |
+|---|---|
+| Normal operation, 2 nodes | \$19.98/month — nothing else |
+| Traffic spike: autoscaler adds a 3rd node for 6 hours | \$19.98/month + 6 hours of the Starter hourly rate (shown as *overage* on your invoice) |
+| Autoscaler removes the 3rd node | back to \$19.98/month — overage stops |
+
+Only a **manual** scale through the dashboard changes the base: it goes through checkout and your monthly price moves with it.
+
+**Pay-as-you-go cluster.** There is no base. Every node bills per hour while it exists, so autoscaling from 2 to 3 nodes means 3 nodes' hourly rates until it scales back to 2.
 
 ## What else bills
 
