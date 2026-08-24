@@ -1,0 +1,15 @@
+---
+title: Kubernetes supported versions
+sidebarTitle: Supported versions
+description: Which Kubernetes releases you can run, and how new versions arrive
+---
+
+<sub>Updated August 24, 2026</sub>
+
+| Version | Distribution | Status |
+|---|---|---|
+| **v1.33** | RKE2 (v1.33.4+rke2r1) | Default — all new clusters |
+
+One release is offered at a time. **In-place upgrades are not available yet**: when a new version ships, the path is to create a new cluster on it and migrate workloads (a blue/green switch behind your ingress/DNS). In-place, drain-based rolling upgrades with maintenance windows are on the roadmap; existing clusters keep running their version until you migrate.
+
+The current list is always available from [List Kubernetes Versions](/api-reference/kubernetes/list-kubernetes-versions).

@@ -1,0 +1,24 @@
+---
+title: Kubernetes node pools and autoscaling
+sidebarTitle: Node pools & autoscaling
+description: How pools group workers, and the exact rules the autoscaler follows
+---
+
+<sub>Updated August 24, 2026</sub>
+
+A **node pool** is a group of identical workers: same node plan, same Kubernetes labels and taints. A cluster has 1+ pools with 2–20 nodes each; the platform keeps a minimum of 2 workers per cluster.
+
+- **Labels and taints** set on a pool are applied to its nodes automatically (and re-applied if a node is replaced). Use them to steer workloads: e.g. taint a high-memory pool and tolerate it only from your database pods.
+- **`node_count` vs `actual_node_count`** — the target vs what currently exists; they differ briefly while scaling.
+- **Scale-down is drain-first**: newest nodes go first, each cordoned and drained honouring PodDisruptionBudgets, never force-deleted. A node that can't be emptied within 10 minutes stops the operation with the reason on the pool.
+
+## Autoscaling rules
+
+Enable per pool with min/max bounds. The autoscaler evaluates every 5 minutes:
+
+- **Up (+1 node):** any pod is unschedulable for lack of CPU or memory. The pool with the most headroom below its max gets the node.
+- **Down (−1 node):** cluster-wide worker CPU **and** memory below 40% for 15 sustained minutes; removal uses the same drain-first path.
+- **Bounds are law:** a pool found outside its min/max (e.g. after a manual change) is brought back inside automatically.
+- **Cooldown:** at most one autoscale action per cluster per 10 minutes. Every action is recorded in the Activity feed with its reason.
+
+On subscription-billed clusters, autoscaled nodes above the committed base are metered hourly as overage — the subscription price itself never changes from autoscaling.

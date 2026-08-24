@@ -1,0 +1,16 @@
+---
+title: Kubernetes storage
+sidebarTitle: Storage
+description: Longhorn block volumes on dedicated storage nodes
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Persistent volumes are served by **Longhorn** running on dedicated storage nodes — enable them at cluster creation (2 or 3 nodes, 100–1000 GB data disk each, \$0.08/GB/month).
+
+- PVCs using the default `longhorn` storage class get replicated block volumes; a storage-node failure keeps your data available from the remaining replica.
+- Worker root disks are **ephemeral** — anything a pod writes outside a PVC is lost when the node is replaced or scaled away.
+- Apps from App Hub that need persistence (PostgreSQL, WordPress, NextCloud, …) require storage nodes to be present.
+- Choose **3 storage nodes** for production data; 2 is the minimum for replication.
+
+Without storage nodes, the cluster has no default storage class and PVCs stay `Pending`. For object storage (S3), use [Raff Object Storage](/products/store/object-storage) from inside the cluster instead.

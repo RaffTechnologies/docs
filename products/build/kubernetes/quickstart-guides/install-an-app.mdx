@@ -1,0 +1,30 @@
+---
+title: Install an app from App Hub
+sidebarTitle: Install an app
+description: One-click installs of Grafana, Argo CD, PostgreSQL, WordPress and more
+---
+
+<sub>Updated August 24, 2026</sub>
+
+App Hub installs popular Helm charts into your cluster with sensible defaults — no Helm knowledge needed. Available apps include Argo CD, Grafana, cert-manager, Sealed Secrets, PostgreSQL, MySQL, Redis, MongoDB, WordPress, Ghost, n8n, NextCloud, Mattermost, Loki and kube-prometheus-stack.
+
+## Steps
+
+<Steps>
+  <Step title="Open the Apps tab">
+    On the cluster page, open **Apps** and pick an app from the catalog.
+    <Frame>
+      ![TODO: App Hub catalog](/images/products/build/kubernetes/app-hub.png)
+    </Frame>
+  </Step>
+  <Step title="Install">
+    Set the release name and namespace (defaults are fine), optionally paste Helm values as JSON, and click **Install**.
+  </Step>
+  <Step title="Get credentials and expose it">
+    Database-style apps generate credentials you can reveal once installed. Use **Expose** to publish an app over HTTPS on a `*.k8s.raffusercloud.com` subdomain, or over a raw TCP port on the cluster's public IP.
+  </Step>
+</Steps>
+
+<Note>
+Apps that need persistent storage (databases, WordPress, NextCloud, …) require the cluster to have [storage nodes](/products/build/kubernetes/concepts/storage). Custom Helm values are passed to the chart as-is — use the chart's own value names (e.g. Grafana uses `replicas`, not `replicaCount`).
+</Note>

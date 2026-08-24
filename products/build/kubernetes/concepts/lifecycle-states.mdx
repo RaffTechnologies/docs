@@ -1,0 +1,36 @@
+---
+title: Kubernetes cluster states
+sidebarTitle: Lifecycle states
+description: Every status a cluster, pool or node can be in, and what to do about it
+---
+
+<sub>Updated August 24, 2026</sub>
+
+## Cluster
+
+| Status | Meaning | Your move |
+|---|---|---|
+| `pending` / `deploying` | Provisioning (8–12 min) | Watch the Activity feed |
+| `running` | Control plane up | — |
+| `warning` | Degraded; message has detail | Usually transient; contact support if it persists |
+| `failed` | Provisioning could not complete — infrastructure was cleaned up, nothing bills | Delete the record; try again or contact support |
+| `deleting` | Teardown in progress | — |
+| `delete_failed` | Teardown incomplete; **nothing was removed** | Click **Retry delete** |
+
+The boolean `ready` (API and dashboard) is `true` only when the cluster is `running` and no pool is mid-operation — poll that instead of parsing statuses.
+
+## Node pools
+
+`pending` → `provisioning` → `running`, with `scaling` / `deleting` while a background operation runs (the pool's status message reports the outcome, e.g. a drain blocked by a PodDisruptionBudget).
+
+## Nodes
+
+| Status | Meaning |
+|---|---|
+| `provisioning` | VM deploying / joining the cluster |
+| `running` | kubelet reports Ready |
+| `not_ready` | Joined but failing health checks |
+| `cordoned` | Unschedulable — a drain in progress or a manual `kubectl cordon` |
+| `deleting` | Being drained and removed |
+
+Nodes in `not_ready` and `cordoned` still bill — the VM is running; these states describe Kubernetes scheduling, not the machine.

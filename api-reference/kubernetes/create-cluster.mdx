@@ -1,0 +1,15 @@
+---
+title: "Create Kubernetes Cluster"
+openapi: "POST /api/v1/k8s/clusters"
+---
+
+<sub>Updated August 24, 2026</sub>
+
+<Note>
+Before creating a cluster, you need:
+- A **node plan ID** — get one from [List Kubernetes Node Plans](/api-reference/kubernetes/list-node-plans)
+- A **project ID** for the `X-Project-ID` header — see [Generate an API key](/products/manage/team-projects/quickstart-guides/generate-api-key)
+- Optionally a **version ID** from [List Kubernetes Versions](/api-reference/kubernetes/list-kubernetes-versions) (omit for the default)
+
+API-created clusters bill **pay-as-you-go** per node-hour. Accounts on subscription billing receive `402` — create the cluster from the dashboard instead. Retries are safe with an `Idempotency-Key` header.
+</Note>

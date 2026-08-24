@@ -1,0 +1,39 @@
+---
+title: Kubernetes troubleshooting
+sidebarTitle: Troubleshooting
+description: The issues people actually hit, and how to resolve them
+---
+
+<sub>Updated August 24, 2026</sub>
+
+## My PVC is stuck in Pending
+
+The cluster has no storage nodes, so there is no default storage class. Storage nodes can only be added at cluster creation today — recreate the cluster with 2–3 storage nodes, or use [Object Storage](/products/store/object-storage) for S3-style needs.
+
+## Scale-down says a node "could not be emptied"
+
+A PodDisruptionBudget blocked eviction — the pool's status message names the pod. That's the platform protecting your availability: fix the PDB (e.g. `maxUnavailable: 0` with a single replica can never be drained) or scale the workload up first, then retry.
+
+## My app went down briefly during scale-down
+
+Workloads with **one replica** restart when their node is drained — there's no second copy to serve meanwhile. Run 2+ replicas with a PodDisruptionBudget (`minAvailable: 1`) for anything that must stay up; the drain then waits for the moved pod to be ready.
+
+## A node shows Cordoned
+
+Someone (or a scale-down in progress) marked it unschedulable. `kubectl uncordon <node>` reverses a manual cordon; a scale-down uncordons automatically if it aborts.
+
+## The cluster shows "Delete failed"
+
+Teardown hit an infrastructure error and stopped **without removing anything**, so nothing is half-deleted or wrongly billed. Click **Retry delete** — if it persists, contact support with the cluster ID.
+
+## Creating a cluster returns 402 from the API
+
+Your account bills by subscription; API-created clusters are pay-as-you-go only for now. Create the cluster from the dashboard, or contact support about switching billing modes.
+
+## kubectl says connection refused / certificate error
+
+Re-download the kubeconfig from the cluster page (it changes if the cluster was recreated), and check your firewall allows the API — port 6443 is open through the platform baseline, but a custom security group must allow it.
+
+## An installed app ignores my custom values
+
+Values are passed to the Helm chart as-is; each chart has its own value names (Grafana uses `replicas`, Bitnami charts use `replicaCount`). Check the chart's documentation.

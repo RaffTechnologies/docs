@@ -1,0 +1,50 @@
+---
+title: Kubernetes
+sidebarTitle: Overview
+description: Fully-managed Kubernetes clusters — free control plane, autoscaling node pools, one-click apps, billed per worker node
+icon: dharmachakra
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Raff Kubernetes gives you a production Kubernetes cluster in about ten minutes: we run and monitor the control plane (free — you pay only for worker nodes), you get an admin kubeconfig and deploy with the standard tools. Clusters run RKE2 with Cilium networking inside a dedicated VPC, behind a managed gateway with a public IP.
+
+<Frame>
+  ![TODO: Kubernetes cluster overview in the Raff dashboard](/images/products/build/kubernetes/hero.png)
+</Frame>
+
+## At a glance
+
+| Property | Value |
+|---|---|
+| **Kubernetes distribution** | RKE2 (currently v1.33) — see [Supported versions](/products/build/kubernetes/details/supported-versions) |
+| **Control plane** | Managed and free; optional [HA (3 masters)](/products/build/kubernetes/concepts/control-plane-and-ha) for \$30/month |
+| **Worker nodes** | [Node pools](/products/build/kubernetes/concepts/node-pools-and-autoscaling) of 2–20 nodes, per-pool plans, optional autoscaling |
+| **Networking** | Dedicated VPC per cluster, Cilium CNI, optional Traefik ingress and MetalLB — see [Networking](/products/build/kubernetes/concepts/networking) |
+| **Storage** | Optional dedicated storage nodes with Longhorn block volumes — see [Storage](/products/build/kubernetes/concepts/storage) |
+| **Apps** | One-click App Hub (Argo CD, Grafana, PostgreSQL, WordPress, …) from the dashboard |
+| **Access** | Admin kubeconfig download; full `kubectl` / Helm / CI compatibility |
+| **API** | Full [REST API](/api-reference/kubernetes/list-clusters) — clusters, pools, kubeconfig, metrics |
+| **Billing** | Per worker node — see [Billing model](/products/build/kubernetes/concepts/billing-model) and [Pricing](/products/build/kubernetes/details/pricing) |
+| **Region** | us-east |
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Create a cluster" icon="circle-plus" href="/products/build/kubernetes/quickstart-guides/create-a-cluster">
+    From zero to a running cluster in ~10 minutes
+  </Card>
+  <Card title="Connect with kubectl" icon="terminal" href="/products/build/kubernetes/quickstart-guides/connect-with-kubectl">
+    Download the kubeconfig and run your first commands
+  </Card>
+  <Card title="Scale a node pool" icon="arrow-up-right-dots" href="/products/build/kubernetes/quickstart-guides/scale-a-node-pool">
+    Add capacity by hand or let the autoscaler do it
+  </Card>
+  <Card title="Install an app" icon="cubes" href="/products/build/kubernetes/quickstart-guides/install-an-app">
+    One-click Grafana, Argo CD, PostgreSQL and more
+  </Card>
+</CardGroup>
+
+## How a cluster is built
+
+Every cluster gets its own **VPC**, a **gateway** (public IP, NAT, load-balancer entry point), one or three **control-plane nodes** (on hypervisor-local NVMe for fast etcd), your **worker pools**, and optionally dedicated **storage nodes** running Longhorn. The full picture is in [Cluster architecture](/products/build/kubernetes/concepts/cluster-architecture).

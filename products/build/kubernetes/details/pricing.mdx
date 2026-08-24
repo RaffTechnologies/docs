@@ -1,0 +1,29 @@
+---
+title: Kubernetes pricing
+sidebarTitle: Pricing
+description: Worker node plans, HA control-plane fee and storage-node rates
+---
+
+<sub>Updated August 24, 2026</sub>
+
+The control plane is free — you pay per worker node, plus optional HA and storage-node fees. Prices below are per node; live values come from the [pricing API](/api-reference/kubernetes/list-node-plans).
+
+## Worker node plans
+
+| Plan | vCPU | Memory | NVMe disk | $/month | $/hour |
+|---|---|---|---|---|---|
+| K8s Starter | 1 | 2 GB | 50 GB | \$9.99 | \$0.013875 |
+| K8s Standard | 2 | 4 GB | 80 GB | \$13.99 | \$0.019431 |
+| K8s Performance | 4 | 8 GB | 120 GB | \$30.99 | \$0.043042 |
+| K8s High Memory | 8 | 16 GB | 180 GB | \$59.99 | \$0.083319 |
+| K8s Large | 8 | 32 GB | 240 GB | \$115.99 | \$0.161097 |
+| K8s Scale | 16 | 64 GB | 480 GB | \$229.99 | \$0.319431 |
+
+## Add-ons
+
+| Item | Price |
+|---|---|
+| HA control plane (3 masters, 2 gateways) | \$30.00/month |
+| Storage node data disk (Longhorn) | \$0.08/GB/month (100–1000 GB per node) |
+
+Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly — see [Billing model](/products/build/kubernetes/concepts/billing-model). A ~1 GB per node of memory is used by Kubernetes itself — prefer fewer, larger nodes over many small ones.

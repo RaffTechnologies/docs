@@ -1,0 +1,25 @@
+---
+title: Expose a Kubernetes service
+sidebarTitle: Expose a service
+description: Publish workloads with Traefik ingress, MetalLB, or a TCP port on the cluster's public IP
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Every cluster sits behind a managed gateway with one public IP. Ports **80 and 443** are forwarded into the cluster; how traffic is routed from there is up to you.
+
+## Option 1 — Traefik ingress (HTTP/HTTPS)
+
+If the cluster was created with **Traefik**, standard `Ingress` resources work out of the box: create an Ingress for your Service and point DNS (or use the cluster's `*.k8s.raffusercloud.com` domain) at the cluster IP.
+
+## Option 2 — App Hub expose (simplest)
+
+For apps installed from App Hub, click **Expose** — the platform creates the ingress and TLS certificate for you at `https://<app>.<cluster-id>.k8s.raffusercloud.com`, or forwards a raw TCP port (e.g. PostgreSQL 5432) on the public IP.
+
+## Option 3 — MetalLB (LoadBalancer services)
+
+With **MetalLB** enabled, `Service type=LoadBalancer` gets a private IP from the cluster's address pool — useful inside the VPC or behind your own port forwards. Manage the pool size on the cluster's settings (up to 32 addresses).
+
+<Note>
+The gateway's firewall controls what reaches the cluster from the internet — see [Networking](/products/build/kubernetes/concepts/networking).
+</Note>

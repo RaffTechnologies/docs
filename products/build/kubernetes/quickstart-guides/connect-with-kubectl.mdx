@@ -1,0 +1,53 @@
+---
+title: Connect to Kubernetes with kubectl
+sidebarTitle: Connect with kubectl
+description: Download the admin kubeconfig and run kubectl against your cluster
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Every cluster exposes its API server on a public endpoint (`https://<cluster-id>.k8s.raffusercloud.com:6443`). Access is by the cluster's kubeconfig.
+
+## Before you start
+
+- A cluster in **Running** state
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed locally
+
+## Steps
+
+<Steps>
+  <Step title="Download the kubeconfig">
+    Open the cluster and click **kubeconfig** in the header (also available under **Settings**).
+    <Frame>
+      ![TODO: kubeconfig download button on the cluster page](/images/products/build/kubernetes/kubeconfig-download.png)
+    </Frame>
+  </Step>
+  <Step title="Point kubectl at it">
+    ```bash
+    export KUBECONFIG=~/Downloads/<cluster-name>.yaml
+    kubectl get nodes
+    ```
+    You should see your control-plane and worker nodes in `Ready` state.
+  </Step>
+  <Step title="Deploy something">
+    ```bash
+    kubectl create deployment web --image=nginx --replicas=2
+    kubectl get pods -o wide
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+The kubeconfig grants **full cluster-admin access**. Store it like a password, never commit it to a repository, and don't share it outside your team. You can also fetch it from the [API](/api-reference/kubernetes/get-kubeconfig).
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Expose a service" icon="globe" href="/products/build/kubernetes/quickstart-guides/expose-a-service">
+    Reach your workload from the internet
+  </Card>
+  <Card title="View logs & metrics" icon="chart-line" href="/products/build/kubernetes/quickstart-guides/view-logs-and-metrics">
+    Watch workloads without leaving the dashboard
+  </Card>
+</CardGroup>

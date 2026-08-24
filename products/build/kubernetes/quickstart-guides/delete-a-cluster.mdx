@@ -1,0 +1,24 @@
+---
+title: Delete a Kubernetes cluster
+sidebarTitle: Delete a cluster
+description: Remove a cluster and all its infrastructure
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Deleting a cluster removes its nodes, gateway, VPC, reserved IPs and DNS records. **All workloads and data on the cluster are destroyed** — this cannot be undone.
+
+## Steps
+
+<Steps>
+  <Step title="Open Settings → Danger zone">
+    On the cluster page, open **Settings** and click **Delete Cluster**.
+  </Step>
+  <Step title="Confirm by typing the cluster name">
+    Deletion runs in the background and finishes in a couple of minutes. Subscription clusters have their remaining balance credited back automatically.
+  </Step>
+</Steps>
+
+<Note>
+If part of the teardown fails, the cluster stays visible with a **Delete failed** badge and nothing is removed or billed incorrectly — click **Retry delete** to run it again.
+</Note>

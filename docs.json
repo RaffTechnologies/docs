@@ -103,6 +103,48 @@
                   },
                   "products/build/virtual-machines/troubleshooting"
                 ]
+              },
+              {
+                "group": "Kubernetes",
+                "icon": "dharmachakra",
+                "pages": [
+                  "products/build/kubernetes/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/build/kubernetes/quickstart-guides/create-a-cluster",
+                      "products/build/kubernetes/quickstart-guides/connect-with-kubectl",
+                      "products/build/kubernetes/quickstart-guides/add-a-node-pool",
+                      "products/build/kubernetes/quickstart-guides/scale-a-node-pool",
+                      "products/build/kubernetes/quickstart-guides/upgrade-to-ha",
+                      "products/build/kubernetes/quickstart-guides/install-an-app",
+                      "products/build/kubernetes/quickstart-guides/expose-a-service",
+                      "products/build/kubernetes/quickstart-guides/view-logs-and-metrics",
+                      "products/build/kubernetes/quickstart-guides/delete-a-cluster"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/build/kubernetes/concepts/cluster-architecture",
+                      "products/build/kubernetes/concepts/node-pools-and-autoscaling",
+                      "products/build/kubernetes/concepts/control-plane-and-ha",
+                      "products/build/kubernetes/concepts/networking",
+                      "products/build/kubernetes/concepts/storage",
+                      "products/build/kubernetes/concepts/lifecycle-states",
+                      "products/build/kubernetes/concepts/billing-model"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/build/kubernetes/details/features-and-limits",
+                      "products/build/kubernetes/details/pricing",
+                      "products/build/kubernetes/details/supported-versions"
+                    ]
+                  },
+                  "products/build/kubernetes/troubleshooting"
+                ]
               }
             ]
           },
@@ -466,6 +508,56 @@
                   "api-reference/volumes/attach-volume",
                   "api-reference/volumes/detach-volume",
                   "api-reference/volumes/resize-volume"
+                ]
+              },
+              {
+                "group": "Kubernetes",
+                "pages": [
+                  {
+                    "group": "Clusters",
+                    "pages": [
+                      "api-reference/kubernetes/list-clusters",
+                      "api-reference/kubernetes/create-cluster",
+                      "api-reference/kubernetes/get-cluster",
+                      "api-reference/kubernetes/rename-cluster",
+                      "api-reference/kubernetes/delete-cluster",
+                      "api-reference/kubernetes/get-kubeconfig",
+                      "api-reference/kubernetes/upgrade-to-ha",
+                      "api-reference/kubernetes/list-kubernetes-versions",
+                      "api-reference/kubernetes/list-node-plans"
+                    ]
+                  },
+                  {
+                    "group": "Node pools",
+                    "pages": [
+                      "api-reference/kubernetes/list-node-pools",
+                      "api-reference/kubernetes/add-node-pool",
+                      "api-reference/kubernetes/update-node-pool",
+                      "api-reference/kubernetes/scale-node-pool",
+                      "api-reference/kubernetes/delete-node-pool"
+                    ]
+                  },
+                  {
+                    "group": "Observability",
+                    "pages": [
+                      "api-reference/kubernetes/list-cluster-nodes",
+                      "api-reference/kubernetes/list-cluster-events",
+                      "api-reference/kubernetes/get-cluster-metrics",
+                      "api-reference/kubernetes/get-cluster-stats"
+                    ]
+                  },
+                  {
+                    "group": "Networking",
+                    "pages": [
+                      "api-reference/kubernetes/get-cluster-firewall",
+                      "api-reference/kubernetes/assign-cluster-firewall",
+                      "api-reference/kubernetes/reset-cluster-firewall",
+                      "api-reference/kubernetes/get-metallb-pool",
+                      "api-reference/kubernetes/update-metallb-pool",
+                      "api-reference/kubernetes/list-tcp-ports",
+                      "api-reference/kubernetes/delete-tcp-port"
+                    ]
+                  }
                 ]
               },
               {

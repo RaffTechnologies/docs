@@ -1,0 +1,24 @@
+---
+title: Kubernetes control plane and HA
+sidebarTitle: Control plane & HA
+description: The managed control plane, what HA adds, and how we keep etcd fast
+---
+
+<sub>Updated August 24, 2026</sub>
+
+The control plane — API server, scheduler, controllers, etcd — is run by Raff and is **free**; you pay only for workers and storage nodes.
+
+## Standard vs HA
+
+| | Standard | HA (\$30/month) |
+|---|---|---|
+| Control-plane nodes | 1 | 3 (replicated etcd, quorum) |
+| API availability through a master failure | No | Yes |
+| Gateways | 1 | 2 (active/standby) |
+| Recommended for | Dev, staging | Production |
+
+You can create a cluster with HA or [upgrade later](/products/build/kubernetes/quickstart-guides/upgrade-to-ha); upgrades are not reversible.
+
+## etcd on local NVMe
+
+etcd is the one latency-critical component in Kubernetes: every write waits for an fsync. Raff places control-plane disks on **hypervisor-local NVMe** rather than network storage, keeping etcd fsync latency in single-digit milliseconds. The dashboard's control-plane health card shows the live etcd latency p99 and 24-hour restart counts for your cluster — the same signals our own alerting watches.

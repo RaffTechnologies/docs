@@ -1,0 +1,10 @@
+---
+title: "Delete Node Pool"
+openapi: "DELETE /api/v1/k8s/clusters/{cluster_id}/pools/{pool_id}"
+---
+
+<sub>Updated August 24, 2026</sub>
+
+<Note>
+Every node is cordoned and drained before its VM is terminated, one at a time. The last pool of a cluster cannot be deleted, and the cluster keeps at least 2 worker nodes.
+</Note>

@@ -1,0 +1,55 @@
+---
+title: Create a Kubernetes cluster
+sidebarTitle: Create a cluster
+description: Launch a managed Kubernetes cluster from the dashboard in about ten minutes
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Create a cluster with one or more worker pools. Provisioning takes 8–12 minutes; you can watch every step in the cluster's Activity feed.
+
+## Before you start
+
+- An account with billing enabled and a project to put the cluster in
+- A rough idea of the workload size — you can [scale pools](/products/build/kubernetes/quickstart-guides/scale-a-node-pool) any time
+
+## Steps
+
+<Steps>
+  <Step title="Open Kubernetes and click New cluster">
+    In the dashboard, go to **Kubernetes** and click **New cluster**.
+    <Frame>
+      ![TODO: Kubernetes list page with New cluster button](/images/products/build/kubernetes/create-start.png)
+    </Frame>
+  </Step>
+  <Step title="Name the cluster and pick a version">
+    Names are 1–63 lowercase letters, digits or hyphens, unique in your account. Leave the version on the default unless you need a specific one.
+  </Step>
+  <Step title="Choose the control plane">
+    The standard control plane (1 node) is free. Toggle **HA control plane** for 3 masters at \$30/month — recommended for production. See [Control plane & HA](/products/build/kubernetes/concepts/control-plane-and-ha).
+  </Step>
+  <Step title="Configure node pools">
+    Pick a node plan and count (2–20) for the first pool. Add more pools for mixed workloads, and enable **autoscaling** with min/max bounds if you want the cluster to size itself.
+  </Step>
+  <Step title="Networking and add-ons">
+    The cluster gets its own VPC automatically. Optionally enable **Traefik** (ingress), **MetalLB** (LoadBalancer services) and dedicated **storage nodes** (Longhorn). Defaults are fine for a first cluster.
+  </Step>
+  <Step title="Review and create">
+    The cost rail shows the exact monthly price before you confirm.
+  </Step>
+</Steps>
+
+## Verify
+
+The cluster page shows live provisioning events. When the status badge turns **Running** and every pool shows **running**, the cluster is ready — download the kubeconfig and [connect with kubectl](/products/build/kubernetes/quickstart-guides/connect-with-kubectl).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with kubectl" icon="terminal" href="/products/build/kubernetes/quickstart-guides/connect-with-kubectl">
+    Download the kubeconfig and deploy
+  </Card>
+  <Card title="Create via API" icon="code" href="/api-reference/kubernetes/create-cluster">
+    Automate cluster creation with the REST API
+  </Card>
+</CardGroup>

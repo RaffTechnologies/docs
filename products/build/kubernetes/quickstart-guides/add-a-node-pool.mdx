@@ -1,0 +1,38 @@
+---
+title: Add a Kubernetes node pool
+sidebarTitle: Add a node pool
+description: Add a pool of worker nodes with its own plan, labels and taints
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Node pools group workers that share a size, labels and taints. Use separate pools for mixed workloads — e.g. a general pool plus a high-memory pool for databases.
+
+## Steps
+
+<Steps>
+  <Step title="Open the Pools tab">
+    On the cluster page, open **Node pools** and click **Add node pool**.
+  </Step>
+  <Step title="Name it and choose size and count">
+    Pool names follow the same rules as cluster names. Pick a node plan and 2–20 nodes; optionally enable autoscaling with min/max bounds.
+  </Step>
+  <Step title="Confirm">
+    On pay-as-you-go clusters the pool is created immediately and bills per node-hour. On subscription clusters you are taken through checkout for the pro-rated cost first.
+  </Step>
+</Steps>
+
+## Verify
+
+The new pool appears with status **provisioning**, then **running** once every node has joined. Nodes carry the pool's labels and taints automatically — check with `kubectl get nodes --show-labels`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Scale a node pool" icon="arrow-up-right-dots" href="/products/build/kubernetes/quickstart-guides/scale-a-node-pool">
+    Change node counts or let autoscaling manage them
+  </Card>
+  <Card title="Node pools & autoscaling" icon="layer-group" href="/products/build/kubernetes/concepts/node-pools-and-autoscaling">
+    How pools, labels, taints and the autoscaler work
+  </Card>
+</CardGroup>

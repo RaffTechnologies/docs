@@ -1,0 +1,28 @@
+---
+title: Kubernetes networking
+sidebarTitle: Networking
+description: VPC, CIDRs, the gateway, firewall, ingress and MetalLB
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Each cluster runs in its **own VPC**; nodes have private IPs only. The gateway holds the cluster's public IP and is the only way in or out.
+
+## Address ranges
+
+| Network | Default | Notes |
+|---|---|---|
+| VPC (nodes) | auto-allocated /24 | one per cluster |
+| Pod network (`cluster_cidr`) | `10.42.0.0/16` | overridable at create: private IPv4, /12–/24 |
+| Service network (`service_cidr`) | `10.43.0.0/16` | same rules; must not overlap the pod network or the VPC |
+
+## What the gateway forwards
+
+- **6443** → Kubernetes API (your kubeconfig endpoint `https://<cluster-id>.k8s.raffusercloud.com:6443`)
+- **80 / 443** → into the cluster for ingress (Traefik, or App Hub exposes)
+- **Custom TCP ports** → created when exposing an app over TCP (e.g. a database); manage them on the cluster page or [API](/api-reference/kubernetes/list-tcp-ports)
+- Everything else is blocked by the **firewall**: the platform baseline security group by default, or one of your own security groups — switch any time under the cluster's firewall settings.
+
+## MetalLB
+
+With MetalLB enabled, `Service type=LoadBalancer` allocates private IPs from a reserved block inside the VPC (resizable up to 32 addresses). Combine with TCP port forwards to publish them externally.

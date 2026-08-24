@@ -1,0 +1,10 @@
+---
+title: "Scale Node Pool"
+openapi: "POST /api/v1/k8s/clusters/{cluster_id}/pools/{pool_id}/scale"
+---
+
+<sub>Updated August 24, 2026</sub>
+
+<Note>
+Scaling runs asynchronously. Scale-down drains the newest nodes first, honouring PodDisruptionBudgets — a node that cannot be emptied within 10 minutes stops the operation with the reason in the pool's `status_message`. Scale-up on subscription-billed clusters goes through the dashboard checkout (`409` here).
+</Note>

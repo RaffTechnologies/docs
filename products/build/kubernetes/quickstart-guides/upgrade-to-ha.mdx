@@ -1,0 +1,28 @@
+---
+title: Upgrade to an HA control plane
+sidebarTitle: Upgrade to HA
+description: Promote a single-master cluster to a 3-master highly available control plane
+---
+
+<sub>Updated August 24, 2026</sub>
+
+An HA control plane runs 3 masters with a replicated etcd, so the Kubernetes API stays up through a master failure. It costs a flat \$30/month; you can also enable it at cluster creation.
+
+## Steps
+
+<Steps>
+  <Step title="Open Settings">
+    On the cluster page, open **Settings** and find **High availability**.
+  </Step>
+  <Step title="Upgrade">
+    Click **Upgrade to HA**. Pay-as-you-go clusters start immediately; subscription clusters go through checkout for the pro-rated fee first. The two new masters join over a few minutes with no API downtime.
+  </Step>
+</Steps>
+
+## Verify
+
+The cluster header shows an **HA · 3 masters** badge, and `kubectl get nodes` lists three control-plane nodes.
+
+<Note>
+HA cannot be reversed from the dashboard — a 3-master control plane stays HA for the cluster's lifetime.
+</Note>

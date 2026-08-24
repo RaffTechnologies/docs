@@ -1,0 +1,42 @@
+---
+title: Scale a Kubernetes node pool
+sidebarTitle: Scale a node pool
+description: Add or remove worker nodes by hand, or set autoscaling bounds
+---
+
+<sub>Updated August 24, 2026</sub>
+
+Scale a pool between 2 and 20 nodes. Scaling down never kills your workloads abruptly: each node is cordoned and drained first, respecting PodDisruptionBudgets.
+
+## Steps
+
+<Steps>
+  <Step title="Open the pool's scale control">
+    On the **Node pools** tab, use the +/− stepper on the pool card, or click the count to open the scale dialog with a cost preview.
+    <Frame>
+      ![TODO: scale node pool dialog](/images/products/build/kubernetes/scale-pool.png)
+    </Frame>
+  </Step>
+  <Step title="Confirm the new count">
+    Scale-up deploys new nodes (~3 minutes each). Scale-down runs in the background: newest nodes are drained one at a time, then removed. The pool shows a **Scaling** badge until it settles.
+  </Step>
+</Steps>
+
+<Note>
+**Zero-downtime rule:** a node is only removed once every pod on it has been evicted. If a PodDisruptionBudget blocks eviction for 10 minutes, scaling stops, the node is restored, and the pool's status message names the blocking pod. Workloads with a **single replica** still restart during scale-down — there is no second copy to serve while the pod moves; run 2+ replicas for anything that must stay up.
+</Note>
+
+## Autoscaling
+
+Enable autoscaling per pool with min/max bounds (**Edit autoscale** on the pool card). The autoscaler adds a node when pods can't be scheduled for lack of CPU/memory, and removes one after 15 minutes of sustained low utilization — always inside your bounds, at most one change per 10 minutes.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Node pools & autoscaling" icon="layer-group" href="/products/build/kubernetes/concepts/node-pools-and-autoscaling">
+    The rules the autoscaler follows
+  </Card>
+  <Card title="Scale via API" icon="code" href="/api-reference/kubernetes/scale-node-pool">
+    Automate scaling with the REST API
+  </Card>
+</CardGroup>
