@@ -9,9 +9,17 @@ description: Watch workloads, pod logs, node utilization and control-plane healt
 The cluster page gives you day-to-day observability without port-forwarding anything:
 
 - **Overview / KPI strip** — nodes ready, pods, CPU and memory across the cluster, plus **control-plane health**: etcd latency p99 and 24-hour restart counts. Green means the control plane is healthy; sustained etcd latency above 100 ms or restarts indicate a problem on our side that we are alerted on.
-- **Workloads** — deployments, statefulsets, daemonsets, services and ingresses per namespace.
+- **Workloads** — deployments, statefulsets, daemonsets, services and ingresses per namespace, read live from the cluster's API server.
+
+<Frame>
+  ![Workloads tab listing deployments with namespace, readiness, image and health](/images/products/build/kubernetes/workloads-tab.png)
+</Frame>
 - **Pods & logs** — live pod list with streaming logs (tail, since, previous container).
 - **Nodes** — per-node readiness (Ready / Not ready / Cordoned), CPU and memory.
 - **Activity** — every lifecycle event: provisioning steps, scaling, autoscaler actions, warnings.
+
+<Frame>
+  ![Logs tab streaming live pod logs with namespace and pod selectors, pause and download](/images/products/build/kubernetes/pods-logs.png)
+</Frame>
 
 The same data is available on the [metrics](/api-reference/kubernetes/get-cluster-metrics) and [events](/api-reference/kubernetes/list-cluster-events) API endpoints. For full-blown monitoring inside the cluster, install **Grafana** or **kube-prometheus-stack** from [App Hub](/products/build/kubernetes/quickstart-guides/install-an-app).
