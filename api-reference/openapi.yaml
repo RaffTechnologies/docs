@@ -7055,6 +7055,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/AppTier'
 
+
   # ---------------------------------------------------------------------------
   # Kubernetes — managed clusters
   # ---------------------------------------------------------------------------
@@ -9590,8 +9591,8 @@ components:
           example: 2
         ssd_gib:
           type: integer
-          description: NVMe SSD storage in GiB per node
-          example: 50
+          description: NVMe root disk in GiB per node (OS, container images, logs, ephemeral storage; persistent volumes come from storage nodes)
+          example: 25
         transfer_gib:
           type: integer
           description: Monthly data transfer in GiB (0 means unmetered)
@@ -12069,6 +12070,7 @@ components:
           description: When the backup leaves retention
           nullable: true
 
+    
     K8sVersion:
       type: object
       properties:
@@ -12600,6 +12602,7 @@ components:
           type: string
           description: Public address of the forward
           example: 23.26.4.133:5432
+
   responses:
     BadRequest:
       description: Invalid request parameters
