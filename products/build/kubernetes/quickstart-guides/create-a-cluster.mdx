@@ -19,7 +19,7 @@ Create a cluster with one or more worker pools. Provisioning takes 10–20 minut
   <Step title="Open Kubernetes and click New cluster">
     In the dashboard, go to **Kubernetes** and click **New cluster**.
     <Frame>
-      ![Kubernetes page in the Raff dashboard with the New cluster button](/images/products/build/kubernetes/create-start.png)
+      ![Kubernetes page in the Raff dashboard with the New cluster button](/images/products/compute/kubernetes/create-start.png)
     </Frame>
   </Step>
   <Step title="Name the cluster and pick a version">
@@ -28,31 +28,31 @@ Create a cluster with one or more worker pools. Provisioning takes 10–20 minut
   <Step title="Choose the control plane">
     The standard control plane (1 node) is free. Pick **High availability · 3 masters** for \$30/month — recommended for production. See [Control plane & HA](/products/build/kubernetes/concepts/control-plane-and-ha).
     <Frame>
-      ![Control plane step with single master and high availability options](/images/products/build/kubernetes/create-ha.png)
+      ![Control plane step with single master and high availability options](/images/products/compute/kubernetes/create-ha.png)
     </Frame>
   </Step>
   <Step title="Configure node pools">
     Pick a worker plan and node count (2–20) for the first pool. Add more pools for mixed workloads, set labels and taints per pool, and enable **autoscaling** with min/max bounds if you want the cluster to size itself.
     <Frame>
-      ![Node pools step with worker plans, node count, autoscale, labels and taints](/images/products/build/kubernetes/create-pools.png)
+      ![Node pools step with worker plans, node count, autoscale, labels and taints](/images/products/compute/kubernetes/create-pools.png)
     </Frame>
   </Step>
   <Step title="Pick add-ons">
     Cilium CNI is always included. Optionally enable **persistent storage** (Longhorn on dedicated storage nodes, sized here), **Traefik** (ingress) and **MetalLB** (LoadBalancer services). Defaults are fine for a first cluster.
     <Frame>
-      ![Add-ons step with Cilium, persistent storage sizing, Traefik and MetalLB](/images/products/build/kubernetes/create-addons.png)
+      ![Add-ons step with Cilium, persistent storage sizing, Traefik and MetalLB](/images/products/compute/kubernetes/create-addons.png)
     </Frame>
   </Step>
   <Step title="Choose the network and firewall">
     The cluster gets its own VPC automatically, or pick an existing one. The **managed firewall** applies a security group to the cluster's public entry point — the baseline `raff-default-secure` opens 80, 443 and 6443 only. You can change it any time in **Settings → Firewall**.
     <Frame>
-      ![Network step with VPC selection and managed firewall](/images/products/build/kubernetes/create-network.png)
+      ![Network step with VPC selection and managed firewall](/images/products/compute/kubernetes/create-network.png)
     </Frame>
   </Step>
   <Step title="Review and create">
     The summary shows every choice and the exact monthly price before you confirm.
     <Frame>
-      ![Review step with configuration summary and monthly cost](/images/products/build/kubernetes/create-review.png)
+      ![Review step with configuration summary and monthly cost](/images/products/compute/kubernetes/create-review.png)
     </Frame>
   </Step>
 </Steps>

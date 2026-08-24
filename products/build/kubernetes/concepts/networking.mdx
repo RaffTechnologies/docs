@@ -26,7 +26,7 @@ The gateway load-balances at **TCP level** across your nodes:
 - Everything else is blocked by the **firewall**: the platform baseline already permits exactly 80, 443 and 6443 with nothing to configure. If you attach one of your own security groups instead, make sure it allows those three ports. Change the active firewall any time in **Settings → Firewall**:
 
 <Frame>
-  ![Cluster Settings with the firewall section — active security group and assignment](/images/products/build/kubernetes/firewall-settings.png)
+  ![Cluster Settings with the firewall section — active security group and assignment](/images/products/compute/kubernetes/firewall-settings.png)
 </Frame>
 
 **Health checks & failover:** the gateway health-checks the nodes behind it and removes unhealthy ones from rotation automatically; nodes added by scaling or autoscaling are picked up automatically. On a standard cluster the gateway is a single managed instance, restarted automatically on failure; with [HA](/products/build/kubernetes/concepts/control-plane-and-ha) it is a redundant pair with automatic IP failover (VRRP).
