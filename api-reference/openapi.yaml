@@ -402,6 +402,8 @@ paths:
                     $ref: '#/components/schemas/K8sHAPricing'
                   storage_pricing:
                     $ref: '#/components/schemas/K8sStoragePricing'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -7064,7 +7066,6 @@ paths:
       summary: List Kubernetes versions
       description: Kubernetes versions available for new clusters. Use `id` as `k8s_version_id` when creating a cluster.
       operationId: listK8sVersions
-      security: []
       responses:
         '200':
           description: Available versions
@@ -7079,6 +7080,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/K8sVersion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/k8s/node-plans:
     get:
@@ -7087,7 +7090,6 @@ paths:
       summary: List Kubernetes node plans
       description: Worker node plans plus HA control-plane and storage-node pricing. Same data as `GET /api/v1/public/pricing/kubernetes`.
       operationId: listK8sNodePlans
-      security: []
       responses:
         '200':
           description: Node plans and pricing
@@ -7208,6 +7210,7 @@ paths:
       description: Batch utilization snapshot for one or more clusters (CPU, memory, pods, node readiness). Values refresh every 60 seconds.
       operationId: getK8sClusterStats
       parameters:
+        - $ref: '#/components/parameters/ProjectIDHeader'
         - name: ids
           in: query
           required: false
