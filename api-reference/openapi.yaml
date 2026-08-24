@@ -12132,16 +12132,6 @@ components:
         worker_count:
           type: integer
           description: Total worker nodes across all pools
-        master_cpu:
-          type: integer
-        master_ram:
-          type: integer
-          description: MB
-        worker_cpu:
-          type: integer
-        worker_ram:
-          type: integer
-          description: MB
         ha_enabled:
           type: boolean
         firewall_enabled:
