@@ -17,6 +17,12 @@ Every cluster is a set of virtual machines in a **dedicated VPC**, built from fo
 
 The distribution is **RKE2** with the **Cilium** CNI. Nodes have no public IPs — all traffic enters and leaves through the gateway, and the [firewall](/products/build/kubernetes/concepts/networking) on the gateway decides what gets in.
 
+The cluster's **Nodes** tab shows all of these roles live — control plane, gateway and workers with their internal IPs, per-node CPU/memory and kubelet status:
+
+<Frame>
+  ![Nodes tab showing the control plane, gateway and worker nodes with status](/images/products/build/kubernetes/nodes-tab.png)
+</Frame>
+
 ## Lifecycle states
 
 A cluster's `status` moves through: `pending` → `deploying` → `running`, with `warning` for degraded conditions (details in the status message), `failed` when provisioning could not complete (all infrastructure is cleaned up automatically and nothing bills), and `deleting` / `delete_failed` during teardown. The `ready` flag is the simple version: `true` means running with no pool mid-operation.

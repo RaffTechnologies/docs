@@ -26,16 +26,34 @@ Create a cluster with one or more worker pools. Provisioning takes 8–12 minute
     Names are 1–63 lowercase letters, digits or hyphens, unique in your account. Leave the version on the default unless you need a specific one.
   </Step>
   <Step title="Choose the control plane">
-    The standard control plane (1 node) is free. Toggle **HA control plane** for 3 masters at \$30/month — recommended for production. See [Control plane & HA](/products/build/kubernetes/concepts/control-plane-and-ha).
+    The standard control plane (1 node) is free. Pick **High availability · 3 masters** for \$30/month — recommended for production. See [Control plane & HA](/products/build/kubernetes/concepts/control-plane-and-ha).
+    <Frame>
+      ![Control plane step with single master and high availability options](/images/products/build/kubernetes/create-ha.png)
+    </Frame>
   </Step>
   <Step title="Configure node pools">
-    Pick a node plan and count (2–20) for the first pool. Add more pools for mixed workloads, and enable **autoscaling** with min/max bounds if you want the cluster to size itself.
+    Pick a worker plan and node count (2–20) for the first pool. Add more pools for mixed workloads, set labels and taints per pool, and enable **autoscaling** with min/max bounds if you want the cluster to size itself.
+    <Frame>
+      ![Node pools step with worker plans, node count, autoscale, labels and taints](/images/products/build/kubernetes/create-pools.png)
+    </Frame>
   </Step>
-  <Step title="Networking and add-ons">
-    The cluster gets its own VPC automatically. Optionally enable **Traefik** (ingress), **MetalLB** (LoadBalancer services) and dedicated **storage nodes** (Longhorn). Defaults are fine for a first cluster.
+  <Step title="Pick add-ons">
+    Cilium CNI is always included. Optionally enable **persistent storage** (Longhorn on dedicated storage nodes, sized here), **Traefik** (ingress) and **MetalLB** (LoadBalancer services). Defaults are fine for a first cluster.
+    <Frame>
+      ![Add-ons step with Cilium, persistent storage sizing, Traefik and MetalLB](/images/products/build/kubernetes/create-addons.png)
+    </Frame>
+  </Step>
+  <Step title="Choose the network and firewall">
+    The cluster gets its own VPC automatically, or pick an existing one. The **managed firewall** applies a security group to the cluster's public entry point — the baseline `raff-default-secure` opens 80, 443 and 6443 only. You can change it any time in **Settings → Firewall**.
+    <Frame>
+      ![Network step with VPC selection and managed firewall](/images/products/build/kubernetes/create-network.png)
+    </Frame>
   </Step>
   <Step title="Review and create">
-    The cost rail shows the exact monthly price before you confirm.
+    The summary shows every choice and the exact monthly price before you confirm.
+    <Frame>
+      ![Review step with configuration summary and monthly cost](/images/products/build/kubernetes/create-review.png)
+    </Frame>
   </Step>
 </Steps>
 
