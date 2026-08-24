@@ -23,7 +23,11 @@ The gateway load-balances at **TCP level** across your nodes:
 - **6443** → the Kubernetes API (your kubeconfig endpoint `https://<cluster-id>.k8s.raffusercloud.com:6443`)
 - **80 / 443** → into the cluster for ingress (Traefik, or App Hub exposes)
 - **Custom TCP ports** → created when exposing an app over TCP (e.g. a database); manage them on the cluster page or [API](/api-reference/kubernetes/list-tcp-ports)
-- Everything else is blocked by the **firewall**: the platform baseline already permits exactly 80, 443 and 6443 with nothing to configure. If you attach one of your own security groups instead, make sure it allows those three ports.
+- Everything else is blocked by the **firewall**: the platform baseline already permits exactly 80, 443 and 6443 with nothing to configure. If you attach one of your own security groups instead, make sure it allows those three ports. Change the active firewall any time in **Settings → Firewall**:
+
+<Frame>
+  ![Cluster Settings with the firewall section — active security group and assignment](/images/products/build/kubernetes/firewall-settings.png)
+</Frame>
 
 **Health checks & failover:** the gateway health-checks the nodes behind it and removes unhealthy ones from rotation automatically; nodes added by scaling or autoscaling are picked up automatically. On a standard cluster the gateway is a single managed instance, restarted automatically on failure; with [HA](/products/build/kubernetes/concepts/control-plane-and-ha) it is a redundant pair with automatic IP failover (VRRP).
 

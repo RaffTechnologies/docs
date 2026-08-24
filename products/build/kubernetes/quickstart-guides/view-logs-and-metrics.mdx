@@ -14,9 +14,19 @@ The cluster page gives you day-to-day observability without port-forwarding anyt
 <Frame>
   ![Workloads tab listing deployments with namespace, readiness, image and health](/images/products/build/kubernetes/workloads-tab.png)
 </Frame>
+- **Metrics** — live utilization snapshot from the cluster's metrics-server: cluster-wide CPU, memory, pods and readiness, with a per-node breakdown. Refreshed every 60 seconds.
+
+<Frame>
+  ![Metrics tab with cluster-wide utilization and per-node CPU and memory breakdown](/images/products/build/kubernetes/metrics-tab.png)
+</Frame>
+
 - **Pods & logs** — live pod list with streaming logs (tail, since, previous container).
 - **Nodes** — per-node readiness (Ready / Not ready / Cordoned), CPU and memory.
-- **Activity** — every lifecycle event: provisioning steps, scaling, autoscaler actions, warnings.
+- **Activity** — every action on the cluster from anyone in your org (dashboard or API), plus lifecycle events: provisioning steps, scaling, autoscaler actions, warnings. Retained for 90 days, exportable as CSV.
+
+<Frame>
+  ![Activity tab listing every cluster action with actor, source IP and result](/images/products/build/kubernetes/activity-feed.png)
+</Frame>
 
 <Frame>
   ![Logs tab streaming live pod logs with namespace and pod selectors, pause and download](/images/products/build/kubernetes/pods-logs.png)

@@ -14,7 +14,13 @@ A **node pool** is a group of identical workers: same node plan, same Kubernetes
 
 ## Autoscaling rules
 
-Enable per pool with min/max bounds. The autoscaler evaluates every 5 minutes:
+Enable per pool with min/max bounds — from the pool's **Edit autoscale** control or at creation:
+
+<Frame>
+  ![Node pool with the autoscale toggle and min/max node bounds](/images/products/build/kubernetes/autoscale-pool.png)
+</Frame>
+
+The autoscaler evaluates every 5 minutes:
 
 - **Up (+1 node):** any pod is unschedulable for lack of CPU or memory. The pool with the most headroom below its max gets the node.
 - **Down (−1 node):** cluster-wide worker CPU **and** memory below 40% for 15 sustained minutes; removal uses the same drain-first path.
