@@ -14,16 +14,16 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 | Node pools per cluster | unlimited; ≥1 required |
 | Nodes per pool | 2–20 |
 | Minimum workers per cluster | 2 |
-| Storage nodes | 0, 2 or 3; 100–1000 GB data disk each |
+| Storage nodes | 0, 2 or 3; 10–1000 GB data disk each |
 | MetalLB address pool | up to 32 addresses |
-| Kubernetes versions | one supported release — see [Supported versions](/products/build/kubernetes/details/supported-versions) |
+| Kubernetes versions | up to three minor versions with in-place upgrades — see [Supported versions](/products/build/kubernetes/details/supported-versions) |
 | Region | us-east |
 | Connections / requests / Ingress hosts | **No platform-imposed limits** — throughput is bounded only by your cluster's dedicated gateway capacity (per-cluster, unaffected by other tenants) |
 
 ## What's included
 
 - Managed, free control plane (optional 3-master HA), RKE2 + Cilium
-- Node pools with per-pool plans, labels, taints and autoscaling
+- Node pools with labels, taints and autoscaling (all pools share the cluster's worker plan)
 - Drain-first scale-down (PodDisruptionBudgets honoured, never force-deleted)
 - Admin kubeconfig; full REST API; dashboard with workloads, pods, live logs, metrics and control-plane health
 - App Hub one-click installs with HTTPS/TCP expose
@@ -34,7 +34,6 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 
 Honest list of gaps we're working on:
 
-- **In-place Kubernetes version upgrades** — new versions currently mean creating a new cluster and migrating workloads
 - **Kubeconfig rotation / short-lived credentials** — the kubeconfig is a long-lived admin credential; treat it accordingly
 - **Multiple regions** — us-east only
 - Windows nodes, GPU nodes, IPv6

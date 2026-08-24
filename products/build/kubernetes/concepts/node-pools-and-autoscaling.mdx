@@ -8,7 +8,7 @@ description: How pools group workers, and the exact rules the autoscaler follows
 
 A **node pool** is a group of identical workers: same node plan, same Kubernetes labels and taints. A cluster has 1+ pools with 2–20 nodes each; the platform keeps a minimum of 2 workers per cluster.
 
-- **Labels and taints** set on a pool are applied to its nodes automatically (and re-applied if a node is replaced). Use them to steer workloads: e.g. taint a high-memory pool and tolerate it only from your database pods.
+- **Labels and taints** set on a pool are applied to its nodes automatically (and re-applied if a node is replaced). Use them to steer workloads: e.g. taint a dedicated pool and tolerate it only from your database pods.
 - **`node_count` vs `actual_node_count`** — the target vs what currently exists; they differ briefly while scaling.
 - **Scale-down is drain-first**: newest nodes go first, each cordoned and drained honouring PodDisruptionBudgets, never force-deleted. A node that can't be emptied within 10 minutes stops the operation with the reason on the pool.
 

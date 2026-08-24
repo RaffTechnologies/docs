@@ -10,8 +10,8 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 ## Two billing modes
 
-- **Pay-as-you-go** — every worker/storage node bills per hour at its plan's hourly rate while it exists. Clusters created through the [API](/api-reference/kubernetes/create-cluster) follow the account's billing mode — on a subscription account the API creates and charges the monthly subscription automatically.
-- **Subscription** — created through the dashboard checkout; the cluster's node set is a monthly commitment. Growing the cluster (scale-up, new pool, HA upgrade) goes through checkout for the pro-rated difference; shrinking credits the remainder back to your balance. Deleting the cluster converts the unused subscription value to account balance automatically.
+- **Pay-as-you-go** — every worker/storage node bills per hour at its plan's hourly rate while it exists.
+- **Subscription** — the cluster's node set is a monthly commitment. Create it from the dashboard (checkout) or the API (the saved payment method is charged automatically). Growing the cluster (scale-up, new pool, HA upgrade) costs the pro-rated difference — collected at checkout from the dashboard, or charged automatically via the API — and raises the monthly price; shrinking credits the remainder back to your balance. Deleting the cluster converts the unused subscription value to account balance automatically.
 
 ## Autoscaling and billing
 
@@ -27,7 +27,7 @@ Example: you committed a pool of 2 nodes on the \$9.99/month Starter plan (subsc
 | Traffic spike: autoscaler adds a 3rd node for 6 hours | \$19.98/month + 6 hours of the Starter hourly rate (shown as *overage* on your invoice) |
 | Autoscaler removes the 3rd node | back to \$19.98/month — overage stops |
 
-Only a **manual** scale through the dashboard changes the base: it goes through checkout and your monthly price moves with it.
+Only a **manual** scale (dashboard or API) changes the base, and your monthly price moves with it.
 
 **Pay-as-you-go cluster.** There is no base. Every node bills per hour while it exists, so autoscaling from 2 to 3 nodes means 3 nodes' hourly rates until it scales back to 2.
 

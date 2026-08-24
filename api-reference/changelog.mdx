@@ -20,6 +20,7 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 **Kubernetes — API**
 
 - 🔵 **Updated** — **Create cluster** now works on subscription accounts — `POST /api/v1/k8s/clusters` validates the saved payment method, creates the monthly subscription, and charges it automatically (previously `402`; same behavior as VM creation). Terraform and CLI creates work on subscription accounts as a result.
+- 🔵 **Updated** — **Scale node pool, Add node pool, Upgrade to HA** now work on subscription clusters via the API — the pro-rated difference is charged to the saved payment method (balance first) and the monthly price is raised (previously `409`). Dashboard flows still use checkout.
 
 ### August 24, 2026
 

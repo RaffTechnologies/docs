@@ -1,12 +1,12 @@
 ---
 title: Add a Kubernetes node pool
 sidebarTitle: Add a node pool
-description: Add a pool of worker nodes with its own plan, labels and taints
+description: Add a pool of worker nodes with its own labels, taints and autoscaling bounds
 ---
 
 <sub>Updated August 24, 2026</sub>
 
-Node pools group workers that share a size, labels and taints. Use separate pools for mixed workloads — e.g. a general pool plus a high-memory pool for databases.
+Node pools group workers, labels and taints. Use separate pools to organize workloads — e.g. a general pool plus a tainted pool reserved for databases. All pools use the cluster's worker plan.
 
 ## Steps
 

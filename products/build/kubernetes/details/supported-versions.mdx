@@ -9,16 +9,18 @@ description: Which Kubernetes releases you can run, and how new versions and upg
 | Version | Distribution | Status |
 |---|---|---|
 | **v1.33** | RKE2 (v1.33.4+rke2r1) | Default — new clusters |
-| **v1.34** | RKE2 (v1.34.9+rke2r1) | Available as an upgrade target |
-| **v1.35** | RKE2 (v1.35.7+rke2r1) | Available as an upgrade target |
+| **v1.34** | RKE2 (v1.34.10+rke2r1) | Available — create or upgrade |
+| **v1.35** | RKE2 (v1.35.7+rke2r1) | Available — create or upgrade |
 
 The current list is always available from [List Kubernetes Versions](/api-reference/kubernetes/list-kubernetes-versions), and the upgrade targets for your cluster from [Get cluster upgrades](/api-reference/kubernetes/get-cluster-upgrades).
 
 ## How versions are offered
 
-Up to three Kubernetes minor versions are offered at a time. When a new upstream release ships, we validate it on our infrastructure before it appears in your dashboard — first as an upgrade target, later as a creation option. The oldest version is then retired on a schedule (see below).
+Up to three Kubernetes minor versions are offered at a time. When a new upstream release ships, we validate it on our infrastructure before it appears in your dashboard. The oldest version is then retired on a schedule (see below).
 
-Within a minor version we offer one specific patch release (for example v1.34.9). When a newer patch is validated, it replaces the older one as the upgrade target for that line.
+Creating a cluster on a version newer than the base image is supported: the cluster provisions and then upgrades itself to your chosen version before it is handed over — this is part of the normal 10–20 minute creation time.
+
+Within a minor version we offer one specific patch release (for example v1.34.10). When a newer patch is validated, it replaces the older one as the upgrade target for that line.
 
 ## In-place upgrades
 

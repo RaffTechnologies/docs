@@ -19,13 +19,13 @@ The single-master control plane is free. You pay per worker node, plus \$30/mont
 | K8s Large | 8 | 32 GB | \$115.99 | \$0.161097 |
 | K8s Scale | 16 | 64 GB | \$229.99 | \$0.319431 |
 
-Every worker node has a 25 GB NVMe root disk for the OS, container images, logs and ephemeral storage. Persistent volumes come from [storage nodes](/products/build/kubernetes/concepts/storage), priced below.
+Every worker and storage node has a 25 GB NVMe root disk for the OS, container images, logs and ephemeral storage. Persistent volumes come from [storage nodes](/products/build/kubernetes/concepts/storage), priced below.
 
 ## Add-ons
 
 | Item | Price |
 |---|---|
 | HA control plane (3 masters, 2 gateways) | \$30.00/month |
-| Storage node data disk (Longhorn) | \$0.08/GB/month (100–1000 GB per node) |
+| Storage node data disk (Longhorn) | \$0.08/GB/month (10–1000 GB per node) |
 
-Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly — see [Billing model](/products/build/kubernetes/concepts/billing-model). A ~1 GB per node of memory is used by Kubernetes itself — prefer fewer, larger nodes over many small ones.
+Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly — see [Billing model](/products/build/kubernetes/concepts/billing-model). Kubernetes itself uses about 1 GB of memory per node — prefer fewer, larger nodes over many small ones.

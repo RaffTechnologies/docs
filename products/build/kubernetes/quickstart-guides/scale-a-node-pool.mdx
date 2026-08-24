@@ -28,7 +28,7 @@ Scale a pool between 2 and 20 nodes. Scaling down never kills your workloads abr
 
 ## Autoscaling
 
-Enable autoscaling per pool with min/max bounds (**Edit autoscale** on the pool card). The autoscaler adds a node when pods can't be scheduled for lack of CPU/memory, and removes one after 15 minutes of sustained low utilization — always inside your bounds, at most one change per 10 minutes.
+Enable autoscaling per pool with min/max bounds (**Edit autoscale** on the pool card). The autoscaler adds nodes as soon as pods can't be scheduled for lack of CPU/memory, and removes one when a node's pod requests stay under 50% for 10 minutes and its pods fit elsewhere — always inside your bounds, with at most one scale-down per 10 minutes.
 
 ## Next steps
 

@@ -7354,7 +7354,7 @@ paths:
       description: |
         Promote a single-master cluster to a 3-master highly available control plane. The flat HA fee starts accruing once enabled.
 
-        Available for pay-as-you-go clusters; subscription clusters upgrade through the dashboard checkout and receive `409` here.
+        On a pay-as-you-go cluster the flat HA fee simply starts accruing. On a subscription cluster the API charges the pro-rated HA fee to the saved payment method (balance first) and raises the monthly price; in the dashboard the upgrade goes through checkout.
       operationId: upgradeK8sClusterHA
       parameters:
         - $ref: '#/components/parameters/K8sClusterIDPath'
@@ -7562,7 +7562,7 @@ paths:
       description: |
         Add a node pool. Nodes deploy asynchronously; the pool is `running` once every node has joined.
 
-        Available for pay-as-you-go clusters; subscription clusters add pools through the dashboard checkout and receive `409` here.
+        On a pay-as-you-go cluster the new nodes accrue hourly. On a subscription cluster the API charges the pro-rated cost of the new pool to the saved payment method (balance first) and raises the monthly price; in the dashboard the addition goes through checkout.
       operationId: addK8sNodePool
       parameters:
         - $ref: '#/components/parameters/K8sClusterIDPath'
@@ -7662,7 +7662,7 @@ paths:
       description: |
         Set the pool's node count (2–20). Scale-up deploys new nodes; scale-down cordons and drains the newest nodes first — honouring PodDisruptionBudgets, never force-deleting — then removes their VMs. Both run asynchronously; watch the pool's `status` and `status_message`.
 
-        Scale-up on a subscription-billed cluster goes through the dashboard checkout and receives `409` here; scale-down works for every cluster.
+        Scale-down credits the remainder on every cluster. Scale-up on a pay-as-you-go cluster accrues hourly; on a subscription cluster the API charges the pro-rated difference to the saved payment method (balance first) and raises the monthly price, while the dashboard routes it through checkout.
       operationId: scaleK8sNodePool
       parameters:
         - $ref: '#/components/parameters/K8sClusterIDPath'

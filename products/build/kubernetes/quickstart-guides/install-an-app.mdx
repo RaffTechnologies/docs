@@ -24,7 +24,7 @@ The install dialog has three fields:
 
 - **Release name** — the Helm release name, and part of the app's public URL if you expose it later. Lowercase letters, digits and hyphens, up to 53 characters, unique per cluster. Keep the default unless you install the same app twice.
 - **Namespace** — the Kubernetes namespace the app installs into. Created automatically if it does not exist. Each app defaults to its own namespace, which keeps uninstalls clean.
-- **Values (advanced)** — a JSON object merged over the chart's default values, passed to Helm as-is. Use the chart's own value names (for example, Grafana uses `replicas`, not `replicaCount`) — check the chart's documentation. Leave empty for defaults. Limit: 64 KB.
+- **Values (advanced)** — a JSON object merged over the chart's default values, passed to Helm as-is. Use the chart's own value names (for example, Grafana uses `replicas`, not `replicaCount`) — the **Chart documentation and available values** link inside this section opens the chart's docs. Leave empty for defaults. Limit: 64 KB.
 
 Clicking **Install** creates the release in the background: the chart is fetched from its repository and installed with a 5-minute timeout. The card shows **Installing**, then **Active** or **Failed**. Every step is recorded in the cluster's Activity feed.
 

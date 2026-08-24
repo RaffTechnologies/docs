@@ -28,7 +28,7 @@ Teardown hit an infrastructure error and stopped **without removing anything**, 
 
 ## Creating a cluster returns 402 from the API
 
-Your account bills by subscription; API-created clusters are pay-as-you-go only for now. Create the cluster from the dashboard, or contact support about switching billing modes.
+On a subscription account the API charges the saved payment method automatically. A `402` means the charge could not be set up — usually no active card, or a card that can't be auto-charged. Fix the payment method under Billing → Payment methods and retry, or create the cluster from the dashboard.
 
 ## kubectl says connection refused / certificate error
 
