@@ -20,11 +20,11 @@ Enable per pool with min/max bounds — from the pool's **Edit autoscale** contr
   ![Node pool with the autoscale toggle and min/max node bounds](/images/products/build/kubernetes/autoscale-pool.png)
 </Frame>
 
-The autoscaler evaluates every 5 minutes and follows the same rules as the upstream Kubernetes Cluster Autoscaler:
+The autoscaler runs every 5 minutes and uses the same rules as the Kubernetes Cluster Autoscaler:
 
-- **Up:** pods unschedulable for lack of CPU or memory for at least 1 minute (giving the scheduler time to place transient pods first). Each pod is checked against the pool's nodes — labels, taints, and whether it fits a single node at all — and the pool gets as many nodes as the pending pods actually need, up to 3 per action. A pod that can never fit (requests larger than a node, or unmatched constraints) is reported in the Activity feed instead of adding nodes that would not help.
-- **Down (−1 node):** an individual node whose pods **request** less than 50% of its CPU and memory for 10 sustained minutes, and whose pods provably fit on the remaining nodes. The least-utilized such node is removed via the same drain-first path. Requested resources are what count — that is what the scheduler places pods by.
-- **Bounds are law:** a pool found outside its min/max (e.g. after a manual change) is brought back inside automatically.
-- **Cooldown:** scale-ups act immediately; scale-downs wait at least 10 minutes after any autoscale action, so a just-added node is never reaped before workloads spread onto it. Every action is recorded in the Activity feed with its reason.
+- **Scale up:** a pod has been unschedulable for lack of CPU or memory for at least 1 minute. The autoscaler checks the pod against the pool's nodes (labels, taints, whether it fits one node) and adds the number of nodes the pending pods need, up to 3 per action. A pod that cannot fit any node — requests larger than the node plan, or constraints no pool matches — does not trigger scaling; it is reported in the Activity feed.
+- **Scale down (−1 node):** a node's pods **request** less than 50% of its CPU and memory for 10 minutes, and those pods fit on the remaining nodes. The least-utilized such node is removed through the same drain-first path. Decisions use requested resources, not live usage, because the scheduler places pods by requests.
+- **Bounds:** a pool outside its min/max (for example after a manual change) is scaled back inside automatically.
+- **Cooldown:** scale-up acts immediately. Scale-down waits at least 10 minutes after any autoscale action, so a node added for load is not removed before pods are scheduled onto it. Every action is recorded in the Activity feed with its reason.
 
 On subscription-billed clusters, autoscaled nodes above the committed base are metered hourly as overage — the subscription price itself never changes from autoscaling.

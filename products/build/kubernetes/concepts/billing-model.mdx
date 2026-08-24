@@ -6,7 +6,7 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 <sub>Updated August 24, 2026</sub>
 
-**The control plane is free.** You pay for worker nodes, storage nodes, and optionally the HA control-plane fee.
+**The single-master control plane is free.** You pay for worker nodes, storage nodes, and \$30/month if you enable the HA control plane.
 
 ## Two billing modes
 
@@ -15,7 +15,7 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 ## Autoscaling and billing
 
-On subscription clusters the committed base never changes from autoscaling: nodes the autoscaler adds above the base are metered hourly as overage and drop off when it scales back down. On pay-as-you-go, autoscaling simply changes the hourly total.
+On subscription clusters the committed base never changes from autoscaling: nodes the autoscaler adds above the base are metered hourly as overage and drop off when it scales back down. On pay-as-you-go, autoscaling changes the hourly total.
 
 ## What else bills
 

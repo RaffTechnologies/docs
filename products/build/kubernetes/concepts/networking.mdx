@@ -31,7 +31,7 @@ The gateway load-balances at **TCP level** across your nodes:
 
 **Health checks & failover:** the gateway health-checks the nodes behind it and removes unhealthy ones from rotation automatically; nodes added by scaling or autoscaling are picked up automatically. On a standard cluster the gateway is a single managed instance, restarted automatically on failure; with [HA](/products/build/kubernetes/concepts/control-plane-and-ha) it is a redundant pair with automatic IP failover (VRRP).
 
-**Limits:** none imposed on connections, requests or Ingress hosts — throughput is bounded by your cluster's dedicated gateway, so other tenants never affect you.
+**Limits:** there are no platform limits on connections, requests or Ingress hosts. Throughput is bounded by your cluster's own gateway; it is not shared with other customers.
 
 ## MetalLB
 

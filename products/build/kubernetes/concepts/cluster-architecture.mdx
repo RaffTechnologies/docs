@@ -10,7 +10,7 @@ Every cluster is a set of virtual machines in a **dedicated VPC**, built from fo
 
 | Role | Count | What it does |
 |---|---|---|
-| **Gateway** | 1 (2 with HA) | The cluster's front door: holds the public IP, NATs outbound traffic, load-balances the Kubernetes API (6443) and ingress traffic (80/443) into the cluster, and serves DNS to the nodes |
+| **Gateway** | 1 (2 with HA) | Holds the cluster's public IP, NATs outbound traffic, load-balances the Kubernetes API (6443) and ingress traffic (80/443) into the cluster, and serves DNS to the nodes |
 | **Control plane** | 1 or 3 | Runs the Kubernetes API server, scheduler, controllers and etcd. Sized and managed by Raff, free of charge. etcd lives on hypervisor-local NVMe for consistent low latency |
 | **Workers** | 2–20 per pool | Your capacity — grouped into [node pools](/products/build/kubernetes/concepts/node-pools-and-autoscaling), billed per node |
 | **Storage nodes** | 0, 2 or 3 | Optional dedicated nodes running Longhorn, providing replicated block volumes — see [Storage](/products/build/kubernetes/concepts/storage) |
