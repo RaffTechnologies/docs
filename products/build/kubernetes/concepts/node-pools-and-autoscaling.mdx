@@ -20,11 +20,11 @@ Enable per pool with min/max bounds — from the pool's **Edit autoscale** contr
   ![Node pool with the autoscale toggle and min/max node bounds](/images/products/build/kubernetes/autoscale-pool.png)
 </Frame>
 
-The autoscaler evaluates every 5 minutes:
+The autoscaler evaluates every 5 minutes and follows the same rules as the upstream Kubernetes Cluster Autoscaler:
 
-- **Up (+1 node):** any pod is unschedulable for lack of CPU or memory. The pool with the most headroom below its max gets the node.
-- **Down (−1 node):** cluster-wide worker CPU **and** memory below 40% for 15 sustained minutes; removal uses the same drain-first path.
+- **Up:** pods unschedulable for lack of CPU or memory for at least 1 minute (giving the scheduler time to place transient pods first). Each pod is checked against the pool's nodes — labels, taints, and whether it fits a single node at all — and the pool gets as many nodes as the pending pods actually need, up to 3 per action. A pod that can never fit (requests larger than a node, or unmatched constraints) is reported in the Activity feed instead of adding nodes that would not help.
+- **Down (−1 node):** an individual node whose pods **request** less than 50% of its CPU and memory for 10 sustained minutes, and whose pods provably fit on the remaining nodes. The least-utilized such node is removed via the same drain-first path. Requested resources are what count — that is what the scheduler places pods by.
 - **Bounds are law:** a pool found outside its min/max (e.g. after a manual change) is brought back inside automatically.
-- **Cooldown:** at most one autoscale action per cluster per 10 minutes. Every action is recorded in the Activity feed with its reason.
+- **Cooldown:** scale-ups act immediately; scale-downs wait at least 10 minutes after any autoscale action, so a just-added node is never reaped before workloads spread onto it. Every action is recorded in the Activity feed with its reason.
 
 On subscription-billed clusters, autoscaled nodes above the committed base are metered hourly as overage — the subscription price itself never changes from autoscaling.
