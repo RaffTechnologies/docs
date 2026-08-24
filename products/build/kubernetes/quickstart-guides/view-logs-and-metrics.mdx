@@ -9,7 +9,12 @@ description: Watch workloads, pod logs, node utilization and control-plane healt
 The cluster page shows the following without any setup or port-forwarding:
 
 - **Overview / KPI strip** — nodes ready, pods, CPU and memory across the cluster, plus **control-plane health**: etcd latency p99 and 24-hour restart counts. Green means the control plane is healthy; sustained etcd latency above 100 ms or restarts indicate a problem on our side that we are alerted on.
-- **Workloads** — deployments, statefulsets, daemonsets, services and ingresses per namespace, read live from the cluster's API server.
+- **Workloads** — everything running in the cluster, read live from the cluster's API server. Read-only: you deploy and change workloads with kubectl, Helm or GitOps; this tab is for tracking. Five sub-tabs:
+  - **Deployments / StatefulSets / DaemonSets** — each row shows the namespace, **Ready** count (`2/3` = 2 of 3 replicas ready), the container image with its tag, age, and a status: **Healthy** (all replicas ready), **Pending** (not ready yet, but created less than 10 minutes ago — still starting), **Degraded** (not all replicas ready past that window — worth investigating: check the pod's logs in the Logs tab).
+  - **Services** — type, cluster IP and ports of every Service.
+  - **Ingresses** — the HTTP routes into the cluster and their hosts.
+
+  Filter by name or namespace to find a specific workload. A workload stuck **Degraded** with a rising restart count in the Logs tab is the usual sign of a crash loop or a failing image pull.
 
 <Frame>
   ![Workloads tab listing deployments with namespace, readiness, image and health](/images/products/build/kubernetes/workloads-tab.png)
