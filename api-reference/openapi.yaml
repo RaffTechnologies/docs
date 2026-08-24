@@ -12285,7 +12285,7 @@ components:
           maximum: 20
         plan_id:
           type: integer
-          description: Omit to inherit the cluster's worker plan
+          description: Omit to inherit the cluster's worker plan. All pools share it — a differing plan is rejected.
         min_nodes:
           type: integer
         max_nodes:
