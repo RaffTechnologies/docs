@@ -17,10 +17,10 @@ Every cluster is a set of virtual machines in a **dedicated VPC**, built from fo
 
 The distribution is **RKE2** with the **Cilium** CNI. Nodes have no public IPs — all traffic enters and leaves through the gateway, and the [firewall](/products/build/kubernetes/concepts/networking) on the gateway decides what gets in.
 
-The cluster's **Nodes** tab shows all of these roles live — control plane, gateway and workers with their internal IPs, per-node CPU/memory and kubelet status:
+The cluster's **Nodes** tab shows each role in its own section — Gateway (with the floating public IP), Control plane, Storage and Workers — with internal IPs, per-node CPU/memory and kubelet status:
 
 <Frame>
-  ![Nodes tab showing the control plane, gateway and worker nodes with status](/images/products/build/kubernetes/nodes-tab.png)
+  ![Nodes tab with Gateway, Control plane, Storage and Workers sections](/images/products/build/kubernetes/nodes-tab.png)
 </Frame>
 
 ## Lifecycle states
