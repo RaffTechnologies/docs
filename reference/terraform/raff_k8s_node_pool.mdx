@@ -1,0 +1,55 @@
+---
+title: "raff_k8s_node_pool"
+description: "Manage additional Kubernetes node pools with Terraform — node count, autoscaling bounds, labels and taints."
+---
+
+<sub>Updated August 25, 2026</sub>
+
+Manages an **additional node pool** on a Raff Kubernetes cluster. The cluster's first pool is defined on [`raff_k8s_cluster`](/reference/terraform/raff_k8s_cluster) (`default_pool`). All pools use the cluster's worker plan.
+
+Scale-down drains nodes first, honouring PodDisruptionBudgets — a node that can't be emptied stops the operation. On a subscription cluster, growing a pool via Terraform charges the pro-rated difference to the saved payment method and raises the monthly price.
+
+## Example
+
+```hcl
+resource "raff_k8s_node_pool" "batch" {
+  cluster_id = raff_k8s_cluster.prod.cluster_id
+  name       = "batch"
+  plan_id    = data.raff_k8s_node_plans.all.plans[0].id
+  node_count = 2
+
+  autoscale_enabled = true
+  min_nodes         = 2
+  max_nodes         = 6
+
+  labels = jsonencode({ workload = "batch" })
+  taints = jsonencode([{ key = "batch", value = "true", effect = "NoSchedule" }])
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `cluster_id` | string | Yes | Short cluster ID (`raff_k8s_cluster.x.cluster_id`) |
+| `name` | string | Yes | Pool name, unique in the cluster |
+| `plan_id` | int | Yes | Worker node plan ID — must match the cluster's existing plan |
+| `node_count` | int | Yes | Node count (2–20) |
+| `autoscale_enabled` | bool | No | Enable autoscaling between `min_nodes` and `max_nodes` |
+| `min_nodes` | int | No | Autoscale lower bound |
+| `max_nodes` | int | No | Autoscale upper bound |
+| `labels` | string | No | JSON object of Kubernetes labels applied to every node, e.g. `{"tier":"db"}` |
+| `taints` | string | No | JSON array of taints, e.g. `[{"key":"gpu","value":"true","effect":"NoSchedule"}]` |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Pool ID |
+| `actual_node_count` | Nodes that currently exist — differs from `node_count` briefly while scaling, and when the autoscaler has added nodes above the base |
+
+## Import
+
+```bash
+terraform import raff_k8s_node_pool.batch <cluster-id>/<pool-id>
+```

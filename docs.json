@@ -706,6 +706,8 @@
             "pages": [
               "reference/terraform/introduction",
               "reference/terraform/install",
+              "reference/terraform/raff_k8s_cluster",
+              "reference/terraform/raff_k8s_node_pool",
               "reference/terraform/raff_project",
               "reference/terraform/raff_vm",
               "reference/terraform/raff_volume",

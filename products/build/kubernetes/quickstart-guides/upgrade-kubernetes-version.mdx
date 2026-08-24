@@ -13,6 +13,9 @@ Clusters upgrade in place: control-plane nodes one at a time, then workers drain
 <Steps>
   <Step title="Open Settings">
     On the cluster page, open **Settings** and find **Kubernetes version**. The card shows your current version and the available targets — minor versions are offered sequentially (1.33 → 1.34, no skipping).
+    <Frame>
+      ![Kubernetes version card in cluster Settings — current version, upgrade mode, and maintenance window](/images/products/compute/kubernetes/version-card.png)
+    </Frame>
   </Step>
   <Step title="Choose a version and upgrade">
     Pick the target version and click **Upgrade**. Confirm the dialog — on a single-master cluster it warns about the brief API interruption.

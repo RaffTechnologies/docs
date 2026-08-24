@@ -111,6 +111,35 @@ output "ipv4_monthly" {
 
 Floating IP pricing by family. Returns `ipv4` and `ipv6` as single-element lists; each has `price_per_hour`, `monthly_price`, `yearly_price`, `twenty_four_month_price`.
 
+## raff_k8s_versions
+
+Kubernetes versions offered for new clusters. Use `default_version_id` or a `versions[*].id` as `k8s_version_id` on [`raff_k8s_cluster`](/reference/terraform/raff_k8s_cluster).
+
+```hcl
+data "raff_k8s_versions" "all" {}
+# .versions[*]: id, version, display_name, is_default
+# .default_version_id
+```
+
+## raff_k8s_node_plans
+
+Worker node plans with sizing and pricing. Use a `plans[*].id` as `plan_id` on the cluster's `default_pool` and on [`raff_k8s_node_pool`](/reference/terraform/raff_k8s_node_pool).
+
+```hcl
+data "raff_k8s_node_plans" "all" {}
+# .plans[*]: id, name, vcpu, memory_gib, price_per_month
+```
+
+## raff_k8s_cluster
+
+Read an existing cluster by its short `cluster_id` — status, version, endpoint, worker count, and the admin `kubeconfig` (sensitive).
+
+```hcl
+data "raff_k8s_cluster" "prod" {
+  cluster_id = "zk7x9m"
+}
+```
+
 ## Related
 
 <CardGroup cols={3}>

@@ -1,0 +1,70 @@
+---
+title: "raff_k8s_cluster"
+description: "Manage Raff managed Kubernetes clusters with Terraform — default node pool, HA control plane, add-ons, storage nodes, kubeconfig output."
+---
+
+<sub>Updated August 25, 2026</sub>
+
+Manages a managed **Kubernetes cluster**. Provisioning takes 10–20 minutes; the resource waits until the cluster is running (create timeout 30 minutes, delete 20). The cluster's first pool is defined inline as `default_pool`; additional pools use [`raff_k8s_node_pool`](/reference/terraform/raff_k8s_node_pool).
+
+On a subscription account the create charges the saved payment method for the monthly subscription automatically; pay-as-you-go accounts bill hourly.
+
+## Example
+
+```hcl
+data "raff_k8s_node_plans" "all" {}
+data "raff_k8s_versions" "all" {}
+
+resource "raff_k8s_cluster" "prod" {
+  name       = "prod-cluster"
+  ha_enabled = true
+
+  default_pool {
+    name       = "default-pool"
+    plan_id    = data.raff_k8s_node_plans.all.plans[0].id
+    node_count = 3
+  }
+
+  traefik_enabled = true
+}
+
+# Write the kubeconfig for kubectl / the kubernetes and helm providers
+resource "local_sensitive_file" "kubeconfig" {
+  content         = raff_k8s_cluster.prod.kubeconfig
+  filename        = "${path.module}/kubeconfig.yaml"
+  file_permission = "0600"
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `name` | string | Yes | Cluster name (1–63 lowercase letters, digits or hyphens, unique per account). Renames in place |
+| `default_pool` | block | Yes | The cluster's first node pool: `name`, `plan_id` (from [`raff_k8s_node_plans`](/reference/terraform/data-sources#raff_k8s_node_plans)), `node_count` (2–20) |
+| `k8s_version_id` | int | No | Kubernetes version ID from [`raff_k8s_versions`](/reference/terraform/data-sources#raff_k8s_versions). Defaults to the platform default. A version newer than the base image is reached automatically during creation |
+| `ha_enabled` | bool | No | HA control plane (3 masters + redundant gateway, flat $30/month). Upgradable in place `false` → `true`; downgrading is not supported |
+| `traefik_enabled` | bool | No | Install the Traefik ingress controller |
+| `metallb_enabled` | bool | No | Install MetalLB for `LoadBalancer` services |
+| `storage_node_count` | int | No | Dedicated Longhorn storage nodes (0, 2 or 3). 0 disables in-cluster block storage |
+| `storage_node_disk_gb` | int | No | Data disk per storage node in GB (10–1000). Required when `storage_node_count` > 0 |
+| `cluster_cidr` | string | No | Pod network CIDR. Defaults to `10.42.0.0/16` |
+| `service_cidr` | string | No | Service network CIDR. Defaults to `10.43.0.0/16` |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | Cluster UUID |
+| `cluster_id` | Short cluster ID used in URLs, the API endpoint hostname, and `raff_k8s_node_pool.cluster_id` |
+| `api_endpoint` | `https://<cluster-id>.k8s.raffusercloud.com:6443` |
+| `kubeconfig` | Admin kubeconfig YAML (sensitive) — feed it to the `kubernetes`/`helm` providers or write it to a file |
+| `k8s_version` | The running Kubernetes version (full, e.g. `v1.35.7+rke2r1`) |
+| `status` | Cluster status |
+| `price_per_month` | Monthly price of the committed node set |
+
+## Import
+
+```bash
+terraform import raff_k8s_cluster.prod <cluster-id>
+```
