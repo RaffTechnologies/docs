@@ -7322,11 +7322,20 @@ paths:
         - Kubernetes
       summary: Get kubeconfig
       description: |
-        Download the cluster's admin kubeconfig. Grants full cluster-admin access — store it like a password.
+        Download the cluster's admin kubeconfig. Grants full cluster-admin access — store it like a password. Pass `expires_in` to get a short-lived kubeconfig instead.
       operationId: getK8sKubeconfig
       parameters:
         - $ref: '#/components/parameters/K8sClusterIDPath'
         - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: expires_in
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 600
+            maximum: 2592000
+          description: |
+            Issue a SHORT-LIVED kubeconfig instead of the admin one: a token with this time-to-live in seconds (10 minutes to 30 days). Expired kubeconfigs stop working on their own; [rotate access](#tag/Kubernetes/operation/rotateK8sKubeconfigAccess) invalidates all of them at once.
       responses:
         '200':
           description: Kubeconfig for kubectl
@@ -7346,6 +7355,31 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/k8s/clusters/{cluster_id}/kubeconfig/rotate:
+    post:
+      tags:
+        - Kubernetes
+      summary: Rotate cluster access
+      description: |
+        Invalidates every previously issued short-lived kubeconfig for the cluster, immediately. Use it when a credential may have leaked or a team member leaves. Newly requested short-lived kubeconfigs keep working; the admin kubeconfig is unaffected.
+      operationId: rotateK8sKubeconfigAccess
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Access rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/v1/k8s/clusters/{cluster_id}/ha:
     post:
       tags:

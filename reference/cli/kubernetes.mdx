@@ -82,10 +82,11 @@ The API endpoint and DNS stay the same.
 ## kubeconfig
 
 ```bash
-raff kubernetes kubeconfig <cluster-id> [--save <path>]
+raff kubernetes kubeconfig <cluster-id> [--save <path>] [--ttl <duration>]
+raff kubernetes kubeconfig rotate <cluster-id>
 ```
 
-Prints the kubeconfig to stdout, or writes it to a file (mode 0600) with `--save`:
+Prints the admin kubeconfig to stdout, or writes it to a file (mode 0600) with `--save`. `--ttl` issues a **short-lived** kubeconfig instead (`--ttl 1h`, `10m`–`720h`) — it expires on its own, so it is safer for teammates and CI. `kubeconfig rotate` invalidates every previously issued short-lived kubeconfig immediately; the admin kubeconfig is unaffected.
 
 ```bash
 raff kubernetes kubeconfig zk7x9m --save ~/.kube/raff-zk7x9m.yaml
@@ -105,12 +106,12 @@ Lists every node (gateway, control plane, workers, storage) with role, status, a
 
 ```bash
 raff kubernetes pool list <cluster-id>
-raff kubernetes pool add <cluster-id> --name <name> --plan <plan-id> [--nodes 2]
+raff kubernetes pool add <cluster-id> --name <name> [--nodes 2]
 raff kubernetes pool scale <cluster-id> <pool-id> <node-count>
 raff kubernetes pool delete <cluster-id> <pool-id> [--force]
 ```
 
-Scale-down and pool deletion drain nodes first — workloads are evicted respecting PodDisruptionBudgets before a node is removed. Additional pools use the same plan as the cluster's existing pools.
+Scale-down and pool deletion drain nodes first — workloads are evicted respecting PodDisruptionBudgets before a node is removed. Additional pools use the same worker plan as the cluster's existing pools (`--plan` is accepted but must match).
 
 ## upgrade-ha
 
@@ -154,7 +155,7 @@ Only the flags you pass change; the rest keep their values.
 raff kubernetes versions
 ```
 
-Lists the Kubernetes versions offered for new clusters, with the version ID used by `create --version`.
+Lists the Kubernetes versions offered, with the version ID used by `create --version`. Creating on a version newer than the base image works — the cluster upgrades itself to it during creation.
 
 ## plans
 

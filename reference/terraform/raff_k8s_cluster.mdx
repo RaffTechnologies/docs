@@ -42,7 +42,10 @@ resource "local_sensitive_file" "kubeconfig" {
 |---|---|---|---|
 | `name` | string | Yes | Cluster name (1–63 lowercase letters, digits or hyphens, unique per account). Renames in place |
 | `default_pool` | block | Yes | The cluster's first node pool: `name`, `plan_id` (from [`raff_k8s_node_plans`](/reference/terraform/data-sources#raff_k8s_node_plans)), `node_count` (2–20) |
-| `k8s_version_id` | int | No | Kubernetes version ID from [`raff_k8s_versions`](/reference/terraform/data-sources#raff_k8s_versions). Defaults to the platform default. A version newer than the base image is reached automatically during creation |
+| `version_id` | int | No | Kubernetes version ID from [`raff_k8s_versions`](/reference/terraform/data-sources#raff_k8s_versions). Defaults to the platform default. A version newer than the base image is reached automatically during creation. **Changing it triggers a rolling in-place upgrade** (sequential minors, not reversible) — the apply waits for completion |
+| `upgrade_mode` | string | No | `manual` (default), `auto_patch`, or `auto_minor` — see [Supported versions](/products/build/kubernetes/details/supported-versions) |
+| `maintenance_day` | int | No | Maintenance window day, 0 (Sunday) – 6 (Saturday); 4-hour window |
+| `maintenance_start` | int | No | Window start hour (0–23, UTC) |
 | `ha_enabled` | bool | No | HA control plane (3 masters + redundant gateway, flat $30/month). Upgradable in place `false` → `true`; downgrading is not supported |
 | `traefik_enabled` | bool | No | Install the Traefik ingress controller |
 | `metallb_enabled` | bool | No | Install MetalLB for `LoadBalancer` services |

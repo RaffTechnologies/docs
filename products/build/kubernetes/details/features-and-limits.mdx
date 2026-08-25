@@ -25,7 +25,7 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 - Managed, free control plane (optional 3-master HA), RKE2 + Cilium
 - Node pools with labels, taints and autoscaling (all pools share the cluster's worker plan)
 - Drain-first scale-down (PodDisruptionBudgets honoured, never force-deleted)
-- Admin kubeconfig; full REST API; dashboard with workloads, pods, live logs, metrics and control-plane health
+- Admin kubeconfig plus short-lived kubeconfigs (10 minutes to 30 days) with one-click revocation; full REST API; dashboard with workloads, pods, live logs, metrics and control-plane health
 - App Hub one-click installs with HTTPS/TCP expose
 - Dedicated VPC, gateway firewall (baseline or your security group), Traefik and MetalLB options, Longhorn storage nodes
 - [99.90% monthly SLA](/products/build/kubernetes/details/sla) (endpoint path on HA clusters) and 24/7 support
@@ -34,6 +34,5 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 
 Honest list of gaps we're working on:
 
-- **Kubeconfig rotation / short-lived credentials** — the kubeconfig is a long-lived admin credential; treat it accordingly
 - **Multiple regions** — us-east only
 - Windows nodes, GPU nodes, IPv6
