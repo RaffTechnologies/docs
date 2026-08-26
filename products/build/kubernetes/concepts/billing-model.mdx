@@ -6,11 +6,11 @@ description: What bills, when — pay-as-you-go vs subscription, autoscaling ove
 
 <sub>Updated August 24, 2026</sub>
 
-**The single-master control plane is free.** You pay for worker nodes, storage nodes, and \$30/month if you enable the HA control plane.
+**The single-master control plane is free.** You pay for worker nodes, \$30/month if you enable the HA control plane, and per-GB for the persistent volumes your PVCs create.
 
 ## Two billing modes
 
-- **Pay-as-you-go** — every worker/storage node bills per hour at its plan's hourly rate while it exists.
+- **Pay-as-you-go** — every worker node bills per hour at its plan's hourly rate while it exists.
 - **Subscription** — the cluster's node set is a monthly commitment. Create it from the dashboard (checkout) or the API (the saved payment method is charged automatically). Growing the cluster (scale-up, new pool, HA upgrade) costs the pro-rated difference — collected at checkout from the dashboard, or charged automatically via the API — and raises the monthly price; shrinking credits the remainder back to your balance. Deleting the cluster converts the unused subscription value to account balance automatically.
 
 ## Autoscaling and billing
@@ -36,7 +36,7 @@ Only a **manual** scale (dashboard or API) changes the base, and your monthly pr
 | Item | Price |
 |---|---|
 | HA control plane | \$30/month flat |
-| Storage nodes | node price + \$0.08/GB/month for the data disk |
+| Persistent volumes (PVCs) | \$0.08/GB/month, billed hourly for exactly the GB claimed — on both billing modes, never part of the subscription |
 | Reserved public IP (the cluster's) | included |
 
 Full rates: [Pricing](/products/build/kubernetes/details/pricing).

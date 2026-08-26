@@ -12332,7 +12332,10 @@ components:
           type: boolean
         longhorn_enabled:
           type: boolean
-          description: Dedicated storage nodes with Longhorn block storage
+          description: >-
+            Legacy clusters only — dedicated storage nodes with Longhorn block
+            storage. Clusters created since August 26, 2026 use the
+            `raff-block` StorageClass (PVCs become Volumes) and report false.
         traefik_enabled:
           type: boolean
         metallb_enabled:
@@ -12346,7 +12349,7 @@ components:
         price_per_hour:
           type: number
           format: double
-          description: Current hourly price (workers + storage + HA fee; control plane is free)
+          description: Current hourly price (workers + HA fee; control plane is free, PVC storage bills separately per GB)
         price_per_month:
           type: number
           format: double
@@ -12400,13 +12403,16 @@ components:
           description: Use one of your security groups instead of the baseline
         storage_node_count:
           type: integer
-          enum: [0, 2, 3]
-          description: Dedicated Longhorn storage nodes (0 disables in-cluster block storage)
+          deprecated: true
+          description: >-
+            Removed August 26, 2026 — every cluster includes the `raff-block`
+            default StorageClass: PersistentVolumeClaims are provisioned as
+            Volumes and billed per GB. Any value other than 0 is rejected.
           default: 0
         storage_node_disk_gb:
           type: integer
-          description: Data disk per storage node; required when `storage_node_count` > 0. Bounds from [List Kubernetes node plans](#tag/Kubernetes/operation/listK8sNodePlans) `storage_pricing`.
-          example: 100
+          deprecated: true
+          description: Removed August 26, 2026 together with `storage_node_count`.
         traefik_enabled:
           type: boolean
           description: Install the Traefik ingress controller

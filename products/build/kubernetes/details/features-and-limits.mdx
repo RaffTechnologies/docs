@@ -14,7 +14,7 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 | Node pools per cluster | unlimited; ≥1 required |
 | Nodes per pool | 2–20 |
 | Minimum workers per cluster | 2 |
-| Storage nodes | 0, 2 or 3; 10–1000 GB data disk each |
+| Persistent volumes | `raff-block` default StorageClass — PVCs become Raff Volumes (10 GB–10 TB each, ReadWriteOnce) |
 | MetalLB address pool | up to 32 addresses |
 | Kubernetes versions | up to three minor versions with in-place upgrades — see [Supported versions](/products/build/kubernetes/details/supported-versions) |
 | Region | us-east |
@@ -27,7 +27,7 @@ description: Exactly what ships today — capabilities, limits, and what is not 
 - Drain-first scale-down (PodDisruptionBudgets honoured, never force-deleted)
 - Admin kubeconfig plus short-lived kubeconfigs (10 minutes to 30 days) with one-click revocation; full REST API; dashboard with workloads, pods, live logs, metrics and control-plane health
 - App Hub one-click installs with HTTPS/TCP expose
-- Dedicated VPC, gateway firewall (baseline or your security group), Traefik and MetalLB options, Longhorn storage nodes
+- Dedicated VPC, gateway firewall (baseline or your security group), Traefik and MetalLB options, per-GB volume-backed persistent storage
 - [99.90% monthly SLA](/products/build/kubernetes/details/sla) (endpoint path on HA clusters) and 24/7 support
 
 ## Not offered yet

@@ -1,11 +1,11 @@
 ---
 title: SLA
-description: Uptime commitment, service credit schedule, and how to claim for Virtual Machines on the Raff Platform
+description: Uptime commitment, service credit schedule, and how to claim for services on the Raff Platform
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated August 22, 2026</sub>
 
-This page summarizes the Raff Service Level Agreement as it applies to Virtual Machines. The full, legally binding SLA is published at:
+This page summarizes the Raff Service Level Agreement across platform services. The full, legally binding SLA is published at:
 
 <Card title="Service Level Agreement (legal)" icon="file-contract" href="https://app.rafftechnologies.com/legal#service-level-agreement">
   app.rafftechnologies.com/legal#service-level-agreement
@@ -19,18 +19,33 @@ Live availability for every covered service is recorded automatically at:
 
 ## Uptime commitment
 
-Raff Technologies guarantees **99.90% monthly uptime** for Virtual Machines.
+Raff Technologies guarantees **99.90% monthly uptime** for the services below.
 
-The same 99.90% commitment applies to:
-
-| Service | Monthly uptime |
-|---|---|
-| Virtual Machines | 99.90% |
-| Block Storage (Volumes) | 99.90% |
-| Snapshots | 99.90% |
-| Backups | 99.90% |
+| Service | Monthly uptime | Notes |
+|---|---|---|
+| Virtual Machines | 99.90% | |
+| Block Storage (Volumes) | 99.90% | |
+| Snapshots | 99.90% | |
+| Backups | 99.90% | |
+| Object Storage | 99.90% | S3 API availability |
+| VPC Networking & Floating IPs | 99.90% | |
+| Managed Kubernetes — nodes | 99.90% | Worker and storage nodes, covered as Virtual Machines |
+| Managed Kubernetes — endpoint & ingress path | 99.90% | Clusters with the **High Availability option** (see below) |
+| Managed Databases | 99.90% | Instances with the **High Availability option** (see below) |
 
 Uptime is calculated as `(total minutes in the month - unavailable minutes) / total minutes × 100%`.
+
+### Managed Kubernetes
+
+- **Worker and storage nodes** are Virtual Machines and carry the 99.90% VM commitment.
+- **The managed endpoint and ingress path** (public endpoint, load balancing, Kubernetes API reachability) carry the 99.90% commitment on clusters running the **High Availability option**, where the endpoint is a redundant gateway pair with automatic failover and the control plane runs 3 nodes.
+- On **non-HA clusters** the endpoint is a single managed instance: it is covered at the infrastructure (VM) level, without a separate endpoint-path commitment.
+- Workloads, Ingress resources, and add-on configuration inside the cluster are customer-managed and outside the SLA.
+
+### Managed Databases
+
+- Instances with the **High Availability option** (replicated, automatic failover) carry the 99.90% commitment on the database endpoint.
+- **Single-node instances** are covered at the infrastructure (VM) level, without a separate endpoint commitment.
 
 **Unavailability** means the service is completely inaccessible — returns errors or doesn't respond to API or console requests — for **more than 5 consecutive minutes**. The status page is the authoritative source for measurement.
 
@@ -59,7 +74,9 @@ The 99.90% commitment does not apply when unavailability is caused by:
 - **Emergency security patches or critical maintenance** requiring less than 10 minutes of downtime
 - Customer error or misuse of the service
 - Failures in customer-installed software, OS, or configuration
-- **DDoS attacks** against your VM or the platform
+- **Customer-managed workloads and configuration** inside Managed Kubernetes clusters or Managed Databases (applications, Ingress resources, database queries and schema)
+- Third-party certificate authorities (e.g. Let's Encrypt issuance delays)
+- **DDoS attacks** against your resources or the platform
 - Force majeure (natural disasters, war, terrorism)
 - Internet outages or third-party service failures beyond Raff's reasonable control
 - Accounts with overdue payments, suspended accounts, or accounts in violation of the Terms of Service
@@ -69,7 +86,7 @@ The 99.90% commitment does not apply when unavailability is caused by:
 1. **Within 30 days** of the incident, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 2. Include:
    - Date, time, and duration of the unavailability
-   - The specific service(s) affected (e.g. Virtual Machines)
+   - The specific service(s) affected (e.g. Virtual Machines, Managed Kubernetes)
    - Your account ID
 3. After validation, the service credit appears on your account in the next billing cycle.
 

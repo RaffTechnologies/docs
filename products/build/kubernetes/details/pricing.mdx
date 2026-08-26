@@ -1,12 +1,12 @@
 ---
 title: Kubernetes pricing
 sidebarTitle: Pricing
-description: Worker node plans, HA control-plane fee and storage-node rates
+description: Worker node plans, HA control-plane fee and per-GB volume storage
 ---
 
-<sub>Updated August 24, 2026</sub>
+<sub>Updated August 26, 2026</sub>
 
-The single-master control plane is free. You pay per worker node, plus \$30/month for the optional HA control plane and per-GB fees for storage nodes. Prices below are per node; live values come from the [pricing API](/api-reference/kubernetes/list-node-plans).
+The single-master control plane is free. You pay per worker node, plus \$30/month for the optional HA control plane. Persistent storage is not part of the cluster price — PersistentVolumeClaims are billed per GB as you create them. Prices below are per node; live values come from the [pricing API](/api-reference/kubernetes/list-node-plans).
 
 ## Worker node plans
 
@@ -19,13 +19,13 @@ The single-master control plane is free. You pay per worker node, plus \$30/mont
 | K8s Large | 8 | 32 GB | \$115.99 | \$0.161097 |
 | K8s Scale | 16 | 64 GB | \$229.99 | \$0.319431 |
 
-Every worker and storage node has a 25 GB NVMe root disk for the OS, container images, logs and ephemeral storage. Persistent volumes come from [storage nodes](/products/build/kubernetes/concepts/storage), priced below.
+Every worker has a 25 GB NVMe root disk for the OS, container images, logs and ephemeral storage. Persistent volumes are [Raff Volumes provisioned by your PVCs](/products/build/kubernetes/concepts/storage), priced below.
 
 ## Add-ons
 
 | Item | Price |
 |---|---|
 | HA control plane (3 masters, 2 gateways) | \$30.00/month |
-| Storage node data disk (Longhorn) | \$0.08/GB/month (10–1000 GB per node) |
+| Persistent volume storage (`raff-block` PVCs) | \$0.08/GB/month, billed hourly (10 GB–10 TB per volume) |
 
-Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly — see [Billing model](/products/build/kubernetes/concepts/billing-model). Kubernetes itself uses about 1 GB of memory per node — prefer fewer, larger nodes over many small ones.
+You pay for exactly the storage your claims request — every GB billed is a GB you can use. Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly, with PVC storage always billed hourly on top — see [Billing model](/products/build/kubernetes/concepts/billing-model). Kubernetes itself uses about 1 GB of memory per node — prefer fewer, larger nodes over many small ones.

@@ -8,7 +8,7 @@ description: The issues people actually hit, and how to resolve them
 
 ## My PVC is stuck in Pending
 
-The cluster has no storage nodes, so there is no default storage class. Storage nodes can only be added at cluster creation today — recreate the cluster with 2–3 storage nodes, or use [Object Storage](/products/store/object-storage) for S3-style needs.
+On clusters created since August 26, 2026 the `raff-block` default storage class is always present — check `kubectl get storageclass` and the PVC's events (`kubectl describe pvc <name>`). On older clusters created without storage nodes there is no default storage class — recreate the cluster (it will include `raff-block`), or use [Object Storage](/products/store/object-storage) for S3-style needs.
 
 ## Scale-down says a node "could not be emptied"
 

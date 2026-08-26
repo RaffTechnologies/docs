@@ -39,7 +39,7 @@ resource "raff_backup_schedule" "web_weekly" {
 | `vm_id` | string (UUID) | Source VM. ForceNew — point at a different schedule's VM by replacing the resource |
 | `frequency` | string | `daily` or `weekly` |
 | `time` | string | Time of day, e.g. `08:00` or `8am` |
-| `keep_count` | int | Number of backups to retain before auto-pruning |
+| `keep_count` | int | Number of backups to retain before auto-pruning (2-100) |
 
 ### Optional
 

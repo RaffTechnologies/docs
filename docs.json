@@ -22,13 +22,30 @@
       "mode": "simple"
     }
   },
-  "openapi": ["/api-reference/openapi.yaml"],
+  "openapi": [
+    "/api-reference/openapi.yaml"
+  ],
   "metadata": {
     "timestamp": true
   },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:site_name": "Raff",
+      "og:image": "https://rafftechnologies.com/images/og.jpg",
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@rafftechnologies"
+    }
+  },
   "redirects": [
-    { "source": "/products/storage/:slug*", "destination": "/products/store/:slug*" },
-    { "source": "/products/networking/:slug*", "destination": "/products/network/:slug*" }
+    {
+      "source": "/products/storage/:slug*",
+      "destination": "/products/store/:slug*"
+    },
+    {
+      "source": "/products/networking/:slug*",
+      "destination": "/products/network/:slug*"
+    }
   ],
   "navigation": {
     "tabs": [
@@ -146,6 +163,13 @@
                     ]
                   },
                   "products/build/kubernetes/troubleshooting"
+                ]
+              },
+              {
+                "group": "Raff Apps",
+                "icon": "rocket",
+                "pages": [
+                  "products/build/raff-apps/index"
                 ]
               }
             ]
@@ -385,7 +409,9 @@
                   "api-reference/catalog/list-volume-pricing",
                   "api-reference/catalog/list-snapshot-pricing",
                   "api-reference/catalog/list-backup-pricing",
-                  "api-reference/catalog/list-ip-pricing"
+                  "api-reference/catalog/list-ip-pricing",
+                  "api-reference/catalog/list-database-pricing",
+                  "api-reference/catalog/list-kubernetes-pricing"
                 ]
               },
               {
@@ -447,6 +473,77 @@
                       "api-reference/endpoint/upsert-vm-note",
                       "api-reference/endpoint/update-vm-note",
                       "api-reference/endpoint/append-vm-note"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Raff Apps",
+                "pages": [
+                  {
+                    "group": "Services",
+                    "pages": [
+                      "api-reference/apps/list-app-services",
+                      "api-reference/apps/create-app-service",
+                      "api-reference/apps/get-app-service",
+                      "api-reference/apps/delete-app-service",
+                      "api-reference/apps/pause-app-service",
+                      "api-reference/apps/resume-app-service",
+                      "api-reference/apps/scale-app-service"
+                    ]
+                  },
+                  {
+                    "group": "Deployments",
+                    "pages": [
+                      "api-reference/apps/request-app-source-upload",
+                      "api-reference/apps/list-app-deployments",
+                      "api-reference/apps/create-app-deployment",
+                      "api-reference/apps/get-app-deployment",
+                      "api-reference/apps/get-app-deployment-logs",
+                      "api-reference/apps/rollback-app-service"
+                    ]
+                  },
+                  {
+                    "group": "Observability",
+                    "pages": [
+                      "api-reference/apps/list-app-logs",
+                      "api-reference/apps/get-app-service-metrics"
+                    ]
+                  },
+                  {
+                    "group": "Environment variables",
+                    "pages": [
+                      "api-reference/apps/list-app-env-vars",
+                      "api-reference/apps/reveal-app-env-vars",
+                      "api-reference/apps/set-app-env-var",
+                      "api-reference/apps/bulk-set-app-env-vars",
+                      "api-reference/apps/delete-app-env-var"
+                    ]
+                  },
+                  {
+                    "group": "Custom domains",
+                    "pages": [
+                      "api-reference/apps/list-app-custom-domains",
+                      "api-reference/apps/add-app-custom-domain",
+                      "api-reference/apps/delete-app-custom-domain",
+                      "api-reference/apps/retry-app-domain-verification"
+                    ]
+                  },
+                  {
+                    "group": "Jobs",
+                    "pages": [
+                      "api-reference/apps/run-app-job",
+                      "api-reference/apps/list-app-job-runs",
+                      "api-reference/apps/cancel-app-job-run"
+                    ]
+                  },
+                  {
+                    "group": "Billing & tiers",
+                    "pages": [
+                      "api-reference/apps/list-app-tiers",
+                      "api-reference/apps/get-apps-usage",
+                      "api-reference/apps/get-app-spend-settings",
+                      "api-reference/apps/update-app-spend-settings"
                     ]
                   }
                 ]
@@ -756,41 +853,101 @@
       {
         "header": "Company",
         "items": [
-          { "label": "About", "href": "https://rafftechnologies.com/about-us" },
-          { "label": "Blog", "href": "https://rafftechnologies.com/blog" },
-          { "label": "Pricing", "href": "https://rafftechnologies.com/pricing" },
-          { "label": "Status", "href": "https://rafftechnologies.com/status" }
+          {
+            "label": "About",
+            "href": "https://rafftechnologies.com/about-us"
+          },
+          {
+            "label": "Blog",
+            "href": "https://rafftechnologies.com/blog"
+          },
+          {
+            "label": "Pricing",
+            "href": "https://rafftechnologies.com/pricing"
+          },
+          {
+            "label": "Status",
+            "href": "https://rafftechnologies.com/status"
+          }
         ]
       },
       {
         "header": "Docs",
         "items": [
-          { "label": "Docs Home", "href": "/introduction" },
-          { "label": "API Reference", "href": "/api-reference/endpoints" },
-          { "label": "CLI", "href": "/reference/cli/introduction" },
-          { "label": "Terraform Provider", "href": "https://registry.terraform.io/providers/RaffTechnologies/raff/latest" },
-          { "label": "Quickstart", "href": "/quickstart" },
-          { "label": "Products", "href": "/products" }
+          {
+            "label": "Docs Home",
+            "href": "/introduction"
+          },
+          {
+            "label": "API Reference",
+            "href": "/api-reference/endpoints"
+          },
+          {
+            "label": "CLI",
+            "href": "/reference/cli/introduction"
+          },
+          {
+            "label": "Terraform Provider",
+            "href": "https://registry.terraform.io/providers/RaffTechnologies/raff/latest"
+          },
+          {
+            "label": "Quickstart",
+            "href": "/quickstart"
+          },
+          {
+            "label": "Products",
+            "href": "/products"
+          }
         ]
       },
       {
         "header": "Application",
         "items": [
-          { "label": "Dashboard", "href": "https://app.rafftechnologies.com" },
-          { "label": "Sign in", "href": "https://app.rafftechnologies.com/auth/sign-in" },
-          { "label": "Sign up", "href": "https://app.rafftechnologies.com/auth/sign-up" },
-          { "label": "Marketplace", "href": "https://marketplace.rafftechnologies.com" }
+          {
+            "label": "Dashboard",
+            "href": "https://app.rafftechnologies.com"
+          },
+          {
+            "label": "Sign in",
+            "href": "https://app.rafftechnologies.com/auth/sign-in"
+          },
+          {
+            "label": "Sign up",
+            "href": "https://app.rafftechnologies.com/auth/sign-up"
+          },
+          {
+            "label": "Marketplace",
+            "href": "https://marketplace.rafftechnologies.com"
+          }
         ]
       },
       {
         "header": "Support",
         "items": [
-          { "label": "Tickets", "href": "https://help.rafftechnologies.com" },
-          { "label": "Contact", "href": "mailto:support@rafftechnologies.com" },
-          { "label": "FAQ", "href": "https://rafftechnologies.com/faq" },
-          { "label": "Terms of Service", "href": "https://app.rafftechnologies.com/legal#terms-of-service" },
-          { "label": "Privacy Policy", "href": "https://app.rafftechnologies.com/legal#privacy-policy" },
-          { "label": "SLA", "href": "https://app.rafftechnologies.com/legal#service-level-agreement" }
+          {
+            "label": "Tickets",
+            "href": "https://help.rafftechnologies.com"
+          },
+          {
+            "label": "Contact",
+            "href": "mailto:support@rafftechnologies.com"
+          },
+          {
+            "label": "FAQ",
+            "href": "https://rafftechnologies.com/faq"
+          },
+          {
+            "label": "Terms of Service",
+            "href": "https://app.rafftechnologies.com/legal#terms-of-service"
+          },
+          {
+            "label": "Privacy Policy",
+            "href": "https://app.rafftechnologies.com/legal#privacy-policy"
+          },
+          {
+            "label": "SLA",
+            "href": "https://app.rafftechnologies.com/legal#service-level-agreement"
+          }
         ]
       }
     ],

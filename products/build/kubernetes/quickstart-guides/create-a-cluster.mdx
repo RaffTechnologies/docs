@@ -38,7 +38,7 @@ Create a cluster with one or more worker pools. Provisioning takes 10–20 minut
     </Frame>
   </Step>
   <Step title="Pick add-ons">
-    Cilium CNI is always included. Optionally enable **persistent storage** (Longhorn on dedicated storage nodes, sized here), **Traefik** (ingress) and **MetalLB** (LoadBalancer services). Defaults are fine for a first cluster.
+    Cilium CNI and **persistent storage** (the `raff-block` storage class — PVCs are billed per GB as you create them, nothing to size here) are always included. Optionally enable **Traefik** (ingress) and **MetalLB** (LoadBalancer services). Defaults are fine for a first cluster.
     <Frame>
       ![Add-ons step with Cilium, persistent storage sizing, Traefik and MetalLB](/images/products/compute/kubernetes/create-addons.png)
     </Frame>

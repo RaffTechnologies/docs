@@ -23,7 +23,7 @@ The control plane is free — you pay only for worker nodes, from \$9.99/month e
 | **Control plane** | Managed and free; optional [HA (3 masters)](/products/build/kubernetes/concepts/control-plane-and-ha) for \$30/month |
 | **Worker nodes** | [Node pools](/products/build/kubernetes/concepts/node-pools-and-autoscaling) of 2–20 nodes with labels, taints and optional autoscaling |
 | **Networking** | Dedicated VPC per cluster, Cilium CNI, optional Traefik ingress and MetalLB — see [Networking](/products/build/kubernetes/concepts/networking) |
-| **Storage** | Optional dedicated storage nodes with Longhorn block volumes — see [Storage](/products/build/kubernetes/concepts/storage) |
+| **Storage** | Built-in `raff-block` storage class — PVCs are provisioned as Raff Volumes, billed per GB — see [Storage](/products/build/kubernetes/concepts/storage) |
 | **Apps** | One-click App Hub (Argo CD, Grafana, PostgreSQL, WordPress, …) from the dashboard |
 | **Access** | Admin kubeconfig download; full `kubectl` / Helm / CI compatibility |
 | **API** | Full [REST API](/api-reference/kubernetes/list-clusters) — clusters, pools, kubeconfig, metrics |
@@ -50,4 +50,4 @@ The control plane is free — you pay only for worker nodes, from \$9.99/month e
 
 ## How a cluster is built
 
-Every cluster gets its own **VPC**, a **gateway** (public IP, NAT, load-balancer entry point), one or three **control-plane nodes** (on hypervisor-local NVMe for fast etcd), your **worker pools**, and optionally dedicated **storage nodes** running Longhorn. The full picture is in [Cluster architecture](/products/build/kubernetes/concepts/cluster-architecture).
+Every cluster gets its own **VPC**, a **gateway** (public IP, NAT, load-balancer entry point), one or three **control-plane nodes** (on hypervisor-local NVMe for fast etcd), and your **worker pools**. Persistent volumes attach to workers on demand as Raff Volumes. The full picture is in [Cluster architecture](/products/build/kubernetes/concepts/cluster-architecture).

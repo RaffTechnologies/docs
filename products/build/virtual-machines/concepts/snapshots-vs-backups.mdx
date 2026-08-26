@@ -21,7 +21,7 @@ Snapshots and backups both capture a VM's disk state, but they're built for diff
 | **Restore time (RTO target)** | Fast — minutes for typical OS disks; restore creates a fresh VM disk from the snapshot | Similar — minutes |
 | **Data freshness (RPO)** | As fresh as the moment you clicked "Snapshot" | At most one schedule interval (e.g. 24 hours behind for daily) |
 | **Best for** | One-off "known good" states; before risky changes | Routine protection without remembering to act |
-| **Pricing** | Per-GB stored, against the shared free pool | Per-GB stored, against the shared free pool, plus the schedule |
+| **Pricing** | Per-GB stored, against the shared free pool | Per-GB stored, against the shared free pool — the schedule itself has no fee |
 
 ## When to use a snapshot
 

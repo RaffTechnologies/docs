@@ -1,7 +1,7 @@
 ---
 title: Kubernetes cluster architecture
 sidebarTitle: Cluster architecture
-description: What a Raff Kubernetes cluster is made of — gateway, control plane, workers, storage nodes
+description: What a Raff Kubernetes cluster is made of — gateway, control plane, workers, volume storage
 ---
 
 <sub>Updated August 24, 2026</sub>
@@ -13,7 +13,7 @@ Every cluster is a set of virtual machines in a **dedicated VPC**, built from fo
 | **Gateway** | 1 (2 with HA) | Holds the cluster's public IP, NATs outbound traffic, load-balances the Kubernetes API (6443) and ingress traffic (80/443) into the cluster, and serves DNS to the nodes |
 | **Control plane** | 1 or 3 | Runs the Kubernetes API server, scheduler, controllers and etcd. Sized and managed by Raff, free of charge. etcd lives on hypervisor-local NVMe for consistent low latency |
 | **Workers** | 2–20 per pool | Your capacity — grouped into [node pools](/products/build/kubernetes/concepts/node-pools-and-autoscaling), billed per node |
-| **Storage nodes** | 0, 2 or 3 | Optional dedicated nodes running Longhorn, providing replicated block volumes — see [Storage](/products/build/kubernetes/concepts/storage) |
+| **Volume storage** | — | No storage nodes: PersistentVolumeClaims are provisioned as Raff Volumes and attached to workers on demand — see [Storage](/products/build/kubernetes/concepts/storage) |
 
 The distribution is **RKE2** with the **Cilium** CNI. Nodes have no public IPs — all traffic enters and leaves through the gateway, and the [firewall](/products/build/kubernetes/concepts/networking) on the gateway decides what gets in.
 

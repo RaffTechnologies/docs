@@ -29,7 +29,7 @@ The install dialog has three fields:
 Clicking **Install** creates the release in the background: the chart is fetched from its repository and installed with a 5-minute timeout. The card shows **Installing**, then **Active** or **Failed**. Every step is recorded in the cluster's Activity feed.
 
 <Note>
-Apps marked **Needs persistent storage** (databases, NextCloud, …) can only be installed on clusters with [storage nodes](/products/build/kubernetes/concepts/storage); the install is rejected otherwise.
+Apps marked **Needs persistent storage** (databases, NextCloud, …) store their data on [persistent volumes](/products/build/kubernetes/concepts/storage) — included on every cluster, billed per GB.
 </Note>
 
 ## Credentials

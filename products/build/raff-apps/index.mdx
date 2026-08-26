@@ -1,0 +1,60 @@
+---
+title: Raff Apps
+sidebarTitle: Overview
+description: Push-to-deploy web services, workers, and jobs on the Raff PaaS
+icon: rocket
+---
+
+<sub>Updated July 8, 2026</sub>
+
+Raff Apps is a push-to-deploy platform for running your code. Ship a **web service** with a public HTTPS URL and custom domains, a **private service** reachable only inside your project, a **background worker**, a **cron job**, or a **one-off job** — all from a connected GitHub repo, a prebuilt image, a starter template, or a Docker Compose import.
+
+Each service runs on a fixed compute tier and scales the way you choose: a fixed replica count, autoscaling, or scale-to-zero. Billing is per second from your account balance, and **spend caps are on by default** — set a monthly limit and services pause automatically when it is reached, so a runaway deploy never surprises you. Attack and DDoS traffic is never billed, there is no per-seat pricing, and price increases come with 30 days' notice.
+
+<Frame>
+  ![TODO: hero screenshot of Raff Apps in the dashboard](/images/products/build/raff-apps/hero.png)
+</Frame>
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Create a service" icon="plus" href="/api-reference/apps/create-app-service">
+    Deploy a web service, worker, cron, or job.
+  </Card>
+  <Card title="Deploy new code" icon="rocket" href="/api-reference/apps/create-app-deployment">
+    Build and roll out a new deployment.
+  </Card>
+  <Card title="Add a custom domain" icon="globe" href="/api-reference/apps/add-app-custom-domain">
+    Point your own domain at a web service.
+  </Card>
+  <Card title="Set spend caps" icon="gauge" href="/api-reference/apps/update-app-spend-settings">
+    Cap monthly spend; services pause at the limit.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Service types" icon="layer-group" href="/api-reference/apps/list-app-services">
+    Web, private, worker, cron, and job services.
+  </Card>
+  <Card title="Deployments & rollback" icon="clock-rotate-left" href="/api-reference/apps/list-app-deployments">
+    Build history, logs, and instant rollback.
+  </Card>
+  <Card title="Environment variables" icon="key" href="/api-reference/apps/list-app-env-vars">
+    Configuration and secrets, rolled out safely.
+  </Card>
+  <Card title="Scaling" icon="up-right-and-down-left-from-center" href="/api-reference/apps/scale-app-service">
+    Replicas, autoscaling, and scale-to-zero.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/apps/list-app-services">
+    Endpoints for Raff Apps.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

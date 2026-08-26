@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated August 25, 2026</sub>
+<sub>Updated August 26, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,18 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### August 26, 2026
+
+**Kubernetes — API**
+
+- 🟢 **Added** — **Built-in persistent storage** — every new cluster includes the `raff-block` default StorageClass: PersistentVolumeClaims are provisioned as Volumes, attached to the pod's worker automatically, visible in your Volumes list, and billed at \$0.08/GB/month (hourly) for exactly the GB claimed
+- 🔴 **Removed** — **Create cluster**: `storage_node_count` and `storage_node_disk_gb` (dedicated Longhorn storage nodes) — any non-zero value is now rejected. Existing clusters with storage nodes keep working unchanged
+- 🔵 **Updated** — **Delete cluster** now also deletes the cluster's PVC-backed volumes, so no storage keeps billing after teardown
+
+**Kubernetes — Terraform**
+
+- 🟡 **Deprecated** — `raff_k8s_cluster.storage_node_count` / `storage_node_disk_gb` — leave unset; persistent storage is built in and billed per GB
 
 ### August 25, 2026
 

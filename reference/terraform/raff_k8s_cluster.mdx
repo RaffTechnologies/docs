@@ -1,6 +1,6 @@
 ---
 title: "raff_k8s_cluster"
-description: "Manage Raff managed Kubernetes clusters with Terraform — default node pool, HA control plane, add-ons, storage nodes, kubeconfig output."
+description: "Manage Raff managed Kubernetes clusters with Terraform — default node pool, HA control plane, add-ons, kubeconfig output."
 ---
 
 <sub>Updated August 25, 2026</sub>
@@ -49,8 +49,8 @@ resource "local_sensitive_file" "kubeconfig" {
 | `ha_enabled` | bool | No | HA control plane (3 masters + redundant gateway, flat $30/month). Upgradable in place `false` → `true`; downgrading is not supported |
 | `traefik_enabled` | bool | No | Install the Traefik ingress controller |
 | `metallb_enabled` | bool | No | Install MetalLB for `LoadBalancer` services |
-| `storage_node_count` | int | No | Dedicated Longhorn storage nodes (0, 2 or 3). 0 disables in-cluster block storage |
-| `storage_node_disk_gb` | int | No | Data disk per storage node in GB (10–1000). Required when `storage_node_count` > 0 |
+| `storage_node_count` | int | No | **Deprecated (removed August 26, 2026)** — every cluster includes the `raff-block` default StorageClass; PVCs are provisioned as Volumes and billed per GB. Any value other than 0 is rejected |
+| `storage_node_disk_gb` | int | No | **Deprecated** — removed together with `storage_node_count` |
 | `cluster_cidr` | string | No | Pod network CIDR. Defaults to `10.42.0.0/16` |
 | `service_cidr` | string | No | Service network CIDR. Defaults to `10.43.0.0/16` |
 
