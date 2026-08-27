@@ -4,7 +4,7 @@ sidebarTitle: Storage
 description: PersistentVolumes backed by Raff Volumes — pay per GB, no storage nodes
 ---
 
-<sub>Updated August 26, 2026</sub>
+<sub>Updated August 27, 2026</sub>
 
 Every cluster includes the **`raff-block`** storage class (the default). Create a PersistentVolumeClaim and it is provisioned as a [Raff Volume](/products/store/volumes) — a Ceph-backed block device the platform attaches to whichever worker runs your pod. Nothing to enable, nothing to size up front.
 
@@ -26,13 +26,19 @@ spec:
 2. **The cluster's storage driver calls the platform** and a Volume of exactly that size is created under your account. Billing starts; the claim is usually `Bound` within seconds.
 3. **The disk attaches to the right worker automatically.** Wherever Kubernetes schedules your pod, the volume is attached to that node, formatted on first use, and mounted into the pod.
 4. **It follows the pod.** If the node is replaced or the pod moves, the volume detaches and re-attaches to the new node — data intact, typically in seconds.
-5. **Deleting the claim deletes the volume** and billing stops.
+5. **Grow a volume any time** — edit the claim's requested size (grow only): the disk and filesystem expand live, no pod restart, and billing moves to the new size.
+
+   ```bash
+   kubectl patch pvc data -p '{"spec":{"resources":{"requests":{"storage":"20Gi"}}}}'
+   ```
+
+6. **Deleting the claim deletes the volume** and billing stops.
 
 - **Pay for exactly what you claim** — \$0.08/GB/month, billed hourly, and every GB you pay for is a GB you can use. Storage is never part of the cluster price; it starts billing when a PVC is created and stops when it's deleted.
 - **Volumes follow pods.** When a pod moves to another node, its volume detaches and re-attaches automatically — data intact.
 - **Visible in your dashboard.** Each PVC appears in your [Volumes](/products/store/volumes) list, named after its cluster. It can only be managed through Kubernetes — deleting it from the dashboard is blocked while the PVC exists.
 - **Deleted with the PVC** (reclaim policy `Delete`), and cluster deletion removes any remaining volumes — nothing keeps billing after teardown.
-- **ReadWriteOnce** access (one node at a time, like AWS EBS and DigitalOcean block storage), 10 GB–10 TB per volume, `ext4` by default.
+- **ReadWriteOnce** access (one node at a time, like AWS EBS and DigitalOcean block storage), 10 GB–10 TB per volume, `ext4` by default, online expansion supported (grow only).
 - Worker root disks are **ephemeral** — anything a pod writes outside a PVC is lost when the node is replaced or scaled away.
 - Apps from App Hub that need persistence (PostgreSQL, WordPress, NextCloud, …) work out of the box — their PVCs land on `raff-block`.
 

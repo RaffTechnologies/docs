@@ -7799,6 +7799,62 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/k8s/clusters/{cluster_id}/volumes:
+    get:
+      tags:
+        - Kubernetes
+      summary: List cluster volumes
+      description: >-
+        The cluster's persistent volumes — created automatically by
+        PersistentVolumeClaims on the `raff-block` storage class and billed
+        per GB. Manage them through Kubernetes (`kubectl`), not this API:
+        grow by editing the claim's requested size, delete by deleting the
+        claim.
+      operationId: listK8sClusterVolumes
+      parameters:
+        - $ref: '#/components/parameters/K8sClusterIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: Cluster volumes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  volumes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        volume_id:
+                          type: integer
+                        name:
+                          type: string
+                          description: Display name (`<cluster>-<namespace>-<claim>`)
+                          example: k7n92s-data-postgres-data-postgresql-0
+                        pv_name:
+                          type: string
+                          description: Kubernetes PersistentVolume name
+                        size_gb:
+                          type: integer
+                        status:
+                          type: string
+                          enum: [creating, available, attached]
+                        node_ip:
+                          type: string
+                          description: Internal IP of the worker it is attached to ("" when detached)
+                        price_per_hour:
+                          type: number
+                          format: double
+                        created_at:
+                          type: string
+                          format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/k8s/clusters/{cluster_id}/metrics:
     get:
       tags:

@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated August 26, 2026</sub>
+<sub>Updated August 27, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### August 27, 2026
+
+**Kubernetes — API**
+
+- 🟢 **Added** — **List cluster volumes** — `GET /api/v1/k8s/clusters/{cluster_id}/volumes` returns the cluster's PVC-provisioned persistent volumes (size, status, attached node, price); also shown on the cluster's new **Storage** tab in the dashboard
+- 🔵 **Updated** — **Persistent volumes support online expansion**: grow a PVC's requested size and the disk and filesystem expand live (no pod restart); billing moves to the new size. Grow only, 10 GB–10 TB
 
 ### August 26, 2026
 
