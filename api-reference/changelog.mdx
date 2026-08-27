@@ -19,6 +19,8 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 **Kubernetes — API**
 
+- 🟢 **Added** — **CPU-Optimized worker plans** — `GET /api/v1/k8s/node-plans` returns a `node_class` per plan (`shared` or `cpu_optimized`); CPU-Optimized nodes reserve far more host CPU per vCPU for compute-heavy workloads. Pick one via `worker_plan_id` as usual
+
 - 🟢 **Added** — **List cluster volumes** — `GET /api/v1/k8s/clusters/{cluster_id}/volumes` returns the cluster's PVC-provisioned persistent volumes (size, status, attached node, price); also shown on the cluster's new **Storage** tab in the dashboard
 - 🔵 **Updated** — **Persistent volumes support online expansion**: grow a PVC's requested size and the disk and filesystem expand live (no pod restart); billing moves to the new size. Grow only, 10 GB–10 TB
 

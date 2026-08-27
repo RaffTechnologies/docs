@@ -9836,8 +9836,17 @@ components:
           example: 2
         ssd_gib:
           type: integer
-          description: NVMe root disk in GiB per node (OS, container images, logs, ephemeral storage; persistent volumes come from storage nodes)
+          description: NVMe root disk in GiB per node (OS, container images, logs, ephemeral storage; persistent volumes are PVC-provisioned Raff Volumes)
           example: 25
+        node_class:
+          type: string
+          enum: [shared, cpu_optimized]
+          description: >-
+            CPU commitment tier — `shared` for general workloads,
+            `cpu_optimized` reserves far more host CPU per vCPU for steady,
+            compute-heavy workloads. One plan (and therefore one tier)
+            applies to all pools in a cluster.
+          example: shared
         transfer_gib:
           type: integer
           description: Monthly data transfer in GiB (0 means unmetered)

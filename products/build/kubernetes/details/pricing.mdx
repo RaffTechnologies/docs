@@ -4,11 +4,15 @@ sidebarTitle: Pricing
 description: Worker node plans, HA control-plane fee and per-GB volume storage
 ---
 
-<sub>Updated August 26, 2026</sub>
+<sub>Updated August 27, 2026</sub>
 
 The single-master control plane is free. You pay per worker node, plus \$30/month for the optional HA control plane. Persistent storage is not part of the cluster price — PersistentVolumeClaims are billed per GB as you create them. Prices below are per node; live values come from the [pricing API](/api-reference/kubernetes/list-node-plans).
 
 ## Worker node plans
+
+Two CPU tiers, same convention as [VM plans](/products/build/virtual-machines/details/pricing): **Shared** for general workloads, **CPU-Optimized** with a much higher CPU commitment for steady, compute-heavy workloads (databases, CI runners, batch processing).
+
+### Shared CPU
 
 | Plan | vCPU | Memory | $/month | $/hour |
 |---|---|---|---|---|
@@ -18,6 +22,16 @@ The single-master control plane is free. You pay per worker node, plus \$30/mont
 | K8s High Memory | 8 | 16 GB | \$59.99 | \$0.083319 |
 | K8s Large | 8 | 32 GB | \$115.99 | \$0.161097 |
 | K8s Scale | 16 | 64 GB | \$229.99 | \$0.319431 |
+
+### CPU-Optimized
+
+| Plan | vCPU | Memory | $/month | $/hour |
+|---|---|---|---|---|
+| K8s CO Standard | 2 | 4 GB | \$27.99 | \$0.038875 |
+| K8s CO Performance | 4 | 8 GB | \$49.99 | \$0.069431 |
+| K8s CO High Memory | 8 | 16 GB | \$89.99 | \$0.124986 |
+| K8s CO Large | 8 | 32 GB | \$146.99 | \$0.204153 |
+| K8s CO Scale | 16 | 32 GB | \$183.99 | \$0.255542 |
 
 Every worker has a 25 GB NVMe root disk for the OS, container images, logs and ephemeral storage. Persistent volumes are [Raff Volumes provisioned by your PVCs](/products/build/kubernetes/concepts/storage), priced below.
 
