@@ -19,6 +19,7 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 **Kubernetes — API**
 
+- 🟢 **Added** — **Per-pool node plans** — every node pool now has its own `plan_id`: create clusters with mixed pools (`node_pools[].plan_id`), and `POST /clusters/{id}/pools` accepts any plan — mix sizes and tiers (General Purpose / CPU-Optimized) in one cluster. Per-pool `node_count` minimum is now 1 (the cluster keeps ≥2 workers overall)
 - 🟢 **Added** — **CPU-Optimized worker plans** — `GET /api/v1/k8s/node-plans` returns a `node_class` per plan (`shared` or `cpu_optimized`); CPU-Optimized nodes reserve far more host CPU per vCPU for compute-heavy workloads. Pick one via `worker_plan_id` as usual
 
 - 🟢 **Added** — **List cluster volumes** — `GET /api/v1/k8s/clusters/{cluster_id}/volumes` returns the cluster's PVC-provisioned persistent volumes (size, status, attached node, price); also shown on the cluster's new **Storage** tab in the dashboard

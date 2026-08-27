@@ -6,7 +6,7 @@ description: Add a pool of worker nodes with its own labels, taints and autoscal
 
 <sub>Updated August 24, 2026</sub>
 
-Node pools group workers, labels and taints. Use separate pools to organize workloads — e.g. a general pool plus a tainted pool reserved for databases. All pools use the cluster's worker plan.
+Node pools group workers, labels and taints. Use separate pools to organize workloads — e.g. a general pool plus a tainted CPU-Optimized pool reserved for databases. Each pool picks its own node plan.
 
 ## Steps
 
@@ -15,7 +15,7 @@ Node pools group workers, labels and taints. Use separate pools to organize work
     On the cluster page, open **Node pools** and click **Add node pool**.
   </Step>
   <Step title="Name it and choose size and count">
-    Pool names follow the same rules as cluster names. Pick a node plan and 2–20 nodes; optionally enable autoscaling with min/max bounds.
+    Pool names follow the same rules as cluster names. Pick a node plan — any plan, independent of the other pools — and 1–20 nodes; optionally enable autoscaling with min/max bounds.
   </Step>
   <Step title="Confirm">
     On pay-as-you-go clusters the pool is created immediately and bills per node-hour. On subscription clusters you are taken through checkout for the pro-rated cost first.

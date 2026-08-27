@@ -24,6 +24,7 @@ The `raff kubernetes` command group (alias: `raff k8s`) covers every managed Kub
 | [`maintenance`](#maintenance) | Set the upgrade mode and maintenance window |
 | [`versions`](#versions) | List available Kubernetes versions |
 | [`plans`](#plans) | List worker node plans with pricing |
+| [`volumes`](#volumes) | List the cluster's PVC-provisioned volumes |
 
 ---
 
@@ -51,7 +52,7 @@ raff kubernetes create --name <name> --plan <plan-id> [--nodes 2] [--version <ve
 |---|---|
 | `--name` | Cluster name (1–63 lowercase letters, digits or hyphens). Required. |
 | `--plan` | Worker node plan ID — see [`plans`](#plans). Required. |
-| `--nodes` | Worker node count for the default pool (2–20). Default 2. |
+| `--nodes` | Worker node count for the default pool (2–20; added pools can be 1–20 with their own plan). Default 2. |
 | `--version` | Kubernetes version ID — see [`versions`](#versions). Default: platform default. |
 | `--ha` | HA control plane (3 masters, flat monthly fee). |
 | `--wait` | Block until the cluster is running (10–20 minutes). |
@@ -106,12 +107,12 @@ Lists every node (gateway, control plane, workers, storage) with role, status, a
 
 ```bash
 raff kubernetes pool list <cluster-id>
-raff kubernetes pool add <cluster-id> --name <name> [--nodes 2]
+raff kubernetes pool add <cluster-id> --name <name> --plan <plan-id> [--nodes 2]
 raff kubernetes pool scale <cluster-id> <pool-id> <node-count>
 raff kubernetes pool delete <cluster-id> <pool-id> [--force]
 ```
 
-Scale-down and pool deletion drain nodes first — workloads are evicted respecting PodDisruptionBudgets before a node is removed. Additional pools use the same worker plan as the cluster's existing pools (`--plan` is accepted but must match).
+Scale-down and pool deletion drain nodes first — workloads are evicted respecting PodDisruptionBudgets before a node is removed. Each pool has its own worker plan — pass any plan ID from [`plans`](#plans) to mix sizes and tiers (General Purpose / CPU-Optimized) in one cluster. Added pools can have 1–20 nodes; the cluster keeps at least 2 workers overall.
 
 ## upgrade-ha
 
@@ -163,4 +164,12 @@ Lists the Kubernetes versions offered, with the version ID used by `create --ver
 raff kubernetes plans
 ```
 
-Lists worker node plans with vCPU, memory, and monthly price. Every worker has a 25 GiB root disk.
+Lists worker node plans with class (General Purpose `shared` / CPU-Optimized `cpu_optimized`), vCPU, memory, and monthly price. Every worker has a 25 GiB root disk.
+
+## volumes
+
+```bash
+raff kubernetes volumes <cluster-id>
+```
+
+Lists the cluster's PVC-provisioned persistent volumes (the `raff-block` StorageClass): PV name, size, status, the worker it is attached to, and the hourly price.

@@ -5,7 +5,7 @@ description: "Manage additional Kubernetes node pools with Terraform — node co
 
 <sub>Updated August 25, 2026</sub>
 
-Manages an **additional node pool** on a Raff Kubernetes cluster. The cluster's first pool is defined on [`raff_k8s_cluster`](/reference/terraform/raff_k8s_cluster) (`default_pool`). All pools use the cluster's worker plan.
+Manages an **additional node pool** on a Raff Kubernetes cluster. The cluster's first pool is defined on [`raff_k8s_cluster`](/reference/terraform/raff_k8s_cluster) (`default_pool`). Each pool has its own `plan_id`, so pools in one cluster can use different plans and tiers.
 
 Scale-down drains nodes first, honouring PodDisruptionBudgets — a node that can't be emptied stops the operation. On a subscription cluster, growing a pool via Terraform charges the pro-rated difference to the saved payment method and raises the monthly price.
 
@@ -33,8 +33,8 @@ resource "raff_k8s_node_pool" "batch" {
 |---|---|---|---|
 | `cluster_id` | string | Yes | Short cluster ID (`raff_k8s_cluster.x.cluster_id`) |
 | `name` | string | Yes | Pool name, unique in the cluster |
-| `plan_id` | int | Yes | Worker node plan ID — must match the cluster's existing plan |
-| `node_count` | int | Yes | Node count (2–20) |
+| `plan_id` | int | Yes | Worker node plan ID for this pool — pools may use different plans |
+| `node_count` | int | Yes | Node count (1–20; the cluster keeps ≥2 workers overall) |
 | `autoscale_enabled` | bool | No | Enable autoscaling between `min_nodes` and `max_nodes` |
 | `min_nodes` | int | No | Autoscale lower bound |
 | `max_nodes` | int | No | Autoscale upper bound |

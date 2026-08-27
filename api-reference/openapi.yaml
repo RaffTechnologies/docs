@@ -9844,8 +9844,8 @@ components:
           description: >-
             CPU commitment tier — `shared` for general workloads,
             `cpu_optimized` reserves far more host CPU per vCPU for steady,
-            compute-heavy workloads. One plan (and therefore one tier)
-            applies to all pools in a cluster.
+            compute-heavy workloads. Each node pool has its own plan, so a
+            cluster can mix tiers across pools.
           example: shared
         transfer_gib:
           type: integer
@@ -12451,7 +12451,7 @@ components:
         node_pools:
           type: array
           minItems: 1
-          description: At least one pool with at least 2 nodes in total
+          description: At least one pool with at least 2 nodes in total. Pools may use different plans — each pool's nodes are sized and billed by its own plan.
           items:
             $ref: '#/components/schemas/K8sNodePoolInput'
         ha_enabled:
@@ -12509,12 +12509,13 @@ components:
           example: default-pool
         node_count:
           type: integer
-          minimum: 2
+          minimum: 1
           maximum: 20
+          description: Per-pool minimum is 1; the cluster needs at least 2 worker nodes across all pools
           example: 3
         plan_id:
           type: integer
-          description: Worker plan from [List Kubernetes node plans](#tag/Kubernetes/operation/listK8sNodePlans)
+          description: Worker plan from [List Kubernetes node plans](#tag/Kubernetes/operation/listK8sNodePlans). Pools in one cluster may use different plans.
           example: 11
         min_nodes:
           type: integer
@@ -12541,11 +12542,11 @@ components:
           example: pool-2
         node_count:
           type: integer
-          minimum: 2
+          minimum: 1
           maximum: 20
         plan_id:
           type: integer
-          description: Omit to inherit the cluster's worker plan. All pools share it — a differing plan is rejected.
+          description: Worker plan for this pool — pools may use different plans. Omit to inherit the first pool's plan.
         min_nodes:
           type: integer
         max_nodes:
