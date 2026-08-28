@@ -7322,7 +7322,9 @@ paths:
         - Kubernetes
       summary: Get kubeconfig
       description: |
-        Download the cluster's admin kubeconfig. Grants full cluster-admin access — store it like a password. Pass `expires_in` to get a short-lived kubeconfig instead.
+        Issue a kubeconfig for the cluster. Every kubeconfig expires — the default lifetime is **7 days**; use `expires_in` to choose another (10 minutes to 30 days). Grants full cluster-admin access while valid, so store it like a password, and [rotate access](#tag/Kubernetes/operation/rotateK8sKubeconfigAccess) to invalidate every issued kubeconfig at once.
+
+        For anything long-running (a workstation, CI), prefer the CLI: `raff kubernetes kubeconfig <cluster-id>` writes a kubeconfig that fetches a fresh token for every `kubectl` command, so it never expires and stores no credential on disk.
       operationId: getK8sKubeconfig
       parameters:
         - $ref: '#/components/parameters/K8sClusterIDPath'
@@ -7335,7 +7337,7 @@ paths:
             minimum: 600
             maximum: 2592000
           description: |
-            Issue a SHORT-LIVED kubeconfig instead of the admin one: a token with this time-to-live in seconds (10 minutes to 30 days). Expired kubeconfigs stop working on their own; [rotate access](#tag/Kubernetes/operation/rotateK8sKubeconfigAccess) invalidates all of them at once.
+            Kubeconfig lifetime in seconds (10 minutes to 30 days). Defaults to 7 days when omitted. Expired kubeconfigs stop working on their own.
       responses:
         '200':
           description: Kubeconfig for kubectl

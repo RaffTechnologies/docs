@@ -1,12 +1,21 @@
 ---
 title: Connect to Kubernetes with kubectl
 sidebarTitle: Connect with kubectl
-description: Download the admin kubeconfig and run kubectl against your cluster
+description: Get a kubeconfig and run kubectl against your cluster
 ---
 
 <sub>Updated August 24, 2026</sub>
 
 Every cluster exposes its API server on a public endpoint (`https://<cluster-id>.k8s.raffusercloud.com:6443`). Access is by the cluster's kubeconfig.
+
+There are two ways to get one, and the difference is only about renewal:
+
+| | How you get it | When it stops working |
+| --- | --- | --- |
+| **CLI** (recommended) | `raff kubernetes kubeconfig <cluster-id>` | Never — it fetches a fresh token for every command and stores no credential on disk |
+| **Dashboard download** | **kubeconfig** button on the cluster | After 7 days — download again, or switch to the CLI |
+
+Every credential we issue expires. Rotating access invalidates all of them at once.
 
 ## Before you start
 
@@ -14,6 +23,19 @@ Every cluster exposes its API server on a public endpoint (`https://<cluster-id>
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) installed locally
 
 ## Steps
+
+### Option A — the CLI (nothing to renew)
+
+```bash
+raff kubernetes kubeconfig <cluster-id> --save ~/.kube/config
+kubectl get nodes
+```
+
+The file it writes contains no credential: `kubectl` calls the Raff CLI for a
+short-lived token before each request, the same way `gcloud` and `aws eks`
+work. Anyone who copies the file cannot use it without your API key.
+
+### Option B — download from the dashboard
 
 <Steps>
   <Step title="Download the kubeconfig">
@@ -38,7 +60,7 @@ Every cluster exposes its API server on a public endpoint (`https://<cluster-id>
 </Steps>
 
 <Warning>
-The kubeconfig grants **full cluster-admin access**. Store it like a password, never commit it to a repository, and don't share it outside your team. You can also fetch it from the [API](/api-reference/kubernetes/get-kubeconfig).
+A downloaded kubeconfig grants **full cluster-admin access until it expires** (7 days by default). Store it like a password and never commit it to a repository. For CI and anything long-running, use the CLI instead — it keeps no credential on disk. You can also issue one from the [API](/api-reference/kubernetes/get-kubeconfig), and **Settings → Access → Revoke** invalidates every issued kubeconfig immediately.
 </Warning>
 
 ## Next steps

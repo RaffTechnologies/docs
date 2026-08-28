@@ -83,11 +83,15 @@ The API endpoint and DNS stay the same.
 ## kubeconfig
 
 ```bash
-raff kubernetes kubeconfig <cluster-id> [--save <path>] [--ttl <duration>]
+raff kubernetes kubeconfig <cluster-id> [--save <path>] [--ttl <duration>] [--static]
 raff kubernetes kubeconfig rotate <cluster-id>
 ```
 
-Prints the admin kubeconfig to stdout, or writes it to a file (mode 0600) with `--save`. `--ttl` issues a **short-lived** kubeconfig instead (`--ttl 1h`, `10m`–`720h`) — it expires on its own, so it is safer for teammates and CI. `kubeconfig rotate` invalidates every previously issued short-lived kubeconfig immediately; the admin kubeconfig is unaffected.
+Writes a **self-renewing** kubeconfig: the file carries no credential, and `kubectl` calls the Raff CLI for a fresh short-lived token before each request — the same exec-credential mechanism `gcloud` and `aws eks` use. It never expires, nothing long-lived is stored, and the file is useless to anyone without your API key. `--ttl` sets each token's lifetime (default `1h`).
+
+`--static` embeds a token in the file instead, for environments that cannot run the CLI. It expires (7 days by default, `--ttl` to change) and must be re-issued afterwards.
+
+`kubeconfig rotate` invalidates every kubeconfig and token issued for the cluster, immediately.
 
 ```bash
 raff kubernetes kubeconfig zk7x9m --save ~/.kube/raff-zk7x9m.yaml
