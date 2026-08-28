@@ -1,0 +1,65 @@
+---
+title: Cluster access and credentials
+sidebarTitle: Cluster access
+description: How kubeconfigs are issued, how long they last, and how to revoke them
+---
+
+<sub>Updated August 28, 2026</sub>
+
+Every cluster's API server is reachable at `https://<cluster-id>.k8s.raffusercloud.com:6443`, and access is by kubeconfig. **Every credential we issue expires** — there is no permanent kubeconfig, so a leaked file always has an end date and can be revoked immediately.
+
+There are two ways to get one. They differ only in whether you ever have to think about renewal.
+
+| | Command or action | Expires |
+| --- | --- | --- |
+| **CLI** — recommended | `raff kubernetes kubeconfig <cluster-id> --save ~/.kube/config` | **Never.** A fresh token is fetched for each `kubectl` command |
+| **Download** | **kubeconfig** button on the cluster, or `GET /api/v1/k8s/clusters/{id}/kubeconfig` | 7 days by default (1 hour – 30 days) |
+
+## The CLI kubeconfig renews itself
+
+The file the CLI writes contains **no credential at all** — no token, no client key. It carries the API server address, the cluster CA, and an instruction to run the Raff CLI:
+
+```yaml
+users:
+- name: raff-<cluster-id>
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1
+      command: raff
+      args: [kubernetes, token, <cluster-id>]
+```
+
+Before every request, `kubectl` runs that command and receives a short-lived token (one hour by default, `--ttl` to change). Nothing long-lived is written to disk, the file is useless to anyone without your API key, and you never re-download it. It uses the standard Kubernetes [client-go exec credential](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins) interface, so it works with `kubectl`, Helm and any other client that speaks it.
+
+Use this for workstations, CI, and anything long-running.
+
+<Note>
+The CLI must be installed and authenticated wherever `kubectl` runs — including CI images. If it cannot be, use a downloaded kubeconfig (`--static` in the CLI) and plan for its expiry.
+</Note>
+
+## Downloaded kubeconfigs expire
+
+A downloaded kubeconfig carries a token inside it, so it works anywhere without the CLI — and stops working when the token expires. Choose the lifetime under **Settings → Access**: **1 hour, 8 hours, 24 hours, 7 days, or 30 days**. The choice is remembered per cluster and reused by the **kubeconfig** button in the header, so you set it once.
+
+Thirty days is the maximum. Longer-lived files are not offered on purpose: a kubeconfig grants **full cluster-admin access** while it is valid, and a credential that outlives everyone's memory of creating it is the problem short-lived credentials exist to solve. If you don't want to think about expiry, use the CLI — it removes the deadline rather than postponing it.
+
+Over the API, `expires_in` selects the lifetime in seconds (600–2592000):
+
+```bash
+curl -H "X-API-Key: $RAFF_API_KEY" -H "X-Project-ID: $PROJECT_ID" \
+  "https://api.rafftechnologies.com/api/v1/k8s/clusters/<cluster-id>/kubeconfig?expires_in=86400"
+```
+
+## Revoking access
+
+**Settings → Access → Revoke** (or `raff kubernetes kubeconfig rotate <cluster-id>`) invalidates **every** kubeconfig and token issued for the cluster, immediately — downloaded files and CLI sessions alike. Use it when a credential leaks or someone leaves the team.
+
+Revoking does not interrupt running workloads; it only ends existing API access. Downloading again, or running any `kubectl` command through a CLI kubeconfig, issues a fresh credential.
+
+## What a kubeconfig grants
+
+Every issued credential is **cluster-admin** for the whole cluster while valid. Raff does not currently issue scoped-down kubeconfigs — if you need narrower access for a person or a service, create a ServiceAccount with your own RBAC rules inside the cluster and distribute a token for it.
+
+<Warning>
+Treat any downloaded kubeconfig like a password: never commit it to a repository, and prefer the CLI where you would otherwise store a file on a shared machine.
+</Warning>

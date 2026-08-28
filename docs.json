@@ -148,6 +148,7 @@
                       "products/build/kubernetes/concepts/node-pools-and-autoscaling",
                       "products/build/kubernetes/concepts/control-plane-and-ha",
                       "products/build/kubernetes/concepts/networking",
+                      "products/build/kubernetes/concepts/cluster-access",
                       "products/build/kubernetes/concepts/storage",
                       "products/build/kubernetes/concepts/lifecycle-states",
                       "products/build/kubernetes/concepts/billing-model"

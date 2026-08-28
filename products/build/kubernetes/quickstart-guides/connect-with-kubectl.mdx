@@ -15,7 +15,7 @@ There are two ways to get one, and the difference is only about renewal:
 | **CLI** (recommended) | `raff kubernetes kubeconfig <cluster-id>` | Never — it fetches a fresh token for every command and stores no credential on disk |
 | **Dashboard download** | **kubeconfig** button on the cluster | After 7 days by default — pick 1 hour to 30 days under **Settings → Access**, or switch to the CLI |
 
-Every credential we issue expires. Rotating access invalidates all of them at once.
+Every credential we issue expires. Rotating access invalidates all of them at once — see [Cluster access and credentials](/products/build/kubernetes/concepts/cluster-access).
 
 ## Before you start
 
@@ -32,8 +32,8 @@ kubectl get nodes
 ```
 
 The file it writes contains no credential: `kubectl` calls the Raff CLI for a
-short-lived token before each request, the same way `gcloud` and `aws eks`
-work. Anyone who copies the file cannot use it without your API key.
+short-lived token before each request. Anyone who copies the file cannot use
+it without your API key.
 
 ### Option B — download from the dashboard
 
