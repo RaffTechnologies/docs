@@ -4,7 +4,7 @@ sidebarTitle: Billing model
 description: What bills, when — pay-as-you-go vs subscription, autoscaling overage, HA and storage fees
 ---
 
-<sub>Updated August 24, 2026</sub>
+<sub>Updated August 28, 2026</sub>
 
 **The single-master control plane is free.** You pay for worker nodes, \$30/month if you enable the HA control plane, and per-GB for the persistent volumes your PVCs create.
 
@@ -30,6 +30,25 @@ Example: you committed a pool of 2 nodes on the \$9.99/month Starter plan (subsc
 Only a **manual** scale (dashboard or API) changes the base, and your monthly price moves with it.
 
 **Pay-as-you-go cluster.** There is no base. Every node bills per hour while it exists, so autoscaling from 2 to 3 nodes means 3 nodes' hourly rates until it scales back to 2.
+
+## What appears on your invoice
+
+A subscription cluster is itemised **one line per node pool**, priced at that pool's own plan — so a cluster mixing plans reads honestly rather than showing a single lump:
+
+| Line | Amount |
+| --- | --- |
+| Kubernetes node pool "default-pool" — K8s Standard × 2 | \$27.98 |
+| Kubernetes node pool "pool-2" — K8s Performance × 1 | \$30.99 |
+| Kubernetes — high availability control plane *(HA clusters only)* | \$30.00 |
+
+Usage-based charges arrive on the monthly pay-as-you-go invoice instead, one line per category:
+
+| Line | What it covers |
+| --- | --- |
+| Kubernetes Storage | every PVC in the account for that month, combined |
+| Kubernetes Node Overage | autoscaler nodes above your committed base |
+
+Storage and overage lines are totals per category, not per volume or per node — the per-resource breakdown is in the dashboard's usage view.
 
 ## What else bills
 
