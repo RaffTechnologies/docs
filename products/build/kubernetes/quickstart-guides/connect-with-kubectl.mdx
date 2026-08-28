@@ -13,7 +13,7 @@ There are two ways to get one, and the difference is only about renewal:
 | | How you get it | When it stops working |
 | --- | --- | --- |
 | **CLI** (recommended) | `raff kubernetes kubeconfig <cluster-id>` | Never — it fetches a fresh token for every command and stores no credential on disk |
-| **Dashboard download** | **kubeconfig** button on the cluster | After 7 days — download again, or switch to the CLI |
+| **Dashboard download** | **kubeconfig** button on the cluster | After 7 days by default — pick 1 hour to 30 days under **Settings → Access**, or switch to the CLI |
 
 Every credential we issue expires. Rotating access invalidates all of them at once.
 
