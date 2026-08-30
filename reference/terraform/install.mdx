@@ -44,10 +44,10 @@ The same workflow works with OpenTofu (`tofu init`).
 
 | Constraint | What it allows |
 |---|---|
-| `version = "0.1.0"` | Exactly 0.1.0 |
-| `version = "~> 0.1"` | Any 0.1.x — recommended for most teams |
-| `version = "~> 0.1, < 0.5"` | Any 0.1.x up to but not including 0.5.0 |
-| `version = ">= 0.1"` | Any version ≥ 0.1 — use only when you actively track changes |
+| `version = "0.3.1"` | Exactly 0.3.1 |
+| `version = "~> 0.1"` | Any 0.x release — recommended while the provider is pre-1.0 |
+| `version = "~> 0.3.0"` | Any 0.3.x patch: 0.3.1 yes, 0.4.0 no |
+| `version = ">= 0.3"` | Any version ≥ 0.3 — use only when you actively track changes |
 
 Lock-files (`.terraform.lock.hcl`) record the exact version `terraform init` resolved, so collaborators on the same module use the same provider build. Commit the lock file.
 
@@ -64,11 +64,11 @@ cd terraform-provider-raff
 go build -o terraform-provider-raff
 
 # Install to local Terraform plugin path
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)
-cp terraform-provider-raff ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.1.0/$(go env GOOS)_$(go env GOARCH)/
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.3.1/$(go env GOOS)_$(go env GOARCH)
+cp terraform-provider-raff ~/.terraform.d/plugins/registry.terraform.io/RaffTechnologies/raff/0.3.1/$(go env GOOS)_$(go env GOARCH)/
 ```
 
-Now any Terraform module that requires `RaffTechnologies/raff` 0.1.0 will use your local build instead of the registry version.
+Now any Terraform module that requires `RaffTechnologies/raff` 0.3.1 will use your local build instead of the registry version.
 
 To switch back to the registry version, delete the local plugin file and re-run `terraform init -upgrade`.
 
