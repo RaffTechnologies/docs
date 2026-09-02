@@ -6586,6 +6586,9 @@ paths:
       description: |
         Create or update one variable. By default the change rolls out to
         running replicas. Set `redeploy: false` to defer it to the next deploy.
+
+        A variable with `scope` of `build` or `both` is passed to the image
+        build, so changing it triggers a rebuild rather than a restart.
       operationId: setAppEnvVar
       parameters:
         - $ref: '#/components/parameters/AppServiceRef'
@@ -6603,6 +6606,15 @@ paths:
                   type: string
                 is_secret:
                   type: boolean
+                scope:
+                  type: string
+                  enum: [runtime, build, both]
+                  default: runtime
+                  description: >
+                    Where the value is injected. Use `build` or `both` for
+                    values a framework inlines at build time (NEXT_PUBLIC_*,
+                    VITE_*, REACT_APP_*, PUBLIC_*); changing one rebuilds the
+                    image instead of restarting replicas.
                 redeploy:
                   type: boolean
                   default: true
@@ -6657,6 +6669,10 @@ paths:
                         type: string
                       is_secret:
                         type: boolean
+                      scope:
+                        type: string
+                        enum: [runtime, build, both]
+                        default: runtime
                 redeploy:
                   type: boolean
                   default: true
@@ -11719,6 +11735,25 @@ components:
         is_system:
           type: boolean
           description: Managed by the platform (e.g. bindings) — read-only
+        scope:
+          type: string
+          enum: [runtime, build, both]
+          default: runtime
+          description: |
+            Where the value is injected. `runtime` reaches the running container
+            only. `build` reaches the image build only. `both` reaches each.
+
+            Frameworks that inline configuration at build time need `build` or
+            `both` — Next.js `NEXT_PUBLIC_*`, Vite `VITE_*`, Create React App
+            `REACT_APP_*`, SvelteKit and Astro `PUBLIC_*`. A runtime-only value
+            is not visible to those builds and ships as an empty string.
+
+            Changing a build-scoped variable rebuilds the image rather than
+            restarting replicas, so it takes a full build to take effect.
+
+            Build arguments are recoverable from image history for any `ARG` the
+            Dockerfile declares, so a build-scoped value is not confidential
+            inside the image. Prefer `runtime` for credentials.
 
     AppCustomDomain:
       type: object
