@@ -3,9 +3,11 @@ title: OS templates
 description: The Linux distros, BSD, and Windows Server images Raff provides at VM creation, plus the marketplace one-click apps that install software on top
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated September 5, 2026</sub>
 
 An **OS template** is the pre-built operating system image you select when creating a VM. The template determines what's on the VM's disk **before** any of your code or config runs — kernel, init system, package manager, base packages, default users.
+
+A version is retired from the picker when its upstream standard support ends; existing VMs on a retired version keep running, reinstalling and snapshotting unchanged.
 
 Two kinds of templates ship with the platform:
 
@@ -16,6 +18,22 @@ Two kinds of templates ship with the platform:
 
 Beyond these you can [save your own VM as a Custom Image](/products/build/virtual-machines/concepts/custom-images) and reuse it like an OS template.
 
+## What every Raff Linux image includes
+
+Base images are rebuilt regularly from the upstream cloud image with all updates applied, and every Linux template ships the same baseline:
+
+| Included | Detail |
+|---|---|
+| **Latest packages and kernel** at build time | The image name carries the rebuild date (for example "Ubuntu 26.04.1 LTS (BASE 2026-09)") |
+| **SSH password and root login enabled** | You choose an SSH key, a password, or both at create-time. Keys are recommended |
+| **fail2ban** with the `sshd` jail active | 5 failed logins within 10 minutes ban the source IP for 10 minutes. Tune `/etc/fail2ban/jail.local` |
+| **sshd brute-force limits** | `MaxAuthTries 3`, `LoginGraceTime 20` |
+| **Automatic security updates** | `unattended-upgrades` enabled, security pocket only |
+| **Disk tuning for Raff storage** | udev rules set the virtio disks to `rotational=0`, `scheduler=none`, 8 MB read-ahead |
+| **Raff Terminal Agent** | Installed at first boot with a per-VM token so the dashboard terminal works. It is not part of the image; see [Terminal](/products/build/virtual-machines/details/features-and-limits) |
+
+Not enabled by default: a host firewall. `ufw` (Debian family) and `firewalld` (RHEL family) are installed but inactive so the ports you open are the ones you choose. See [Initial server setup](/products/build/virtual-machines/quickstart-guides/initial-server-setup).
+
 ## OS templates available today (`us-east`)
 
 All Linux templates ship with `cloud-init` already configured for Raff's CONTEXT-disk pattern (SSH key + password injection at first boot). All Windows templates ship with `cloudbase-init` for the same.
@@ -24,10 +42,9 @@ All Linux templates ship with `cloud-init` already configured for Raff's CONTEXT
 
 | Version | When to pick |
 |---|---|
-| **Ubuntu 24.04** (LTS, x64) | **Recommended for new Linux workloads** — current LTS, supported through April 2029 |
+| **Ubuntu 26.04** (LTS, x64) | **Recommended for new Linux workloads** — newest LTS (26.04.1), supported through April 2031 |
+| **Ubuntu 24.04** (LTS, x64) | Previous LTS, supported through April 2029. Pick when matching an existing 24.04 fleet or when a vendor has not certified 26.04 yet |
 | **Ubuntu 22.04** (LTS, x64) | Existing fleets running 22.04. Supported through April 2027 |
-| **Ubuntu 20.04** (LTS, x64) | Legacy workloads only — 20.04 LTS standard support ended April 2025; still bootable for migrations |
-| **Ubuntu 24.10** (x64) | Interim release. Pick only if you specifically need newer kernel / userland features and are OK with the shorter support window |
 
 ### Debian
 
@@ -35,7 +52,6 @@ All Linux templates ship with `cloud-init` already configured for Raff's CONTEXT
 |---|---|
 | **Debian 13** (x64) | Current stable. Pick this for new Debian workloads |
 | **Debian 12** (x64) | Previous stable, oldstable. Still widely used; pick when matching an existing fleet |
-| **Debian 11** (x64) | Legacy. Long-term support phase only |
 
 ### RHEL family — AlmaLinux, Rocky Linux, CentOS Stream
 
@@ -43,7 +59,10 @@ Three RHEL-compatible distros covering the same surface — same `dnf`/`rpm` eco
 
 | Version | Notes |
 |---|---|
-| **AlmaLinux 9**, **Rocky Linux 9** | Recommended RHEL-9-compatible pick. Both are downstream rebuilds; effectively identical for most workloads |
+| **AlmaLinux 10**, **Rocky Linux 10** | **Recommended for new RHEL-family workloads** — RHEL 10 compatible (10.2), supported to 2035. Requires an x86-64-v3 CPU, which every Raff host provides. SELinux enforcing by default |
+| **AlmaLinux 9**, **Rocky Linux 9** | RHEL-9-compatible, supported to 2032. Pick when matching an existing RHEL 9 fleet or when a vendor has not certified RHEL 10 yet |
+
+RHEL 9 and 10 family templates require a plan with **at least 2 GB of memory**, matching the upstream minimum. The 1 GB plan is not offered for them.
 | **AlmaLinux 8**, **Rocky Linux 8** | RHEL-8-compatible. Use for matching existing RHEL 8 fleets |
 | **CentOS 9 Stream** (x64) | Upstream of RHEL — useful for testing what's coming in RHEL next; not recommended as a long-term production base since it's a rolling-release variant |
 
@@ -51,15 +70,15 @@ Three RHEL-compatible distros covering the same surface — same `dnf`/`rpm` eco
 
 | Version | When to pick |
 |---|---|
-| **Fedora 42** (x64) | Latest. Newest userland and kernel; ~13-month support window |
-| **Fedora 41**, **Fedora 40** | Earlier Fedora releases for matching existing fleets |
+| **Fedora 44** (x64) | Latest. Newest userland and kernel; ~13-month support window |
+| **Fedora 43** (x64) | Previous release, supported until December 2026 |
 
 ### Alpine
 
 | Version | When to pick |
 |---|---|
-| **Alpine 3.21** | Latest. Tiny base image (~5 MB), musl libc, ideal for container hosts and resource-constrained workloads |
-| **Alpine 3.20** | Previous release |
+| **Alpine 3.24** | Latest. Tiny base image, musl libc, ideal for container hosts and resource-constrained workloads |
+| **Alpine 3.21** | Previous release, supported until November 2026 |
 
 Alpine is **not glibc-compatible** — some prebuilt binaries (Java, Node native modules, proprietary databases) don't run without rebuilding for musl. Pick another distro if your stack expects glibc.
 
@@ -67,7 +86,7 @@ Alpine is **not glibc-compatible** — some prebuilt binaries (Java, Node native
 
 | Template | Notes |
 |---|---|
-| **OpenSUSE 15** | RPM-based with `zypper`; popular in European shops and SUSE-trained ops teams |
+| **openSUSE Leap 16** | RPM-based with `zypper`; popular in European shops and SUSE-trained ops teams |
 | **FreeBSD 14** | Real BSD (not Linux) — different kernel, different package manager (`pkg`), `jails` instead of containers. Pick for ZFS workloads, network appliances, or BSD-shop preference |
 
 ### Windows Server
@@ -112,15 +131,15 @@ A short decision flow:
 
 | Need | Template |
 |---|---|
-| **General-purpose Linux**, recent LTS | **Ubuntu 24.04 LTS** |
-| **Stable, conservative Linux**, RHEL-shop preference | **AlmaLinux 9** or **Rocky Linux 9** |
+| **General-purpose Linux**, recent LTS | **Ubuntu 26.04 LTS** |
+| **Stable, conservative Linux**, RHEL-shop preference | **AlmaLinux 10** or **Rocky Linux 10** |
 | **Stable Linux**, Debian preference | **Debian 13** |
-| **Tiny container host** | **Alpine 3.21** |
+| **Tiny container host** | **Alpine 3.24** |
 | **Windows production workload** | **Windows Server 2025 Standard** |
 | **Match an existing fleet** | Same template + version that fleet runs |
 | **Pre-installed app** (Docker, WordPress, OPNsense, etc.) | The matching **Marketplace** template |
 
-If you don't have a strong preference, **start with Ubuntu 24.04 LTS** — broadest community support, recent kernel, current LTS through 2029.
+If you don't have a strong preference, **start with Ubuntu 26.04 LTS** — broadest community support, newest kernel, current LTS through 2031.
 
 ## Related
 

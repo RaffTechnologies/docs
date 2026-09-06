@@ -139,44 +139,36 @@ sudo firewall-cmd --list-all
 
 The Raff [Firewall Group](/products/network/firewall) on the network interface and the inside-the-VM firewall stack independently — you need both to allow a port for traffic to reach the service. Most users keep the SG broad and use the OS firewall for fine-grained control, or the reverse. Don't open ports in both layers without thinking through what's exposed.
 
-## 7. Enable automatic security updates
+## 7. Confirm automatic security updates
 
-Set the VM to apply security patches without you remembering to.
+Raff Ubuntu and Debian images ship with `unattended-upgrades` enabled for the security pocket. Confirm it is on:
 
-**Ubuntu / Debian:**
 ```bash
-sudo apt install -y unattended-upgrades
-sudo dpkg-reconfigure -plow unattended-upgrades
+systemctl is-enabled unattended-upgrades
+cat /etc/apt/apt.conf.d/20auto-upgrades
 ```
 
-Confirm `/etc/apt/apt.conf.d/50unattended-upgrades` includes the security source.
+On the RHEL family, enable `dnf-automatic`:
 
-**RHEL family:**
 ```bash
 sudo dnf install -y dnf-automatic
 sudo systemctl enable --now dnf-automatic.timer
 ```
 
-Edit `/etc/dnf/automatic.conf` to set `apply_updates = yes` if you want full installs (default is download-only).
+## 8. Confirm fail2ban
 
-## 8. (Optional) fail2ban
+Raff Ubuntu and Debian images ship with `fail2ban` and the `sshd` jail active (5 failures in 10 minutes → 10 minute ban). Check it and see who has been knocking:
 
-`fail2ban` watches auth logs and bans IPs that fail repeatedly — cheap insurance for any VM with public SSH.
-
-**Ubuntu / Debian:**
 ```bash
-sudo apt install -y fail2ban
-sudo systemctl enable --now fail2ban
 sudo fail2ban-client status sshd
 ```
 
-**RHEL family:**
+Tune `/etc/fail2ban/jail.local` if you want longer ban times. On the RHEL family install it yourself:
+
 ```bash
 sudo dnf install -y fail2ban fail2ban-firewalld
 sudo systemctl enable --now fail2ban
 ```
-
-Defaults are sensible. Tune `/etc/fail2ban/jail.local` if you want longer ban times.
 
 ## 9. Set the timezone (optional)
 
@@ -205,7 +197,7 @@ After reboot, reconnect as `raff` and confirm everything's still working.
 - [x] Password SSH login disabled
 - [x] Firewall enabled with default-deny inbound
 - [x] Automatic security updates running
-- [x] (Optional) fail2ban running
+- [x] fail2ban running (preinstalled on Raff Ubuntu/Debian images)
 - [x] (Optional) sensible timezone
 
 Your VM is now in roughly the same shape as a freshly-provisioned production host at any cloud you'd come from.
