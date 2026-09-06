@@ -62,7 +62,7 @@ Three RHEL-compatible distros covering the same surface — same `dnf`/`rpm` eco
 | **AlmaLinux 10**, **Rocky Linux 10** | **Recommended for new RHEL-family workloads** — RHEL 10 compatible (10.2), supported to 2035. Requires an x86-64-v3 CPU, which every Raff host provides. SELinux enforcing by default |
 | **AlmaLinux 9**, **Rocky Linux 9** | RHEL-9-compatible, supported to 2032. Pick when matching an existing RHEL 9 fleet or when a vendor has not certified RHEL 10 yet |
 
-RHEL 9 and 10 family templates require a plan with **at least 2 GB of memory**, matching the upstream minimum. The 1 GB plan is not offered for them.
+**Minimum plan per template.** Every template requires at least 1 vCPU and 25 GB of disk. Templates whose upstream minimum is above 1 GB require a plan with **at least 2 GB of memory**: AlmaLinux 9 and 10, Rocky Linux 9 and 10, CentOS Stream 9, Fedora, openSUSE Leap 16, and all Windows Server editions (which also need 50 GB). The 1 GB plan stays available for Ubuntu, Debian, Alpine, FreeBSD and AlmaLinux/Rocky 8.
 | **AlmaLinux 8**, **Rocky Linux 8** | RHEL-8-compatible. Use for matching existing RHEL 8 fleets |
 | **CentOS 9 Stream** (x64) | Upstream of RHEL — useful for testing what's coming in RHEL next; not recommended as a long-term production base since it's a rolling-release variant |
 
@@ -78,7 +78,8 @@ RHEL 9 and 10 family templates require a plan with **at least 2 GB of memory**, 
 | Version | When to pick |
 |---|---|
 | **Alpine 3.24** | Latest. Tiny base image, musl libc, ideal for container hosts and resource-constrained workloads |
-| **Alpine 3.21** | Previous release, supported until November 2026 |
+| **Alpine 3.23** | Previous stable, supported until November 2027 |
+| **Alpine 3.21** | Older release, supported until November 2026 |
 
 Alpine is **not glibc-compatible** — some prebuilt binaries (Java, Node native modules, proprietary databases) don't run without rebuilding for musl. Pick another distro if your stack expects glibc.
 
