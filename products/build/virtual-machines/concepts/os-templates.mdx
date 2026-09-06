@@ -65,6 +65,13 @@ Three RHEL-compatible distros covering the same surface — same `dnf`/`rpm` eco
 **Minimum plan per template.** Every template requires at least 1 vCPU and 25 GB of disk. Templates whose upstream minimum is above 1 GB require a plan with **at least 2 GB of memory**: AlmaLinux 9 and 10, Rocky Linux 9 and 10, CentOS Stream 9, Fedora, openSUSE Leap 16, and all Windows Server editions (which also need 50 GB). The 1 GB plan stays available for Ubuntu, Debian, Alpine, FreeBSD and AlmaLinux/Rocky 8.
 | **AlmaLinux 8**, **Rocky Linux 8** | RHEL-8-compatible. Use for matching existing RHEL 8 fleets |
 | **CentOS 9 Stream** (x64) | Upstream of RHEL — useful for testing what's coming in RHEL next; not recommended as a long-term production base since it's a rolling-release variant |
+| **Oracle Linux 10**, **Oracle Linux 9** | RHEL-compatible with Oracle's UEK kernel, free to use. Pick for Oracle Database or Oracle-certified stacks. **Requires a plan with at least 2 GB memory and a 40 GB disk** (the base image is 37 GB) |
+
+### Amazon Linux
+
+| Version | When to pick |
+|---|---|
+| **Amazon Linux 2023** (x64) | AWS's own RHEL-family distribution. Pick when moving workloads off AWS with minimal change. Ships without fail2ban (not available for AL2023); SSH brute-force limits come from sshd's own rate limiting |
 
 ### Fedora
 
