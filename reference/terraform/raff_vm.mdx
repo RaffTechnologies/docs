@@ -13,7 +13,7 @@ Manages a Raff **Virtual Machine** — Linux or Windows, with NVMe SSD disks, op
 resource "raff_vm" "web" {
   name        = "web-01"
   template_id = "<ubuntu-2404-template-uuid>"
-  pricing_id  = 78                # Standard 2 vCPU / 4 GiB / 80 GiB ($17.99/mo)
+  pricing_id  = 80                # Standard 2 vCPU / 4 GiB / 80 GiB ($17.99/mo)
   region      = "us-east"
   ssh_keys    = ["<ssh-key-id>"]
 }
