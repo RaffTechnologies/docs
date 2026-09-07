@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated August 28, 2026</sub>
+<sub>Updated September 7, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,17 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### September 7, 2026
+
+**Pricing — VMs, Kubernetes, Managed Databases**
+
+- 🔵 **Updated** — **Standard (General Purpose) VM plans repriced** — [List VM Pricing](/api-reference/catalog/list-vm-pricing) now returns the new monthly rates for every shared-CPU size above 1 vCPU / 1 GiB (2 vCPU / 4 GiB is \$17.99, 4 vCPU / 8 GiB \$33.99, 8 vCPU / 16 GiB \$71.99, 16 vCPU / 32 GiB \$139.99). The 1 vCPU / 1 GiB (\$4.99) and 2 vCPU / 8 GiB (\$27.99) sizes are unchanged. Bundled SSD is 20 GB per GiB of RAM up to 8 GiB, +10 GB per GiB above that, capped at 320 GB
+- 🔵 **Updated** — **Premium (CPU-Optimized) VM plans repriced and redefined** — every vCPU now has half a physical thread reserved (guaranteed), with burst to the full thread. New rates run \$15.99 (1 vCPU / 1 GiB) to \$288.99 (16 vCPU / 32 GiB); SSD allotments are unchanged
+- 🔵 **Updated** — **Windows VM plans repriced** — \$13.99 (1 vCPU / 2 GiB) to \$174.99 (16 vCPU / 32 GiB). The Windows Server licence is still a separate \$15/mo line
+- 🔵 **Updated** — **Kubernetes worker plans** — `GET /api/v1/k8s/node-plans` returns the new rates: K8s Standard \$17.99, Performance \$33.99, High Memory \$71.99, Large \$119.99; CO Standard \$36.99, CO Performance \$72.99, CO High Memory \$144.99, CO Large \$192.99, CO Scale \$288.99. Starter (\$9.99), Scale (\$229.99) and the \$30/mo HA control plane are unchanged. PVC storage is now \$0.10/GB/month (was \$0.08)
+- 🔵 **Updated** — **Managed Database plans** — `GET /api/v1/database/plans` returns the new Postgres / MySQL ladder from \$22.99 (1 vCPU / 2 GiB) to \$367.99 (16 vCPU / 32 GiB) and the matching Valkey sizes (2 GB \$22.99 to 32 GB \$293.99); the \$7.99 entry size, Free tier, ClickHouse and Kafka ladders are unchanged. Extra storage is now \$0.15/GB-month (was \$0.12). HA and read-replica multipliers are unchanged
+- Volumes, backups, snapshots, reserved IPs, Object Storage, Raff Apps and Functions prices are unchanged
 
 ### August 28, 2026
 

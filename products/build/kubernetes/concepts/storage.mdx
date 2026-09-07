@@ -34,7 +34,7 @@ spec:
 
 6. **Deleting the claim deletes the volume** and billing stops.
 
-- **Pay for exactly what you claim** — \$0.08/GB/month, billed hourly, and every GB you pay for is a GB you can use. Storage is never part of the cluster price; it starts billing when a PVC is created and stops when it's deleted.
+- **Pay for exactly what you claim** — \$0.10/GB/month, billed hourly, and every GB you pay for is a GB you can use. Storage is never part of the cluster price; it starts billing when a PVC is created and stops when it's deleted.
 - **Volumes follow pods.** When a pod moves to another node, its volume detaches and re-attaches automatically — data intact.
 - **Visible in your dashboard.** Each PVC appears in your [Volumes](/products/store/volumes) list, named after its cluster. It can only be managed through Kubernetes — deleting it from the dashboard is blocked while the PVC exists.
 - **Deleted with the PVC** (reclaim policy `Delete`), and cluster deletion removes any remaining volumes — nothing keeps billing after teardown.
