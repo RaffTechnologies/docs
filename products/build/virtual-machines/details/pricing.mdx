@@ -1,6 +1,6 @@
 ---
 title: Pricing
-description: How Virtual Machines are billed on the Raff Platform — full per-plan rate tables for Standard and Premium tiers, subscription vs PAYG, billing-date alignment, and what's billed alongside the plan
+description: How Virtual Machines are billed on the Raff Platform — full per-plan rate tables for Standard, Premium and Windows Server tiers, subscription vs PAYG, billing-date alignment, and what's billed alongside the plan
 ---
 
 <sub>Updated September 7, 2026</sub>
@@ -9,14 +9,15 @@ Raff bills VMs against a prepaid **account balance**. The default model is subsc
 
 ## Plan tiers and rates (us-east)
 
-Two plan tiers, each with multiple sizes. Prices are USD, per VM, per region.
+Three plan tiers, each with multiple sizes. Prices are USD, per VM, per region.
 
 | Tier | CPU model | Use case |
 |---|---|---|
 | **Standard — General Purpose** | **Shared** vCPU | Web servers, dev/staging, batch jobs, anything that doesn't need consistent CPU performance every millisecond. Best price/CPU |
 | **Premium — CPU Optimized** | **Guaranteed** vCPU | Databases, real-time services, latency-sensitive APIs, anything where noisy-neighbor variability would hurt. Higher per-vCPU price, predictable performance |
+| **Windows Server** | **Guaranteed** vCPU | Windows workloads over RDP — Active Directory, file shares, .NET and IIS apps, SQL Server, trading terminals. Licence billed separately from compute |
 
-Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread.
+Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread. Pick **Windows Server** to run Windows — you select it by choosing a Windows template at create time.
 
 ### Standard — General Purpose plans (shared CPU)
 
@@ -52,6 +53,32 @@ Pick **Standard** for cost-efficient general-purpose workloads where short perfo
 | 16 | 16 GiB | 200 GiB | \$240.99 | \$2,409.90 | \$4,337.82 |
 | 8 | 32 GiB | 240 GiB | \$192.99 | \$1,929.90 | \$3,473.82 |
 | 16 | 32 GiB | 360 GiB | \$288.99 | \$2,889.90 | \$5,201.82 |
+
+### Windows Server plans
+
+Windows Server plans run on guaranteed vCPU, the same allocation as Premium. You get one by picking a Windows template when you create the VM. Every plan includes RDP access from first boot.
+
+The rates below are for **compute only** — Windows licensing is billed separately:
+
+| Licence option | Price |
+|---|---|
+| 6-month evaluation | **Free** with every Windows VM — no licence fee to start |
+| Windows Server Standard | \$15.00/month per VM, licensed through Raff's Microsoft SPLA programme |
+| Remote Desktop user SAL | \$8.00/month per user, for multi-user RDP beyond the 2 admin sessions |
+| Your own licence (BYOL) | Bring a licence you already own — Raff charges no licence fee for it |
+
+| vCPU | RAM | SSD | Monthly | Yearly | 24-month |
+|---|---|---|---|---|---|
+| 1 | 2 GiB | 50 GiB | \$13.99 | \$139.90 | \$251.82 |
+| 2 | 2 GiB | 50 GiB | \$17.99 | \$179.90 | \$323.82 |
+| 2 | 4 GiB | 80 GiB | \$22.99 | \$229.90 | \$413.82 |
+| 4 | 4 GiB | 80 GiB | \$29.99 | \$299.90 | \$539.82 |
+| 4 | 8 GiB | 120 GiB | \$40.99 | \$409.90 | \$737.82 |
+| 8 | 8 GiB | 120 GiB | \$54.99 | \$549.90 | \$989.82 |
+| 8 | 16 GiB | 180 GiB | \$76.99 | \$769.90 | \$1,385.82 |
+| 8 | 32 GiB | 240 GiB | \$137.99 | \$1,379.90 | \$2,483.82 |
+| 16 | 16 GiB | 200 GiB | \$112.99 | \$1,129.90 | \$2,033.82 |
+| 16 | 32 GiB | 360 GiB | \$174.99 | \$1,749.90 | \$3,149.82 |
 
 ### Lock-in discount
 
@@ -152,6 +179,8 @@ PAYG accounts (enterprise / SMB on request) follow a different cycle — usage a
 | **Backups** | Per GB stored, against the shared free pool |
 | **Object Storage** | Per GB stored |
 | **Public IPs** | Per IP, separately billed |
+| **Windows Server licence** | \$15.00/month per VM, on Windows plans only |
+| **Remote Desktop user SALs** | \$8.00/month per user, when RDS is enabled |
 
 ## Free backup & snapshot storage pool
 
@@ -159,7 +188,7 @@ Backups and snapshots share **one free-storage pool per account**:
 
 - **50 GB free** to start.
 - Every VM you run grows the pool: **+10%** of its disk for Standard
-  (general-purpose) plans, **+15%** for Premium (CPU-optimized) plans.
+  (general-purpose) plans, **+15%** for Premium (CPU-optimized) and Windows Server plans.
 - Deleting a VM (or shrinking its disk) shrinks the pool by the same amount;
   it never drops below the 50 GB base.
 

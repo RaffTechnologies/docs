@@ -40,6 +40,6 @@ Every worker has a 25 GB NVMe root disk for the OS, container images, logs and e
 | Item | Price |
 |---|---|
 | HA control plane (3 masters, 2 gateways) | \$30.00/month |
-| Persistent volume storage (`raff-block` PVCs) | \$0.10/GB/month, billed hourly (10 GB–10 TB per volume) |
+| Persistent volume storage (`raff-block` PVCs) | \$0.10/GB/month, billed hourly (10 GB–1 TB per volume) |
 
 You pay for exactly the storage your claims request — every GB billed is a GB you can use. Pay-as-you-go bills hourly per existing node; subscriptions commit the node set monthly, with PVC storage always billed hourly on top — see [Billing model](/products/build/kubernetes/concepts/billing-model). Kubernetes itself uses about 1 GB of memory per node — prefer fewer, larger nodes over many small ones.

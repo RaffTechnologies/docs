@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated September 7, 2026</sub>
+<sub>Updated September 8, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### September 8, 2026
+
+**Virtual Machines — Console access policy**
+
+- 🟢 **Added** — **Per-VM console 2FA requirement** — `PATCH /api/v1/vms/{id}/console-policy` with `{"console_require_mfa": true}` makes the VM's web console (terminal and VNC) open only from a session verified with a second factor. Off by default; the VM owner switches it on from **VM → Security**. API keys cannot open a console on such a VM. `GET /api/v1/vms/{id}` now returns `console_require_mfa`. CLI: `raff vm console-policy <vm-id> --require-mfa`; Terraform: `console_require_mfa` on `raff_vm`
 
 ### September 7, 2026
 

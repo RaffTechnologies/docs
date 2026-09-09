@@ -446,6 +446,7 @@
                       "api-reference/endpoint/reboot-vm",
                       "api-reference/endpoint/hard-reboot-vm",
                       "api-reference/endpoint/rename-vm",
+                      "api-reference/endpoint/set-vm-console-policy",
                       "api-reference/endpoint/reset-vm-password",
                       "api-reference/endpoint/reinstall-vm",
                       "api-reference/endpoint/factory-reset-vm"

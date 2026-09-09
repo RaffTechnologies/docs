@@ -896,6 +896,40 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/vms/{id}/console-policy:
+    patch:
+      tags:
+        - Virtual Machines
+      summary: Set console access policy
+      description: |
+        Toggle whether the VM's web console (terminal or VNC) requires a two-factor-verified
+        session. Off by default. When on, the dashboard only opens the console from a session
+        verified with a second factor, and API keys cannot open it. Which members may open the
+        console at all is governed by the `vm.console` permission.
+      operationId: setVMConsolePolicy
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetVMConsolePolicyRequest'
+      responses:
+        '200':
+          description: Console policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/vms/{id}/reset-password:
     post:
       tags:
@@ -8507,6 +8541,10 @@ components:
         active:
           type: boolean
           description: Whether the VM is active
+        console_require_mfa:
+          type: boolean
+          description: Whether opening the web console requires a two-factor-verified session
+          example: false
         created_at:
           type: string
           format: date-time
@@ -9299,6 +9337,15 @@ components:
           minLength: 1
           maxLength: 64
           description: New name for the virtual machine
+
+    SetVMConsolePolicyRequest:
+      type: object
+      required:
+        - console_require_mfa
+      properties:
+        console_require_mfa:
+          type: boolean
+          description: Require a two-factor-verified session to open the web console
 
     ReinstallVMRequest:
       type: object
