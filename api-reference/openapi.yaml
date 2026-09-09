@@ -902,10 +902,11 @@ paths:
         - Virtual Machines
       summary: Set console access policy
       description: |
-        Toggle whether the VM's web console (terminal or VNC) requires a two-factor-verified
-        session. Off by default. When on, the dashboard only opens the console from a session
-        verified with a second factor, and API keys cannot open it. Which members may open the
-        console at all is governed by the `vm.console` permission.
+        Toggle whether the VM's web console (terminal or VNC) asks for a fresh two-factor code
+        before it opens. Off by default. When on, the dashboard prompts for the authenticator
+        code (a confirmation unlocks protected consoles for 1 hour), and API keys cannot
+        open the console. Which members may open the console at all is governed by the
+        `vm.console` permission.
       operationId: setVMConsolePolicy
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
