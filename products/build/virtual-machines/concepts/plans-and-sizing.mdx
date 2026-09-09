@@ -1,18 +1,19 @@
 ---
 title: Plans & sizing
-description: Two plan tiers (General Purpose / shared CPU and CPU Optimized / guaranteed CPU), how to pick between them, and which size to start with for common workloads — web apps, databases, workers, dev/staging, Windows desktop, game servers
+description: Three plan tiers (General Purpose / shared CPU, CPU Optimized / guaranteed CPU, and Windows Server), how to pick between them, and which size to start with for common workloads — web apps, databases, workers, dev/staging, Windows desktop, game servers
 ---
 
 <sub>Updated September 7, 2026</sub>
 
 A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single rate. Outbound bandwidth is **unlimited** on every plan. Picking the right plan is the main sizing decision when creating a VM. The full price list lives on [Pricing](/products/build/virtual-machines/details/pricing); this page is the **how-to-pick** guide.
 
-## The two tiers
+## The three tiers
 
 | Tier | CPU model | When it's the right pick |
 |---|---|---|
 | **Standard — General Purpose** | **Shared** vCPU | Most workloads. Cheapest per-vCPU rate. Short performance dips during host-level contention are acceptable |
 | **Premium — CPU Optimized** | **Guaranteed** vCPU | Workloads where consistent CPU performance matters every millisecond — databases, real-time services, latency-sensitive APIs |
+| **Windows Server** | **Guaranteed** vCPU | Anything running Windows. Its own plan family, chosen by picking a Windows template; the licence is a separate line |
 
 In simple terms:
 
