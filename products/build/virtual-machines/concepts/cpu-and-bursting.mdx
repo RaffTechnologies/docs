@@ -23,29 +23,17 @@ After a long stretch of heavy use the balance reaches zero. Your VM then alterna
 
 Nothing is suspended, nothing needs restarting, and no action is required from you. Averaged over time this works out to your sustained level.
 
-## How long you can burst
+## How much burst you get
 
-The times below assume a **full balance**, which is what a VM has after a quiet night. This is not a monthly allowance. Credit rebuilds continuously, so a VM with a normal daily rhythm rarely runs it down at all.
+Two cases, and which one you are in depends only on your average CPU use over time.
 
-| Average CPU use | Time at full speed before credit runs out |
-|---|---|
-| 100% | 16 hours |
-| 80% | 1 day |
-| 60% | 2 days |
-| 50% | 4 days |
-| 40% or less | Never runs out |
+**Below 40% average, nothing ever happens.** The reserve only fills. Your VM runs at full speed permanently and never sees a limit. Most VMs live here.
 
-These are the same on every Standard size. A 1 vCPU and an 8 vCPU VM behave identically in proportion to their own size.
+**Above 40% average, your VM averages 40%.** You still get the extra, but delivered in bursts rather than continuously. Under constant heavy load a VM alternates: roughly two hours at its sustained level, then a stretch at full speed, then the same again.
 
-Short spikes are effectively free. A build that pins every core for twenty minutes, a nightly backup, a traffic burst: none of these come close to the limit.
+A VM that has been quiet starts with a full reserve, so it can run flat out for about **16 hours** before any of this applies. That is a head start, not something you get back each day.
 
-### If heavy load keeps going
-
-Once a full balance is spent, the VM settles into a repeating pattern for as long as the load lasts: about two hours at the reduced level, then a stretch at full speed, then the same again.
-
-How long that stretch is depends on the load. At a constant 100% it is roughly 40 minutes; at 60% it is about two hours.
-
-So the 16 hours in the table is the head start a rested VM gets, not something you receive over and over. Averaged across a day, sustained heavy load works out to your sustained level.
+Short spikes never come close. A build that pins every core for twenty minutes, a nightly backup, a traffic burst: none of them touch the reserve in any meaningful way.
 
 ## Where to see it
 
