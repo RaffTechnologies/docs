@@ -25,17 +25,27 @@ Nothing is suspended, nothing needs restarting, and no action is required from y
 
 ## How long you can burst
 
-Starting from a full balance, this is how long a VM can hold a given average CPU load before credit runs out. The answer is the same on every Standard size. A 1 vCPU and an 8 vCPU VM behave identically in proportion to their own size.
+The times below assume a **full balance**, which is what a VM has after a quiet night. This is not a monthly allowance. Credit rebuilds continuously, so a VM with a normal daily rhythm rarely runs it down at all.
 
-| Average CPU use | How long you can hold it |
+| Average CPU use | Time at full speed before credit runs out |
 |---|---|
 | 100% | 16 hours |
 | 80% | 1 day |
 | 60% | 2 days |
 | 50% | 4 days |
-| 40% or less | Indefinitely |
+| 40% or less | Never runs out |
+
+These are the same on every Standard size. A 1 vCPU and an 8 vCPU VM behave identically in proportion to their own size.
 
 Short spikes are effectively free. A build that pins every core for twenty minutes, a nightly backup, a traffic burst: none of these come close to the limit.
+
+### If heavy load keeps going
+
+Once a full balance is spent, the VM settles into a repeating pattern for as long as the load lasts: about two hours at the reduced level, then a stretch at full speed, then the same again.
+
+How long that stretch is depends on the load. At a constant 100% it is roughly 40 minutes; at 60% it is about two hours.
+
+So the 16 hours in the table is the head start a rested VM gets, not something you receive over and over. Averaged across a day, sustained heavy load works out to your sustained level.
 
 ## Where to see it
 
