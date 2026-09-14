@@ -47,6 +47,22 @@ The **CPU** card on your VM's Information tab shows the current state:
 
 The card also shows the last 24 hours, so a pattern is easy to spot.
 
+### What it looks like inside your VM
+
+If you run `top` while your VM is at its sustained level, you will see a high
+**steal time** (`st`), with load average unchanged:
+
+```
+load average: 4.16, 3.50, 1.91
+%Cpu(s):  7.8 us,  9.5 sy,  0.0 id,  82.8 st
+```
+
+Steal time usually means a busy host, so this is easy to misread. Here it means
+something simpler: your processes are asking for CPU and are being held to your
+sustained level while the reserve refills. Load average stays high because the
+work is still queued. Nothing is wrong with the host, and nothing is wrong with
+your VM.
+
 ## If you need more
 
 A VM that sits at **At baseline** regularly is telling you something. Two options:
