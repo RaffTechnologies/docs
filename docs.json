@@ -94,6 +94,7 @@
                     "group": "Concepts",
                     "pages": [
                       "products/build/virtual-machines/concepts/plans-and-sizing",
+                      "products/build/virtual-machines/concepts/cpu-and-bursting",
                       "products/build/virtual-machines/concepts/regions",
                       "products/build/virtual-machines/concepts/os-templates",
                       "products/build/virtual-machines/concepts/custom-images",

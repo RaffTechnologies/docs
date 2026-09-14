@@ -1,0 +1,63 @@
+---
+title: CPU and bursting
+description: How CPU works on Standard plans — the sustained level you can always count on, how bursting above it works, and what happens after long periods of heavy load
+---
+
+<sub>Updated September 14, 2026</sub>
+
+Standard VMs are **burstable**. Your VM can use all of its vCPUs whenever it needs them, and it has a **sustained level** it can hold indefinitely. Most VMs never reach the limit — bursting is what makes Standard both fast and cheap.
+
+This page applies to **Standard (General Purpose)** plans. [Premium and Windows Server plans](/products/build/virtual-machines/concepts/plans-and-sizing) use guaranteed vCPU and work differently.
+
+## How it works
+
+Your plan includes a sustained level of **40% of your vCPUs**. On a 4 vCPU VM that is 1.6 cores, available every second of every day.
+
+Use less than that and you build credit. Use more and you spend it. Bursting above your sustained level is included — it is not an extra charge and there is nothing to enable.
+
+Credit builds up to **24 hours' worth**, so a VM that is quiet overnight starts the morning with a full balance.
+
+### When credit runs out
+
+After a long stretch of heavy use the balance reaches zero. Your VM then alternates: it runs at a reduced level (**20% of your vCPUs**) for about **two hours** while credit rebuilds, then returns to full speed automatically.
+
+Nothing is suspended, nothing needs restarting, and no action is required from you. Averaged over time this works out to your sustained level.
+
+## How long you can burst
+
+Starting from a full balance, this is how long a VM can hold a given average CPU load before credit runs out. The answer is the same on every Standard size — a 1 vCPU and an 8 vCPU VM behave identically in proportion to their own size.
+
+| Average CPU use | How long you can hold it |
+|---|---|
+| 100% | 16 hours |
+| 80% | 1 day |
+| 60% | 2 days |
+| 50% | 4 days |
+| 40% or less | Indefinitely |
+
+Short spikes are effectively free. A build that pins every core for twenty minutes, a nightly backup, a traffic burst — none of these come close to the limit.
+
+## Where to see it
+
+The **CPU** card on your VM's Information tab shows the current state:
+
+| State | Meaning |
+|---|---|
+| **Full speed** | All cores available. Nothing to think about |
+| **Bursting** | Currently using more than your sustained level |
+| **At baseline** | Credit is rebuilding. Full speed returns on its own |
+
+The card also shows the last 24 hours, so a pattern is easy to spot.
+
+## If you need more
+
+A VM that sits at **At baseline** regularly is telling you something. Two options:
+
+- **Resize to more vCPUs.** The sustained level is a percentage, so it scales with the plan — an 8 vCPU Standard VM holds 3.2 cores indefinitely. See [Resize a VM](/products/build/virtual-machines/quickstart-guides/resize).
+- **Move to Premium.** [CPU Optimized plans](/products/build/virtual-machines/concepts/plans-and-sizing) use guaranteed vCPU, which suits workloads that need consistent CPU every millisecond — databases, real-time services, latency-sensitive APIs.
+
+## Related
+
+- [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing) — choosing between Standard, Premium and Windows Server
+- [Monitoring & metrics](/products/build/virtual-machines/concepts/monitoring-and-metrics) — CPU graphs and history
+- [Pricing](/products/build/virtual-machines/details/pricing) — full price list
