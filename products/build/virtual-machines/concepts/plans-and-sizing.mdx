@@ -17,7 +17,7 @@ A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single rate
 
 In simple terms:
 
-- **Standard** — the platform may share the underlying physical core with other VMs. Performance is great most of the time but can have brief jitter when neighbors get busy. Best price/CPU. Standard is **burstable**: all your vCPUs are available whenever you need them, on top of a sustained level you can hold indefinitely — see [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting).
+- **Standard** — the platform may share the underlying physical core with other VMs. Performance is great most of the time but can have brief jitter when neighbors get busy. Best price/CPU. Standard is **burstable**: all your vCPUs are available whenever you need them, on top of a sustained level you can hold indefinitely. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting).
 - **Premium** — half a physical thread is reserved for every vCPU, with burst to the full thread. Performance is predictable and steady. Higher price/CPU but no noisy-neighbor dips.
 
 If you can't tell which fits, **start with Standard**. Move workloads to Premium when you can point to a specific symptom (latency p99 spikes, database query timeouts under load, real-time-stream stutter) that guaranteed CPU would solve.
