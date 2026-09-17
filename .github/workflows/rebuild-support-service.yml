@@ -1,0 +1,27 @@
+name: Rebuild support-service on docs change
+
+# The support assistant (Raffy) answers from a copy of this repo baked into
+# the support-service image at build time. Without this hook a pricing or
+# product change here only reaches customers on the next unrelated
+# support-service deploy. Needs a repo secret RAFF_DISPATCH_TOKEN: a
+# fine-grained PAT with "Contents: read and write" on
+# RaffTechnologies/raff_server_microservices (repository_dispatch needs it).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.mdx'
+      - 'docs.json'
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger support-service build
+        env:
+          GH_TOKEN: ${{ secrets.RAFF_DISPATCH_TOKEN }}
+        run: |
+          gh api repos/RaffTechnologies/raff_server_microservices/dispatches \
+            -f event_type=docs-updated \
+            -F 'client_payload[sha]=${{ github.sha }}'
