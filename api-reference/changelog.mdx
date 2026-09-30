@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated September 8, 2026</sub>
+<sub>Updated September 26, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### September 26, 2026
+
+**Managed Databases: API**
+
+- 🔵 **Updated**: **Public access keeps its ports.** Turning public access off and on again with `POST /api/v1/databases/{database_id}/public-access` now returns the same `public_port`. The ports are released only when the database is deleted. Before, turning public access off gave the ports up and enabling it again assigned a new pair.
+- 🟣 **Fixed**: **PostgreSQL pooled endpoint connection limit.** The public pooled endpoint (`public_port`) now accepts up to the plan's pooled limit (200 on Free, up to 1,500 on the largest plan). It was capped at the direct limit (60 on Free), so new pooled connections were refused early.
 
 ### September 8, 2026
 

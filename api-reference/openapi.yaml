@@ -1024,7 +1024,7 @@ paths:
         For subscription VMs, the price difference is calculated pro-rata for the
         remaining billing period:
 
-        - **Upgrade** — the difference is deducted from credits, then account balance.
+        - **Upgrade** — the difference is deducted from your account balance.
           If your balance is insufficient, the request fails with `402`.
         - **Downgrade** — the pro-rata credit is added to your account balance.
 
@@ -1067,7 +1067,7 @@ paths:
         ## Billing
 
         For subscription VMs, the storage cost difference is calculated pro-rata
-        and deducted from credits, then account balance. Returns `402` if
+        and deducted from your account balance. Returns `402` if
         insufficient balance.
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
@@ -2414,7 +2414,7 @@ paths:
         ## Billing
 
         For subscription volumes, the storage cost difference is calculated
-        pro-rata and deducted from credits, then account balance.
+        pro-rata and deducted from your account balance.
         Returns `402` if insufficient balance.
       parameters:
         - name: id
@@ -4497,7 +4497,9 @@ paths:
       description: |
         Open or close public access to the database.
 
-        When enabled, the database is reachable at `{database_id}.public.db.raffusercloud.com` on a port assigned from the reserved range 25060–26060 (`public_port` on the database object). For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint. TLS is always required.
+        When enabled, the database is reachable at `{database_id}.public.db.raffusercloud.com` on the port pair Raff assigns to it (`public_port` on the database object). For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint, each capped at the plan's connection limit for that endpoint. TLS is always required.
+
+        The ports stay assigned while public access is off, so enabling it again returns the same ports. They are released only when the database is deleted.
 
         `allowlist` restricts which source CIDRs may connect. Omit it to keep the stored list; pass `[]` to allow all sources. Re-post `enabled: true` with a new `allowlist` to update the restriction in place.
       operationId: setDatabasePublicAccess
@@ -9529,8 +9531,6 @@ components:
         pro_rata_amount:
           type: number
           description: Amount charged (positive) or credited (negative).
-        credits_applied:
-          type: number
         balance_applied:
           type: number
         new_monthly_price:
