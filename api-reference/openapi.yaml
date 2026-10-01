@@ -4899,7 +4899,7 @@ paths:
       summary: Create function
       description: |
         Create a serverless function. The function serves at
-        `https://{slug}.fn.raffusercloud.com` — the slug is your name plus a
+        `https://{slug}.fn.onraff.com`. The slug is your name plus a
         short random suffix, so names never collide across accounts.
 
         Functions unlock after your first top-up of $5 or more (the money
@@ -10950,7 +10950,7 @@ components:
           type: string
         url:
           type: string
-          description: "`https://{slug}.fn.raffusercloud.com` — HTTPS with automatic TLS"
+          description: "`https://{slug}.fn.onraff.com`, HTTPS with automatic TLS"
         status:
           type: string
           enum: [pending, building, live, paused, error, deleting]
