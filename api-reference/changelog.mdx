@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated September 26, 2026</sub>
+<sub>Updated October 4, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,15 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 4, 2026
+
+**Raff Apps: spend cap**
+
+- 🔵 **Updated**: **`PATCH /api/v1/apps/spend-settings` changes only the fields you send.** Before, a field left out was saved as off, $0 or `pause`, so sending only `monthly_cap_usd` turned the cap off.
+- 🔵 **Updated**: **The cap must be at least $1.** `monthly_cap_usd` below 1 returns 400. To remove the cap, send `{"enabled": false}`.
+- 🟢 **Added**: **`cap_action: notify_only`**, now the default for accounts that never set a cap. The owners and billing contacts get an email and a dashboard notice at 75%, 90% and 100% of the cap; with `pause`, every pay-as-you-go app is also paused at 100%. Apps on a prepaid plan keep running.
+- 🔵 **Updated**: **While the cap has apps paused,** resuming, creating, deploying, scaling up and running jobs of pay-as-you-go apps return 412 until the cap is raised or turned off, or a new month starts.
 
 ### September 26, 2026
 

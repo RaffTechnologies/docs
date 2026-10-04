@@ -7050,8 +7050,18 @@ paths:
         - Raff Apps
       summary: Update spend cap settings
       description: |
-        Set the account's monthly Apps spend cap. When the cap is reached
-        services pause automatically until the next period or the cap is raised.
+        Change the account's monthly Apps spend cap. Send only the fields you
+        want to change; fields you leave out keep their value. An account that
+        never set a cap is on at $50 with `notify_only`.
+
+        The account owners and billing contacts get an email and a dashboard
+        notice at 75% and 90% of the cap, and again when it is reached. Then
+        `notify_only` keeps apps running, and `pause` pauses every
+        pay-as-you-go app until the next month or until the cap is raised or
+        turned off. Apps on a prepaid plan keep running unless they are scaled
+        above their plan. While apps are paused by the cap, resuming,
+        creating, deploying, scaling up and running jobs of pay-as-you-go
+        apps return 412.
       operationId: updateAppSpendSettings
       requestBody:
         required: true
@@ -7059,15 +7069,20 @@ paths:
           application/json:
             schema:
               type: object
-              required: [enabled, monthly_cap_usd]
+              minProperties: 1
               properties:
                 enabled:
                   type: boolean
+                  description: Turn the cap on or off.
                 monthly_cap_usd:
                   type: number
+                  minimum: 1
+                  maximum: 1000000
+                  description: The monthly cap in USD, rounded to cents. To remove the cap, set `enabled` to false.
                 cap_action:
                   type: string
-                  enum: [pause]
+                  enum: [notify_only, pause]
+                  description: What happens when the cap is reached.
       responses:
         '200':
           description: Updated settings
@@ -11947,9 +11962,10 @@ components:
           type: number
         cap_action:
           type: string
-          enum: [pause]
+          enum: [notify_only, pause]
         paused_by_cap:
           type: boolean
+          description: True while the cap has the account's apps paused.
 
     Database:
       type: object
