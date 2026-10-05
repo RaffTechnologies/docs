@@ -32,6 +32,14 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 - 🟣 **Fixed**: **Create database** mistakes you can fix (a plan of another engine, read replicas on an engine without them, high availability or a backup on the free plan) return 400 with the reason. They returned 500.
 - 🔵 **Updated**: **Database** objects include `is_free` and `suspended_at`, and `status` can be `resizing` or `restoring`. MySQL, ClickHouse, and Kafka are listed as available in the engine catalog.
 
+**Managed Databases: CLI** (raff-cli v0.6.0)
+
+- 🟢 **Added**: [`raff database`](/reference/cli/database) (alias `raff db`). `raff db create` with no flags creates a free PostgreSQL database with public access and prints a working connection string. Also `list`, `get`, `delete`, `rename`, `resize`, `resume`, `connection`, `rotate-password`, `query`, `browse`, `users`, `backups`, `restore`, `public`, `vpc`, `metrics`, `logs`, `slow-queries`, `extensions`, `parameters`, `engines`, `plans`.
+
+**Managed Databases: Terraform** (provider v0.4.0)
+
+- 🟢 **Added**: [`raff_database`](/reference/terraform/raff_database) and [`raff_database_user`](/reference/terraform/raff_database_user) resources, and the [`raff_database`, `raff_database_plans`, `raff_database_engines`](/reference/terraform/data-sources#raff_database) data sources.
+
 **Raff Apps: clearer errors and instance limits**
 
 - 🔵 **Updated**: **Errors you can fix return a plain sentence with the right code.** Bad values return 400, a name or domain already taken returns 409, and something that does not exist returns 404, each with a message that says what to change. When something breaks on our side the API returns 500 with "Something went wrong on our side. Try again, or contact support." Error bodies no longer start with `rpc error: code = ...`.
