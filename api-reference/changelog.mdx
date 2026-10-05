@@ -30,15 +30,19 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 - 🔵 **Updated**: **Get connection details** (`GET /api/v1/databases/{database_id}/connection`) returns the public endpoint too: `public_host`, `public_port`, and `public_connection_uri`, filled while public access is on. A database without a VPC has no private endpoint.
 - 🟣 **Fixed**: **Create database** without `storage_gb` or `engine_version` now uses the plan's included storage and the newest version, as documented. Before, the database got 0 GB and never started.
 - 🟣 **Fixed**: **Create database** mistakes you can fix (a plan of another engine, read replicas on an engine without them, high availability or a backup on the free plan) return 400 with the reason. They returned 500.
+- 🟣 **Fixed**: **Create database** with `public_access: true` now opens public access. Before, the setting was stored but the database had no public endpoint until public access was turned on separately.
+- 🟣 **Fixed**: **Public access** and **database users** mistakes return 400 with the reason: `0.0.0.0/0`, an invalid or IPv6 CIDR, more than 20 allowlist entries, a reserved user name (names starting with `app_` or `fnb_` belong to Raff Apps and Functions), or the user limit. They returned 500.
 - 🔵 **Updated**: **Database** objects include `is_free` and `suspended_at`, and `status` can be `resizing` or `restoring`. MySQL, ClickHouse, and Kafka are listed as available in the engine catalog.
 
 **Managed Databases: CLI** (raff-cli v0.6.0)
 
 - 🟢 **Added**: [`raff database`](/reference/cli/database) (alias `raff db`). `raff db create` with no flags creates a free PostgreSQL database with public access and prints a working connection string. Also `list`, `get`, `delete`, `rename`, `resize`, `resume`, `connection`, `rotate-password`, `query`, `browse`, `users`, `backups`, `restore`, `public`, `vpc`, `metrics`, `logs`, `slow-queries`, `extensions`, `parameters`, `engines`, `plans`.
+- 🔵 **Updated** (v0.6.1): `raff configure` shows only the start of a stored API key (`raff_737e…`).
 
 **Managed Databases: Terraform** (provider v0.4.0)
 
 - 🟢 **Added**: [`raff_database`](/reference/terraform/raff_database) and [`raff_database_user`](/reference/terraform/raff_database_user) resources, and the [`raff_database`, `raff_database_plans`, `raff_database_engines`](/reference/terraform/data-sources#raff_database) data sources.
+- 🔵 **Updated** (v0.4.1): `public_allowlist` and `raff_database_user` names are checked at `terraform plan`, before anything is created.
 
 **Raff Apps: clearer errors and instance limits**
 

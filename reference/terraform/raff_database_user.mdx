@@ -27,7 +27,7 @@ output "reporting_password" {
 | Argument | Type | Required? | Description |
 |---|---|---|---|
 | `database_id` | string | Yes | Short ID of the database |
-| `name` | string | Yes | 3 to 31 characters: a lowercase letter, then lowercase letters, digits, or underscores |
+| `name` | string | Yes | 3 to 31 characters: a lowercase letter, then lowercase letters, digits, or underscores. Names starting with `app_` or `fnb_` are reserved for Raff Apps and Functions |
 | `role` | string | No | `readonly` (default) or `readwrite` |
 
 Changing any argument replaces the user.

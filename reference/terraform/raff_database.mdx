@@ -52,7 +52,7 @@ resource "raff_database" "dev" {
 | `replica_count` | int | No | Read replicas (PostgreSQL only) |
 | `vpc_id` | string | No | VPC for the private endpoint. Connects or disconnects in place |
 | `public_access` | bool | No | Public access. Toggles in place |
-| `public_allowlist` | list(string) | No | Source CIDRs allowed on the public endpoint. Empty allows all |
+| `public_allowlist` | list(string) | No | Source IPv4 CIDRs allowed on the public endpoint, written with the network address (`203.0.113.0/24`, `198.51.100.7/32`), at most 20. Empty allows all; `0.0.0.0/0` is not accepted |
 
 ## Attribute reference (computed)
 

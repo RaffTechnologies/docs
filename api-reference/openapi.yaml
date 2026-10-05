@@ -12960,7 +12960,7 @@ components:
       properties:
         name:
           type: string
-          description: 3 to 31 characters. Starts with a lowercase letter, then lowercase letters, digits, or underscores.
+          description: 3 to 31 characters. Starts with a lowercase letter, then lowercase letters, digits, or underscores. Names starting with `app_` or `fnb_` are reserved for Raff Apps and Functions.
           example: reporting
         role:
           type: string
