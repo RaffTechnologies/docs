@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 4, 2026</sub>
+<sub>Updated October 5, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,16 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 5, 2026
+
+**Raff Apps: clearer errors and instance limits**
+
+- 🔵 **Updated**: **Errors you can fix return a plain sentence with the right code.** Bad values return 400, a name or domain already taken returns 409, and something that does not exist returns 404, each with a message that says what to change. When something breaks on our side the API returns 500 with "Something went wrong on our side. Try again, or contact support." Error bodies no longer start with `rpc error: code = ...`.
+- 🔵 **Updated**: **Values are checked before they are saved.** Create and update refuse an invalid cron schedule, an invalid time zone, a health check path without a leading `/`, a port outside 1 to 65535 and the ports the platform reserves (8008, 8012, 8013, 8022, 9090, 9091) for web apps and private apps that scale to zero.
+- 🔵 **Updated**: **An app can have at most 6 instances**, fixed or autoscaled. The limit is checked only when a value goes up, so an app above it can always scale down. `min_replicas` above `max_replicas` returns 400.
+- 🔵 **Updated**: **`GET /api/v1/apps/usage`**: `period` must be `current` or `previous` (anything else returns 400), and `service_id` also finds apps deleted during the month.
+- 🟣 **Fixed**: **Cron time zones other than UTC** were refused on update. Any IANA time zone, such as `Europe/Istanbul`, is accepted now.
 
 ### October 4, 2026
 

@@ -7007,13 +7007,18 @@ paths:
       parameters:
         - name: service_id
           in: query
-          description: Scope to a single service (omit for all services).
+          description: |
+            Scope to one app, by id or short id (omit for all apps). Apps
+            deleted during the month are included, so their charges can still
+            be read.
           schema:
             type: string
         - name: period
           in: query
+          description: "`current` is this month so far, `previous` is last month."
           schema:
             type: string
+            enum: [current, previous]
             default: current
       responses:
         '200':
@@ -7022,8 +7027,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppUsage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/apps/spend-settings:
     get:
@@ -11664,14 +11673,21 @@ components:
           type: integer
         replicas:
           type: integer
+          minimum: 1
+          maximum: 6
+          description: Fixed number of instances. An app can have at most 6 instances.
         autoscaling_enabled:
           type: boolean
         min_replicas:
           type: integer
+          description: Fewest instances when autoscaling. Cannot be more than `max_replicas`.
         max_replicas:
           type: integer
+          maximum: 6
+          description: Most instances when autoscaling. An app can have at most 6 instances.
         scale_to_zero:
           type: boolean
+          description: Stop every instance when idle. Only for `web` and `private` apps.
         http_port:
           type: integer
         health_check_path:
@@ -11688,9 +11704,13 @@ components:
 
     ScaleAppServiceRequest:
       type: object
+      description: |
+        An app can have at most 6 instances. The limit is checked only when a
+        value goes up, so an app above it can always scale down.
       properties:
         replicas:
           type: integer
+          description: Fixed number of instances.
         autoscaling_set:
           type: boolean
           description: Set true to apply the autoscaling fields
@@ -11698,14 +11718,18 @@ components:
           type: boolean
         min_replicas:
           type: integer
+          description: Fewest instances when autoscaling. Cannot be more than `max_replicas`.
         max_replicas:
           type: integer
+          description: Most instances when autoscaling.
         autoscaling_metric:
           type: string
+          enum: [concurrency, cpu]
         autoscaling_target:
           type: integer
         scale_to_zero:
           type: boolean
+          description: Stop every instance when idle. Only for `web` and `private` apps.
 
     AppTier:
       type: object
