@@ -1,0 +1,243 @@
+---
+title: "raff database"
+description: "Manage databases from the CLI: create, connect, run queries, browse tables, users, backups, restore, public access, metrics, and logs."
+---
+
+<sub>Updated October 5, 2026</sub>
+
+The `raff database` command group (aliases: `raff db`, `raff databases`) covers every managed database operation in the public API for PostgreSQL, MySQL, Valkey, ClickHouse, and Kafka. Each subcommand supports `--output json` for scripting.
+
+```bash
+raff db create
+```
+
+With no flags, this creates a free PostgreSQL database with public access, waits until it runs (usually about 10 seconds), and prints a connection string you can use right away.
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List databases |
+| [`get`](#get) | Show one database |
+| [`create`](#create) | Create a database |
+| [`delete`](#delete) | Delete a database and its backups |
+| [`rename`](#rename) | Rename a database |
+| [`resize`](#resize) | Change plan, storage, high availability, or read replicas |
+| [`resume`](#resume) | Wake a free database paused after 7 idle days |
+| [`connection`](#connection) | Show how to connect |
+| [`rotate-password`](#rotate-password) | Give the admin user a new password |
+| [`query`](#query) | Run one SQL statement or Valkey command |
+| [`browse`](#browse) | List schemas, tables, or a table's rows |
+| [`users`](#users) | Manage database users |
+| [`backups`](#backups) | List and create backups |
+| [`restore`](#restore) | Restore to a backup or point in time |
+| [`public`](#public) | Turn public access on or off |
+| [`vpc`](#vpc) | Connect to a VPC or disconnect |
+| [`metrics`](#metrics), [`logs`](#logs), [`slow-queries`](#slow-queries) | Observe the database |
+| [`extensions`](#extensions) | PostgreSQL extensions |
+| [`parameters`](#parameters) | Engine settings in effect |
+| [`engines`](#engines), [`plans`](#plans) | Engines, versions, and plans |
+
+---
+
+## list
+
+```bash
+raff db list [--output table|json]
+```
+
+## get
+
+```bash
+raff db get <database-id>
+```
+
+Shows status, engine, plan, storage, high availability, replicas, hostnames, and price.
+
+## create
+
+```bash
+raff db create [--name <name>] [--engine postgres] [--version <v>] [--plan <plan-id>] [--storage <gb>] [--ha] [--replicas <n>] [--vpc <vpc-id>] [--private] [--no-wait]
+```
+
+| Flag | Description |
+|---|---|
+| `--name` | Database name. Default: generated, e.g. `postgres-3f9a1c`. |
+| `--engine` | `postgres` (default), `mysql`, `valkey`, `clickhouse`, or `kafka`. |
+| `--version` | Engine major version, see [`engines`](#engines). Default: latest. |
+| `--plan` | Plan ID, see [`plans`](#plans). Default: the engine's free plan (one per account). |
+| `--storage` | Storage in GB. Default: the plan's included storage. |
+| `--ha` | High availability: a standby that takes over on failure. |
+| `--replicas` | Read replicas (PostgreSQL only). |
+| `--vpc` | VPC ID for the private endpoint. |
+| `--private` | No public access. Without `--vpc` or `--private`, public access is on (TLS required, generated password); limit sources with [`public enable --allow`](#public). |
+| `--no-wait` | Return at once instead of waiting until the database runs. |
+
+Requires a project: pass `--project-id`, set `RAFF_PROJECT_ID`, or set a default with `raff configure`.
+
+```bash
+raff db create --name orders --engine mysql
+```
+
+## delete
+
+```bash
+raff db delete <database-id> [--force] [--wait]
+```
+
+Deletes the database and all its backups. This cannot be undone. `--force` skips the confirmation prompt.
+
+## rename
+
+```bash
+raff db rename <database-id> <new-name>
+```
+
+Hostnames are based on the database ID and do not change.
+
+## resize
+
+```bash
+raff db resize <database-id> [--plan <plan-id>] [--storage <gb>] [--ha on|off] [--replicas <n>]
+```
+
+Storage only grows. A new plan must be the same engine.
+
+## resume
+
+```bash
+raff db resume <database-id>
+```
+
+## connection
+
+```bash
+raff db connection <database-id> [--reveal] [--ca]
+```
+
+Prints the user, database, and the public and private endpoints with their URIs. `--reveal` includes the password. `--ca` prints the CA certificate for `sslmode=verify-full`; for Kafka it is always printed because clients must trust it.
+
+## rotate-password
+
+```bash
+raff db rotate-password <database-id>
+```
+
+Open connections keep working until they disconnect.
+
+## query
+
+```bash
+raff db query <database-id> "<statement>" [--write] [--max-rows <n>]
+```
+
+Runs one statement as the admin user. Read-only unless `--write` is set. Returns up to 1,000 rows by default (`--max-rows` up to 5,000) and stops after 15 seconds.
+
+```bash
+raff db query a1b2c3d4 "SELECT count(*) FROM users"
+raff db query a1b2c3d4 --write "CREATE TABLE notes (id serial PRIMARY KEY, body text)"
+```
+
+## browse
+
+```bash
+raff db browse <database-id> [schema [table]] [--limit <n>] [--cursor <c>] [--match <pattern>]
+```
+
+No path lists schemas, a schema lists its tables, and a schema plus table prints a page of rows. For Valkey, no path lists keys (filter with `--match user:*`) and a key prints its value.
+
+## users
+
+```bash
+raff db users list <database-id>
+raff db users create <database-id> <name> [--role readonly|readwrite]
+raff db users password <database-id> <name>
+raff db users rotate <database-id> <name>
+raff db users delete <database-id> <name> [--force]
+```
+
+`create` prints the new user's password. Names are 3 to 31 characters: a lowercase letter, then lowercase letters, digits, or underscores.
+
+## backups
+
+```bash
+raff db backups list <database-id>
+raff db backups create <database-id>
+```
+
+The list marks which backups can be restored and, for PostgreSQL, the earliest point in time you can restore to.
+
+## restore
+
+```bash
+raff db restore <database-id> [--backup <backup-id> | --time <RFC 3339>] [--name <new-name>] [--ha]
+raff db restore <database-id> --in-place [--backup <backup-id> | --time <RFC 3339>] [--force]
+```
+
+Without `--in-place`, the restore creates a new database and prints its ID. `--in-place` overwrites this database; data written after the restore point is lost.
+
+```bash
+raff db restore a1b2c3d4 --time 2026-10-05T09:30:00Z --name orders-before-migration
+```
+
+## public
+
+```bash
+raff db public enable <database-id> [--allow <cidr>,<cidr>]
+raff db public disable <database-id>
+```
+
+`--allow` limits which sources can connect; leave it out to keep the stored list. PostgreSQL is also reachable on the standard ports 6543 (pooled) and 5432 (direct) of the public hostname.
+
+## vpc
+
+```bash
+raff db vpc connect <database-id> <vpc-id>
+raff db vpc disconnect <database-id>
+```
+
+## metrics
+
+```bash
+raff db metrics <database-id>
+```
+
+CPU, memory, storage, connections, and replication lag, refreshed about every 60 seconds.
+
+## logs
+
+```bash
+raff db logs <database-id> [--tail 200]
+```
+
+## slow-queries
+
+```bash
+raff db slow-queries <database-id> [--limit 20]
+```
+
+## extensions
+
+```bash
+raff db extensions list <database-id>
+raff db extensions enable <database-id> <extension>
+raff db extensions disable <database-id> <extension>
+```
+
+## parameters
+
+```bash
+raff db parameters <database-id>
+```
+
+## engines
+
+```bash
+raff db engines
+```
+
+## plans
+
+```bash
+raff db plans [--engine postgres]
+```

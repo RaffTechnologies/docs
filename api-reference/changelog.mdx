@@ -17,6 +17,21 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 ### October 5, 2026
 
+**Managed Databases: API**
+
+- 🟢 **Added**: **Managed Databases in the API reference.** Every database endpoint now has its own page.
+- 🟢 **Added**: **Run a query**: `POST /api/v1/databases/{database_id}/console`. Read-only unless `read_only: false`, up to 5,000 rows, 15 second limit.
+- 🟢 **Added**: **Browse schemas, tables, and keys**: `POST /api/v1/databases/{database_id}/browse`.
+- 🟢 **Added**: **Database users**: list, create, rotate a password, get a password, and delete under `/api/v1/databases/{database_id}/users`.
+- 🟢 **Added**: **Saved queries**: `GET`, `PUT /api/v1/databases/{database_id}/saved-queries` and `DELETE /api/v1/databases/{database_id}/saved-queries/{name}`.
+- 🟢 **Added**: **Disconnect from VPC** (`DELETE /api/v1/databases/{database_id}/vpc`), **engine parameters** (`GET /api/v1/databases/{database_id}/parameters`), **traffic by client** (`GET /api/v1/databases/{database_id}/metrics/clients`), and **apps and functions using the database** (`GET /api/v1/databases/{database_id}/consumers`).
+- 🔵 **Updated**: **Restore** (`POST /api/v1/databases/{database_id}/restore`) accepts `in_place: true` to restore over the same database. Backups list `restorable` and `restore_window_start`.
+- 🔵 **Updated**: **Public PostgreSQL** is also reachable on the standard ports 6543 (pooled) and 5432 (direct) of `{database_id}.public.db.raffusercloud.com`.
+- 🔵 **Updated**: **Get connection details** (`GET /api/v1/databases/{database_id}/connection`) returns the public endpoint too: `public_host`, `public_port`, and `public_connection_uri`, filled while public access is on. A database without a VPC has no private endpoint.
+- 🟣 **Fixed**: **Create database** without `storage_gb` or `engine_version` now uses the plan's included storage and the newest version, as documented. Before, the database got 0 GB and never started.
+- 🟣 **Fixed**: **Create database** mistakes you can fix (a plan of another engine, read replicas on an engine without them, high availability or a backup on the free plan) return 400 with the reason. They returned 500.
+- 🔵 **Updated**: **Database** objects include `is_free` and `suspended_at`, and `status` can be `resizing` or `restoring`. MySQL, ClickHouse, and Kafka are listed as available in the engine catalog.
+
 **Raff Apps: clearer errors and instance limits**
 
 - 🔵 **Updated**: **Errors you can fix return a plain sentence with the right code.** Bad values return 400, a name or domain already taken returns 409, and something that does not exist returns 404, each with a message that says what to change. When something breaks on our side the API returns 500 with "Something went wrong on our side. Try again, or contact support." Error bodies no longer start with `rpc error: code = ...`.

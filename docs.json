@@ -481,6 +481,77 @@
                 ]
               },
               {
+                "group": "Managed Databases",
+                "pages": [
+                  {
+                    "group": "Databases",
+                    "pages": [
+                      "api-reference/databases/list-database-engines",
+                      "api-reference/databases/list-database-plans",
+                      "api-reference/databases/list-databases",
+                      "api-reference/databases/create-database",
+                      "api-reference/databases/get-database",
+                      "api-reference/databases/update-database",
+                      "api-reference/databases/delete-database",
+                      "api-reference/databases/scale-database",
+                      "api-reference/databases/resume-database"
+                    ]
+                  },
+                  {
+                    "group": "Connect & access",
+                    "pages": [
+                      "api-reference/databases/get-database-connection",
+                      "api-reference/databases/rotate-database-credentials",
+                      "api-reference/databases/connect-database-v-p-c",
+                      "api-reference/databases/disconnect-database-v-p-c",
+                      "api-reference/databases/set-database-public-access",
+                      "api-reference/databases/list-database-users",
+                      "api-reference/databases/create-database-user",
+                      "api-reference/databases/rotate-database-user",
+                      "api-reference/databases/get-database-user-credential",
+                      "api-reference/databases/delete-database-user"
+                    ]
+                  },
+                  {
+                    "group": "Query & data",
+                    "pages": [
+                      "api-reference/databases/run-database-query",
+                      "api-reference/databases/browse-database",
+                      "api-reference/databases/list-database-saved-queries",
+                      "api-reference/databases/save-database-saved-query",
+                      "api-reference/databases/delete-database-saved-query"
+                    ]
+                  },
+                  {
+                    "group": "Backups & restore",
+                    "pages": [
+                      "api-reference/databases/list-database-backups",
+                      "api-reference/databases/create-database-backup",
+                      "api-reference/databases/restore-database"
+                    ]
+                  },
+                  {
+                    "group": "Observability",
+                    "pages": [
+                      "api-reference/databases/get-database-metrics",
+                      "api-reference/databases/get-database-metrics-history",
+                      "api-reference/databases/get-database-client-traffic",
+                      "api-reference/databases/get-database-slow-queries",
+                      "api-reference/databases/get-database-logs"
+                    ]
+                  },
+                  {
+                    "group": "Configuration",
+                    "pages": [
+                      "api-reference/databases/list-database-extensions",
+                      "api-reference/databases/set-database-extension",
+                      "api-reference/databases/list-database-parameters",
+                      "api-reference/databases/list-database-consumers"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Raff Apps",
                 "pages": [
                   {
@@ -783,6 +854,7 @@
               "reference/cli/configure",
               "reference/cli/vm",
               "reference/cli/kubernetes",
+              "reference/cli/database",
               "reference/cli/volume",
               "reference/cli/snapshot",
               "reference/cli/backup",
@@ -822,6 +894,8 @@
               "reference/terraform/raff_project_member",
               "reference/terraform/raff_k8s_cluster",
               "reference/terraform/raff_k8s_node_pool",
+              "reference/terraform/raff_database",
+              "reference/terraform/raff_database_user",
               "reference/terraform/data-sources"
             ]
           }

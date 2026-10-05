@@ -1,0 +1,76 @@
+---
+title: "raff_database"
+description: "Manage Raff managed databases with Terraform: PostgreSQL, MySQL, Valkey, ClickHouse, and Kafka, with resizing, high availability, VPC, and public access in place."
+---
+
+<sub>Updated October 5, 2026</sub>
+
+Manages a **managed database**. The resource waits until the database is running (create timeout 20 minutes). Without `plan_id`, the database is created on the engine's free plan (one per account).
+
+## Example
+
+```hcl
+data "raff_database_plans" "postgres" {
+  engine = "postgres"
+}
+
+resource "raff_database" "orders" {
+  name       = "orders"
+  engine     = "postgres"
+  plan_id    = data.raff_database_plans.postgres.plans[1].id
+  storage_gb = 50
+  ha_enabled = true
+
+  public_access    = true
+  public_allowlist = ["203.0.113.0/24"]
+}
+
+output "orders_url" {
+  value     = raff_database.orders.public_connection_uri
+  sensitive = true
+}
+```
+
+A free PostgreSQL database needs only a name:
+
+```hcl
+resource "raff_database" "dev" {
+  name = "dev"
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `name` | string | Yes | Display name, unique within the account. Renames in place |
+| `engine` | string | No | `postgres` (default), `mysql`, `valkey`, `clickhouse`, or `kafka`. Changing it replaces the database |
+| `engine_version` | string | No | Major version from [`raff_database_engines`](/reference/terraform/data-sources#raff_database_engines). Defaults to the latest. Changing it replaces the database |
+| `plan_id` | int | No | Plan from [`raff_database_plans`](/reference/terraform/data-sources#raff_database_plans). Defaults to the free plan. Changing it resizes in place |
+| `storage_gb` | int | No | Storage in GB. Defaults to the plan's included storage. Grows in place; cannot shrink |
+| `ha_enabled` | bool | No | High availability: a standby that takes over on failure. Toggles in place |
+| `replica_count` | int | No | Read replicas (PostgreSQL only) |
+| `vpc_id` | string | No | VPC for the private endpoint. Connects or disconnects in place |
+| `public_access` | bool | No | Public access. Toggles in place |
+| `public_allowlist` | list(string) | No | Source CIDRs allowed on the public endpoint. Empty allows all |
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id`, `database_id` | Short database ID used in hostnames and the API |
+| `status` | Database status |
+| `is_free` | True on the free plan. Free databases pause after 7 days without connections |
+| `host`, `port` | Private endpoint, reachable inside the VPC |
+| `public_host`, `public_port` | Public endpoint. For PostgreSQL, `public_port` is pooled and `public_port + 1` is direct; ports 6543 and 5432 also work on `public_host` |
+| `username`, `password`, `database_name` | Admin credentials (password is sensitive) |
+| `connection_uri` | Private URI including the password, reachable inside the VPC (sensitive) |
+| `public_connection_uri` | Public URI including the password, empty while public access is off (sensitive) |
+| `ca_cert` | CA that signs the database's certificate. Kafka clients must trust it; PostgreSQL can use it with `sslmode=verify-full` |
+| `monthly_price` | Monthly price in USD |
+
+## Import
+
+```bash
+terraform import raff_database.orders <database-id>
+```

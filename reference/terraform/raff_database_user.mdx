@@ -1,0 +1,47 @@
+---
+title: "raff_database_user"
+description: "Manage users inside a Raff managed database with Terraform, with read-only or read-write access."
+---
+
+<sub>Updated October 5, 2026</sub>
+
+Manages a **user inside a managed database**. Use one per app or person instead of sharing the admin user.
+
+## Example
+
+```hcl
+resource "raff_database_user" "reporting" {
+  database_id = raff_database.orders.database_id
+  name        = "reporting"
+  role        = "readonly"
+}
+
+output "reporting_password" {
+  value     = raff_database_user.reporting.password
+  sensitive = true
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `database_id` | string | Yes | Short ID of the database |
+| `name` | string | Yes | 3 to 31 characters: a lowercase letter, then lowercase letters, digits, or underscores |
+| `role` | string | No | `readonly` (default) or `readwrite` |
+
+Changing any argument replaces the user.
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | `<database_id>/<name>` |
+| `password` | The user's password (sensitive) |
+| `scope` | The database, schema, or keyspace the access applies to |
+
+## Import
+
+```bash
+terraform import raff_database_user.reporting <database-id>/<name>
+```

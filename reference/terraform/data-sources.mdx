@@ -140,6 +140,36 @@ data "raff_k8s_cluster" "prod" {
 }
 ```
 
+## raff_database_engines
+
+Engines and their versions. Use a `versions[*]` value as `engine_version` on [`raff_database`](/reference/terraform/raff_database).
+
+```hcl
+data "raff_database_engines" "all" {}
+# .engines[*]: engine, display_name, available, versions
+```
+
+## raff_database_plans
+
+Database plans with sizing and pricing. Use a `plans[*].id` as `plan_id` on [`raff_database`](/reference/terraform/raff_database). `is_free_tier` marks the free plan.
+
+```hcl
+data "raff_database_plans" "postgres" {
+  engine = "postgres"
+}
+# .plans[*]: id, engine, name, vcpu, memory_gib, storage_gib, is_free_tier, max_connections, price_per_month
+```
+
+## raff_database
+
+Read an existing database by its short `database_id` or by `name`: status, endpoints, and admin credentials (password and URI are sensitive).
+
+```hcl
+data "raff_database" "orders" {
+  name = "orders"
+}
+```
+
 ## Related
 
 <CardGroup cols={3}>

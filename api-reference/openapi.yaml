@@ -4138,7 +4138,7 @@ paths:
         - Managed Databases
       summary: List database engines
       description: |
-        The database engine catalog: each engine with its display name, supported versions, and whether it is available to create. Engines listed with `available: false` (MySQL) are planned but cannot be created yet.
+        The database engine catalog: each engine with its display name, supported versions, and whether it is available to create.
       operationId: listDatabaseEngines
       responses:
         '200':
@@ -4207,8 +4207,16 @@ paths:
       tags:
         - Managed Databases
       summary: List databases
-      description: List all managed databases for the authenticated account.
+      description: List the managed databases of the account, or of one project with `X-Project-ID`.
       operationId: listDatabases
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Optional project ID to scope the list. Omit to list across all accessible projects.
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: List of databases
@@ -4231,7 +4239,7 @@ paths:
         - Managed Databases
       summary: Create database
       description: |
-        Create a managed database. Provisioning is asynchronous — the database is created in status `pending` and moves through `deploying` to `running`; poll `GET /api/v1/databases/{database_id}` for progress.
+        Create a managed database. Provisioning is asynchronous: the database is created in status `pending` and moves through `deploying` to `running`. Poll `GET /api/v1/databases/{database_id}` for progress. A free PostgreSQL or MySQL database is usually `running` within 10 seconds.
 
         ## Networking
 
@@ -4239,8 +4247,10 @@ paths:
 
         ## Engines
 
-        - **PostgreSQL** — pooled endpoint on port 6432 (PgBouncer, transaction mode) plus a direct endpoint on 5432. Nightly base backup with continuous WAL archiving for point-in-time restore.
-        - **Valkey** — single TLS endpoint on port 6379. Nightly RDB snapshots plus on-demand snapshots. No read replicas — high availability adds a standby with automatic Sentinel failover.
+        - **PostgreSQL**: pooled endpoint on port 6432 (PgBouncer, transaction mode) plus a direct endpoint on 5432. Nightly base backup with continuous WAL archiving for point-in-time restore.
+        - **MySQL**: TLS endpoint on port 3306. Nightly backups plus on-demand backups.
+        - **Valkey**: single TLS endpoint on port 6379. Nightly RDB snapshots plus on-demand snapshots. No read replicas; high availability adds a standby with automatic Sentinel failover.
+        - **ClickHouse** and **Kafka**: see the engine catalog for versions. Kafka clients must trust the `ca_cert` returned by the connection endpoint.
 
         ## Pricing
 
@@ -4403,7 +4413,10 @@ paths:
         - Managed Databases
       summary: Get connection details
       description: |
-        Connection details for the database: host, port, username, database name, and a ready-to-use connection URI.
+        Connection details for the database: username, database name, and two endpoints.
+
+        - **Private** (`host`, `port`, `connection_uri`): reachable from inside the database's VPC. Without a VPC there is no private endpoint.
+        - **Public** (`public_host`, `public_port`, `public_connection_uri`): filled while public access is on.
 
         The `password` field is empty unless you pass `reveal=true`. TLS is always required.
       operationId: getDatabaseConnection
@@ -4489,6 +4502,34 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+    delete:
+      tags:
+        - Managed Databases
+      summary: Disconnect database from VPC
+      description: |
+        Detach the database's private endpoint from its VPC. Clients inside the VPC lose access; public access, if enabled, keeps working.
+      operationId: disconnectDatabaseVPC
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Database disconnected from the VPC
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/databases/{database_id}/public-access:
     post:
       tags:
@@ -4498,6 +4539,8 @@ paths:
         Open or close public access to the database.
 
         When enabled, the database is reachable at `{database_id}.public.db.raffusercloud.com` on the port pair Raff assigns to it (`public_port` on the database object). For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint, each capped at the plan's connection limit for that endpoint. TLS is always required.
+
+        PostgreSQL is also reachable on the standard ports of the same hostname: 6543 (pooled) and 5432 (direct). These route by the hostname your client sends during TLS, so use the hostname, not an IP address.
 
         The ports stay assigned while public access is off, so enabling it again returns the same ports. They are released only when the database is deleted.
 
@@ -4794,12 +4837,7 @@ paths:
         reaches `running` in about a minute; all data is preserved.
       operationId: resumeDatabase
       parameters:
-        - name: database_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Database short ID
+        - $ref: '#/components/parameters/DatabaseIDPath'
       responses:
         '200':
           description: Resume started
@@ -4808,26 +4846,29 @@ paths:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
                   database:
                     $ref: '#/components/schemas/Database'
         '400':
-          description: The database is not paused
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Database not found
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/databases/{database_id}/restore:
     post:
       tags:
         - Managed Databases
-      summary: Restore to a new database
+      summary: Restore database
       description: |
-        Restore a database into a NEW instance. In-place restore is not supported — it would destroy the backup timeline it restores from — so `clone_to_new` must be `true`.
+        Restore a database to a backup or a point in time, either into a new database (`clone_to_new: true`) or over this one (`in_place: true`).
 
-        Choose the restore point with `backup_id` (a specific completed backup) or, for PostgreSQL, `pitr_timestamp` (any point in time covered by continuous WAL archiving). Omit both to restore the latest available state.
+        Choose the restore point with `backup_id` (a completed backup with `restorable: true`) or, for PostgreSQL, `pitr_timestamp` (any time from `restore_window_start` on the backup list until now). Omit both to restore the latest available state. A point outside the window returns `400`.
 
-        The clone inherits the source's plan, storage, VPC, and project, starts with no read replicas, and bills pay-as-you-go. High availability is an explicit choice via `ha_enabled` — never inherited. If `new_name` is taken, the platform auto-suffixes it (`-2`, `-3`, …).
-
-        The clone provisions asynchronously; poll `GET /api/v1/databases/{new_database_id}` like any create.
+        - **New database**: inherits the source's plan, storage, VPC, and project, starts with no read replicas, and bills pay-as-you-go. High availability is an explicit choice via `ha_enabled`, never inherited. If `new_name` is taken, the platform adds a suffix (`-2`, `-3`, …). Poll `GET /api/v1/databases/{new_database_id}` like any create. Free databases cannot restore into a new database.
+        - **In place**: overwrites this database. A safety backup is taken first, the status is `restoring` while it runs, and `new_database_id` is empty. Data written after the restore point is lost.
       operationId: restoreDatabase
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4849,9 +4890,428 @@ paths:
                     type: boolean
                   new_database_id:
                     type: string
-                    description: Short ID of the new database being created
+                    description: Short ID of the new database being created (empty for an in-place restore)
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/metrics/clients:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get traffic by client
+      description: |
+        Operations, errors, and warnings per database user over a window, bucketed for charting. A value of `-1` means the engine does not count that number per user.
+      operationId: getDatabaseClientTraffic
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: window_hours
+          in: query
+          description: History window in hours
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Traffic per database user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  clients:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseClientTraffic'
+                  bucket_seconds:
+                    type: integer
+                    description: Seconds each point covers
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/users:
+    get:
+      tags:
+        - Managed Databases
+      summary: List database users
+      description: |
+        The users (roles) inside the database engine, with what each can do. `kind` tells them apart: `admin` is the user created with the database, `scoped` are users you added, `binding` are users Raff created for an app or function, and `system` are engine users you cannot change.
+      operationId: listDatabaseUsers
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Database users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Managed Databases
+      summary: Create database user
+      description: |
+        Add a user with read-only or read-write access. The password is returned once in this response; fetch it again later with `GET /api/v1/databases/{database_id}/users/{name}/credential`.
+      operationId: createDatabaseUser
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatabaseUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/DatabaseUser'
+                  password:
+                    type: string
+                    description: The new user's password
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/users/{name}:
+    delete:
+      tags:
+        - Managed Databases
+      summary: Delete database user
+      description: Remove a user you added. The admin user and users Raff manages for apps and functions cannot be deleted.
+      operationId: deleteDatabaseUser
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - $ref: '#/components/parameters/DatabaseUserNamePath'
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/users/{name}/rotate:
+    post:
+      tags:
+        - Managed Databases
+      summary: Rotate database user password
+      description: Give a user a new password. Open connections keep working until they disconnect.
+      operationId: rotateDatabaseUser
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - $ref: '#/components/parameters/DatabaseUserNamePath'
+      responses:
+        '200':
+          description: New password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  password:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/users/{name}/credential:
+    get:
+      tags:
+        - Managed Databases
+      summary: Get database user password
+      description: The current username and password of a user you added.
+      operationId: getDatabaseUserCredential
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - $ref: '#/components/parameters/DatabaseUserNamePath'
+      responses:
+        '200':
+          description: Username and password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  username:
+                    type: string
+                  password:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/parameters:
+    get:
+      tags:
+        - Managed Databases
+      summary: List engine parameters
+      description: |
+        The engine settings in effect (for example `max_connections` or `work_mem`), with the default and where each value comes from: `plan` (set by the plan size), `override` (set through `engine_config`), or `engine` (engine default).
+      operationId: listDatabaseParameters
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Engine parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  parameters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseParameter'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/console:
+    post:
+      tags:
+        - Managed Databases
+      summary: Run a query
+      description: |
+        Run one statement against the database and get the result: SQL for PostgreSQL, MySQL, and ClickHouse, or one command for Valkey.
+
+        - Runs as the admin user, read-only unless you set `read_only: false`. A read-only run refuses writes.
+        - Returns at most `max_rows` rows (default 1,000, ceiling 5,000); `truncated` is `true` when more rows existed.
+        - A statement is stopped after 15 seconds.
+
+        Each row carries its values as strings in `cells`, with `nulls[i]` set when value `i` is SQL `NULL`.
+      operationId: runDatabaseQuery
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunDatabaseQueryRequest'
+      responses:
+        '200':
+          description: Query result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                  - $ref: '#/components/schemas/DatabaseQueryResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/browse:
+    post:
+      tags:
+        - Managed Databases
+      summary: Browse schemas, tables, and keys
+      description: |
+        Walk the database one level at a time with `path`.
+
+        - **PostgreSQL, MySQL, ClickHouse**: `[]` lists schemas, `[schema]` lists its tables, `[schema, table]` returns a page of rows. Page with `limit` and `next_cursor`.
+        - **Valkey**: `[]` lists keys (filter with `match`, for example `user:*`), `[key]` returns the key's value with its type and TTL in `meta`.
+
+        A response has `kind: nodes` (a list in `nodes`) or `kind: rows` (`columns` and `rows`).
+      operationId: browseDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowseDatabaseRequest'
+      responses:
+        '200':
+          description: One level of the database
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                  - $ref: '#/components/schemas/DatabaseBrowseResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/saved-queries:
+    get:
+      tags:
+        - Managed Databases
+      summary: List saved queries
+      description: Queries saved for this database, shared by everyone on the account.
+      operationId: listDatabaseSavedQueries
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Saved queries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  queries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseSavedQuery'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Managed Databases
+      summary: Save a query
+      description: Save a query under a name. Saving again with the same name replaces it.
+      operationId: saveDatabaseSavedQuery
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, statement]
+              properties:
+                name:
+                  type: string
+                  example: active-users
+                statement:
+                  type: string
+                  example: SELECT count(*) FROM users WHERE active;
+      responses:
+        '200':
+          description: Saved query
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  query:
+                    $ref: '#/components/schemas/DatabaseSavedQuery'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/saved-queries/{name}:
+    delete:
+      tags:
+        - Managed Databases
+      summary: Delete a saved query
+      operationId: deleteDatabaseSavedQuery
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+        - name: name
+          in: path
+          required: true
+          description: Saved query name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Saved query deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/databases/{database_id}/consumers:
+    get:
+      tags:
+        - Managed Databases
+      summary: List apps and functions using the database
+      description: The Raff apps and functions bound to this database, with the state of each binding.
+      operationId: listDatabaseConsumers
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      responses:
+        '200':
+          description: Apps and functions bound to the database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  consumers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DatabaseConsumer'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -8182,6 +8642,13 @@ components:
       in: path
       required: true
       description: Database ID (UUID) or short id (the `database_id` field, e.g. `a1b2c3d4`)
+      schema:
+        type: string
+    DatabaseUserNamePath:
+      name: name
+      in: path
+      required: true
+      description: Database user name
       schema:
         type: string
     AppServiceRef:
@@ -12019,9 +12486,9 @@ components:
           example: "16"
         status:
           type: string
-          enum: [pending, deploying, running, warning, suspended, failed, deleting, deleted]
+          enum: [pending, deploying, running, warning, resizing, restoring, suspended, failed, deleting, deleted]
           description: |
-            Lifecycle status. Creation: `pending` → `deploying` → `running`. `warning` means running with a degraded component; `suspended` means a free-tier database paused for idleness (resume any time — data is kept); `failed` means provisioning or a scale operation failed.
+            Lifecycle status. Creation: `pending` → `deploying` → `running`. `warning` means running with a degraded component. `resizing` and `restoring` mean a scale or in-place restore is in progress. `suspended` means a free-tier database paused for idleness (resume any time, data is kept). `failed` means provisioning or a scale operation failed.
         status_message:
           type: string
           description: Human-readable detail for `warning` and `failed` states
@@ -12048,7 +12515,6 @@ components:
           example: 0
         vpc_id:
           type: string
-          format: uuid
           description: VPC the private endpoint is attached to (empty if not yet connected)
         public_access:
           type: boolean
@@ -12068,8 +12534,7 @@ components:
           example: payg
         subscription_id:
           type: string
-          format: uuid
-          description: Subscription ID if billing_type is subscription
+          description: Subscription ID if billing_type is subscription (empty otherwise)
         price_per_hour:
           type: number
           description: Hourly billing rate in USD
@@ -12081,7 +12546,7 @@ components:
         public_port:
           type: integer
           description: |
-            Public port from the reserved range 25060–26060; `0` when public access is off. For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint.
+            Public port from the reserved range 25060–26060; `0` when public access is off. For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint. PostgreSQL is also reachable on the standard ports 6543 (pooled) and 5432 (direct) of `public_dns_hostname`.
           example: 25060
         public_dns_hostname:
           type: string
@@ -12093,6 +12558,12 @@ components:
             type: string
           description: Source CIDRs allowed on the public endpoint. Empty = allow all sources.
           example: ["203.0.113.0/24"]
+        is_free:
+          type: boolean
+          description: True for a free-tier database. Free databases pause after 7 days without connections.
+        suspended_at:
+          type: string
+          description: When a free-tier database was paused for idleness, RFC 3339 (empty when not paused)
         created_at:
           type: string
           format: date-time
@@ -12221,12 +12692,14 @@ components:
 
     RestoreDatabaseRequest:
       type: object
-      required:
-        - clone_to_new
+      description: Set exactly one of `clone_to_new` or `in_place` to `true`.
       properties:
         clone_to_new:
           type: boolean
-          description: Must be `true` — restores always create a new database; in-place restore is not supported
+          description: Restore into a new database
+        in_place:
+          type: boolean
+          description: Restore over this database. Data written after the restore point is lost.
         backup_id:
           type: string
           format: uuid
@@ -12269,8 +12742,22 @@ components:
         ca_cert:
           type: string
           description: >-
-            PEM CA bundle your client must trust, for engines whose certificates
-            come from a private CA (currently Kafka). Empty for other engines.
+            PEM CA that signs the database's certificate. Kafka clients must
+            trust it; for PostgreSQL, use it with `sslmode=verify-full`.
+        public_host:
+          type: string
+          description: Public hostname. Empty while public access is off.
+          example: a1b2c3d4.public.db.raffusercloud.com
+        public_port:
+          type: integer
+          description: >-
+            Public port. PostgreSQL uses the standard direct port 5432 (routed by
+            the hostname your client sends in TLS); ClickHouse uses its native
+            TLS port; other engines use `public_port` of the database.
+          example: 5432
+        public_connection_uri:
+          type: string
+          description: Ready-to-use URI for the public endpoint (includes the password only when revealed). Empty while public access is off.
 
     DatabaseMetrics:
       type: object
@@ -12308,8 +12795,7 @@ components:
           description: WAL archiving lag in bytes (PostgreSQL)
         metrics_updated_at:
           type: string
-          format: date-time
-          description: When this snapshot was taken
+          description: When this snapshot was taken, RFC 3339 (empty before the first sample)
 
     DatabaseMetricsPoint:
       type: object
@@ -12358,7 +12844,7 @@ components:
           example: PostgreSQL
         available:
           type: boolean
-          description: Whether this engine can be created. MySQL is listed but not yet available.
+          description: Whether this engine can be created
         versions:
           type: array
           items:
@@ -12433,23 +12919,242 @@ components:
           description: Object storage location of the backup artifact
         backup_timestamp:
           type: string
-          format: date-time
-          description: Consistency point of the backup
-          nullable: true
+          description: Consistency point of the backup, RFC 3339 (empty while running)
         created_at:
           type: string
           format: date-time
         completed_at:
           type: string
-          format: date-time
-          nullable: true
+          description: RFC 3339 (empty while running)
         expires_at:
           type: string
-          format: date-time
-          description: When the backup leaves retention
-          nullable: true
+          description: When the backup leaves retention, RFC 3339 (empty when not set)
+        restorable:
+          type: boolean
+          description: Whether this backup can be used as `backup_id` for a restore. Backups from before the last in-place restore are kept for reference but cannot be restored.
+        restore_window_start:
+          type: string
+          description: RFC 3339. Earliest point in time a PostgreSQL restore can target (the same on every backup in the list). Empty when unknown.
 
-    
+    DatabaseUser:
+      type: object
+      properties:
+        name:
+          type: string
+          example: reporting
+        role:
+          type: string
+          description: What the user can do, in the engine's terms
+          example: readonly
+        scope:
+          type: string
+          description: The database, schema, or keyspace the access applies to
+        kind:
+          type: string
+          enum: [admin, scoped, binding, system]
+          description: "`admin` = created with the database; `scoped` = added by you; `binding` = managed by Raff for an app or function; `system` = engine internal"
+
+    CreateDatabaseUserRequest:
+      type: object
+      required: [name, role]
+      properties:
+        name:
+          type: string
+          description: 3 to 31 characters. Starts with a lowercase letter, then lowercase letters, digits, or underscores.
+          example: reporting
+        role:
+          type: string
+          enum: [readonly, readwrite]
+
+    DatabaseParameter:
+      type: object
+      properties:
+        name:
+          type: string
+          example: max_connections
+        value:
+          type: string
+          example: "100"
+        default_value:
+          type: string
+        source:
+          type: string
+          enum: [plan, override, engine]
+        unit:
+          type: string
+          example: kB
+
+    DatabaseClientTraffic:
+      type: object
+      properties:
+        user:
+          type: string
+          description: Database user
+        total_ops:
+          type: integer
+        total_errors:
+          type: integer
+        total_warnings:
+          type: integer
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              recorded_at:
+                type: string
+                format: date-time
+              ops:
+                type: integer
+              errors:
+                type: integer
+              warnings:
+                type: integer
+
+    RunDatabaseQueryRequest:
+      type: object
+      required: [statement]
+      properties:
+        statement:
+          type: string
+          description: One SQL statement, or one Valkey command
+          example: SELECT id, email FROM users LIMIT 10;
+        read_only:
+          type: boolean
+          default: true
+          description: Refuse writes. Set `false` to run statements that change data or schema.
+        max_rows:
+          type: integer
+          default: 1000
+          description: Most rows to return (ceiling 5,000)
+
+    DatabaseRow:
+      type: object
+      properties:
+        cells:
+          type: array
+          items:
+            type: string
+          description: Values in column order, as text
+        nulls:
+          type: array
+          items:
+            type: boolean
+          description: "`true` where the value is SQL NULL"
+
+    DatabaseQueryResult:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseRow'
+        rows_affected:
+          type: integer
+          description: Rows changed by a write
+        command:
+          type: string
+          description: Engine command tag, for example `SELECT 10` or `INSERT 0 1`
+        notices:
+          type: array
+          items:
+            type: string
+        truncated:
+          type: boolean
+          description: More rows existed than `max_rows`
+        duration_ms:
+          type: number
+
+    BrowseDatabaseRequest:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: string
+          description: "`[]`, `[schema]`, or `[schema, table]`; for Valkey `[]` or `[key]`"
+          example: ["public", "users"]
+        cursor:
+          type: string
+          description: "`next_cursor` from the previous page"
+        match:
+          type: string
+          description: Valkey key pattern
+          example: "user:*"
+        limit:
+          type: integer
+          description: Items or rows per page
+
+    DatabaseBrowseResult:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [nodes, rows]
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              kind:
+                type: string
+                description: "`schema`, `table`, `view`, `matview`, or a Valkey key type"
+              detail:
+                type: string
+                description: Short extra detail, for example a row estimate
+        columns:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatabaseRow'
+        next_cursor:
+          type: string
+          description: Pass as `cursor` for the next page; empty on the last page
+        meta:
+          type: object
+          additionalProperties:
+            type: string
+          description: Valkey key type and TTL
+
+    DatabaseSavedQuery:
+      type: object
+      properties:
+        name:
+          type: string
+        statement:
+          type: string
+        created_by:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    DatabaseConsumer:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [app, function]
+        id:
+          type: string
+        name:
+          type: string
+        service_type:
+          type: string
+        status:
+          type: string
+        binding_status:
+          type: string
+
     K8sVersion:
       type: object
       properties:
