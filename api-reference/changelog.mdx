@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 5, 2026</sub>
+<sub>Updated October 6, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 6, 2026
+
+**Managed Databases**
+
+- 🟢 **Added**: **Extensions at create.** `POST /api/v1/databases` accepts `extensions` for PostgreSQL (for example `["vector"]`). They are on before the database is marked running.
+- 🔵 **Updated**: **`engine_config` accepts only Valkey `maxmemory-policy`** (`noeviction` for queues, `allkeys-lru` for caches). Other keys or values are refused with 400.
 
 ### October 5, 2026
 

@@ -57,7 +57,7 @@ Shows status, engine, plan, storage, high availability, replicas, hostnames, and
 ## create
 
 ```bash
-raff db create [--name <name>] [--engine postgres] [--version <v>] [--plan <plan-id>] [--storage <gb>] [--ha] [--replicas <n>] [--vpc <vpc-id>] [--private] [--no-wait]
+raff db create [--name <name>] [--engine postgres] [--version <v>] [--plan <plan-id>] [--storage <gb>] [--ha] [--replicas <n>] [--vpc <vpc-id>] [--private] [--extension <name>] [--mode queue|cache] [--no-wait]
 ```
 
 | Flag | Description |
@@ -71,12 +71,16 @@ raff db create [--name <name>] [--engine postgres] [--version <v>] [--plan <plan
 | `--replicas` | Read replicas (PostgreSQL only). |
 | `--vpc` | VPC ID for the private endpoint. |
 | `--private` | No public access. Without `--vpc` or `--private`, public access is on (TLS required, generated password); limit sources with [`public enable --allow`](#public). |
+| `--extension` | PostgreSQL extension to turn on before the database is ready: `vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto` or `unaccent`. Repeat the flag or separate names with commas. Others can be turned on later with [`extensions`](#extensions). |
+| `--mode` | Valkey only. `queue` (default) keeps every key and refuses writes when memory is full. `cache` drops the least recently used keys when memory is full. |
 | `--no-wait` | Return at once instead of waiting until the database runs. |
 
 Requires a project: pass `--project-id`, set `RAFF_PROJECT_ID`, or set a default with `raff configure`.
 
 ```bash
+raff db create --name ai --extension vector
 raff db create --name orders --engine mysql
+raff db create --name sessions --engine valkey --mode cache
 ```
 
 ## delete

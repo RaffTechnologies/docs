@@ -12623,6 +12623,13 @@ components:
             Engine settings you can choose at create. Anything else is refused with 400.
             - Valkey `maxmemory-policy`: `noeviction` (default; nothing is ever removed, writes fail when memory is full; for queues and data you cannot lose) or `allkeys-lru` (the least recently used keys are removed when memory is full; for caches).
           example: {"maxmemory-policy": "allkeys-lru"}
+        extensions:
+          type: array
+          items:
+            type: string
+          description: |
+            PostgreSQL only. Extensions to turn on before the database is marked running, so it is ready for them the moment you connect. Allowed: `vector` (AI embeddings), `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Other engines or other names are refused with 400. Any other extension the image ships can be turned on later with the extensions endpoint.
+          example: ["vector"]
 
     UpdateDatabaseRequest:
       type: object
