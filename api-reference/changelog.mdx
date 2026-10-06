@@ -38,11 +38,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 - 🟢 **Added**: [`raff database`](/reference/cli/database) (alias `raff db`). `raff db create` with no flags creates a free PostgreSQL database with public access and prints a working connection string. Also `list`, `get`, `delete`, `rename`, `resize`, `resume`, `connection`, `rotate-password`, `query`, `browse`, `users`, `backups`, `restore`, `public`, `vpc`, `metrics`, `logs`, `slow-queries`, `extensions`, `parameters`, `engines`, `plans`.
 - 🔵 **Updated** (v0.6.1): `raff configure` shows only the start of a stored API key (`raff_737e…`).
+- 🔵 **Updated** (v0.6.2): `raff db create` and `raff db public enable` wait until the public address answers, so the printed connection string works on first use.
 
 **Managed Databases: Terraform** (provider v0.4.0)
 
 - 🟢 **Added**: [`raff_database`](/reference/terraform/raff_database) and [`raff_database_user`](/reference/terraform/raff_database_user) resources, and the [`raff_database`, `raff_database_plans`, `raff_database_engines`](/reference/terraform/data-sources#raff_database) data sources.
 - 🔵 **Updated** (v0.4.1): `public_allowlist` and `raff_database_user` names are checked at `terraform plan`, before anything is created.
+- 🔵 **Updated** (v0.4.2): `raff_database` with `public_access` finishes only when the public address answers, so `public_connection_uri` works for the next step of your apply.
 
 **Raff Apps: clearer errors and instance limits**
 
