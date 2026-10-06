@@ -12619,7 +12619,10 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: Engine configuration overrides (allowlisted keys only)
+          description: |
+            Engine settings you can choose at create. Anything else is refused with 400.
+            - Valkey `maxmemory-policy`: `noeviction` (default; nothing is ever removed, writes fail when memory is full; for queues and data you cannot lose) or `allkeys-lru` (the least recently used keys are removed when memory is full; for caches).
+          example: {"maxmemory-policy": "allkeys-lru"}
 
     UpdateDatabaseRequest:
       type: object
