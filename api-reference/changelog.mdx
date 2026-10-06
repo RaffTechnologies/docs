@@ -22,6 +22,7 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 - 🟢 **Added**: **Extensions at create.** `POST /api/v1/databases` accepts `extensions` for PostgreSQL (for example `["vector"]`). They are on before the database is marked running.
 - 🔵 **Updated**: **`engine_config` accepts only Valkey `maxmemory-policy`** (`noeviction` for queues, `allkeys-lru` for caches). Other keys or values are refused with 400.
 - 🟢 **Added**: **CLI v0.6.3**: `raff db create --extension vector` (PostgreSQL) and `--mode queue|cache` (Valkey). raff-go v0.8.0 has the `Extensions` field.
+- 🟢 **Added**: **Terraform provider v0.4.3**: `raff_database` takes `extensions` (PostgreSQL) and `valkey_mode` (`queue` or `cache`).
 
 ### October 5, 2026
 

@@ -39,6 +39,21 @@ resource "raff_database" "dev" {
 }
 ```
 
+PostgreSQL with vector on from the start, and a Valkey cache:
+
+```hcl
+resource "raff_database" "ai" {
+  name       = "ai"
+  extensions = ["vector"]
+}
+
+resource "raff_database" "cache" {
+  name        = "cache"
+  engine      = "valkey"
+  valkey_mode = "cache"
+}
+```
+
 ## Argument reference
 
 | Argument | Type | Required? | Description |
@@ -53,6 +68,8 @@ resource "raff_database" "dev" {
 | `vpc_id` | string | No | VPC for the private endpoint. Connects or disconnects in place |
 | `public_access` | bool | No | Public access. Toggles in place |
 | `public_allowlist` | list(string) | No | Source IPv4 CIDRs allowed on the public endpoint, written with the network address (`203.0.113.0/24`, `198.51.100.7/32`), at most 20. Empty allows all; `0.0.0.0/0` is not accepted |
+| `extensions` | set(string) | No | PostgreSQL only: `vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, or `unaccent`. On before the database is running; adding one later turns it on in place. Removing one stops managing it, it is never dropped |
+| `valkey_mode` | string | No | Valkey only, set at create: `queue` (default) keeps every key and refuses writes when memory is full, `cache` drops the least recently used keys. A later change is refused (the database is never replaced for it) |
 
 ## Attribute reference (computed)
 
