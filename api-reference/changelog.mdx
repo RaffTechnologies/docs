@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 6, 2026</sub>
+<sub>Updated October 8, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,15 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 8, 2026
+
+**Managed Databases**
+
+- 🔵 **Updated**: **Run a query** for Kafka: `TOPICS` returns each topic's partitions, copies, retention, messages kept, readers, and lag.
+- 🔵 **Updated**: **Browse** for Kafka: `[topic]` returns the newest messages of every partition and `[topic, partition]` the newest of one partition, without moving any reader's position.
+- 🟣 **Fixed**: **Rotate credentials** (`POST /api/v1/databases/{database_id}/credentials/rotate`) works for PostgreSQL. Before, it returned an error.
+- 🟣 **Fixed**: ClickHouse databases on 1 and 2 vCPU plans start again.
 
 ### October 6, 2026
 

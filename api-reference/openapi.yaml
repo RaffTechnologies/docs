@@ -5119,7 +5119,7 @@ paths:
         - Managed Databases
       summary: Run a query
       description: |
-        Run one statement against the database and get the result: SQL for PostgreSQL, MySQL, and ClickHouse, or one command for Valkey.
+        Run one statement against the database and get the result: SQL for PostgreSQL, MySQL, and ClickHouse, one command for Valkey, or one of these commands for Kafka: `TOPICS`, `DESCRIBE <topic>`, `CREATE-TOPIC <name> [partitions]`, `DELETE-TOPIC <name>`, `PRODUCE <topic> <message>`, `CONSUME <topic> [n]`, `GROUPS`. `TOPICS` returns each topic's partitions, copies, retention, messages kept, readers, and lag.
 
         - Runs as the admin user, read-only unless you set `read_only: false`. A read-only run refuses writes.
         - Returns at most `max_rows` rows (default 1,000, ceiling 5,000); `truncated` is `true` when more rows existed.
@@ -5164,6 +5164,7 @@ paths:
 
         - **PostgreSQL, MySQL, ClickHouse**: `[]` lists schemas, `[schema]` lists its tables, `[schema, table]` returns a page of rows. Page with `limit` and `next_cursor`.
         - **Valkey**: `[]` lists keys (filter with `match`, for example `user:*`), `[key]` returns the key's value with its type and TTL in `meta`.
+        - **Kafka**: `[]` lists topics, `[topic]` returns the newest messages of every partition, `[topic, partition]` the newest of one partition. `limit` sets how many (default 20, up to 200).
 
         A response has `kind: nodes` (a list in `nodes`) or `kind: rows` (`columns` and `rows`).
       operationId: browseDatabase
@@ -13086,7 +13087,7 @@ components:
           type: array
           items:
             type: string
-          description: "`[]`, `[schema]`, or `[schema, table]`; for Valkey `[]` or `[key]`"
+          description: "`[]`, `[schema]`, or `[schema, table]`; for Valkey `[]` or `[key]`; for Kafka `[]`, `[topic]`, or `[topic, partition]`"
           example: ["public", "users"]
         cursor:
           type: string
