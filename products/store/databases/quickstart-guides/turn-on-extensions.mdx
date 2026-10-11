@@ -1,0 +1,60 @@
+---
+title: Turn on PostgreSQL extensions
+sidebarTitle: Turn on extensions
+description: Turn on pgvector, pg_trgm, pg_stat_statements and other PostgreSQL extensions on a Raff managed database.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+PostgreSQL extensions add features to the database: `vector` for AI embeddings, `pg_trgm` for fuzzy search, `pg_stat_statements` for slow query statistics and many more. Turning one on takes a second and needs no restart.
+
+## Before you start
+
+- A running PostgreSQL database.
+
+## Steps
+
+<Steps>
+  <Step title="Open Extensions">
+    Open the database, go to **Settings** and find **Extensions**. It shows how many are on.
+  </Step>
+  <Step title="Find the extension">
+    The most used ones are at the top: `vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Use **Search** or **Show all** for the rest.
+  </Step>
+  <Step title="Tick it">
+    Tick the checkbox. The extension is installed in `defaultdb` with anything it depends on. Untick to remove it.
+  </Step>
+</Steps>
+
+`vector` and `pg_trgm` can also be ticked when you [create the database](/products/store/databases/quickstart-guides/create-a-database), so they are ready the moment it starts.
+
+## Common extensions
+
+| Extension | For |
+|---|---|
+| `vector` | Embeddings and similarity search for AI and RAG (pgvector) |
+| `pg_trgm` | Fuzzy text search and `LIKE '%...%'` indexes |
+| `pg_stat_statements` | Slow query statistics in **Monitoring** |
+| `uuid-ossp`, `pgcrypto` | UUIDs, hashing and encryption functions |
+| `citext` | Case-insensitive text |
+| `hstore`, `ltree` | Key-value columns, tree paths |
+| `unaccent` | Search that ignores accents |
+
+Extensions that can reach the server's files or run untrusted languages are not offered. PostGIS is not available yet.
+
+## Do it from your tools
+
+- **API**: [List](/api-reference/databases/list-database-extensions) and [turn on or off](/api-reference/databases/set-database-extension)
+- **CLI**: [`raff database extensions`](/reference/cli/database)
+- **Terraform**: the `extensions` argument of [`raff_database`](/reference/terraform/raff_database)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor a database" icon="chart-line" href="/products/store/databases/quickstart-guides/monitor-a-database">
+    See slow queries once `pg_stat_statements` is on.
+  </Card>
+  <Card title="Engines" icon="lightbulb" href="/products/store/databases/concepts/engines">
+    What each engine is for.
+  </Card>
+</CardGroup>

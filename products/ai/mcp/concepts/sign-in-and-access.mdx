@@ -1,0 +1,76 @@
+---
+title: MCP sign-in and access
+sidebarTitle: Sign-in and access
+description: How an AI app signs in to Raff, which account it works in, what it can reach, and how to remove its access.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+An AI app reaches your Raff account in one of two ways: you sign in with Raff in your browser (most apps), or you give it a Raff API key (tools that accept a header). Either way it acts as you, with your role in the account, and never as a Raff administrator.
+
+## How it works
+
+### Sign in with Raff (OAuth)
+
+When you add the server to an app such as Claude or ChatGPT, the app opens a Raff page in your browser:
+
+1. Sign in to Raff, with your authenticator code if you use one.
+2. Read the request: **Allow *app name* to use your Raff account?**
+3. If you belong to more than one account, pick the account the app works in.
+4. Click **Allow access**.
+
+The app gets a token for that account and refreshes it on its own, so you sign in once. The request page expires after 10 minutes; if it says **This request has expired**, connect again from the app.
+
+The app never sees your Raff password.
+
+### API key
+
+Tools that send a fixed header (Claude Code, Cursor, scripts) can use a Raff API key instead of signing in:
+
+```
+Authorization: Bearer raff_your_api_key
+```
+
+The key works in the account it was created in, with the permissions it was given. [Create an API key](/products/manage/team-projects/quickstart-guides/generate-api-key) for each tool so you can remove one without affecting the others.
+
+## What the app can do
+
+Access is granted once for the whole account, the same way you would give a teammate access:
+
+- Create and manage databases, and apps, functions and servers as Raff adds them to the MCP server.
+- Read and change data in your databases with SQL.
+- Only what your role allows in this account. A member without permission to delete databases cannot delete them through an AI app either.
+
+What an app signed in with Raff can reach today:
+
+| Reaches | Does not reach |
+|---|---|
+| Managed databases (all tools on the [Tools](/products/ai/mcp/details/tools) page) | Virtual machines, Kubernetes, volumes, object storage, networking |
+| Your projects (to create databases in the right one) | Team members, roles and API keys |
+| Your saved card, as "Visa ending in 4242" (to show what a paid change is charged to) | Card numbers, invoices, billing settings |
+| Raff documentation | Raff admin access |
+
+As tools for more products ship, the same sign-in reaches them, and this table is updated.
+
+Every call is made through the public Raff API, so it follows the same permissions, billing rules and rate limits as the API, and appears in the account's audit log.
+
+## Remove access
+
+- **Signed in with Raff**: remove the Raff connector in the app (in Claude: **Customize → Connectors**; in Claude Code: `claude mcp remove raff`). The app can no longer call Raff.
+- **API key**: [delete the key](/products/manage/team-projects/quickstart-guides/rotate-api-key) in the dashboard. Every tool using it stops at once.
+
+## Trade-offs
+
+- Access is account-wide, not per database. To keep an app away from production data, sign it in to a separate account, or give it an API key in an account that holds only what it should touch.
+- [Read-only mode](/products/ai/mcp/concepts/read-only-and-tool-groups) removes every tool that changes anything, if you only want the app to look.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Paid changes" icon="credit-card" href="/products/ai/mcp/concepts/paid-changes">
+    How prices are confirmed before anything is charged.
+  </Card>
+  <Card title="Connect Claude" icon="rocket" href="/products/ai/mcp/quickstart-guides/connect-claude">
+    Sign in with Raff from Claude.
+  </Card>
+</CardGroup>

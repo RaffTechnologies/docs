@@ -1,0 +1,70 @@
+---
+title: Connect Raff to Claude Code
+sidebarTitle: Connect Claude Code
+description: Add the Raff MCP server to Claude Code with one command, then sign in with Raff or use an API key.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Add Raff to Claude Code and it can create a database for the project you are working on, put the connection string in your `.env`, write the migrations and check the result, without leaving the terminal.
+
+## Before you start
+
+- [Claude Code](https://code.claude.com) installed.
+- A Raff account, or a [Raff API key](/products/manage/team-projects/quickstart-guides/generate-api-key) for machines without a browser.
+
+## Steps
+
+<Steps>
+  <Step title="Add the server">
+    ```bash
+    claude mcp add --transport http raff https://mcp.rafftechnologies.com/mcp
+    ```
+
+    By default the server is added for you in the current project. Add `--scope user` to have it in every project, or `--scope project` to share it with your team through the project's `.mcp.json`.
+  </Step>
+  <Step title="Sign in with Raff">
+    Start Claude Code, run `/mcp`, select **raff** and choose to authenticate. A Raff page opens in your browser: sign in, pick the account and click **Allow access**. Claude Code shows the server as connected and refreshes the sign-in on its own.
+
+    From the shell, `claude mcp login raff` does the same.
+  </Step>
+  <Step title="Ask Claude Code">
+    *"Create a free Postgres database on Raff for this project and put the connection string in .env as DATABASE_URL."*
+  </Step>
+</Steps>
+
+### Use an API key instead
+
+On a server or in CI, where no browser can open, pass a Raff API key as a header:
+
+```bash
+claude mcp add --transport http raff https://mcp.rafftechnologies.com/mcp \
+  --header "Authorization: Bearer raff_your_api_key"
+```
+
+Keep the key out of shared files: with `--scope project` the header would be written to `.mcp.json`.
+
+## Verify
+
+```bash
+claude mcp list
+```
+
+`raff` is listed as connected. In Claude Code, *"list my Raff databases"* answers with your databases.
+
+## Remove
+
+```bash
+claude mcp remove raff
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a database from chat" icon="database" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    What happens when you ask for a database.
+  </Card>
+  <Card title="Tools" icon="wrench" href="/products/ai/mcp/details/tools">
+    Everything Claude Code can do in Raff.
+  </Card>
+</CardGroup>

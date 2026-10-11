@@ -1,0 +1,57 @@
+---
+title: High availability and read replicas
+sidebarTitle: High availability and replicas
+description: How high availability keeps a managed database running when a server fails, per engine, and what PostgreSQL read replicas do.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+High availability keeps extra copies of the database on separate servers and switches to one automatically when the primary fails. Your apps keep the same address; at most they reconnect. Without it, a database runs on one server and is down until that server is back.
+
+## How it works
+
+### Per engine
+
+| Engine | High availability runs | Failover | Price |
+|---|---|---|---|
+| **PostgreSQL** | A primary and a standby | Automatic; the address follows the new primary | +70% |
+| **MySQL** | A 3-node cluster; every node holds all data | Automatic; a proxy sends writes to a healthy node | +140% |
+| **Valkey** | A primary, a standby and Sentinel | Automatic, within seconds of the primary failing | +70% |
+| **ClickHouse** | Two replicas and ClickHouse Keeper | Automatic for tables using `Replicated*` engines | +70% |
+| **Kafka** | 3 brokers; every topic copied to all three | Automatic; a broker can fail without losing messages | +140% |
+
+The percentage is added to the plan price. It is not available on the free plan.
+
+### Read replicas (PostgreSQL)
+
+A read replica is one more copy of a PostgreSQL database, kept in sync. Each costs the same as the plan. Replicas add copies that can take over; a separate address for sending read queries to replicas is not available yet, so they do not add read capacity today.
+
+### Turning it on and off
+
+Turn high availability on or off at any time in **Settings**, or choose it at create. Turning it on adds the copies without losing data; turning it off removes them. See [Resize a database](/products/store/databases/quickstart-guides/resize-a-database).
+
+MySQL is the exception: choose high availability when you create the database. A MySQL database without it runs as one server and cannot add it later: create a new MySQL database with high availability and copy the data into it, for example with `mysqldump`.
+
+## When to use it
+
+- Production databases your customers depend on.
+- Anything where minutes of downtime during a server failure cost more than the extra price.
+
+Development and staging usually run fine on a single node.
+
+## Trade-offs
+
+- The PostgreSQL standby is updated asynchronously: if the primary fails, the last moments of writes may not have reached the standby. Point-in-time restore covers what backups hold.
+- During a failover, open connections drop; apps that retry reconnect to the same address.
+- High availability protects against a server failing, not against deleting data by mistake. Backups cover that.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Backups and point-in-time restore" icon="lightbulb" href="/products/store/databases/concepts/backups-and-restore">
+    Protection against mistakes and bad deploys.
+  </Card>
+  <Card title="Resize a database" icon="rocket" href="/products/store/databases/quickstart-guides/resize-a-database">
+    Turn high availability on.
+  </Card>
+</CardGroup>

@@ -1,0 +1,65 @@
+---
+title: Monitor a database
+description: Read CPU, memory, storage and connection charts, find slow queries, read the server log and see recent activity for a managed database.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+The **Monitoring** tab shows how the database is doing: charts for the last hour to the last week, the queries that take the most time, the server log and the activity on the database. Raff also emails you when a database goes down or fills up.
+
+## Before you start
+
+- A running database. Numbers appear about a minute after it starts.
+
+## Charts
+
+Open the database and go to **Monitoring**, **Charts**.
+
+- Pick the window: **1h**, **6h**, **24h** or **7d**.
+- Tiles: slow queries, peak connections (direct and pooled for PostgreSQL), disk usage, memory and CPU.
+- **Traffic by client** (PostgreSQL, MySQL): which users send the most work.
+- **Replication lag** (high availability) and **Archive lag** (PostgreSQL backups).
+
+The **Overview** tab shows the same numbers live under **Health**.
+
+## Slow queries
+
+Go to **Monitoring**, **Queries** (**Slow commands** on Valkey). The list shows the statements that took the most total time, with how often they ran and their mean time: start there to decide what to index or rewrite.
+
+On PostgreSQL, turn on `pg_stat_statements` first: **Settings**, **Extensions**. See [Turn on extensions](/products/store/databases/quickstart-guides/turn-on-extensions).
+
+## Logs
+
+Go to **Monitoring**, **Logs** for the newest lines of the server log. **Show system** adds the engine's own background messages.
+
+## Activity
+
+**Monitoring**, **Activity** lists what happened to the database (created, resized, backed up, public access changed, password rotated) and who did it. **Export CSV** downloads it.
+
+## Alerts by email
+
+Raff emails the project when:
+
+| Event | When |
+|---|---|
+| The database is down | It has not answered for 2 minutes, and again when it is back |
+| Storage is high | 80% and 90% of the plan's storage |
+| Storage is full | 95%: PostgreSQL and MySQL become read-only until usage drops below 90% |
+
+See [Status and health](/products/store/databases/concepts/status-and-health).
+
+## Do it from your tools
+
+- **API**: [Metrics](/api-reference/databases/get-database-metrics), [history](/api-reference/databases/get-database-metrics-history), [slow queries](/api-reference/databases/get-database-slow-queries), [logs](/api-reference/databases/get-database-logs)
+- **CLI**: [`raff database metrics`, `slow-queries`, `logs`](/reference/cli/database)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Resize a database" icon="up-right-and-down-left-from-center" href="/products/store/databases/quickstart-guides/resize-a-database">
+    More CPU, memory or storage.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/databases/troubleshooting">
+    When something is wrong.
+  </Card>
+</CardGroup>

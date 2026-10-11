@@ -52,7 +52,7 @@ tags:
   - name: Raff Apps
     description: Push-to-deploy web services, private services, workers, cron jobs, and one-off jobs on the Raff PaaS — with custom domains, environment variables, autoscaling, and per-second billing with spend caps
   - name: Managed Databases
-    description: Fully managed PostgreSQL and Valkey databases with private VPC networking, automatic backups, and metrics
+    description: Managed PostgreSQL, MySQL, Valkey, ClickHouse and Kafka with backups, high availability, private VPC networking, optional public access over TLS, and metrics
   - name: Networking
     description: Attach and detach VPCs, floating IPs, and security groups to VM network interfaces
   - name: Snapshots
@@ -4207,7 +4207,10 @@ paths:
       tags:
         - Managed Databases
       summary: List databases
-      description: List the managed databases of the account, or of one project with `X-Project-ID`.
+      description: |
+        List the managed databases of the account, or of one project with `X-Project-ID`.
+
+        Each database includes its live numbers in `metrics` (connections, storage, operations per second), sampled every minute; `metrics` is `null` until the first sample.
       operationId: listDatabases
       parameters:
         - name: X-Project-ID
@@ -4239,7 +4242,17 @@ paths:
         - Managed Databases
       summary: Create database
       description: |
-        Create a managed database. Provisioning is asynchronous: the database is created in status `pending` and moves through `deploying` to `running`. Poll `GET /api/v1/databases/{database_id}` for progress. A free PostgreSQL or MySQL database is usually `running` within 10 seconds.
+        Create a managed database.
+
+        <Note>
+        Before creating a database, you need:
+        - A **plan ID** from [List database plans](/api-reference/databases/list-database-plans). The free plan is marked `is_free_tier`; one free database per account.
+        - Optionally an **engine version** from [List database engines](/api-reference/databases/list-database-engines). Omit it for the newest.
+        - A **project ID** in `X-Project-ID` from [List projects](/api-reference/projects/list-projects).
+        - Optionally a **VPC ID** for a private endpoint.
+        </Note>
+
+        Provisioning is asynchronous: the database is created in status `pending` and moves through `deploying` to `running`. Poll `GET /api/v1/databases/{database_id}` for progress. A free PostgreSQL or MySQL database is usually `running` within seconds. With `public_access: true`, `running` means the public address already accepts connections.
 
         ## Networking
 
@@ -4254,7 +4267,13 @@ paths:
 
         ## Pricing
 
-        The plan sets the base price. High availability adds 70% of the tier price; storage above the tier allotment is $0.12/GB/month. See `GET /api/v1/public/pricing/database` for the full catalog.
+        The plan sets the base price. High availability adds 70% of the plan price for PostgreSQL, Valkey and ClickHouse, 140% for MySQL and Kafka. Each PostgreSQL read replica costs the plan price. Storage above the plan's included storage is $0.15/GB/month. The same numbers are in `GET /api/v1/databases/plans` and, without authentication, `GET /api/v1/public/pricing/database`.
+
+        ## Errors
+
+        - `409`: the name is taken in this project, or the account already has a free database.
+        - `402`: a paid plan on a monthly account without a card that can be charged automatically. The response links to the dashboard to add one.
+        - `403`: the account's billing status or your role does not allow creating databases.
 
         ## Billing
 
@@ -4290,13 +4309,16 @@ paths:
           $ref: '#/components/responses/InsufficientBalance'
         '403':
           $ref: '#/components/responses/BillingValidationFailed'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /api/v1/databases/{database_id}:
     get:
       tags:
         - Managed Databases
       summary: Get database
-      description: Get details of a managed database.
+      description: |
+        Get one managed database: status, plan, storage, high availability, networking, price and live `metrics`. Poll it after create, scale or restore until `status` is `running`.
       operationId: getDatabase
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4349,21 +4371,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
     delete:
       tags:
         - Managed Databases
       summary: Delete database
       description: |
-        Permanently delete a managed database and its backups. This cannot be undone.
+        Delete a managed database, its data, standbys and addresses. Billing stops at once. This cannot be undone.
 
-        If the database has an active subscription, the remaining prepaid balance is refunded pro-rata to your account balance.
+        - **Monthly database**: the unused part of the current month is credited to your account balance.
+        - **Backups** are kept for 14 days after the delete, then removed for good. Within that window, support can restore one into a new database.
+        - Returns `412` while Raff is moving the database for maintenance; try again in a few minutes.
       operationId: deleteDatabase
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
       responses:
         '200':
-          description: Deletion started
+          description: Database deleted
           content:
             application/json:
               schema:
@@ -4381,10 +4407,12 @@ paths:
       description: |
         Change the plan, storage, high availability, or read replica count of a running database.
 
-        - **Plan** — the new plan must be the same engine. Its included storage sets a floor: storage never shrinks below the new tier's allotment.
-        - **Storage** — `storage_gb` can only grow. Omit (or `0`) to keep the current size.
-        - **High availability** — set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged.
-        - **Read replicas** — `replica_count` is always applied: pass your current count when you are not changing it. PostgreSQL only; Valkey rejects a count above 0.
+        - **Plan**: the new plan must be the same engine. Its included storage sets a floor: storage never shrinks below the new tier's allotment.
+        - **Storage**: `storage_gb` can only grow. Omit (or `0`) to keep the current size.
+        - **High availability**: set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged. MySQL high availability is chosen at create: turning it on for a MySQL database without it returns `400`.
+        - **Read replicas**: `replica_count` is always applied: pass your current count when you are not changing it. PostgreSQL only, 0 to 5; other engines reject a count above 0.
+
+        A free database can only move to a paid plan; its size is fixed. The database restarts briefly for plan, high availability and replica changes; growing storage needs no restart. Poll `GET /api/v1/databases/{database_id}` until `status` is back to `running`.
 
         ## Billing
 
@@ -4429,10 +4457,10 @@ paths:
       description: |
         Connection details for the database: username, database name, and two endpoints.
 
-        - **Private** (`host`, `port`, `connection_uri`): reachable from inside the database's VPC. Without a VPC there is no private endpoint.
+        - **Private** (`host`, `port`, `connection_uri`): reachable from inside the database's VPC. For PostgreSQL, `port` is the direct port 5432; the pooler is on 6432 of the same host. Use these only when the database has a `vpc_id`; without a VPC there is no private endpoint you can reach.
         - **Public** (`public_host`, `public_port`, `public_connection_uri`): filled while public access is on.
 
-        The `password` field is empty unless you pass `reveal=true`. TLS is always required.
+        The `password` field is empty unless you pass `reveal=true`. TLS is always required: `ca_cert` is the database's certificate authority, for clients that verify the server certificate (the public hostname is in the certificate).
       operationId: getDatabaseConnection
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4465,7 +4493,7 @@ paths:
         - Managed Databases
       summary: Rotate credentials
       description: |
-        Generate a new password for the database user. Existing connections keep working until they disconnect; new connections must use the new password. Fetch it via `GET /api/v1/databases/{database_id}/connection?reveal=true`.
+        Generate a new password for the admin user (`raffadmin`). New connections must use the new password; update your apps right away. Fetch it via `GET /api/v1/databases/{database_id}/connection?reveal=true`.
       operationId: rotateDatabaseCredentials
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4488,6 +4516,8 @@ paths:
       summary: Connect database to VPC
       description: |
         Attach a database created without a VPC to one of your VPCs. The private endpoint `{database_id}.db.raffusercloud.com` becomes reachable from inside that VPC.
+
+        The first connection to a VPC can take a few minutes while the VPC's router starts; the request returns when the endpoint is ready. Returns `409` when the database is already connected to a VPC.
       operationId: connectDatabaseVPC
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4521,7 +4551,7 @@ paths:
         - Managed Databases
       summary: Disconnect database from VPC
       description: |
-        Detach the database's private endpoint from its VPC. Clients inside the VPC lose access; public access, if enabled, keeps working.
+        Detach the database's private endpoint from its VPC. Clients inside the VPC lose access; public access, if enabled, keeps working. Calling it on a database without a VPC succeeds and changes nothing.
       operationId: disconnectDatabaseVPC
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4558,7 +4588,9 @@ paths:
 
         The ports stay assigned while public access is off, so enabling it again returns the same ports. They are released only when the database is deleted.
 
-        `allowlist` restricts which source CIDRs may connect. Omit it to keep the stored list; pass `[]` to allow all sources. Re-post `enabled: true` with a new `allowlist` to update the restriction in place.
+        `allowlist` restricts which source addresses may connect: up to 20 IPv4 addresses or CIDR ranges. Omit it to keep the stored list; pass `[]` to allow all sources. Re-post `enabled: true` with a new `allowlist` to update the restriction in place.
+
+        Turning public access on returns once the public address accepts connections, usually within seconds. Kafka is private only and is refused.
       operationId: setDatabasePublicAccess
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4593,7 +4625,7 @@ paths:
         - Managed Databases
       summary: Get metrics
       description: |
-        Latest usage snapshot: CPU, memory, storage, connections, and replication lag. Metrics refresh about every 60 seconds; zero values mean not measured yet.
+        Latest usage snapshot: CPU, memory, storage, connections, and replication lag. Metrics refresh about every 60 seconds; zero values mean not measured yet, and `-1` means the engine does not report that number.
       operationId: getDatabaseMetrics
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4619,7 +4651,8 @@ paths:
       tags:
         - Managed Databases
       summary: Get metrics history
-      description: Time-series metrics over a window, bucketed for charting.
+      description: |
+        Time-series metrics over a window, bucketed for charting: about 120 points, oldest first. `window_hours` is 1 to 168 (default 24); history is kept 7 days.
       operationId: getDatabaseMetricsHistory
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4659,10 +4692,11 @@ paths:
       description: |
         The slowest recent queries.
 
-        - **PostgreSQL** — aggregated statistics from `pg_stat_statements`: each row is one normalized query with its call count, mean, and total time.
-        - **Valkey** — individual slow commands from `SLOWLOG`: `calls` is 1 per entry and `rows` is not applicable.
+        - **PostgreSQL**: aggregated statistics from `pg_stat_statements`: each row is one normalized query with its call count, mean, and total time.
+        - **Valkey**: individual slow commands from `SLOWLOG`: `calls` is 1 per entry and `rows` is not applicable.
+        - **MySQL**: statement digests for `defaultdb`. **ClickHouse**: the query log. **Kafka**: none.
 
-        `collecting` indicates whether statistics collection is active yet.
+        On PostgreSQL, turn on the `pg_stat_statements` extension first; until then `collecting` is `false`. `limit` is 1 to 100 (default 20). The database must be `running`.
       operationId: getDatabaseSlowQueries
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4699,7 +4733,8 @@ paths:
       tags:
         - Managed Databases
       summary: Get logs
-      description: Recent engine log lines, newest last.
+      description: |
+        Recent engine log lines, newest last. `tail` is up to 500 lines (1,000 for Valkey); default 200. The database must be `running`.
       operationId: getDatabaseLogs
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4734,7 +4769,7 @@ paths:
         - Managed Databases
       summary: List extensions
       description: |
-        The PostgreSQL extension allowlist with the installed state of each extension. Valkey has no extensions — the list is empty.
+        Every PostgreSQL extension the database can turn on, with whether it is on. `curated` marks the most used ones (`vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`). Extensions that reach the server's files or run untrusted languages are left out. Other engines return an empty list. The database must be `running`.
       operationId: listDatabaseExtensions
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4761,7 +4796,8 @@ paths:
       tags:
         - Managed Databases
       summary: Enable or disable extension
-      description: Install or remove a PostgreSQL extension from the allowlist. PostgreSQL only.
+      description: |
+        Turn a PostgreSQL extension on (`CREATE EXTENSION ... CASCADE` in `defaultdb`) or off. Takes a second, no restart. Use a `name` from [List extensions](/api-reference/databases/list-database-extensions), for example `vector`. PostgreSQL only; the database must be `running`.
       operationId: setDatabaseExtension
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4791,7 +4827,7 @@ paths:
         - Managed Databases
       summary: List backups
       description: |
-        All backups for the database: nightly automatic backups (`base`) and on-demand backups (`on_demand`).
+        All backups for the database: nightly automatic backups (`base`, at 02:00 UTC) and on-demand backups (`on_demand`), kept 30 days. `restore_window_start` is the earliest point a point-in-time restore can reach. Kafka has no backups; its topics are copied across brokers.
       operationId: listDatabaseBackups
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4819,7 +4855,7 @@ paths:
         - Managed Databases
       summary: Create backup
       description: |
-        Start an on-demand backup — a base backup for PostgreSQL, an RDB snapshot for Valkey. The backup runs asynchronously; poll the list until its status is `completed`.
+        Start an on-demand backup: a base backup for PostgreSQL, a full backup for MySQL and ClickHouse, a snapshot for Valkey. The backup runs asynchronously; poll the list until its status is `completed`. Kafka has no backups and is refused.
       operationId: createDatabaseBackup
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4879,7 +4915,11 @@ paths:
       description: |
         Restore a database to a backup or a point in time, either into a new database (`clone_to_new: true`) or over this one (`in_place: true`).
 
-        Choose the restore point with `backup_id` (a completed backup with `restorable: true`) or, for PostgreSQL, `pitr_timestamp` (any time from `restore_window_start` on the backup list until now). Omit both to restore the latest available state. A point outside the window returns `400`.
+        <Note>
+        Before restoring, get a **backup ID** or the **restore window** from [List backups](/api-reference/databases/list-database-backups).
+        </Note>
+
+        Choose the restore point with `backup_id` (a completed backup with `restorable: true`) or, for PostgreSQL and MySQL on paid plans, `pitr_timestamp` (any time from `restore_window_start` on the backup list until now). Omit both to restore the latest available state. A point outside the window returns `400`. Set exactly one of `clone_to_new` and `in_place`.
 
         - **New database**: inherits the source's plan, storage, VPC, and project, starts with no read replicas, and bills pay-as-you-go. High availability is an explicit choice via `ha_enabled`, never inherited. If `new_name` is taken, the platform adds a suffix (`-2`, `-3`, …). Poll `GET /api/v1/databases/{new_database_id}` like any create. Free databases cannot restore into a new database.
         - **In place**: overwrites this database. A safety backup is taken first, the status is `restoring` while it runs, and `new_database_id` is empty. Data written after the restore point is lost.
@@ -4985,6 +5025,10 @@ paths:
       summary: Create database user
       description: |
         Add a user with read-only or read-write access. The password is returned once in this response; fetch it again later with `GET /api/v1/databases/{database_id}/users/{name}/credential`.
+
+        - PostgreSQL, MySQL and ClickHouse. Valkey and Kafka return `501`.
+        - Name: 3 to 31 characters, lowercase letters, digits and `_`, starting with a letter. Names the engine or Raff use (`raffadmin`, `postgres`, `root`, `admin` and others, and the prefixes `app_` and `fnb_`) are refused.
+        - Up to 20 users per database. A name in use returns `409`. The database must be `running`.
       operationId: createDatabaseUser
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5015,13 +5059,15 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /api/v1/databases/{database_id}/users/{name}:
     delete:
       tags:
         - Managed Databases
       summary: Delete database user
-      description: Remove a user you added. The admin user and users Raff manages for apps and functions cannot be deleted.
+      description: Remove a user you added; it loses access at once. The admin user and users Raff manages for apps and functions cannot be deleted. PostgreSQL, MySQL and ClickHouse; Valkey and Kafka return `501`.
       operationId: deleteDatabaseUser
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5045,7 +5091,7 @@ paths:
       tags:
         - Managed Databases
       summary: Rotate database user password
-      description: Give a user a new password. Open connections keep working until they disconnect.
+      description: Give a user you added a new password, returned once in the response. Open connections keep working until they disconnect. PostgreSQL, MySQL and ClickHouse; Valkey and Kafka return `501`.
       operationId: rotateDatabaseUser
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5074,7 +5120,7 @@ paths:
       tags:
         - Managed Databases
       summary: Get database user password
-      description: The current username and password of a user you added.
+      description: The current username and password of a user you added. Needs permission to manage databases, not only to connect.
       operationId: getDatabaseUserCredential
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5104,7 +5150,7 @@ paths:
         - Managed Databases
       summary: List engine parameters
       description: |
-        The engine settings in effect (for example `max_connections` or `work_mem`), with the default and where each value comes from: `plan` (set by the plan size), `override` (set through `engine_config`), or `engine` (engine default).
+        The engine settings in effect (for example `max_connections` or `work_mem`), with the default and where each value comes from: `plan` (set by the plan size), `override` (set through `engine_config`), or `engine` (engine default). Read-only: settings follow the plan; the only setting you choose is Valkey's `maxmemory-policy` at create.
       operationId: listDatabaseParameters
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5241,7 +5287,7 @@ paths:
       tags:
         - Managed Databases
       summary: Save a query
-      description: Save a query under a name. Saving again with the same name replaces it.
+      description: Save a query under a name, shared by everyone on the account. Saving again with the same name replaces it. Name up to 80 characters, statement up to 20,000 characters, up to 100 saved queries per database.
       operationId: saveDatabaseSavedQuery
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5283,6 +5329,7 @@ paths:
       tags:
         - Managed Databases
       summary: Delete a saved query
+      description: Delete a saved query by its name. Other saved queries are unchanged.
       operationId: deleteDatabaseSavedQuery
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5309,7 +5356,7 @@ paths:
       tags:
         - Managed Databases
       summary: List apps and functions using the database
-      description: The Raff apps and functions bound to this database, with the state of each binding.
+      description: The Raff apps and functions bound to this database, with the state of each binding. Each binding has its own database user, managed by Raff.
       operationId: listDatabaseConsumers
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -10332,10 +10379,16 @@ components:
           type: integer
           description: Client connection limit enforced by the engine. 0 means the engine default.
           example: 100
+        max_pooled_connections:
+          type: integer
+          description: PostgreSQL only. Client connections the pooler (port 6432 private, 6543 public) accepts. 0 for other engines.
+          example: 200
 
     DatabaseHAPricing:
       type: object
-      description: High availability pricing for one engine. An HA plan costs `price_per_month * (1 + price_multiplier)`.
+      description: |
+        High availability pricing for one engine. A plan with high availability costs `price_per_month * (1 + price_multiplier)`.
+        Today: 0.7 (+70%) for PostgreSQL, Valkey and ClickHouse, 1.4 (+140%) for MySQL and Kafka, whose high availability runs three nodes.
       properties:
         engine:
           $ref: '#/components/schemas/DatabaseEngine'
@@ -10346,18 +10399,19 @@ components:
 
     DatabaseReplicaPricing:
       type: object
-      description: Read replica pricing for one engine.
+      description: |
+        Read replica pricing for one engine (PostgreSQL only). Each replica costs the database plan's `price_per_month * price_multiplier`; today the multiplier is 1.0, so a replica costs the same as the plan.
       properties:
         engine:
           $ref: '#/components/schemas/DatabaseEngine'
         price_multiplier:
           type: number
-          description: Multiplier applied to the replica base price
+          description: Each replica costs the plan's monthly price times this
           example: 1.0
         price_per_month:
           type: number
-          description: Monthly price per read replica in USD
-          example: 29.99
+          description: Not used for billing; the replica price follows the plan (see `price_multiplier`).
+          example: 0
 
     DatabaseStoragePricing:
       type: object
@@ -10367,8 +10421,8 @@ components:
           $ref: '#/components/schemas/DatabaseEngine'
         price_per_gb_month:
           type: number
-          description: Price per GB per month in USD
-          example: 0.12
+          description: Price per GB per month in USD for storage above the plan's included storage
+          example: 0.15
         min_gb:
           type: integer
           description: Minimum storage in GB
@@ -12501,12 +12555,21 @@ components:
           example: "16"
         status:
           type: string
-          enum: [pending, deploying, running, warning, resizing, restoring, suspended, failed, deleting, deleted]
+          enum: [pending, deploying, running, warning, resizing, restoring, moving, suspended, failed, deleting, deleted]
           description: |
-            Lifecycle status. Creation: `pending` → `deploying` → `running`. `warning` means running with a degraded component. `resizing` and `restoring` mean a scale or in-place restore is in progress. `suspended` means a free-tier database paused for idleness (resume any time, data is kept). `failed` means provisioning or a scale operation failed.
+            Lifecycle status.
+
+            - Creation: `pending`, then `deploying`, then `running`. A database with public access reports `running` only once its public address accepts connections.
+            - `warning`: running with a problem (a component down, storage full). When the database stopped answering, `down_since` is set.
+            - `resizing`: a plan, storage, high availability or replica change is being applied (a short restart, not an outage).
+            - `restoring`: an in-place restore is in progress.
+            - `moving`: Raff is moving the database to other hardware for maintenance.
+            - `suspended`: a free database paused after 7 days without connections. Data is kept; resume with `POST /api/v1/databases/{database_id}/resume`.
+            - `failed`: provisioning did not complete.
+            - `deleting`, `deleted`: being deleted, deleted.
         status_message:
           type: string
-          description: Human-readable detail for `warning` and `failed` states
+          description: Plain-words detail for `warning`, `resizing` and `failed`
         region:
           type: string
           enum: [us-east]
@@ -12518,15 +12581,15 @@ components:
           example: 5
         storage_gb:
           type: integer
-          description: Provisioned storage in GB. Storage above the plan's included allotment bills at $0.12/GB/month.
+          description: Provisioned storage in GB. Storage above the plan's included storage is billed per GB per month (`storage_pricing` in `GET /api/v1/databases/plans`, $0.15 today).
           example: 25
         ha_enabled:
           type: boolean
           description: |
-            High availability — a standby that takes over automatically on failure (Sentinel failover for Valkey). Adds 70% of the plan price.
+            High availability: copies on separate servers that take over automatically on failure. PostgreSQL and Valkey run a primary and a standby, ClickHouse two replicas, MySQL a 3-node cluster, Kafka 3 brokers. Adds 70% of the plan price for PostgreSQL, Valkey and ClickHouse, 140% for MySQL and Kafka (`ha_pricing` in `GET /api/v1/databases/plans`).
         replica_count:
           type: integer
-          description: Number of read replicas (PostgreSQL only; always 0 for Valkey)
+          description: Number of read replicas (PostgreSQL only; 0 for other engines). Each costs the same as the plan.
           example: 0
         vpc_id:
           type: string
@@ -12536,12 +12599,12 @@ components:
           description: Whether public access is enabled
         connection_host:
           type: string
-          description: Private endpoint hostname, resolvable inside the attached VPC
+          description: Private endpoint hostname, resolvable inside the attached VPC. Use it only when `vpc_id` is set; without a VPC the database has no private address you can reach.
           example: a1b2c3d4.db.raffusercloud.com
         connection_port:
           type: integer
-          description: "Private endpoint port. PostgreSQL: 6432 pooled (PgBouncer, transaction mode), 5432 direct. Valkey: 6379 (TLS)."
-          example: 6432
+          description: "Private endpoint port. PostgreSQL: 5432 direct; the pooler (PgBouncer, transaction mode) is on 6432 of the same host. MySQL: 3306. Valkey: 6379. ClickHouse: 8443 (HTTPS), 9440 (native). Kafka: 9092. All require TLS."
+          example: 5432
         billing_type:
           type: string
           enum: [payg, subscription]
@@ -12561,8 +12624,8 @@ components:
         public_port:
           type: integer
           description: |
-            Public port from the reserved range 25060–26060; `0` when public access is off. For PostgreSQL, `public_port` is the pooled endpoint and `public_port + 1` is the direct endpoint. PostgreSQL is also reachable on the standard ports 6543 (pooled) and 5432 (direct) of `public_dns_hostname`.
-          example: 25060
+            The database's own public port on `public_dns_hostname`; `0` when public access is off. For PostgreSQL and ClickHouse, `public_port` and `public_port + 1` (PostgreSQL: pooled and direct; ClickHouse: HTTPS and native). PostgreSQL is also reachable on the standard ports 6543 (pooled) and 5432 (direct), routed by the hostname the client sends over TLS; use `public_port` for old clients that do not send it. The port stays the same when public access is turned off and on again.
+          example: 20104
         public_dns_hostname:
           type: string
           description: Public endpoint hostname (empty when public access is off)
@@ -12579,6 +12642,36 @@ components:
         suspended_at:
           type: string
           description: When a free-tier database was paused for idleness, RFC 3339 (empty when not paused)
+        down_since:
+          type: string
+          description: When the database stopped answering, RFC 3339 (empty while it answers). Set with status `warning`.
+        metrics:
+          type: object
+          nullable: true
+          description: Latest live numbers, sampled every minute. `null` until the first sample.
+          properties:
+            connections_active:
+              type: integer
+            connections_max:
+              type: integer
+            pooled_connections_active:
+              type: integer
+              description: PostgreSQL pooler
+            pooled_connections_max:
+              type: integer
+              description: PostgreSQL pooler
+            storage_used_bytes:
+              type: integer
+            storage_capacity_bytes:
+              type: integer
+            ops_per_sec:
+              type: number
+              description: Transactions (PostgreSQL), queries (MySQL, ClickHouse) or commands (Valkey) per second
+            cache_hit_pct:
+              type: number
+            metrics_updated_at:
+              type: string
+              description: When the numbers were sampled, RFC 3339
         created_at:
           type: string
           format: date-time
@@ -12594,7 +12687,7 @@ components:
       properties:
         name:
           type: string
-          description: Display name, unique within the account
+          description: Display name, unique within the project across all engines. Lowercase letters, digits and hyphens work everywhere.
           example: orders-db
         engine:
           $ref: '#/components/schemas/DatabaseEngine'
@@ -12608,15 +12701,15 @@ components:
           example: 5
         storage_gb:
           type: integer
-          description: Storage in GB. Omit to use the plan's included allotment; storage above it bills at $0.12/GB/month.
+          description: Storage in GB. Omit to use the plan's included storage; storage above it is billed per GB per month ($0.15 today). Fixed on the free plan.
         ha_enabled:
           type: boolean
           default: false
-          description: Enable high availability (+70% of the plan price)
+          description: Enable high availability (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +140% for MySQL and Kafka). Not available on the free plan.
         replica_count:
           type: integer
           default: 0
-          description: Read replicas (PostgreSQL only; Valkey rejects a count above 0)
+          description: Read replicas, PostgreSQL only. Each costs the same as the plan. Not available on the free plan.
         region:
           type: string
           enum: [us-east]
@@ -12629,7 +12722,7 @@ components:
         public_access:
           type: boolean
           default: false
-          description: Enable public access at create time
+          description: Give the database a public address (TLS required) as soon as it is created. If the public address cannot be set up, the database is still created, without it; check `public_access` in the response of `GET /api/v1/databases/{database_id}`. Kafka is private only.
         engine_config:
           type: object
           additionalProperties:
@@ -12698,7 +12791,11 @@ components:
           type: array
           items:
             type: string
-          description: Source CIDRs allowed to connect. Omit to keep the stored list; pass `[]` to allow all sources.
+          description: |
+            IPv4 addresses or CIDR ranges allowed to connect. Omit to keep the stored list; pass `[]` to allow all sources (the password and TLS are still required).
+            - Up to 20 entries.
+            - A single address such as `203.0.113.7` is stored as `203.0.113.7/32`.
+            - `0.0.0.0/0` is refused: pass `[]` instead.
           example: ["203.0.113.0/24"]
 
     SetDatabaseExtensionRequest:
@@ -12709,8 +12806,8 @@ components:
       properties:
         name:
           type: string
-          description: Extension name from the allowlist (see `GET /api/v1/databases/{database_id}/extensions`)
-          example: pgvector
+          description: Extension name as listed by `GET /api/v1/databases/{database_id}/extensions`
+          example: vector
         enabled:
           type: boolean
           description: "`true` to install, `false` to remove"
@@ -12739,7 +12836,7 @@ components:
         ha_enabled:
           type: boolean
           default: false
-          description: Enable high availability on the new database (+70% of the plan price). Never inherited from the source.
+          description: Enable high availability on the new database (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +140% for MySQL and Kafka). Never inherited from the source.
 
     DatabaseConnection:
       type: object
@@ -12750,8 +12847,8 @@ components:
           example: a1b2c3d4.db.raffusercloud.com
         port:
           type: integer
-          description: Endpoint port
-          example: 6432
+          description: Endpoint port (PostgreSQL 5432 direct; its pooler is on 6432)
+          example: 5432
         username:
           type: string
           description: Database user
@@ -12821,6 +12918,57 @@ components:
         metrics_updated_at:
           type: string
           description: When this snapshot was taken, RFC 3339 (empty before the first sample)
+        pooled_connections_active:
+          type: integer
+          description: Client connections on the pooler (PostgreSQL)
+        pooled_connections_max:
+          type: integer
+          description: Pooler connection limit (PostgreSQL)
+        ops_per_sec:
+          type: number
+          description: Transactions (PostgreSQL), queries (MySQL, ClickHouse) or commands (Valkey) per second. `-1` when not measured
+        cache_hit_pct:
+          type: number
+          description: Share of reads served from memory, percent. `-1` when not measured
+        evictions_per_min:
+          type: number
+          description: Keys removed because memory was full, per minute (Valkey). `-1` for other engines
+        merges_running:
+          type: integer
+          description: Background merges running (ClickHouse). `-1` for other engines
+        compression_ratio:
+          type: number
+          description: Data size before compression divided by size on disk (ClickHouse). `-1` for other engines
+        pooler_server_active:
+          type: integer
+          description: Server connections the pooler is using (PostgreSQL). `-1` without a pooler
+        pooler_server_idle:
+          type: integer
+          description: Idle server connections in the pool (PostgreSQL). `-1` without a pooler
+        pooler_cl_waiting:
+          type: integer
+          description: Client connections waiting for a server connection (PostgreSQL). Above 0 for long means the pool is too small for the load
+        pooler_maxwait_us:
+          type: integer
+          description: Longest current wait for a server connection, microseconds (PostgreSQL)
+        pooler_version:
+          type: string
+          description: Pooler version (PostgreSQL)
+        conn_rejected_total:
+          type: integer
+          description: Connections refused because the limit was reached, since the database started. `-1` when not measured
+        conn_idle_timeout_secs:
+          type: integer
+          description: Seconds after which idle connections are closed. `-1` when not set
+        storage_data_bytes:
+          type: integer
+          description: Part of `storage_used_bytes` taken by data. `-1` when not measured
+        storage_log_bytes:
+          type: integer
+          description: Part of `storage_used_bytes` taken by the write-ahead or binary log. `-1` when not measured
+        storage_read_only:
+          type: boolean
+          description: True while storage is at 95% or more and PostgreSQL or MySQL accept reads only. Writes come back below 90%
 
     DatabaseMetricsPoint:
       type: object
@@ -12934,14 +13082,11 @@ components:
           description: "`base` = nightly automatic backup; `on_demand` = manually requested"
         status:
           type: string
-          enum: [running, completed, failed]
+          enum: [pending, running, completed, failed]
           description: Only `completed` backups are restorable
         size_bytes:
           type: integer
           description: Backup size in bytes (0 while running)
-        s3_path:
-          type: string
-          description: Object storage location of the backup artifact
         backup_timestamp:
           type: string
           description: Consistency point of the backup, RFC 3339 (empty while running)
@@ -12959,7 +13104,7 @@ components:
           description: Whether this backup can be used as `backup_id` for a restore. Backups from before the last in-place restore are kept for reference but cannot be restored.
         restore_window_start:
           type: string
-          description: RFC 3339. Earliest point in time a PostgreSQL restore can target (the same on every backup in the list). Empty when unknown.
+          description: RFC 3339. Earliest point in time a point-in-time restore can target (the same on every backup in the list). Empty when unknown.
 
     DatabaseUser:
       type: object
@@ -13734,6 +13879,12 @@ components:
             $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflicts with what exists, for example a name already in use
       content:
         application/json:
           schema:

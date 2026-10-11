@@ -1,0 +1,49 @@
+---
+title: Delete a database
+description: Delete a managed database, what happens to its data, backups and billing.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Deleting a database removes it, its data and its standbys at once, and stops billing. Backups are kept for 14 days after the delete, then removed for good.
+
+## Before you start
+
+- Take a final backup or export what you need. After 14 days nothing can be recovered.
+- Update the apps that use the database.
+
+## Steps
+
+<Steps>
+  <Step title="Open Settings">
+    Open the database, go to **Settings** and scroll to **Delete database**.
+  </Step>
+  <Step title="Confirm">
+    Click **Delete database**, type the database's name exactly, and click **Delete database** again.
+  </Step>
+</Steps>
+
+You can also delete several databases at once: select them in the **Databases** list and click **Delete**.
+
+## What happens
+
+- The database, its data and its addresses are removed at once. Billing stops now.
+- **Monthly databases**: the unused part of the month is credited to your account balance.
+- **Backups** are kept for 14 days. Within that window, [contact support](mailto:support@rafftechnologies.com) to restore one into a new database.
+- The name can be used again at once. The public port is not reused by another database for 7 days.
+
+## Do it from your tools
+
+- **API**: [`DELETE /api/v1/databases/{database_id}`](/api-reference/databases/delete-database)
+- **CLI**: [`raff database delete`](/reference/cli/database)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Back up and restore" icon="clock-rotate-left" href="/products/store/databases/quickstart-guides/back-up-and-restore">
+    Take a last backup first.
+  </Card>
+  <Card title="Billing model" icon="lightbulb" href="/products/store/databases/concepts/billing-model">
+    How credits work on delete.
+  </Card>
+</CardGroup>

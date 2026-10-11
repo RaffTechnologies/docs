@@ -1,0 +1,54 @@
+---
+title: Connect a database to a VPC
+sidebarTitle: Connect a VPC
+description: Give a managed database a private address inside your VPC so your Raff VMs reach it without the internet.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Connecting a VPC puts a private endpoint for the database inside your VPC, with the stable hostname `<database_id>.db.raffusercloud.com`. Your VMs on that VPC connect to it directly, with no public address and no egress charges.
+
+## Before you start
+
+- A running database.
+- A VPC with the VMs that should reach the database. See [VPC](/products/network/vpc).
+
+## Steps
+
+<Steps>
+  <Step title="Open Access">
+    Open the database and go to the **Access** tab.
+  </Step>
+  <Step title="Connect the VPC">
+    In **Private networking**, choose the VPC in **Select a VPC...** and click **Connect VPC**. It can take a few minutes the first time, while the VPC's router starts.
+  </Step>
+  <Step title="Connect from a VM">
+    Go to **Connect**, choose **Your VPC**, and copy the address. From a VM on the VPC:
+
+    ```bash
+    psql "postgresql://raffadmin:PASSWORD@a1b2c3d4.db.raffusercloud.com:6432/defaultdb?sslmode=require"
+    ```
+  </Step>
+</Steps>
+
+You can also pick a VPC when you [create the database](/products/store/databases/quickstart-guides/create-a-database).
+
+## Disconnect
+
+In **Private networking**, click **Disconnect** and confirm. The data is untouched and public access stays as it was. Connecting a VPC again gives the endpoint a new private IP; the hostname stays the same.
+
+## Do it from your tools
+
+- **API**: [`POST /api/v1/databases/{database_id}/vpc`](/api-reference/databases/connect-database-v-p-c), [`DELETE`](/api-reference/databases/disconnect-database-v-p-c)
+- **CLI**: [`raff database vpc`](/reference/cli/database)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Networking and security" icon="lightbulb" href="/products/store/databases/concepts/networking-and-security">
+    Private and public addresses side by side.
+  </Card>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Ports and code for every engine.
+  </Card>
+</CardGroup>

@@ -1,0 +1,82 @@
+---
+title: Create a database
+description: Create a managed PostgreSQL, MySQL, Valkey, ClickHouse or Kafka database from the Raff dashboard.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Create a database by picking an engine, a plan and how it connects. A free or pay-as-you-go database starts within a minute; a monthly database starts right after checkout.
+
+## Before you start
+
+- A Raff account and a project to create the database in (the project picker is at the top left).
+- For a paid plan on monthly billing, a card. Free databases need no card.
+- Optional: a VPC, if your VMs or apps should reach the database privately. You can create one in the same form.
+
+## Steps
+
+<Steps>
+  <Step title="Open the create page">
+    Go to **Databases** and click **Create database**, or click **+ Create** at the top right and choose **Managed Database**.
+  </Step>
+  <Step title="Identity: engine, name, version">
+    Pick the engine: **PostgreSQL** (apps, APIs, AI), **MySQL** (WordPress, Laravel), **Valkey** (cache, sessions, queues), **ClickHouse** (analytics, logs) or **Kafka** (event streams).
+
+    Give it a **Name**, for example `orders-db`. Names are unique within the project. Pick the **Version**; the newest is preselected. The region is **US East**.
+
+    <Frame>
+      ![TODO: Identity card with engine cards, name and version](/images/products/store/databases/create-01-identity.png)
+    </Frame>
+  </Step>
+  <Step title="Compute & storage: pick a plan">
+    Pick a row in the plan table: **Compute**, **RAM**, **NVMe storage**, **Connections** and **Price**. The **Free** plan is preselected when your account has no free database yet.
+
+    On a paid plan you can add storage in 10 GB steps with **+** ($0.15 per GB per month). Storage can grow later without downtime, but never shrink. See [Plans and sizing](/products/store/databases/concepts/plans-and-sizing).
+  </Step>
+  <Step title="Engine options">
+    - **PostgreSQL, Turn on now**: `vector` (AI embeddings) is ticked; tick `pg_trgm` for fuzzy text search. More extensions can be turned on later in **Settings**.
+    - **Valkey, Cache or queue?**: **Cache** removes the least recently used keys when memory is full; **Queue or data** (default) never removes keys, and new writes fail when memory is full.
+  </Step>
+  <Step title="Topology">
+    **Single node** for development and staging, or **High availability** for production: copies on separate servers with automatic failover. High availability adds 70% to the plan price (140% for MySQL and Kafka) and is not available on the free plan. For MySQL, choose it now: it cannot be added to a MySQL database later. See [High availability and replicas](/products/store/databases/concepts/high-availability-and-replicas).
+  </Step>
+  <Step title="Network">
+    - **Use existing VPC** or **Create new VPC**: the database gets a private address inside the VPC, reachable from your VMs and apps on it.
+    - **Skip for now, no VPC**: reach the database from the dashboard and, after you turn it on, over its public address.
+
+    Public access is turned on after create, in the **Access** tab. See [Turn on public access](/products/store/databases/quickstart-guides/turn-on-public-access).
+  </Step>
+  <Step title="Create">
+    Check the **Estimated price** on the right, then:
+
+    | Your choice | Button | What happens |
+    |---|---|---|
+    | Free plan | **Create free database** | Starts at once, no payment |
+    | Paid plan, pay-as-you-go account | **Create database** | Starts at once, billed by the hour from your balance |
+    | Paid plan, monthly account | **Continue to checkout** | Pay the first month, then it starts |
+  </Step>
+</Steps>
+
+## Verify
+
+The **Creating your database** screen shows each step and turns into **Your database is ready** with its connection string. In the **Databases** list, its status is **Healthy**.
+
+A database with public access shows as ready only once its public address accepts connections, so the connection string works the moment you see it.
+
+## Create it another way
+
+- **API**: [`POST /api/v1/databases`](/api-reference/databases/create-database)
+- **CLI**: [`raff database create`](/reference/cli/database)
+- **Terraform**: [`raff_database`](/reference/terraform/raff_database)
+- **AI assistant**: [Create a database from chat](/products/ai/mcp/quickstart-guides/create-a-database-from-chat)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Get the connection string and connect your app.
+  </Card>
+  <Card title="Turn on public access" icon="globe" href="/products/store/databases/quickstart-guides/turn-on-public-access">
+    Reach it from outside your VPC.
+  </Card>
+</CardGroup>

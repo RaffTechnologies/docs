@@ -1,0 +1,61 @@
+---
+title: Database billing model
+sidebarTitle: Billing model
+description: How managed databases are billed on Raff, monthly or by the hour, and what happens to the bill when you resize or delete.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+A managed database has one flat price: the plan, plus high availability, read replicas and extra storage if you add them. Backups, monitoring, TLS and traffic are included; there are no egress charges or per-request fees.
+
+## How it works
+
+### Monthly or by the hour
+
+Your account's billing mode decides how databases are billed:
+
+- **Monthly (the default)**: each paid database is a monthly subscription. The first month is paid at checkout in the dashboard, or charged within seconds when created through the API, CLI or an AI assistant, from your account balance first, then your card.
+- **Pay-as-you-go**: databases are billed by the hour from your account balance, up to the monthly price.
+
+The free plan costs nothing in either mode.
+
+### The price
+
+```
+monthly price = plan
+              + plan × high availability share   (70%, or 140% for MySQL and Kafka)
+              + plan × read replicas             (PostgreSQL, each the same as the plan)
+              + extra storage GB × $0.15
+```
+
+For example, PostgreSQL 2 vCPU · HiMem ($45.99) with high availability: $45.99 + $32.19 = $78.18 a month.
+
+### Changes during the month
+
+| Change | Monthly billing | Pay-as-you-go |
+|---|---|---|
+| Costs more (bigger plan, high availability, replicas, storage) | The rest of the current month is charged at the new price before it applies | New hourly price from the change |
+| Costs less | The unused part goes to your account balance after it applies | New hourly price from the change |
+| Free to paid | Becomes a monthly subscription; the first month is charged | Billed by the hour from the change |
+| Delete | The unused part of the month goes to your account balance | Billing stops |
+
+## When to use it
+
+- **Monthly** for databases that run all the time: one predictable price.
+- **Pay-as-you-go** (on request) for short-lived databases.
+
+## Trade-offs
+
+- A monthly database needs a card that can be charged automatically.
+- Restoring into a new database creates a new, billed database.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/store/databases/details/pricing">
+    Every plan and add-on price.
+  </Card>
+  <Card title="Resize a database" icon="rocket" href="/products/store/databases/quickstart-guides/resize-a-database">
+    What a change costs before you confirm.
+  </Card>
+</CardGroup>

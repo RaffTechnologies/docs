@@ -1,0 +1,65 @@
+---
+title: Manage database users and passwords
+sidebarTitle: Manage users
+description: Create read-only and read-write users, reveal and rotate passwords, and rotate the admin password of a managed database.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Every database starts with one admin user, `raffadmin`. Give each app or person its own user instead, read-only or read-write, so you can rotate or remove one without touching the others.
+
+## Before you start
+
+- A running PostgreSQL, MySQL or ClickHouse database. Valkey and Kafka have the admin user only.
+
+## Add a user
+
+<Steps>
+  <Step title="Open Access">
+    Open the database and go to the **Access** tab. **Users** lists every user, what it **Can** do and who uses it.
+  </Step>
+  <Step title="Create the user">
+    Click **Add user**, enter a name (lowercase letters, digits and `_`, 3 to 31 characters) and pick:
+
+    - **Read only**: `SELECT` on all tables. For reports, BI and dashboards.
+    - **Read & write**: `SELECT`, `INSERT`, `UPDATE`, `DELETE`. For application traffic.
+
+    Click **Create user**.
+  </Step>
+  <Step title="Save the password">
+    The password is shown once. Copy it; you can reveal or rotate it later from **Users**.
+  </Step>
+</Steps>
+
+Up to 20 users per database. Names used by the engine or by Raff (`raffadmin`, `postgres`, `root`, `admin` and others) cannot be taken.
+
+On PostgreSQL, users get access to the `public` schema, including tables created later by `raffadmin`. On MySQL, to `defaultdb`.
+
+## Rotate a user's password
+
+In **Users**, click **New password** on the user's row. The new password is shown once; the old one stops working at once, so update your app first or right after.
+
+## Rotate the admin password
+
+In **Access**, **Credentials** card, click **Rotate password**, then click again to confirm. The old password stops working now; every app using `raffadmin` must reconnect with the new one.
+
+## Remove a user
+
+Click **Remove** on the user's row and confirm. The user loses access at once; what it created stays in the database.
+
+## Do it from your tools
+
+- **API**: [Users](/api-reference/databases/list-database-users), [Rotate admin password](/api-reference/databases/rotate-database-credentials)
+- **CLI**: [`raff database users`](/reference/cli/database), [`raff database rotate-password`](/reference/cli/database)
+- **Terraform**: [`raff_database_user`](/reference/terraform/raff_database_user)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Connect as the new user with **As user**.
+  </Card>
+  <Card title="Networking and security" icon="lightbulb" href="/products/store/databases/concepts/networking-and-security">
+    TLS, the allowlist and certificates.
+  </Card>
+</CardGroup>

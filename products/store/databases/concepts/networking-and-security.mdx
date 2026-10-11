@@ -1,0 +1,65 @@
+---
+title: Database networking and security
+sidebarTitle: Networking and security
+description: Private VPC addresses, public access over TLS, the allowlist, certificates and connection limits for Raff managed databases.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+A managed database can be reached in three ways: from the dashboard, privately from a VPC, and publicly over the internet. All of them use TLS and the database password; you choose which ones are open.
+
+## How it works
+
+### The dashboard
+
+The **Tables**, **SQL**, **Keys** and **Topics** tabs reach the database from inside Raff. They work with no VPC and no public access.
+
+### Private address (VPC)
+
+Connect a VPC and the database gets a private endpoint inside it, `<database_id>.db.raffusercloud.com`, with an IP from the VPC's range. VMs on the VPC connect directly; nothing leaves Raff and there are no egress charges. Kafka is reached this way only.
+
+### Public address
+
+Turn on public access and the database gets `<database_id>.public.db.raffusercloud.com` on Raff's public database gateway. No VPC is needed. Each database gets its own pair of public ports, kept while public access is off and reused when you turn it on again.
+
+PostgreSQL also answers on the standard ports **5432** (direct) and **6543** (pooled). Many databases share these ports, so the gateway finds yours by the hostname your client sends during the TLS handshake (SNI). Modern drivers do this; for an old client that does not, use the database's own public port.
+
+### TLS
+
+Connections are encrypted with TLS. Each database has its own certificate authority (CA), which your computer does not trust by default:
+
+- `sslmode=require` (the connection strings Raff gives you) encrypts without checking the certificate.
+- To check it too, download the CA on the **Connect** tab and use `sslmode=verify-full&sslrootcert=ca.crt` (PostgreSQL), `--ssl-ca` (MySQL), `--cacert` (Valkey). The certificate names the public hostname.
+- Kafka clients must use the CA.
+
+### Allowlist
+
+With public access on, **Allowed from** lists the IPv4 addresses or ranges that may connect, up to 20. Connections from anywhere else are dropped at the gateway before they reach the database. An empty list allows any address; the password and TLS are still required.
+
+### Limits at the gateway
+
+- Each database accepts at most its plan's connection limit through the gateway.
+- New connections are rate limited to protect the database from connection storms.
+
+## When to use it
+
+- **VPC only**: production databases used by your Raff VMs. Nothing is exposed.
+- **Public with an allowlist**: your office, CI or another cloud, with fixed addresses.
+- **Public without an allowlist**: development, or apps on platforms with changing addresses (serverless, laptops). Use a strong password, which Raff generates.
+
+## Trade-offs
+
+- Public access sends traffic over the internet; a VPC is faster and private.
+- The allowlist is IPv4 only.
+- The private hostname is not in the certificate; inside your VPC, use `sslmode=require`.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Turn on public access" icon="rocket" href="/products/store/databases/quickstart-guides/turn-on-public-access">
+    Switch, hostname, ports and allowlist.
+  </Card>
+  <Card title="Connect a VPC" icon="rocket" href="/products/store/databases/quickstart-guides/connect-a-vpc">
+    A private endpoint in your VPC.
+  </Card>
+</CardGroup>

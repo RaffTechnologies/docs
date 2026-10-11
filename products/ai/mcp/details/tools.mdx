@@ -1,0 +1,61 @@
+---
+title: Raff MCP server tools
+sidebarTitle: Tools
+description: Every tool the Raff MCP server gives an AI assistant, its arguments, and which tools change things.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+The tools an AI assistant can call after you connect the Raff MCP server. You do not call them yourself: you ask in plain words and the assistant picks the tool. This page tells you what it can and cannot do.
+
+Every tool is labelled for the app: **read** tools only look; **write** tools change something; **destructive** tools can remove data. Apps such as Claude and ChatGPT use these labels to ask before a write. In [read-only mode](/products/ai/mcp/concepts/read-only-and-tool-groups) only the read tools are loaded.
+
+## Databases: read
+
+| Tool | What it does | Arguments |
+|---|---|---|
+| `list_databases` | Lists the account's databases with engine, status, plan and price | none |
+| `get_database` | Status, engine and version, plan, storage, high availability, public access | `database_id` |
+| `list_database_plans` | Engines with their versions, and plans with size and monthly price; the free plan is marked | `engine` (optional) |
+| `get_connection_string` | The address an app connects to; the password only with `reveal` | `database_id`, `reveal` |
+| `run_query` | Runs one read-only statement and returns the rows: SQL for PostgreSQL, MySQL and ClickHouse, a Valkey command, or a Kafka command (`TOPICS`, `DESCRIBE`, `CONSUME`, `GROUPS`). Writes are refused | `database_id`, `statement`, `max_rows` |
+| `list_tables` | Tables of a PostgreSQL, MySQL or ClickHouse database, and its schemas | `database_id`, `schema`, `schemas` |
+| `describe_table` | A table's columns with types, nullability and defaults | `database_id`, `table`, `schema` |
+| `get_database_metrics` | Current CPU, memory, storage and connection use | `database_id` |
+| `get_slow_queries` | The statements that took the most total time, with calls and mean time (PostgreSQL) | `database_id`, `limit` |
+| `get_database_logs` | The newest lines of the database server's log | `database_id`, `lines` |
+| `list_backups` | Backups with time, size and whether they can be restored | `database_id` |
+| `list_extensions` | PostgreSQL extensions that can be turned on, and which are on | `database_id` |
+| `list_database_users` | Users (roles) inside the database and their access; the engine's system accounts are left out | `database_id` |
+
+## Databases: write
+
+| Tool | What it does | Arguments | Notes |
+|---|---|---|---|
+| `create_database` | Creates a database, waits until it accepts connections, returns the connection string | `name`, `engine`, `plan_id`, `version`, `extensions`, `valkey_mode`, `private`, `project_id`, `confirm_monthly_price_usd` | No arguments: a free PostgreSQL with a public address. Paid plans need a [confirmed quote](/products/ai/mcp/concepts/paid-changes) |
+| `run_sql` | Runs one statement that changes data or schema (`CREATE`, `INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, or a Valkey or Kafka write) | `database_id`, `statement`, `max_rows` | **Destructive** |
+| `enable_extension` | Turns a PostgreSQL extension on or off, for example `vector` | `database_id`, `name`, `enabled` | |
+| `set_public_access` | Turns the public address on or off, optionally only for some IP addresses | `database_id`, `enabled`, `allowlist` | Connections always need TLS and the password |
+| `resize_database` | Changes the plan, storage, high availability or read replicas | `database_id`, `plan_id`, `storage_gb`, `high_availability`, `replicas`, `confirm_monthly_price_usd` | A change that costs more needs a confirmed quote. Storage can only grow |
+| `create_backup` | Takes a backup now (databases are also backed up every night) | `database_id` | |
+| `restore_backup` | Restores a backup or a point in time into a new database; the original keeps running | `database_id`, `backup_id` or `point_in_time`, `new_name`, `in_place` | **Destructive** with `in_place`: overwrites the database |
+| `rotate_password` | Gives the main user a new password; apps using the old one stop at their next connection | `database_id` | |
+| `create_database_user` | Adds a user with read-write or read-only access and returns its password once | `database_id`, `name`, `role` | |
+| `delete_database` | Deletes a database, its data and its backups | `database_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the database's name. Cannot be undone |
+
+## Documentation
+
+| Tool | What it does | Arguments |
+|---|---|---|
+| `search_docs` | Searches the Raff documentation (guides, API reference, CLI, Terraform) and returns matching passages with links | `query` |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Features and limits" icon="circle-info" href="/products/ai/mcp/details/features-and-limits">
+    Row limits, timeouts and request size.
+  </Card>
+  <Card title="Managed databases API" icon="code" href="/api-reference/endpoints">
+    The API these tools call.
+  </Card>
+</CardGroup>

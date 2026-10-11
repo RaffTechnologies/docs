@@ -1,0 +1,64 @@
+---
+title: Use Raff docs in your AI tools
+sidebarTitle: Connect the docs server
+description: Connect the read-only Raff documentation MCP server so your AI assistant answers Raff questions from the current docs. No sign-in needed.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff's documentation has its own MCP server at `https://docs.rafftechnologies.com/mcp`. It is public and read-only: no sign-in, no account, and it cannot see or change anything in Raff. Connect it when you only want accurate answers about Raff, for example in a tool where you do not want account access.
+
+The [Raff MCP server](/products/ai/mcp) already includes documentation search (`search_docs`), so you do not need both.
+
+## What it gives the assistant
+
+| Tool | What it returns |
+|---|---|
+| **Search** | Matching passages from every published Raff docs page, with links |
+| **Read a page** | A specific page by its docs path, for example `products/build/virtual-machines/quickstart-guides/create-a-vm` |
+
+## Connect
+
+<Tabs>
+  <Tab title="Claude">
+    **Customize → Connectors → + Add → Add custom connector**, name `Raff docs`, URL `https://docs.rafftechnologies.com/mcp`, and choose no sign-in.
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http raff-docs https://docs.rafftechnologies.com/mcp
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    In `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "raff-docs": { "url": "https://docs.rafftechnologies.com/mcp" }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Other apps">
+    Add a remote MCP server with the URL `https://docs.rafftechnologies.com/mcp` and no authentication.
+  </Tab>
+</Tabs>
+
+## Example questions
+
+- *"Show me the curl call to create a Raff VM in a specific project."*
+- *"How do I move a reserved IP between two Raff VMs?"*
+- *"Write a Terraform module for a Raff VM with a 100 GB volume."*
+
+The assistant searches the docs and answers with Raff's real endpoints, field names and dashboard paths, with links to the pages it used.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Raff MCP server" icon="robot" href="/products/ai/mcp">
+    Let the assistant work in your account, not only read the docs.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoints">
+    Every endpoint the docs describe.
+  </Card>
+</CardGroup>

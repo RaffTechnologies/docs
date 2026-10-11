@@ -1,0 +1,66 @@
+---
+title: Resize a database
+description: Change a managed database's plan, grow its storage, turn high availability on or off, and add PostgreSQL read replicas.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Change the plan, storage, high availability or read replicas of a database as it grows. The data, address and password stay the same. A plan change restarts the database briefly; growing storage needs no restart.
+
+## Before you start
+
+- A running database.
+- On monthly billing, a change that costs more goes through checkout for the rest of the current month. See [Billing model](/products/store/databases/concepts/billing-model).
+
+## Change the plan
+
+<Steps>
+  <Step title="Open Settings">
+    Open the database and go to **Settings**. **Plan and storage** shows the current plan.
+  </Step>
+  <Step title="Pick the new plan">
+    Click **Change plan** (or **Upgrade plan** on a free database) and pick a plan of the same engine. CPU, memory and connection limits change; storage and data stay.
+  </Step>
+  <Step title="Confirm">
+    - **Pay-as-you-go**: click **Change plan**. It applies now with a short restart.
+    - **Monthly, costs more**: click **Continue to checkout** and pay the difference for the rest of the month.
+    - **Monthly, costs less**: nothing to pay; the unused part of this month goes to your account balance.
+  </Step>
+</Steps>
+
+While it applies, the status shows **Upgrading** or **Downgrading**. Clients reconnect after the restart, which takes seconds on PostgreSQL.
+
+## Grow storage
+
+In **Plan and storage**, enter the new size in **Storage (GB)** and click **Grow storage**. Extra storage costs $0.15 per GB per month and applies without downtime. Storage only grows; to use less, restore into a new, smaller database.
+
+Free databases have fixed storage: upgrade to a paid plan to grow it.
+
+## Turn high availability on or off
+
+In **High availability**, turn the switch on. Raff adds a standby (a 3-node cluster for MySQL and Kafka) on separate servers that takes over automatically if the primary fails. It adds 70% of the plan price, 140% for MySQL and Kafka.
+
+Turning it off removes the standby and asks you to confirm: if the server fails, the database is down until it is back.
+
+**MySQL**: high availability is chosen when you create the database. A MySQL database created without it runs as one server and cannot add it later: create a new MySQL database with high availability and copy the data into it, for example with `mysqldump`.
+
+## Add read replicas (PostgreSQL)
+
+In **Read replicas**, choose how many. Each replica is a copy kept in sync and costs the same as the plan. Replicas protect against losing a server; they do not have their own address for read traffic yet.
+
+## Do it from your tools
+
+- **API**: [`POST /api/v1/databases/{database_id}/scale`](/api-reference/databases/scale-database)
+- **CLI**: [`raff database resize`](/reference/cli/database)
+- **AI assistant**: `resize_database`, which shows the new price first
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Plans and sizing" icon="lightbulb" href="/products/store/databases/concepts/plans-and-sizing">
+    What each plan includes, connections and storage.
+  </Card>
+  <Card title="High availability and replicas" icon="lightbulb" href="/products/store/databases/concepts/high-availability-and-replicas">
+    How failover works per engine.
+  </Card>
+</CardGroup>

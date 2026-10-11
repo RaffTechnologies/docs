@@ -1,0 +1,61 @@
+---
+title: Database status and health
+sidebarTitle: Status and health
+description: What each managed database status means, how Raff checks database health, and which events send you an email.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff checks every database all the time: the engine itself, the path your apps use to reach it, its storage and its connections. The status in the dashboard says what it found, in plain words.
+
+## How it works
+
+### Statuses
+
+| Dashboard | API `status` | Meaning |
+|---|---|---|
+| **Creating** | `pending`, `deploying` | Being set up. A database with public access shows as ready only once its public address accepts connections |
+| **Healthy** | `running` | Answering normally |
+| **Upgrading**, **Downgrading**, **Updating** | `resizing` | A plan, storage, high availability or replica change is being applied, with a short restart. Not an outage |
+| **Maintenance** | `resizing`, `moving` | Raff is moving it to other hardware |
+| **Restoring** | `restoring` | An in-place restore is running |
+| **Degraded** | `warning` | Running with a problem, for example storage full or a component down |
+| **Down** | `warning` with `down_since` | Not answering. Raff works on it and emails you |
+| **Paused** | `suspended` | A free database paused after 7 days without connections. Data is kept |
+| **Error** | `failed` | Set-up did not finish. If it recovers, it becomes **Healthy** by itself |
+| **Deleting** | `deleting` | Being deleted |
+
+### Checks
+
+- **Engine**: whether it is ready, every few seconds.
+- **Connection path**: every minute, Raff connects through each database's public address the way your apps do, without logging in.
+- **Storage and connections**: every minute, faster when storage passes 50%.
+
+### Emails
+
+Sent to the project's members:
+
+- **Down**: after 2 minutes without answering, and **back up** when it answers again, with how long it was down.
+- **Storage**: at 80% and 90% of the plan's storage, at most once a day each; when PostgreSQL or MySQL become read-only at 95%, and when writes work again.
+- **Free databases**: before a free database pauses for idleness, when it pauses, and reminders while it stays paused.
+
+## When to use it
+
+- Watch the **Monitoring** tab for trends; rely on the emails for incidents.
+- A **Degraded** or **Down** database shows the cause on its **Overview** tab.
+
+## Trade-offs
+
+- A short restart during a resize is expected and does not count as down.
+- Statuses refresh every few seconds in the dashboard; the API returns the same values.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Monitor a database" icon="rocket" href="/products/store/databases/quickstart-guides/monitor-a-database">
+    Charts, slow queries and logs.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/databases/troubleshooting">
+    What to do for each problem.
+  </Card>
+</CardGroup>

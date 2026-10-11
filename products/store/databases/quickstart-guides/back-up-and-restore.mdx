@@ -1,0 +1,66 @@
+---
+title: Back up and restore a database
+sidebarTitle: Back up and restore
+description: Take an on-demand backup, restore a backup into a new database or over the current one, and restore PostgreSQL or MySQL to any second.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff backs up every database every night at 02:00 UTC. You can also take a backup at any time, restore a backup into a new database while the original keeps running, or overwrite the database with an older state. PostgreSQL and MySQL on paid plans restore to any second in the last 30 days.
+
+## Before you start
+
+- A running PostgreSQL, MySQL, Valkey or ClickHouse database. Kafka keeps copies of every topic on its brokers instead of backups.
+
+## Take a backup now
+
+Open the database, go to **Backups** and click **Back up now**. It appears in the list as **Manual**, first **in progress**, then ready.
+
+## Restore a backup
+
+<Steps>
+  <Step title="Pick the backup">
+    In **Backups**, find the backup by the time it was **Taken** and click **Restore**.
+  </Step>
+  <Step title="Choose where">
+    - **Into a new database** (recommended): a new database on the same plan, named `<name>-restored` unless you choose a name. The original is untouched. The new database is billed like any other; on monthly billing it goes through checkout.
+    - **Overwrite this one**: replaces the live data and takes the database offline for a few minutes. Raff takes a safety snapshot first. Type the database name to confirm.
+  </Step>
+  <Step title="Restore">
+    Click **Restore to new database** or **Restore in place**. A new database is ready in about a minute.
+  </Step>
+</Steps>
+
+## Restore to a point in time (PostgreSQL, MySQL)
+
+<Steps>
+  <Step title="Pick the moment">
+    In **Restore to a point in time**, use **Rewind to** (**20 minutes ago**, **1 hour ago**, **Yesterday**), the slider, or type a time in **Restore to**. Times are in your local time.
+  </Step>
+  <Step title="Choose where and restore">
+    Choose **Into a new database** or **Overwrite this one**, then click **Restore**.
+  </Step>
+</Steps>
+
+You can restore to any second since the oldest backup kept, shown as **Restore to any second since...** at the top of the tab.
+
+## Free databases
+
+Free databases are backed up every night and can be restored over themselves. Restoring into a new database and point-in-time restore come with paid plans.
+
+## Do it from your tools
+
+- **API**: [List](/api-reference/databases/list-database-backups), [create](/api-reference/databases/create-database-backup) and [restore](/api-reference/databases/restore-database)
+- **CLI**: [`raff database backups`, `raff database restore`](/reference/cli/database)
+- **AI assistant**: `create_backup`, `restore_backup`
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Backups and point-in-time restore" icon="lightbulb" href="/products/store/databases/concepts/backups-and-restore">
+    Schedules, retention and how restore works per engine.
+  </Card>
+  <Card title="Delete a database" icon="trash" href="/products/store/databases/quickstart-guides/delete-a-database">
+    What happens to backups after a delete.
+  </Card>
+</CardGroup>

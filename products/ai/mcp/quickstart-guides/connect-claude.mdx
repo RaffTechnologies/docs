@@ -1,0 +1,66 @@
+---
+title: Connect Raff to Claude
+sidebarTitle: Connect Claude
+description: Add the Raff MCP server as a custom connector in Claude on the web or the desktop app and sign in with your Raff account.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Add Raff as a custom connector in Claude, sign in once, and Claude can create and manage your Raff databases in any chat. Works in Claude on the web and in the Claude desktop app.
+
+## Before you start
+
+- A Raff account. A paid database also needs a card in **Billing**; free databases do not.
+- A Claude plan that allows custom connectors. Free, Pro, Max, Team and Enterprise all do; Free allows one custom connector.
+- On **Team** or **Enterprise**, an owner or admin adds the connector for the organization first (see below).
+
+## Steps
+
+<Steps>
+  <Step title="Open connectors">
+    In Claude, open **Customize → Connectors**, click **+ Add**, then **Add custom connector**.
+  </Step>
+  <Step title="Enter the Raff server">
+    | Field | Value |
+    |---|---|
+    | **Name** | `Raff` |
+    | **URL** | `https://mcp.rafftechnologies.com/mcp` |
+
+    Click **Continue**. Claude detects that Raff uses sign-in; keep the detected settings and click **Add**.
+  </Step>
+  <Step title="Sign in with Raff">
+    Click **Connect**. A Raff page opens in your browser: sign in, pick the account if you have more than one, and click **Allow access**.
+
+    <Frame>
+      ![TODO: Raff consent page, Allow Claude to use your Raff account](/images/products/ai/mcp/consent.png)
+    </Frame>
+  </Step>
+  <Step title="Ask Claude">
+    In a new chat, ask: *"List my Raff databases"*. Claude calls Raff and answers with your databases.
+  </Step>
+</Steps>
+
+### Team and Enterprise
+
+An organization owner (Team) or an admin with the right role (Enterprise) adds Raff once under **Organization settings → Connectors → Add → Custom → Web**, with the same name and URL. Each member then opens **Customize → Connectors**, finds Raff and clicks **Connect** to sign in with their own Raff account. Members only reach what their own Raff role allows.
+
+## Verify
+
+- The Raff connector shows as connected in **Customize → Connectors**.
+- Asking *"Which Raff database plans are free?"* returns the free plan for each engine.
+
+## Options
+
+- **Read-only**: use `https://mcp.rafftechnologies.com/mcp?read_only=true` as the URL. See [Read-only mode and tool groups](/products/ai/mcp/concepts/read-only-and-tool-groups).
+- **Change the URL later**: Claude does not edit connectors. Remove Raff and add it again with the new URL.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a database from chat" icon="database" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    Your first database, in under a minute.
+  </Card>
+  <Card title="Paid changes" icon="credit-card" href="/products/ai/mcp/concepts/paid-changes">
+    The order card and how prices are confirmed.
+  </Card>
+</CardGroup>

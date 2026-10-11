@@ -1,0 +1,88 @@
+---
+title: Connect Raff to VS Code, Gemini CLI and other apps
+sidebarTitle: Connect other apps
+description: Add the Raff MCP server to VS Code with GitHub Copilot, Gemini CLI or any app that supports remote MCP servers.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Any app that supports remote MCP servers over Streamable HTTP can use Raff. Point it at the server URL and either sign in with Raff in the browser or send a Raff API key as a header.
+
+| Setting | Value |
+|---|---|
+| **URL** | `https://mcp.rafftechnologies.com/mcp` |
+| **Transport** | Streamable HTTP |
+| **Sign-in** | OAuth 2.1 with dynamic client registration (the app registers itself), or the header `Authorization: Bearer raff_your_api_key` |
+
+## VS Code with GitHub Copilot
+
+Run **MCP: Add Server** from the Command Palette, or add Raff to `.vscode/mcp.json` in your project:
+
+```json
+{
+  "servers": {
+    "raff": {
+      "type": "http",
+      "url": "https://mcp.rafftechnologies.com/mcp"
+    }
+  }
+}
+```
+
+On first use VS Code opens a browser to sign in with Raff. To use an API key instead, let VS Code ask for it once and store it:
+
+```json
+{
+  "inputs": [
+    { "type": "promptString", "id": "raff-key", "description": "Raff API key", "password": true }
+  ],
+  "servers": {
+    "raff": {
+      "type": "http",
+      "url": "https://mcp.rafftechnologies.com/mcp",
+      "headers": { "Authorization": "Bearer ${input:raff-key}" }
+    }
+  }
+}
+```
+
+## Gemini CLI
+
+```bash
+gemini mcp add --transport http raff https://mcp.rafftechnologies.com/mcp
+```
+
+Then run `/mcp auth raff` in Gemini CLI to sign in with Raff in the browser. Add `-s user` to have Raff in every project.
+
+Or edit `~/.gemini/settings.json`. Use `httpUrl` (Streamable HTTP), not `url`:
+
+```json
+{
+  "mcpServers": {
+    "raff": {
+      "httpUrl": "https://mcp.rafftechnologies.com/mcp"
+    }
+  }
+}
+```
+
+Browser sign-in needs a local browser. On a server, use a header instead: `"headers": { "Authorization": "Bearer raff_your_api_key" }`.
+
+## Any other app
+
+Look for "remote MCP server", "custom connector" or "MCP URL" in the app's settings and enter the URL above. If the app asks for an authentication type, choose OAuth; if it only takes headers, add `Authorization: Bearer` with a [Raff API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+## Verify
+
+Ask the assistant *"List my Raff databases"*. It answers with your databases, or an empty list on a new account.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a database from chat" icon="database" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    Your first database from the assistant.
+  </Card>
+  <Card title="Sign-in and access" icon="lightbulb" href="/products/ai/mcp/concepts/sign-in-and-access">
+    API keys, OAuth and what each can reach.
+  </Card>
+</CardGroup>

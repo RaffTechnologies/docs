@@ -45,6 +45,10 @@
     {
       "source": "/products/networking/:slug*",
       "destination": "/products/network/:slug*"
+    },
+    {
+      "source": "/products/mcp",
+      "destination": "/products/ai/mcp"
     }
   ],
   "navigation": {
@@ -56,8 +60,7 @@
             "group": "Products Home",
             "pages": [
               "products/index",
-              "products/why-raff",
-              "products/mcp"
+              "products/why-raff"
             ]
           },
           {
@@ -240,6 +243,51 @@
                   },
                   "products/store/object-storage/troubleshooting"
                 ]
+              },
+              {
+                "group": "Managed Databases",
+                "icon": "database",
+                "pages": [
+                  "products/store/databases/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/store/databases/quickstart-guides/create-a-database",
+                      "products/store/databases/quickstart-guides/connect-to-a-database",
+                      "products/store/databases/quickstart-guides/turn-on-public-access",
+                      "products/store/databases/quickstart-guides/connect-a-vpc",
+                      "products/store/databases/quickstart-guides/work-with-data",
+                      "products/store/databases/quickstart-guides/manage-users",
+                      "products/store/databases/quickstart-guides/turn-on-extensions",
+                      "products/store/databases/quickstart-guides/resize-a-database",
+                      "products/store/databases/quickstart-guides/back-up-and-restore",
+                      "products/store/databases/quickstart-guides/monitor-a-database",
+                      "products/store/databases/quickstart-guides/delete-a-database"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/store/databases/concepts/engines",
+                      "products/store/databases/concepts/plans-and-sizing",
+                      "products/store/databases/concepts/high-availability-and-replicas",
+                      "products/store/databases/concepts/networking-and-security",
+                      "products/store/databases/concepts/connection-pooling",
+                      "products/store/databases/concepts/backups-and-restore",
+                      "products/store/databases/concepts/status-and-health",
+                      "products/store/databases/concepts/free-plan",
+                      "products/store/databases/concepts/billing-model"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/store/databases/details/features-and-limits",
+                      "products/store/databases/details/pricing"
+                    ]
+                  },
+                  "products/store/databases/troubleshooting"
+                ]
               }
             ]
           },
@@ -375,6 +423,47 @@
                     ]
                   },
                   "products/manage/team-projects/troubleshooting"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "AI",
+            "icon": "robot",
+            "pages": [
+              {
+                "group": "MCP server",
+                "icon": "plug",
+                "pages": [
+                  "products/ai/mcp/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/ai/mcp/quickstart-guides/connect-claude",
+                      "products/ai/mcp/quickstart-guides/connect-claude-code",
+                      "products/ai/mcp/quickstart-guides/connect-chatgpt",
+                      "products/ai/mcp/quickstart-guides/connect-cursor",
+                      "products/ai/mcp/quickstart-guides/connect-other-clients",
+                      "products/ai/mcp/quickstart-guides/create-a-database-from-chat",
+                      "products/ai/mcp/quickstart-guides/connect-docs-server"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/ai/mcp/concepts/sign-in-and-access",
+                      "products/ai/mcp/concepts/paid-changes",
+                      "products/ai/mcp/concepts/read-only-and-tool-groups"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/ai/mcp/details/tools",
+                      "products/ai/mcp/details/features-and-limits"
+                    ]
+                  },
+                  "products/ai/mcp/troubleshooting"
                 ]
               }
             ]

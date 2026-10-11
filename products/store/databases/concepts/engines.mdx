@@ -1,0 +1,80 @@
+---
+title: Database engines
+sidebarTitle: Engines
+description: PostgreSQL, MySQL, Valkey, ClickHouse and Kafka on Raff, what each is for, versions, and what is different about each.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff runs five engines. They share the same dashboard, API, plans and billing; what differs is what each is good at and a few engine-specific details.
+
+## How it works
+
+### PostgreSQL
+
+The default choice for apps, APIs and AI. Versions 18, 17, 16 and 15; 18 when you do not choose.
+
+- Two addresses: a **pooler** (PgBouncer, transaction mode) for app traffic and a **direct** connection for migrations and session features. See [Connection pooling](/products/store/databases/concepts/connection-pooling).
+- Extensions such as `vector` (pgvector), `pg_trgm` and `pg_stat_statements`. See [Turn on extensions](/products/store/databases/quickstart-guides/turn-on-extensions).
+- Point-in-time restore to any second, high availability with a standby, and read replicas.
+- Database `defaultdb`, admin user `raffadmin`.
+
+### MySQL
+
+For WordPress, Laravel and apps already on MySQL. Version 8.0 (Percona Server).
+
+- One address on port 3306.
+- High availability runs a 3-node cluster (Galera) where every node holds all data.
+- Point-in-time restore from the binary log.
+- Database `defaultdb`, admin user `raffadmin`.
+
+### Valkey
+
+The open-source, Redis-compatible in-memory store, version 8. Any Redis client works over TLS (`rediss://`).
+
+- Choose at create what happens when memory is full: **Cache** removes the least recently used keys; **Queue or data** keeps every key and refuses new writes.
+- Snapshots every night; a restore can lose up to a day of keys.
+- High availability adds a standby with automatic failover (Sentinel).
+
+### ClickHouse
+
+Column-oriented analytics: logs, events, metrics, dashboards over billions of rows. Version 25.8.
+
+- Two addresses: HTTPS (8443) for HTTP clients and drivers, native TCP (9440) for `clickhouse-client`.
+- High availability runs two replicas and a coordination service (ClickHouse Keeper). Use `Replicated*` table engines so tables are copied to both.
+- Load data from CSV or Object Storage in the **Tables** tab.
+
+### Kafka
+
+Event streaming between services, version 4.3 (KRaft, no ZooKeeper).
+
+- Private only: reach it from your VPC. Clients connect with SASL_SSL and SCRAM-SHA-512 and must trust the database's CA certificate.
+- High availability runs 3 brokers and copies every topic to all three.
+- Topics are created on first use, and messages are kept 7 days by default.
+- No backups: copies on the brokers protect the data.
+
+## Which engine
+
+| Need | Engine |
+|---|---|
+| A general app database, or vectors for AI | PostgreSQL |
+| An app built for MySQL | MySQL |
+| Cache, sessions, rate limits, job queues | Valkey |
+| Analytics over large event or log tables | ClickHouse |
+| Streams of events between services | Kafka |
+
+## Trade-offs
+
+- The engine and its major version are fixed after create. To move, create a new database and copy the data.
+- The free plan covers PostgreSQL, MySQL and Valkey. ClickHouse and Kafka start at their smallest paid plan.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Plans and sizing" icon="lightbulb" href="/products/store/databases/concepts/plans-and-sizing">
+    Plans, connections and storage per engine.
+  </Card>
+  <Card title="Create a database" icon="rocket" href="/products/store/databases/quickstart-guides/create-a-database">
+    Pick an engine and create it.
+  </Card>
+</CardGroup>

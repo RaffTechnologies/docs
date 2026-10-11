@@ -1,0 +1,71 @@
+---
+title: Raff MCP server
+sidebarTitle: Overview
+description: Manage Raff from Claude, ChatGPT, Cursor and other AI assistants. Connect one URL, sign in with Raff, and ask in plain words to create databases, run SQL, read slow queries and more.
+icon: robot
+---
+
+<sub>Updated October 11, 2026</sub>
+
+The Raff MCP server lets an AI assistant work in your Raff account. Connect `https://mcp.rafftechnologies.com/mcp` to Claude, ChatGPT, Cursor, Claude Code or any app that supports the [Model Context Protocol](https://modelcontextprotocol.io), sign in with your Raff account once, and ask for what you need: "give me a Postgres database for this app", "why is this query slow", "add an index on orders.created_at". Managed databases come first; apps, functions and servers follow.
+
+<Frame>
+  ![TODO: Claude creating a Raff database from chat, with the Raff order card](/images/products/ai/mcp/hero.png)
+</Frame>
+
+## What you can ask
+
+| You ask | The assistant does |
+|---|---|
+| "Create a free Postgres database for my side project" | Creates it, waits until it accepts connections and gives you the connection string |
+| "Show me the tables in my shop database" | Lists the tables and describes their columns |
+| "Which queries are slowest, and what index would help?" | Reads the slow query list and suggests an index; adds it if you agree |
+| "Upgrade the database to 2 vCPU" | Shows the new monthly price and the card it is paid with, and changes nothing until you confirm |
+| "Back up the database, then restore last night's backup into a copy" | Takes a backup and restores into a new database, leaving the original running |
+| "How do I connect to Raff Postgres from Prisma?" | Answers from the Raff documentation |
+
+Paid changes always show the price first and wait for your confirmation. See [Paid changes](/products/ai/mcp/concepts/paid-changes).
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Connect Claude" icon="message" href="/products/ai/mcp/quickstart-guides/connect-claude">
+    Add Raff as a connector in Claude on the web or the desktop app.
+  </Card>
+  <Card title="Connect Claude Code" icon="terminal" href="/products/ai/mcp/quickstart-guides/connect-claude-code">
+    One command, then sign in from the terminal.
+  </Card>
+  <Card title="Create a database from chat" icon="database" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    Your first database in under a minute, without leaving the chat.
+  </Card>
+  <Card title="Tools" icon="wrench" href="/products/ai/mcp/details/tools">
+    Every tool the assistant can use, and which ones change things.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/ai/mcp/quickstart-guides/connect-claude">
+    Connect your AI app and do your first tasks.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/ai/mcp/concepts/sign-in-and-access">
+    Sign-in, access, paid changes and read-only mode.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/ai/mcp/details/features-and-limits">
+    Tools, features and limits.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/ai/mcp/troubleshooting">
+    Common issues and how to fix them.
+  </Card>
+  <Card title="Docs server" icon="book" href="/products/ai/mcp/quickstart-guides/connect-docs-server">
+    The read-only server for Raff documentation, no sign-in needed.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>

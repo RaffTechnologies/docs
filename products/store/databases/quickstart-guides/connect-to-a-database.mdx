@@ -1,0 +1,97 @@
+---
+title: Connect to a database
+description: Find a managed database's connection string, pick the right address and port, and connect from your app or a client.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Every database has a connection string ready to copy, plus code for the common clients. Pick where you connect from (the internet or your VPC), copy, and paste it into your app.
+
+## Before you start
+
+- A running database. See [Create a database](/products/store/databases/quickstart-guides/create-a-database).
+- A way in: [public access](/products/store/databases/quickstart-guides/turn-on-public-access) turned on, or a [VPC](/products/store/databases/quickstart-guides/connect-a-vpc) connected. Without either, only the dashboard's own tabs reach the database.
+
+## Steps
+
+<Steps>
+  <Step title="Open Connect">
+    Open the database and go to the **Connect** tab.
+  </Step>
+  <Step title="Pick where you connect from">
+    - **The internet**: your laptop, another cloud, a tool. Shown when public access is on.
+    - **Your VPC**: Raff servers on the same network. Shown when a VPC is connected.
+
+    If you created users, pick one under **As user**; otherwise the admin user `raffadmin` is used.
+  </Step>
+  <Step title="Copy the address">
+    Each address card shows the port and a **Copy** button. **Show password** reveals the password in the string.
+
+    <Frame>
+      ![TODO: Connect tab with the transaction pooler and direct connection cards](/images/products/store/databases/connect-tab.png)
+    </Frame>
+  </Step>
+  <Step title="Use it in your app">
+    The code tabs give the same address ready to paste: **URI**, **.env**, and clients for each engine (for PostgreSQL: `psql`, `node`, `python`, `go`, `prisma`).
+  </Step>
+</Steps>
+
+## Which address and port
+
+| Engine | Address to use | Public port | Private port |
+|---|---|---|---|
+| **PostgreSQL** | **Transaction pooler** for apps; **Direct connection** for migrations, `LISTEN/NOTIFY` and session settings | 6543 pooled, 5432 direct | 6432 pooled, 5432 direct |
+| **MySQL** | **MySQL endpoint** | The database's own port | 3306 |
+| **Valkey** | **Primary endpoint** (`rediss://`, TLS) | The database's own port | 6379 |
+| **ClickHouse** | **HTTPS endpoint** for HTTP clients; **Native TCP** for `clickhouse-client` | The database's own two ports | 8443 HTTPS, 9440 native |
+| **Kafka** | **Bootstrap servers** (SASL_SSL, SCRAM-SHA-512) | Private only | 9092 |
+
+Hostnames:
+
+- Public: `<database_id>.public.db.raffusercloud.com`
+- Private (inside the VPC): `<database_id>.db.raffusercloud.com`
+
+Every connection uses TLS. PostgreSQL on the public ports 5432 and 6543 finds your database by the hostname your client sends over TLS; an old client that does not send it can use the database's own public port, shown in **Access**. See [Networking and security](/products/store/databases/concepts/networking-and-security) and [Connection pooling](/products/store/databases/concepts/connection-pooling).
+
+## Examples
+
+<CodeGroup>
+```bash psql
+psql "postgresql://raffadmin:PASSWORD@a1b2c3d4.public.db.raffusercloud.com:6543/defaultdb?sslmode=require"
+```
+
+```bash mysql
+mysql -h a1b2c3d4.public.db.raffusercloud.com -P 20104 -u raffadmin -p --ssl-mode=REQUIRED defaultdb
+```
+
+```bash valkey-cli
+valkey-cli -u "rediss://raffadmin@a1b2c3d4.public.db.raffusercloud.com:20104" --tls --cacert a1b2c3d4-ca.crt
+```
+
+```bash .env
+DATABASE_URL="postgresql://raffadmin:PASSWORD@a1b2c3d4.public.db.raffusercloud.com:6543/defaultdb?sslmode=require"
+```
+</CodeGroup>
+
+The Connect tab fills in your real host, port and password. To verify the server certificate instead of only encrypting, download the CA certificate on the **Connect** tab and use `sslmode=verify-full` (PostgreSQL) or `--cacert` (Valkey).
+
+## From your laptop to a private database
+
+A database on a VPC only, without public access, is reached through a VM on the same VPC:
+
+```bash
+ssh -N -L 5432:a1b2c3d4.db.raffusercloud.com:5432 root@YOUR_VM_IP
+```
+
+Then connect to `localhost:5432`. The Connect tab shows this line with your values.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage users" icon="users" href="/products/store/databases/quickstart-guides/manage-users">
+    Give each app its own user and password.
+  </Card>
+  <Card title="Connection pooling" icon="lightbulb" href="/products/store/databases/concepts/connection-pooling">
+    Pooled or direct, and why.
+  </Card>
+</CardGroup>

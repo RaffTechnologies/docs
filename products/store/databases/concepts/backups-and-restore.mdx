@@ -1,0 +1,58 @@
+---
+title: Database backups and point-in-time restore
+sidebarTitle: Backups and point-in-time restore
+description: When Raff backs up managed databases, how long backups are kept, and how restore and point-in-time restore work per engine.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff backs up every managed database every night and keeps the backups in Raff Object Storage, three copies each. PostgreSQL and MySQL also keep a continuous change log, so you can restore to any second, not only to last night.
+
+## How it works
+
+### Per engine
+
+| Engine | Nightly backup (02:00 UTC) | Kept | Restore to any second |
+|---|---|---|---|
+| **PostgreSQL** | Full backup plus continuous WAL | 30 days | Yes, paid plans |
+| **MySQL** | Full backup plus binary log | 30 days | Yes, paid plans |
+| **Valkey** | Snapshot | 30 days | No: last night's snapshot or a manual one |
+| **ClickHouse** | Full backup, plus incremental every 6 hours | 30 backups | No: backup times |
+| **Kafka** | None | | Topics are copied across brokers instead |
+
+The first backup of a new database runs right after it starts. **Back up now** takes one at any time.
+
+### Restore into a new database
+
+The default. Raff creates a new database on the same plan from the backup or point in time, named `<name>-restored` unless you choose. The original keeps running, so you can compare, copy back a table, or switch your app over. The new database is a normal, billed database; high availability is off unless you turn it on.
+
+### Restore in place
+
+Overwrites the live database with the older state. Raff first takes a safety snapshot of the current data, then rebuilds the database; it is offline for a few minutes. Writes made after the restore point are gone, except in the safety snapshot.
+
+### Free databases
+
+Free databases are backed up every night and restore in place. Point-in-time restore and restoring into a new database come with paid plans.
+
+## When to use it
+
+- **A bad deploy or a wrong `DELETE`**: restore into a new database to just before it, then copy the rows back.
+- **A test copy of production**: restore last night's backup into a new database.
+- **Rolling the whole database back**: restore in place.
+
+## Trade-offs
+
+- Point-in-time restore reaches back to the oldest backup kept, shown in the **Backups** tab as **Restore to any second since...**.
+- Valkey snapshots are nightly: a restore can lose up to a day of keys.
+- After a database is deleted, its backups are kept 14 days; within that time only support can restore them.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Back up and restore" icon="rocket" href="/products/store/databases/quickstart-guides/back-up-and-restore">
+    Step by step in the dashboard.
+  </Card>
+  <Card title="High availability and replicas" icon="lightbulb" href="/products/store/databases/concepts/high-availability-and-replicas">
+    Protection against server failures.
+  </Card>
+</CardGroup>

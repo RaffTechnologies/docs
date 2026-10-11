@@ -1,0 +1,80 @@
+---
+title: Managed Databases troubleshooting
+sidebarTitle: Troubleshooting
+description: Common issues with Raff managed databases and how to fix them.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Issues you may run into with managed databases, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="I cannot connect from my laptop">
+    **What's happening:** the database has no public address, or your address is not allowed.
+
+    **Fix:**
+    1. In **Access**, turn **Public access** on. See [Turn on public access](/products/store/databases/quickstart-guides/turn-on-public-access).
+    2. If **Allowed from** has entries, add your address with **Add my IP** and **Save addresses**.
+    3. Copy the string from **Connect** with **The internet** selected; private hostnames (without `.public.`) only work inside the VPC.
+  </Accordion>
+  <Accordion title="&quot;tlsv1 unrecognized name&quot; or &quot;port 5432/6543 needs TLS&quot;">
+    **What's happening:** on the public ports 5432 and 6543, PostgreSQL finds your database by the hostname your client sends over TLS. Your client connected without TLS, or did not send the hostname.
+
+    **Fix:** use `sslmode=require` and the full hostname. If the client is too old to send it, connect to the database's own public port, shown in **Access**.
+  </Accordion>
+  <Accordion title="My client rejects the certificate">
+    **What's happening:** each database has its own certificate authority, which your computer does not trust by default.
+
+    **Fix:** download the CA on the **Connect** tab and point your client at it (`sslmode=verify-full&sslrootcert=ca.crt`), or use `sslmode=require`, which encrypts without the check. Inside a VPC use `sslmode=require`: the private hostname is not in the certificate.
+  </Accordion>
+  <Accordion title="Too many connections">
+    **What's happening:** the plan's connection limit is reached.
+
+    **Fix:** on PostgreSQL, connect apps to the pooler (port 6543 public, 6432 private) instead of the direct port. Close idle connections in your app's pool settings. If you still need more, move to a bigger plan. See [Plans and sizing](/products/store/databases/concepts/plans-and-sizing).
+  </Accordion>
+  <Accordion title="Writes fail with &quot;read-only transaction&quot;">
+    **What's happening:** storage reached 95% of the plan, so PostgreSQL or MySQL switched to read-only to protect the data. The **Monitoring** tab shows **Read-only**.
+
+    **Fix:** grow storage in **Settings** (no downtime), or delete data. On PostgreSQL, run `SET default_transaction_read_only = off;` in your session first, then `DROP` or `TRUNCATE` what you do not need. Writes work again once usage is below 90%.
+  </Accordion>
+  <Accordion title="My free database is Paused">
+    **What's happening:** free databases pause after 7 days without connections. The data is kept.
+
+    **Fix:** click **Resume** on the database's page. It is back in about a minute with the same address and password.
+  </Accordion>
+  <Accordion title="The database shows Down or Degraded">
+    **What's happening:** it is not answering, or part of it is not working. The **Overview** tab shows the cause; Raff is alerted and emails you when it is back.
+
+    **Fix:** if the cause is **storage is full**, grow storage. Otherwise, wait for the recovery email, or contact support with the database ID.
+  </Accordion>
+  <Accordion title="Slow queries are empty on PostgreSQL">
+    **What's happening:** query statistics come from `pg_stat_statements`, which is off until you turn it on.
+
+    **Fix:** **Settings**, **Extensions**, tick `pg_stat_statements`. Statistics appear as queries run.
+  </Accordion>
+  <Accordion title="Prisma or another driver fails on the pooled address">
+    **What's happening:** the pooler runs in transaction mode, which does not keep session state or session prepared statements.
+
+    **Fix:** for Prisma add `pgbouncer=true` to the pooled URL, and use the direct port 5432 for migrations (`directUrl`). See [Connection pooling](/products/store/databases/concepts/connection-pooling).
+  </Accordion>
+  <Accordion title="I cannot create a free database">
+    **What's happening:** each account has one free database, any engine, and it is in use.
+
+    **Fix:** use it, upgrade it to a paid plan, or delete it to create another.
+  </Accordion>
+  <Accordion title="A paid database asks for a card">
+    **What's happening:** monthly databases are subscriptions and need a card that can be charged automatically.
+
+    **Fix:** add a card in **Billing**, then create the database again.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The database ID (in the URL and under the name: an 8-character code such as `a1b2c3d4`)
+- The exact error message and the time it happened
+- What you have already tried

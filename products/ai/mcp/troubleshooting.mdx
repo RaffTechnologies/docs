@@ -1,0 +1,70 @@
+---
+title: Raff MCP server troubleshooting
+sidebarTitle: Troubleshooting
+description: Common issues when connecting an AI app to the Raff MCP server, and how to fix them.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Issues you may run into with the Raff MCP server, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="The Raff page says &quot;This request has expired&quot;">
+    **What's happening:** the sign-in request from your app is older than 10 minutes.
+
+    **Fix:** go back to the app and connect Raff again. Finish the Raff page within 10 minutes.
+  </Accordion>
+  <Accordion title="The app says it cannot connect or sign in to Raff">
+    **What's happening:** the app could not reach the server or finish sign-in.
+
+    **Fix:**
+    1. Check the URL is exactly `https://mcp.rafftechnologies.com/mcp`, with `/mcp` at the end.
+    2. Remove the Raff connector and add it again, then sign in.
+    3. With an API key, check the header is `Authorization: Bearer raff_...` and the key has not been deleted.
+  </Accordion>
+  <Accordion title="The assistant works in the wrong account">
+    **What's happening:** an app signed in with Raff works in the account you chose on the Raff page. When you switch accounts in the Raff dashboard, the app follows within 5 minutes.
+
+    **Fix:** switch to the right account in the dashboard, or remove the connector and connect again, choosing the account on the Raff page. An API key always works in the account it was created in.
+  </Accordion>
+  <Accordion title="A paid create or upgrade asks for a card">
+    **What's happening:** paid databases are monthly subscriptions and need a card that can be charged automatically.
+
+    **Fix:** add a card under **Billing** in the Raff dashboard (the quote links there), then ask the assistant again.
+  </Accordion>
+  <Accordion title="The free database cannot be created">
+    **What's happening:** each account has one free database, and it is already in use.
+
+    **Fix:** use the existing free database, delete it, or choose a paid plan.
+  </Accordion>
+  <Accordion title="The assistant says it is not allowed to do something">
+    **What's happening:** either your Raff role does not allow it (for example a member without permission to delete databases), or the app was connected in read-only mode.
+
+    **Fix:** ask an account owner to change your role, or connect without `read_only=true`. See [Sign-in and access](/products/ai/mcp/concepts/sign-in-and-access).
+  </Accordion>
+  <Accordion title="The assistant will not delete a database">
+    **What's happening:** some assistants refuse to delete data by their own rules, whatever the server allows. Raff also requires the database's exact name to delete it.
+
+    **Fix:** tell the assistant the database name and that you want it deleted, or delete it in the Raff dashboard.
+  </Accordion>
+  <Accordion title="A query stops with a timeout">
+    **What's happening:** statements run through the MCP server stop after 15 seconds.
+
+    **Fix:** add a `LIMIT`, filter on an indexed column, or run long jobs (large imports, index builds on big tables) from your own client with the connection string.
+  </Accordion>
+  <Accordion title="My client rejects the database certificate">
+    **What's happening:** each database has its own certificate authority, which your computer does not trust by default. Clients that verify the certificate (`sslmode=verify-full`, `--cacert`) need it.
+
+    **Fix:** download the database's CA certificate (**Connect** tab, **Download CA certificate**, or `ca_cert` from the connection endpoint) and point your client at it, for example `sslmode=verify-full&sslrootcert=ca.crt`. Or use `sslmode=require`, as in the connection string Raff gives you: still encrypted, without the certificate check. See [Networking and security](/products/store/databases/concepts/networking-and-security).
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The AI app you use (Claude, ChatGPT, Cursor, ...)
+- The database ID, if a database is involved
+- The exact error message and the time it happened

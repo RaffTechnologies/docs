@@ -1,0 +1,66 @@
+---
+title: Work with data in the dashboard
+sidebarTitle: Work with data
+description: Browse and edit tables, run SQL, look at Valkey keys and Kafka topics from the Raff dashboard, without installing a client.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Each database has a data tab and, for SQL engines, a SQL editor in the dashboard. Use them to look around, fix a row, run a quick query or load a CSV, without a client or an open port.
+
+## Before you start
+
+- A running database. The dashboard reaches it without a VPC or public access.
+
+## Tables (PostgreSQL, MySQL, ClickHouse)
+
+<Steps>
+  <Step title="Open Tables">
+    Open the database and go to **Tables**. Pick the **Schema** (`public` on PostgreSQL, `defaultdb` on MySQL, `default` on ClickHouse) and a table.
+  </Step>
+  <Step title="Look and filter">
+    Use **Filter**, **Sort** and **Columns**. **Export CSV** downloads what you see.
+  </Step>
+  <Step title="Change rows (PostgreSQL, MySQL)">
+    Double-click a cell to change it, then click **Save changes**. **Add row** adds one; select rows to delete them. Tables without a primary key are read-only here; change them with SQL.
+  </Step>
+  <Step title="Create a table or load a CSV">
+    **New table** creates one with columns and foreign keys. **Import CSV** loads up to 10 MB into a table; empty cells become `NULL`.
+  </Step>
+</Steps>
+
+ClickHouse tables are read-only in this tab: it shows the table engine, rows, size on disk, compression and sort key, and **Load data** copies a CSV or an Object Storage file into a table.
+
+## SQL (PostgreSQL, MySQL, ClickHouse)
+
+Go to **SQL**, write a statement and click **Run** (⌘↵).
+
+- A statement stops after 15 seconds. The first 1,000 rows are shown; **Download CSV** saves them.
+- **Explain** shows the query plan.
+- Statements that remove data ask you to confirm with **Run anyway**.
+- **Save** keeps a query under **Saved queries** for everyone on the account (up to 100 per database).
+
+## Keys (Valkey)
+
+Go to **Keys**, search with a pattern such as `user:*`, and open a key to see its value, **Set expiry** or **Delete key**. **Command console** runs Valkey commands, read-only by default; commands that could harm the server (`FLUSHALL`, `CONFIG`, `KEYS` and others) are blocked.
+
+## Topics (Kafka)
+
+Go to **Topics** to see each topic's partitions, copies, messages kept, retention and readers with their lag. **New topic** creates one, and you can send a test message or delete a topic. **Command line** runs `TOPICS`, `DESCRIBE`, `CONSUME` and `GROUPS`; reading here never moves a consumer group.
+
+## Do it from your tools
+
+- **API**: [Run a query](/api-reference/databases/run-database-query), [Browse](/api-reference/databases/browse-database), [Saved queries](/api-reference/databases/list-database-saved-queries)
+- **CLI**: [`raff database query`](/reference/cli/database)
+- **AI assistant**: `run_query` and `run_sql` in the [Raff MCP server](/products/ai/mcp/details/tools)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor a database" icon="chart-line" href="/products/store/databases/quickstart-guides/monitor-a-database">
+    Slow queries, metrics and logs.
+  </Card>
+  <Card title="Manage users" icon="users" href="/products/store/databases/quickstart-guides/manage-users">
+    Read-only users for reports and BI.
+  </Card>
+</CardGroup>

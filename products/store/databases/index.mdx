@@ -1,0 +1,72 @@
+---
+title: Managed Databases
+sidebarTitle: Overview
+description: Managed PostgreSQL, MySQL, Valkey, ClickHouse and Kafka on Raff. Ready in seconds, backed up every night, private by default, with high availability and a free plan.
+icon: database
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Raff Managed Databases run PostgreSQL, MySQL, Valkey, ClickHouse and Kafka for you: Raff sets them up, backs them up every night, applies failover when you turn on high availability, and watches them around the clock. A database is ready in seconds, reachable from your VPC or over the internet with TLS, and every plan includes NVMe storage with no egress fees. One PostgreSQL, MySQL or Valkey database per account is free.
+
+<Frame>
+  ![TODO: Databases list in the Raff dashboard](/images/products/store/databases/hero.png)
+</Frame>
+
+| Engine | Use it for | Versions |
+|---|---|---|
+| **PostgreSQL** | Apps, APIs, AI (pgvector) | 18, 17, 16, 15 |
+| **MySQL** | WordPress, Laravel, existing MySQL apps | 8.0 |
+| **Valkey** | Caches, sessions, queues (Redis-compatible) | 8 |
+| **ClickHouse** | Analytics, logs, events | 25.8 |
+| **Kafka** | Event streams between services | 4.3 |
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Create a database" icon="plus" href="/products/store/databases/quickstart-guides/create-a-database">
+    Pick an engine and a plan, ready in seconds.
+  </Card>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Connection strings, ports and code for every engine.
+  </Card>
+  <Card title="Turn on public access" icon="globe" href="/products/store/databases/quickstart-guides/turn-on-public-access">
+    Reach the database from your laptop or another cloud.
+  </Card>
+  <Card title="Back up and restore" icon="clock-rotate-left" href="/products/store/databases/quickstart-guides/back-up-and-restore">
+    Take a backup now, or go back to any second.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Quickstart & guides" icon="rocket" href="/products/store/databases/quickstart-guides/create-a-database">
+    Step-by-step dashboard tasks.
+  </Card>
+  <Card title="Concepts" icon="lightbulb" href="/products/store/databases/concepts/engines">
+    Engines, networking, high availability, backups and billing.
+  </Card>
+  <Card title="Details" icon="circle-info" href="/products/store/databases/details/features-and-limits">
+    Features, limits and pricing.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/store/databases/troubleshooting">
+    Common issues and recovery.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/databases/list-databases">
+    Endpoints for Managed Databases.
+  </Card>
+  <Card title="Changelog" icon="clock-rotate-left" href="/api-reference/changelog">
+    All API updates and changes.
+  </Card>
+</CardGroup>
+
+## Also from your tools
+
+- **AI assistants**: create and manage databases from Claude, ChatGPT or Cursor with the [Raff MCP server](/products/ai/mcp).
+- **CLI**: [`raff database`](/reference/cli/database).
+- **Terraform**: [`raff_database`](/reference/terraform/raff_database) and [`raff_database_user`](/reference/terraform/raff_database_user).

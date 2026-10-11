@@ -1,0 +1,64 @@
+---
+title: Database plans and sizing
+sidebarTitle: Plans and sizing
+description: What a managed database plan includes, connection limits, storage, and what happens when storage fills up.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+A plan sets a database's CPU, memory, included NVMe storage and connection limit. Pick one that fits now; you can move to a bigger or smaller plan of the same engine at any time.
+
+## How it works
+
+### What a plan includes
+
+Each plan has a fixed number of vCPUs, RAM and NVMe storage, plus nightly backups, TLS, monitoring and no egress charges. Plans go from 1 vCPU and 1 GB RAM to 16 vCPUs and 32 GB RAM; **HiMem** plans have twice the memory for the same CPUs. Valkey plans are named by memory (1 GB to 32 GB). See [Pricing](/products/store/databases/details/pricing) for every plan.
+
+### Connections
+
+Each plan allows a number of client connections at the same time.
+
+| Plan memory | PostgreSQL direct / pooled | MySQL | Valkey |
+|---|---|---|---|
+| Free | 20 / 200 | 30 | 100 |
+| 1 GB | 25 / 200 | 50 | 2,000 |
+| 2 GB | 50 / 400 | 150 | 4,000 |
+| 4 GB | 100 / 600 | 250 | 6,000 |
+| 8 GB | 160 / 800 | 400 | 8,000 |
+| 16 GB | 240 / 1,000 | 600 | 10,000 |
+| 32 GB | 380 / 1,500 | 800 | 10,000 |
+
+On PostgreSQL, apps should use the pooler: hundreds of app connections share a few server connections. See [Connection pooling](/products/store/databases/concepts/connection-pooling).
+
+### Storage
+
+- Each plan includes NVMe storage. On paid plans you can add more in 10 GB steps for $0.15 per GB per month.
+- Storage only grows. Growing needs no restart.
+- At 80% and 90% Raff emails you. At 95%, PostgreSQL and MySQL become **read-only**: reads work, writes are refused, so the disk never fills completely. Writes come back by themselves when usage drops below 90%, after you delete data or grow storage.
+
+### Changing plans
+
+Moving to another plan keeps the data, address and password and restarts the database briefly. Storage stays as it is, or grows to the new plan's included size. See [Resize a database](/products/store/databases/quickstart-guides/resize-a-database).
+
+## When to use it
+
+- **Free**: trying Raff, side projects, development. One per account.
+- **1 to 2 vCPU**: small production apps, staging.
+- **HiMem**: databases that should fit their working set in memory (most PostgreSQL and MySQL production apps, Valkey).
+- **8 vCPU and up**: heavy analytics (ClickHouse) and high-throughput streams (Kafka).
+
+## Trade-offs
+
+- CPU and memory change only with a restart; plan changes take a short pause.
+- Storage cannot shrink. To use less, restore into a new database with a smaller size.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/store/databases/details/pricing">
+    Every plan and its price.
+  </Card>
+  <Card title="Resize a database" icon="rocket" href="/products/store/databases/quickstart-guides/resize-a-database">
+    Change the plan or grow storage.
+  </Card>
+</CardGroup>

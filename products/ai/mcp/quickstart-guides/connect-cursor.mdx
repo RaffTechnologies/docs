@@ -1,0 +1,73 @@
+---
+title: Connect Raff to Cursor
+sidebarTitle: Connect Cursor
+description: Add the Raff MCP server to Cursor's mcp.json and sign in with Raff or use an API key.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Add Raff to Cursor and its agent can create the database your code needs, inspect tables while you write queries, and read slow queries when something is slow.
+
+## Before you start
+
+- [Cursor](https://cursor.com) installed.
+- A Raff account, or a [Raff API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+## Steps
+
+<Steps>
+  <Step title="Open mcp.json">
+    Use `~/.cursor/mcp.json` to have Raff in every project, or `.cursor/mcp.json` in a project folder for that project only.
+  </Step>
+  <Step title="Add the Raff server">
+    ```json
+    {
+      "mcpServers": {
+        "raff": {
+          "url": "https://mcp.rafftechnologies.com/mcp"
+        }
+      }
+    }
+    ```
+
+    Save the file. Cursor finds the new server.
+  </Step>
+  <Step title="Sign in with Raff">
+    Cursor shows Raff as needing sign-in in its MCP settings; click to connect. A Raff page opens: sign in, pick the account and click **Allow access**.
+  </Step>
+  <Step title="Ask the agent">
+    *"Create a free Postgres database on Raff and add DATABASE_URL to .env."*
+  </Step>
+</Steps>
+
+### Use an API key instead
+
+Read the key from an environment variable so it never sits in the file:
+
+```json
+{
+  "mcpServers": {
+    "raff": {
+      "url": "https://mcp.rafftechnologies.com/mcp",
+      "headers": { "Authorization": "Bearer ${env:RAFF_API_KEY}" }
+    }
+  }
+}
+```
+
+Set `RAFF_API_KEY` in the shell that starts Cursor.
+
+## Verify
+
+Raff shows as connected in Cursor's MCP settings, with its tools listed.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Tools" icon="wrench" href="/products/ai/mcp/details/tools">
+    Everything the agent can do in Raff.
+  </Card>
+  <Card title="Read-only mode" icon="lightbulb" href="/products/ai/mcp/concepts/read-only-and-tool-groups">
+    Let the agent look without changing anything.
+  </Card>
+</CardGroup>

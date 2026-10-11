@@ -21,6 +21,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 - 🔵 **Updated**: **Paid databases created through the API are monthly subscriptions**, the same as buying them in the dashboard. A card that can be charged automatically is required (`402` with a link to add one otherwise); the first month is charged within seconds, from the account balance first, then the card. The free plan is unchanged. Accounts on pay-as-you-go billing are still billed by the hour.
 - 🔵 **Updated**: **Scale database** bills monthly databases: a change that costs more is charged for the rest of the current month before it applies, a change that costs less credits the unused part to the balance. A free database moved to a paid plan becomes a monthly subscription and keeps its data, address and password.
+- 🟣 **Fixed**: the reference now states the current prices: extra storage $0.15/GB/month (was shown as $0.12), high availability +140% for MySQL and Kafka (+70% for the others), each read replica at the plan price. Ports, status values (`moving`), user limits and error codes (`409`, `412`, `501`) are documented per endpoint.
+- 🟣 **Fixed**: a new database with public access reports `running` only once its public address accepts connections. Before, the first connection could fail with `tlsv1 unrecognized name` for up to about 20 seconds. Turning public access on now answers once the address works.
+
+**Raff MCP server**
+
+- 🟢 **Added**: **[Raff MCP server](/products/ai/mcp)** at `https://mcp.rafftechnologies.com/mcp`. Connect Claude, ChatGPT, Cursor, Claude Code or any MCP app, sign in with Raff, and manage databases in plain words: 23 database tools plus documentation search, read-only mode, and a price confirmation before every paid change.
 
 ### October 8, 2026
 

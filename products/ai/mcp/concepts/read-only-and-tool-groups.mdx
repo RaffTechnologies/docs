@@ -1,0 +1,66 @@
+---
+title: MCP read-only mode and tool groups
+sidebarTitle: Read-only mode and tool groups
+description: Limit what an AI assistant can do in Raff by adding read_only and features to the MCP server URL.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Two options in the server URL decide which tools an app sees: `read_only` keeps only the tools that look, and `features` picks the Raff products. An app cannot call a tool it was never given, so these are the simplest way to limit an assistant.
+
+## How it works
+
+### Read-only mode
+
+Add `?read_only=true` to the URL:
+
+```
+https://mcp.rafftechnologies.com/mcp?read_only=true
+```
+
+The app gets only the tools that read: list and inspect databases, plans, connection strings, tables, metrics, slow queries, logs, backups, extensions, users, read-only queries and documentation search. Every tool that creates, changes or deletes anything is left out, including `run_sql`.
+
+`run_query` stays, and refuses any statement that writes.
+
+### Tool groups
+
+Add `?features=` with the groups you want, separated by commas:
+
+```
+https://mcp.rafftechnologies.com/mcp?features=databases
+```
+
+| Group | Tools |
+|---|---|
+| `databases` | Managed databases (23 tools) |
+| `docs` | `search_docs`, answers from the Raff documentation |
+
+Without `features`, every group is loaded. An unknown group name is refused, so a typo does not silently load nothing. New groups (apps, functions, servers) are added as they ship; a URL that names its groups keeps exactly those.
+
+### Both together
+
+```
+https://mcp.rafftechnologies.com/mcp?features=databases&read_only=true
+```
+
+## When to use it
+
+- **Read-only**: letting an assistant explore a production database, explain slow queries or write reports, with no way to change data or spend money.
+- **Tool groups**: keeping the tool list short in apps that slow down or get confused with many tools, or keeping documentation search out when you only want account tools.
+- **Both**: a shared team assistant that answers questions about live databases.
+
+## Trade-offs
+
+- These options are part of the URL you add in the app. Anyone who can edit the app's connector settings can remove them; for a hard limit, also use a member role or an API key without write permissions. See [Sign-in and access](/products/ai/mcp/concepts/sign-in-and-access).
+- An app connected twice (once read-only, once full) sees both sets of tools and may pick either.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Tools" icon="circle-info" href="/products/ai/mcp/details/tools">
+    Which tools are read-only and which change things.
+  </Card>
+  <Card title="Paid changes" icon="lightbulb" href="/products/ai/mcp/concepts/paid-changes">
+    Confirmation before anything is charged.
+  </Card>
+</CardGroup>

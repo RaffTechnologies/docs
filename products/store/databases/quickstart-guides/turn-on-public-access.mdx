@@ -1,0 +1,59 @@
+---
+title: Turn on public access
+description: Give a managed database a public address with TLS, and limit it to the IP addresses you choose.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Public access gives the database an address on the internet, so you can connect from your laptop, CI or another cloud. It is free, needs no VPC, and every connection needs TLS and the password. Add an allowlist to accept only your own addresses.
+
+## Before you start
+
+- A running PostgreSQL, MySQL, Valkey or ClickHouse database. Kafka is private only.
+
+## Steps
+
+<Steps>
+  <Step title="Open Access">
+    Open the database and go to the **Access** tab.
+  </Step>
+  <Step title="Turn it on">
+    In **Public access**, turn the switch on. It reads **On, TLS required**.
+
+    The card shows the hostname, `<database_id>.public.db.raffusercloud.com`, and the ports. For PostgreSQL: 6543 (pooled) and 5432 (direct), plus the database's own two ports for clients that cannot send the hostname over TLS.
+
+    <Frame>
+      ![TODO: Public access card turned on with hostname, ports and allowlist](/images/products/store/databases/public-access.png)
+    </Frame>
+  </Step>
+  <Step title="Limit who can connect (recommended)">
+    Under **Allowed from**, enter an **IP or CIDR** and click **Add**, or click **Add my IP**. Then click **Save addresses**.
+
+    - Up to 20 entries, IPv4 only. A single address is saved as `/32`.
+    - An empty list means **Anywhere**: anyone with the password can connect.
+  </Step>
+</Steps>
+
+## Verify
+
+Go to **Connect**, choose **The internet**, and connect with the copied string. The switch answers once the address works, usually within a few seconds.
+
+## Turn it off
+
+Turn the switch off. The public address stops working at once; your VPC and the dashboard keep working. The database keeps its public port, so turning it on again gives the same address and port.
+
+## Do it from your tools
+
+- **API**: [`POST /api/v1/databases/{database_id}/public-access`](/api-reference/databases/set-database-public-access)
+- **CLI**: [`raff database public`](/reference/cli/database)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Connection strings and code.
+  </Card>
+  <Card title="Networking and security" icon="lightbulb" href="/products/store/databases/concepts/networking-and-security">
+    How the public address, TLS and the allowlist work.
+  </Card>
+</CardGroup>

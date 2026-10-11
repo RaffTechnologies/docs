@@ -1,0 +1,107 @@
+---
+title: Managed Databases pricing
+sidebarTitle: Pricing
+description: Every Raff managed database plan with its monthly price, high availability, read replica and extra storage prices.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Prices are in USD per database per month, region US East. Backups, monitoring, TLS and traffic are included; there are no egress charges. Pay-as-you-go accounts pay the same by the hour, up to the monthly price. See [Billing model](/products/store/databases/concepts/billing-model).
+
+## Add-ons
+
+| Add-on | Price | Engines |
+|---|---|---|
+| High availability | +70% of the plan | PostgreSQL, Valkey, ClickHouse |
+| High availability | +140% of the plan (3 nodes) | MySQL, Kafka |
+| Read replica | The plan price, per replica | PostgreSQL |
+| Extra storage | \$0.15 per GB per month, in 10 GB steps | All paid plans |
+
+## PostgreSQL
+
+| Plan | vCPU | RAM | Storage | Monthly | With high availability |
+|---|---|---|---|---|---|
+| Free | 1 | 1 GB | 2 GB | Free | Not available |
+| 1 vCPU | 1 | 1 GB | 25 GB | \$7.99 | \$13.58 |
+| 1 vCPU · HiMem | 1 | 2 GB | 50 GB | \$22.99 | \$39.08 |
+| 2 vCPU | 2 | 2 GB | 50 GB | \$31.99 | \$54.38 |
+| 2 vCPU · HiMem | 2 | 4 GB | 80 GB | \$45.99 | \$78.18 |
+| 4 vCPU | 4 | 4 GB | 80 GB | \$59.99 | \$101.98 |
+| 4 vCPU · HiMem | 4 | 8 GB | 120 GB | \$82.99 | \$141.08 |
+| 8 vCPU | 8 | 8 GB | 120 GB | \$109.99 | \$186.98 |
+| 8 vCPU · HiMem | 8 | 16 GB | 180 GB | \$146.99 | \$249.88 |
+| 16 vCPU | 16 | 16 GB | 200 GB | \$206.99 | \$351.88 |
+| 8 vCPU (32GB) | 8 | 32 GB | 240 GB | \$293.99 | \$499.78 |
+| 16 vCPU · HiMem | 16 | 32 GB | 360 GB | \$367.99 | \$625.58 |
+
+## MySQL
+
+| Plan | vCPU | RAM | Storage | Monthly | With high availability |
+|---|---|---|---|---|---|
+| Free | 1 | 1 GB | 2 GB | Free | Not available |
+| 1 vCPU | 1 | 1 GB | 25 GB | \$7.99 | \$19.18 |
+| 1 vCPU · HiMem | 1 | 2 GB | 50 GB | \$22.99 | \$55.18 |
+| 2 vCPU | 2 | 2 GB | 50 GB | \$31.99 | \$76.78 |
+| 2 vCPU · HiMem | 2 | 4 GB | 80 GB | \$45.99 | \$110.38 |
+| 4 vCPU | 4 | 4 GB | 80 GB | \$59.99 | \$143.98 |
+| 4 vCPU · HiMem | 4 | 8 GB | 120 GB | \$82.99 | \$199.18 |
+| 8 vCPU | 8 | 8 GB | 120 GB | \$109.99 | \$263.98 |
+| 8 vCPU · HiMem | 8 | 16 GB | 180 GB | \$146.99 | \$352.78 |
+| 16 vCPU | 16 | 16 GB | 200 GB | \$206.99 | \$496.78 |
+| 8 vCPU (32GB) | 8 | 32 GB | 240 GB | \$293.99 | \$705.58 |
+| 16 vCPU · HiMem | 16 | 32 GB | 360 GB | \$367.99 | \$883.18 |
+
+## Valkey
+
+Valkey keeps its data in memory; storage holds its snapshots.
+
+| Plan | vCPU | RAM | Storage | Monthly | With high availability |
+|---|---|---|---|---|---|
+| Free | 1 | 512 MB | 2 GB | Free | Not available |
+| 1 GB | 1 | 1 GB | 4 GB | \$7.99 | \$13.58 |
+| 2 GB | 1 | 2 GB | 8 GB | \$22.99 | \$39.08 |
+| 4 GB | 2 | 4 GB | 16 GB | \$45.99 | \$78.18 |
+| 8 GB | 4 | 8 GB | 24 GB | \$82.99 | \$141.08 |
+| 16 GB | 8 | 16 GB | 48 GB | \$146.99 | \$249.88 |
+| 32 GB | 8 | 32 GB | 80 GB | \$293.99 | \$499.78 |
+
+## ClickHouse
+
+| Plan | vCPU | RAM | Storage | Monthly | With high availability |
+|---|---|---|---|---|---|
+| 2 vCPU · HiMem | 2 | 4 GB | 80 GB | \$59.99 | \$101.98 |
+| 4 vCPU | 4 | 4 GB | 80 GB | \$77.99 | \$132.58 |
+| 4 vCPU · HiMem | 4 | 8 GB | 120 GB | \$107.99 | \$183.58 |
+| 8 vCPU | 8 | 8 GB | 120 GB | \$143.99 | \$244.78 |
+| 8 vCPU · HiMem | 8 | 16 GB | 180 GB | \$191.99 | \$326.38 |
+| 16 vCPU | 16 | 16 GB | 200 GB | \$269.99 | \$458.98 |
+| 8 vCPU (32GB) | 8 | 32 GB | 240 GB | \$383.99 | \$652.78 |
+| 16 vCPU · HiMem | 16 | 32 GB | 360 GB | \$479.99 | \$815.98 |
+
+## Kafka
+
+| Plan | vCPU | RAM | Storage | Monthly | With high availability |
+|---|---|---|---|---|---|
+| 2 vCPU · HiMem | 2 | 4 GB | 80 GB | \$79.99 | \$191.98 |
+| 4 vCPU | 4 | 4 GB | 80 GB | \$103.99 | \$249.58 |
+| 4 vCPU · HiMem | 4 | 8 GB | 120 GB | \$143.99 | \$345.58 |
+| 8 vCPU | 8 | 8 GB | 120 GB | \$191.99 | \$460.78 |
+| 8 vCPU · HiMem | 8 | 16 GB | 180 GB | \$255.99 | \$614.38 |
+| 16 vCPU | 16 | 16 GB | 200 GB | \$359.99 | \$863.98 |
+| 8 vCPU (32GB) | 8 | 32 GB | 240 GB | \$511.99 | \$1,228.78 |
+| 16 vCPU · HiMem | 16 | 32 GB | 360 GB | \$639.99 | \$1,535.98 |
+
+## Free plan
+
+One free PostgreSQL, MySQL or Valkey database per account. See [Free plan](/products/store/databases/concepts/free-plan).
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Features and limits" icon="circle-info" href="/products/store/databases/details/features-and-limits">
+    What every plan includes.
+  </Card>
+  <Card title="List database plans" icon="code" href="/api-reference/databases/list-database-plans">
+    The same prices from the API.
+  </Card>
+</CardGroup>

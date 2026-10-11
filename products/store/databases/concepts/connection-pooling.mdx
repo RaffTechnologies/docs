@@ -1,0 +1,45 @@
+---
+title: PostgreSQL connection pooling
+sidebarTitle: Connection pooling
+description: The pooled and direct PostgreSQL addresses on Raff, when to use each, and what transaction pooling changes for your app.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Every Raff PostgreSQL database comes with a connection pooler (PgBouncer) in front of it. Apps connect to the pooler, which shares a small number of server connections between many app connections. That lets serverless functions and busy apps open hundreds of connections without exhausting the database.
+
+## How it works
+
+| Address | Public port | Private port | Use for |
+|---|---|---|---|
+| **Transaction pooler** | 6543 | 6432 | App traffic: web servers, workers, serverless functions |
+| **Direct connection** | 5432 | 5432 | Migrations, `LISTEN/NOTIFY`, long sessions, admin tools |
+
+The pooler runs in **transaction mode**: an app connection gets a server connection for one transaction, then gives it back. Between transactions, the next statement may run on a different server connection.
+
+The plan sets both limits, for example 25 direct and 200 pooled connections on the 1 GB plan. See [Plans and sizing](/products/store/databases/concepts/plans-and-sizing).
+
+## When to use it
+
+Use the **pooler** by default. Use **direct** for:
+
+- Schema migrations (Prisma Migrate, Rails, Django, Flyway): many tools need one session for the whole migration.
+- `LISTEN/NOTIFY`, advisory locks held across transactions, `SET` that should last for the session, temporary tables.
+- `pg_dump`, `psql` sessions and other admin work.
+
+## Trade-offs
+
+- Session state does not survive between transactions on the pooler: `SET`, temporary tables and session-level prepared statements belong on the direct address.
+- Some drivers use prepared statements by default. With Prisma, add `pgbouncer=true` to the pooled URL; most other drivers work as they are.
+- A common setup: `DATABASE_URL` on the pooler for the app, `DIRECT_URL` on port 5432 for migrations.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Connect to a database" icon="rocket" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Both addresses, ready to copy.
+  </Card>
+  <Card title="Plans and sizing" icon="lightbulb" href="/products/store/databases/concepts/plans-and-sizing">
+    Connection limits per plan.
+  </Card>
+</CardGroup>

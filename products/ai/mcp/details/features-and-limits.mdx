@@ -1,0 +1,58 @@
+---
+title: Raff MCP server features and limits
+sidebarTitle: Features & limits
+description: Endpoint, protocol, sign-in methods, supported apps and the limits of the Raff MCP server.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+The facts about the Raff MCP server in one place.
+
+## Server
+
+| Item | Value | Notes |
+|---|---|---|
+| URL | `https://mcp.rafftechnologies.com/mcp` | |
+| Transport | Streamable HTTP | Stateless: no session to keep alive |
+| Protocol | Model Context Protocol, current specification | Includes MCP Apps for the order card in Claude |
+| Sign-in | OAuth 2.1 (PKCE, dynamic client registration, refresh tokens) or a Raff API key as `Authorization: Bearer` | See [Sign-in and access](/products/ai/mcp/concepts/sign-in-and-access) |
+| URL options | `read_only=true`, `features=databases,docs` | See [Read-only mode and tool groups](/products/ai/mcp/concepts/read-only-and-tool-groups) |
+| Price | Free | You pay only for the resources you create, at the normal price |
+
+## Products
+
+| Product | Status |
+|---|---|
+| Managed databases (PostgreSQL, MySQL, Valkey, ClickHouse, Kafka) | Available, 23 tools |
+| Raff documentation search | Available |
+| Raff Apps and Functions | Planned |
+| Virtual machines | Planned |
+
+## Limits
+
+| Item | Value | Notes |
+|---|---|---|
+| Request size | 1 MB | A larger request is refused with `413` |
+| Statements per call | 1 | `run_query` and `run_sql` run one statement each |
+| Statement time | 15 seconds | Longer statements are stopped |
+| Rows returned | 100 by default, up to 1,000 | Set `max_rows`; the answer says when more rows existed |
+| Wait for a new database | Up to 5 minutes | Then the assistant gets the status instead of holding the chat |
+| Wait for a new public address | Up to 1 minute after the database runs | The address is handed over once it accepts connections |
+| Free databases | 1 per account | |
+| Rate limit | Same as the Raff API | Every tool call is an API call; see [Rate limiting](/authentication#rate-limiting) |
+| Sign-in request | Expires after 10 minutes | Connect again from the app |
+
+## Supported apps
+
+Tested by Raff: Claude (web and desktop), Claude Code. Documented setup: [ChatGPT](/products/ai/mcp/quickstart-guides/connect-chatgpt), [Cursor](/products/ai/mcp/quickstart-guides/connect-cursor), [VS Code and Gemini CLI](/products/ai/mcp/quickstart-guides/connect-other-clients). Any app that supports remote MCP servers over Streamable HTTP works.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Tools" icon="wrench" href="/products/ai/mcp/details/tools">
+    Every tool and its arguments.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/ai/mcp/troubleshooting">
+    When something does not work.
+  </Card>
+</CardGroup>

@@ -1,0 +1,72 @@
+---
+title: MCP paid changes and confirmation
+sidebarTitle: Paid changes
+description: How the Raff MCP server shows a price and the card it is charged to before an AI assistant creates or upgrades anything paid.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+An AI assistant cannot spend money in your Raff account without you seeing the price first. Every change that costs more is a two-step call: the first answer is a quote and changes nothing; only a second call that repeats the quoted price goes ahead.
+
+## How it works
+
+### The quote
+
+When the assistant creates a paid database or upgrades one, the first call returns:
+
+| Field | Example |
+|---|---|
+| What you get | PostgreSQL 2 vCPU, 4 GB RAM, 80 GB storage |
+| Monthly price | $45.99 a month |
+| How it is billed | Monthly subscription: the first month is charged now, from the account balance first, then the card |
+| Paid with | Visa ending in 4242 |
+
+If the account has no card that can be charged automatically, the quote says so and links to **Billing** in the dashboard to add one. Nothing is created.
+
+### Your confirmation
+
+The assistant shows you the quote and asks. When you agree, it calls again with the quoted monthly price. If the price does not match, because the plan or the price changed in between, nothing happens and a new quote comes back.
+
+In Claude, the quote appears as an order card in the chat with **Confirm** and, when no card is saved, **Add a card**. After you confirm, the card follows the database until it runs and shows the connection string with a **Copy** button. Other apps show the same quote as text.
+
+<Frame>
+  ![TODO: Raff order card in Claude with price, card and Confirm button](/images/products/ai/mcp/order-card.png)
+</Frame>
+
+### What needs a confirmation
+
+| Change | Quote first? |
+|---|---|
+| Create a free database | No, it is free (one per account) |
+| Create a paid database | Yes |
+| Resize to a plan, storage, high availability or replica count that costs more | Yes |
+| Resize to something that costs less | No, the difference is credited |
+| Move a free database to a paid plan | Yes |
+| Delete a database | No charge; the assistant must repeat the database's name to delete it |
+
+## Billing
+
+Changes made through an AI assistant are billed exactly like changes made in the dashboard:
+
+- **Paid database**: a monthly subscription. The first month is charged within seconds of the create, from the account balance first and then the card.
+- **Upgrade**: the rest of the current month is charged at the new price before the change applies. The monthly price changes with it.
+- **Downgrade**: the unused part is credited to the account balance once the change applies.
+- **Free to paid**: the database becomes a monthly subscription and keeps its data, address and password.
+- **Delete**: the unused part of the month is credited to the account balance.
+- Accounts on pay-as-you-go billing are billed by the hour instead.
+
+## Trade-offs
+
+- An assistant that is told "yes to everything" in advance can still confirm a quote you have not read. Read-only mode removes every tool that changes anything; see [Read-only mode and tool groups](/products/ai/mcp/concepts/read-only-and-tool-groups).
+- The assistant never sees card numbers. It sees only the card brand and last four digits.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create a database from chat" icon="rocket" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    Free and paid creates, step by step.
+  </Card>
+  <Card title="Sign-in and access" icon="lightbulb" href="/products/ai/mcp/concepts/sign-in-and-access">
+    What a connected app can reach.
+  </Card>
+</CardGroup>

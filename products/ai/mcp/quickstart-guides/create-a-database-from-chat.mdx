@@ -1,0 +1,82 @@
+---
+title: Create a database from chat
+description: Ask an AI assistant connected to Raff for a database and get a working connection string, free or paid.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+With Raff connected, one sentence gets you a running database. The assistant creates it, waits until it accepts connections and hands you the connection string, usually within 30 seconds. A free PostgreSQL needs nothing else; a paid plan shows its price first.
+
+## Before you start
+
+- Raff connected to your AI app: [Claude](/products/ai/mcp/quickstart-guides/connect-claude), [Claude Code](/products/ai/mcp/quickstart-guides/connect-claude-code), [ChatGPT](/products/ai/mcp/quickstart-guides/connect-chatgpt), [Cursor](/products/ai/mcp/quickstart-guides/connect-cursor) or [another app](/products/ai/mcp/quickstart-guides/connect-other-clients).
+- For a paid plan, a card in **Billing** in the Raff dashboard.
+
+## A free database
+
+<Steps>
+  <Step title="Ask for it">
+    *"Create a free Postgres database called notes-app."*
+
+    Each account has one free database. It has a public address over TLS so you can connect from anywhere.
+  </Step>
+  <Step title="Get the connection string">
+    The assistant answers with the database and its connection string:
+
+    ```
+    postgresql://raffadmin:PASSWORD@abc12345.public.db.raffusercloud.com:5432/defaultdb?sslmode=require
+    ```
+
+    The address works the moment you get it: the assistant only hands it over once the database accepts connections.
+  </Step>
+  <Step title="Use it">
+    Ask the assistant to create your tables, or paste the string into your app's `DATABASE_URL`.
+  </Step>
+</Steps>
+
+## A paid database
+
+<Steps>
+  <Step title="Ask for a plan">
+    *"Create a Postgres database with 2 vCPU and 4 GB RAM for production."*
+
+    The assistant finds the plan and gets a quote. Nothing is created yet.
+  </Step>
+  <Step title="Read the quote">
+    The quote shows what you get, the monthly price and the card it is charged to, for example *PostgreSQL 2 vCPU, 4 GB RAM, 80 GB storage: $45.99 a month, Visa ending in 4242*. In Claude it appears as an order card.
+
+    <Frame>
+      ![TODO: Raff order card with Confirm](/images/products/ai/mcp/order-card.png)
+    </Frame>
+  </Step>
+  <Step title="Confirm">
+    Say yes, or click **Confirm** on the order card. The database is created as a monthly subscription; the first month is charged within seconds, from your account balance first and then the card.
+  </Step>
+</Steps>
+
+No card saved? The quote says so and links to **Billing**. Add a card there and ask again.
+
+## Other engines and options
+
+| Ask | Creates |
+|---|---|
+| *"a free MySQL database"* | MySQL, free plan |
+| *"a Valkey cache"* | Valkey that drops the least recently used keys when full (`valkey_mode: cache`) |
+| *"a Postgres database with pgvector"* | PostgreSQL with the `vector` extension on |
+| *"a private Postgres database"* | No public address; reach it from a VPC |
+| *"Postgres 16"* | That version instead of the newest |
+
+## Verify
+
+*"Show me my Raff databases"* lists the new database as running. It also appears under **Databases** in the Raff dashboard.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Tools" icon="wrench" href="/products/ai/mcp/details/tools">
+    Tables, SQL, slow queries, backups and more.
+  </Card>
+  <Card title="Paid changes" icon="credit-card" href="/products/ai/mcp/concepts/paid-changes">
+    How billing works for changes from chat.
+  </Card>
+</CardGroup>

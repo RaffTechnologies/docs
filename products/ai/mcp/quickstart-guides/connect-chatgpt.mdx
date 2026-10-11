@@ -1,0 +1,54 @@
+---
+title: Connect Raff to ChatGPT
+sidebarTitle: Connect ChatGPT
+description: Add the Raff MCP server to ChatGPT as a custom MCP server and sign in with your Raff account.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+ChatGPT can use the Raff MCP server as a custom app. You add the server URL once, sign in with Raff, and ChatGPT can look at and manage your Raff databases.
+
+## Before you start
+
+- A Raff account.
+- A ChatGPT plan with custom MCP servers. OpenAI is changing which plans include them and whether write actions (creating or changing things) are allowed; check [OpenAI's guide](https://developers.openai.com/api/docs/guides/custom-mcp-server) for your plan. On Business, Enterprise and Edu, a workspace admin may need to allow custom apps first.
+
+## Steps
+
+<Steps>
+  <Step title="Add a custom MCP server">
+    In ChatGPT, open the apps page, click **+** and choose **Add custom MCP server**.
+  </Step>
+  <Step title="Enter the Raff server">
+    | Field | Value |
+    |---|---|
+    | **Name** | `Raff` |
+    | **URL** | `https://mcp.rafftechnologies.com/mcp` |
+    | **Authentication** | OAuth |
+
+    ChatGPT registers itself with Raff; you do not need a client ID or secret. Accept the warning about custom servers and create it.
+  </Step>
+  <Step title="Sign in with Raff">
+    When ChatGPT asks you to connect, a Raff page opens: sign in, pick the account and click **Allow access**.
+  </Step>
+  <Step title="Ask ChatGPT">
+    In a new chat, turn on the Raff app and ask: *"List my Raff databases"*.
+  </Step>
+</Steps>
+
+## What to expect
+
+- ChatGPT asks you to confirm every tool that is not read-only before it runs it. Paid changes also show a [price quote](/products/ai/mcp/concepts/paid-changes) first.
+- The Raff order card is drawn in Claude; ChatGPT shows the same quote as text.
+- If your plan allows only read access, use the read-only URL `https://mcp.rafftechnologies.com/mcp?read_only=true` so ChatGPT only sees tools it can use.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create a database from chat" icon="database" href="/products/ai/mcp/quickstart-guides/create-a-database-from-chat">
+    Your first database from a chat.
+  </Card>
+  <Card title="Sign-in and access" icon="lightbulb" href="/products/ai/mcp/concepts/sign-in-and-access">
+    What ChatGPT can reach in your account.
+  </Card>
+</CardGroup>

@@ -1,0 +1,59 @@
+---
+title: Free database plan
+sidebarTitle: Free plan
+description: The free managed database on Raff, what it includes, when it pauses, and how to upgrade it.
+---
+
+<sub>Updated October 11, 2026</sub>
+
+Every Raff account can run one free database, PostgreSQL, MySQL or Valkey, with no card and no time limit. It is a real managed database on the same platform as paid ones, sized for trying Raff, side projects and development.
+
+## How it works
+
+### What it includes
+
+| | Free plan |
+|---|---|
+| Engines | PostgreSQL, MySQL or Valkey (one database in total, any engine) |
+| Compute | 1 vCPU, 1 GB RAM (Valkey 512 MB) |
+| Storage | 2 GB NVMe, fixed |
+| Connections | PostgreSQL 20 direct, 200 pooled; MySQL 30; Valkey 100 |
+| Backups | Every night, restore in place |
+| Access | Public address with TLS, VPC, the dashboard tabs |
+| Region | US East |
+
+Not included: high availability, read replicas, extra storage, point-in-time restore, restoring into a new database.
+
+### Pausing after 7 idle days
+
+A free database that has had no connections for 7 days is paused. The data is kept; nothing is deleted.
+
+- Raff emails you 2 days before it pauses, and when it pauses.
+- **Resume** it from the database's page or the list. It is back in about a minute, with the same address and password.
+- A paused database stays paused until you resume it. Raff emails reminders and keeps it at least 90 days.
+
+### Upgrading
+
+Click **Upgrade plan** in **Settings** and pick any paid plan of the same engine. The data, address and password stay; the database becomes a normal paid database and can then grow, add high availability and use every feature.
+
+## When to use it
+
+- Trying Raff, learning, prototypes, side projects.
+- Development and preview environments that sleep when nobody uses them.
+
+## Trade-offs
+
+- One per account. To create another, upgrade or delete the free one.
+- Storage is fixed at 2 GB; at 95% PostgreSQL and MySQL become read-only.
+- Not meant for production: no failover and no restore into a copy.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create a database" icon="rocket" href="/products/store/databases/quickstart-guides/create-a-database">
+    The free plan is preselected when you have none.
+  </Card>
+  <Card title="Pricing" icon="circle-dollar" href="/products/store/databases/details/pricing">
+    Paid plans from $7.99 a month.
+  </Card>
+</CardGroup>
