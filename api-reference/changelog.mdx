@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 8, 2026</sub>
+<sub>Updated October 11, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 11, 2026
+
+**Managed Databases**
+
+- 🔵 **Updated**: **Paid databases created through the API are monthly subscriptions**, the same as buying them in the dashboard. A card that can be charged automatically is required (`402` with a link to add one otherwise); the first month is charged within seconds, from the account balance first, then the card. The free plan is unchanged. Accounts on pay-as-you-go billing are still billed by the hour.
+- 🔵 **Updated**: **Scale database** bills monthly databases: a change that costs more is charged for the rest of the current month before it applies, a change that costs less credits the unused part to the balance. A free database moved to a paid plan becomes a monthly subscription and keeps its data, address and password.
 
 ### October 8, 2026
 

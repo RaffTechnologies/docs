@@ -4255,6 +4255,12 @@ paths:
         ## Pricing
 
         The plan sets the base price. High availability adds 70% of the tier price; storage above the tier allotment is $0.12/GB/month. See `GET /api/v1/public/pricing/database` for the full catalog.
+
+        ## Billing
+
+        - **Free plan**: no charge and no card needed. One free database per account.
+        - **Paid plan**: a monthly subscription, the same as buying the database in the dashboard. The account needs a card that can be charged automatically, or the create is refused with `402` and a link to add one. The first month is charged within seconds of the create, from the account balance first and then the card.
+        - Accounts on pay-as-you-go billing are billed by the hour instead.
       operationId: createDatabase
       parameters:
         - $ref: '#/components/parameters/ProjectIDHeader'
@@ -4379,6 +4385,12 @@ paths:
         - **Storage** — `storage_gb` can only grow. Omit (or `0`) to keep the current size.
         - **High availability** — set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged.
         - **Read replicas** — `replica_count` is always applied: pass your current count when you are not changing it. PostgreSQL only; Valkey rejects a count above 0.
+
+        ## Billing
+
+        - **Monthly database**: a change that costs more is charged for the rest of the current month before it applies (account balance first, then the card); a change that costs less credits the unused part to the balance once it applies. The monthly price changes with it.
+        - **Free database to a paid plan**: the database becomes a monthly subscription and keeps its data, address and password. The first month is charged once the change applies; a card that can be charged automatically is required.
+        - **Pay-as-you-go database**: the new hourly price applies from the change.
       operationId: scaleDatabase
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -4404,6 +4416,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/InsufficientBalance'
         '404':
           $ref: '#/components/responses/NotFound'
 
