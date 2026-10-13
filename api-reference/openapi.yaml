@@ -12603,7 +12603,7 @@ components:
           example: a1b2c3d4.db.raffusercloud.com
         connection_port:
           type: integer
-          description: "Private endpoint port. PostgreSQL: 5432 direct; the pooler (PgBouncer, transaction mode) is on 6432 of the same host. MySQL: 3306. Valkey: 6379. ClickHouse: 8443 (HTTPS), 9440 (native). Kafka: 9092. All require TLS."
+          description: "Private endpoint port. PostgreSQL: 5432 direct; the pooler (PgBouncer, transaction mode) is on 6432 of the same host. MySQL: 3306. Valkey: 6379. ClickHouse: 8443 (HTTPS), 9440 (native). Kafka: 9092. Use TLS: databases created from October 13, 2026 refuse unencrypted connections."
           example: 5432
         billing_type:
           type: string

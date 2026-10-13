@@ -3,7 +3,7 @@ title: Create a database
 description: Create a managed PostgreSQL, MySQL, Valkey, ClickHouse or Kafka database from the Raff dashboard.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 Create a database by picking an engine, a plan and how it connects. A free or pay-as-you-go database starts within a minute; a monthly database starts right after checkout.
 
@@ -41,10 +41,10 @@ Create a database by picking an engine, a plan and how it connects. A free or pa
     **Single node** for development and staging, or **High availability** for production: copies on separate servers with automatic failover. High availability adds 70% to the plan price (140% for MySQL and Kafka) and is not available on the free plan. For MySQL, choose it now: it cannot be added to a MySQL database later. See [High availability and replicas](/products/store/databases/concepts/high-availability-and-replicas).
   </Step>
   <Step title="Network">
-    - **Use existing VPC** or **Create new VPC**: the database gets a private address inside the VPC, reachable from your VMs and apps on it.
-    - **Skip for now, no VPC**: reach the database from the dashboard and, after you turn it on, over its public address.
+    - **Public access** (on by default): a public address for your laptop, CI or another cloud. TLS and the password are always required; you can limit it to your IP addresses in **Access** after create. Kafka is private only.
+    - **Private network**: **No VPC** (default), **Use existing VPC** or **Create new VPC**. A VPC gives the database a private address your VMs and apps on it use.
 
-    Public access is turned on after create, in the **Access** tab. See [Turn on public access](/products/store/databases/quickstart-guides/turn-on-public-access).
+    With public access off and no VPC, only the dashboard reaches the database until you turn one on. See [Networking and security](/products/store/databases/concepts/networking-and-security).
   </Step>
   <Step title="Create">
     Check the **Estimated price** on the right, then:

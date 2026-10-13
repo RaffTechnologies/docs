@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Engines, versions, ports, backups, high availability and every limit of Raff managed databases in one place.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 The facts about Raff Managed Databases in one place.
 
@@ -40,6 +40,7 @@ Hostnames: `<database_id>.db.raffusercloud.com` (private, in your VPC) and `<dat
 | Storage alerts | 80%, 90% | Email, once a day each |
 | Read-only | At 95% (PostgreSQL, MySQL) | Writes return below 90% |
 | Connections | Per plan | See [Plans and sizing](/products/store/databases/concepts/plans-and-sizing) |
+| TLS | Required | Databases created before October 13, 2026 also accept unencrypted PostgreSQL and MySQL connections on their own port and in the VPC |
 | Allowlist | 20 IPv4 entries | Empty allows any address |
 | Database users | 20 per database | PostgreSQL, MySQL, ClickHouse |
 | Read replicas | Up to 5 | PostgreSQL |

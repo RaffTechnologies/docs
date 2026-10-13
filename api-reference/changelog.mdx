@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 13, 2026
+
+**Managed Databases**
+
+- 🔵 **Updated**: **New databases require TLS.** PostgreSQL and MySQL databases created from today refuse unencrypted connections on every port, inside the VPC and through the PostgreSQL pooler, like Valkey, ClickHouse and Kafka already did. Databases created earlier are unchanged and still accept unencrypted connections on their own port and inside the VPC; use TLS with them too.
 
 ### October 11, 2026
 

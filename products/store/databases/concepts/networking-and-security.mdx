@@ -4,9 +4,9 @@ sidebarTitle: Networking and security
 description: Private VPC addresses, public access over TLS, the allowlist, certificates and connection limits for Raff managed databases.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
-A managed database can be reached in three ways: from the dashboard, privately from a VPC, and publicly over the internet. All of them use TLS and the database password; you choose which ones are open.
+A managed database can be reached in three ways: from the dashboard, privately from a VPC, and publicly over the internet. All of them need the database password and use TLS; you choose which ones are open.
 
 ## How it works
 
@@ -26,7 +26,11 @@ PostgreSQL also answers on the standard ports **5432** (direct) and **6543** (po
 
 ### TLS
 
-Connections are encrypted with TLS. Each database has its own certificate authority (CA), which your computer does not trust by default:
+**TLS is required.** Databases created from October 13, 2026 refuse unencrypted connections everywhere: on the public ports, inside your VPC and through the PostgreSQL pooler. Valkey, ClickHouse and Kafka have always been TLS only.
+
+Databases created before then keep accepting unencrypted PostgreSQL and MySQL connections on their own public port and inside the VPC, so no existing application breaks. Use TLS with them too: the connection strings Raff gives you already do.
+
+Each database has its own certificate authority (CA), which your computer does not trust by default:
 
 - `sslmode=require` (the connection strings Raff gives you) encrypts without checking the certificate.
 - To check it too, download the CA on the **Connect** tab and use `sslmode=verify-full&sslrootcert=ca.crt` (PostgreSQL), `--ssl-ca` (MySQL), `--cacert` (Valkey). The certificate names the public hostname.

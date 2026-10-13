@@ -3,7 +3,7 @@ title: Connect to a database
 description: Find a managed database's connection string, pick the right address and port, and connect from your app or a client.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 Every database has a connection string ready to copy, plus code for the common clients. Pick where you connect from (the internet or your VPC), copy, and paste it into your app.
 
@@ -51,7 +51,7 @@ Hostnames:
 - Public: `<database_id>.public.db.raffusercloud.com`
 - Private (inside the VPC): `<database_id>.db.raffusercloud.com`
 
-Every connection uses TLS. PostgreSQL on the public ports 5432 and 6543 finds your database by the hostname your client sends over TLS; an old client that does not send it can use the database's own public port, shown in **Access**. See [Networking and security](/products/store/databases/concepts/networking-and-security) and [Connection pooling](/products/store/databases/concepts/connection-pooling).
+Connections use TLS, and databases created from October 13, 2026 refuse any without it. PostgreSQL on the public ports 5432 and 6543 finds your database by the hostname your client sends over TLS; an old client that does not send it can use the database's own public port, shown in **Access**. See [Networking and security](/products/store/databases/concepts/networking-and-security) and [Connection pooling](/products/store/databases/concepts/connection-pooling).
 
 ## Examples
 

@@ -7,6 +7,8 @@ description: Give a managed database a public address with TLS, and limit it to 
 
 Public access gives the database an address on the internet, so you can connect from your laptop, CI or another cloud. It is free, needs no VPC, and every connection needs TLS and the password. Add an allowlist to accept only your own addresses.
 
+New databases have public access on from the start, unless you turned it off on the create form. Use these steps to turn it on later or to limit it to your IP addresses.
+
 ## Before you start
 
 - A running PostgreSQL, MySQL, Valkey or ClickHouse database. Kafka is private only.
