@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Endpoint, protocol, sign-in methods, supported apps and the limits of the Raff MCP server.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 The facts about the Raff MCP server in one place.
 
@@ -35,11 +35,14 @@ The facts about the Raff MCP server in one place.
 | Request size | 1 MB | A larger request is refused with `413` |
 | Statements per call | 1 | `run_query` and `run_sql` run one statement each |
 | Statement time | 15 seconds | Longer statements are stopped |
-| Rows returned | 100 by default, up to 1,000 | Set `max_rows`; the answer says when more rows existed |
-| Wait for a new database | Up to 5 minutes | Then the assistant gets the status instead of holding the chat |
-| Wait for a new public address | Up to 1 minute after the database runs | The address is handed over once it accepts connections |
+| Rows returned | 100 by default, up to 1,000 | Set `max_rows`; the answer says when more rows existed or did not fit |
+| Answer size | 70,000 characters | A longer answer is cut and says so: query rows from the end, log lines from the oldest |
+| Log lines | 100 by default, up to 1,000 | Set `lines` on `get_database_logs` |
+| Slow queries | 10 by default, up to 50 | Set `limit` on `get_slow_queries` |
+| Wait for a new database | Up to 150 seconds | A slower one comes back as starting; the order card and `get_database` follow it until it runs |
+| Wait for a new public address | Up to 1 minute after the database runs | The address is handed over once it accepts connections. One call never runs past 200 seconds |
 | Free databases | 1 per account | |
-| Rate limit | Same as the Raff API | Every tool call is an API call; see [Rate limiting](/authentication#rate-limiting) |
+| Rate limit | 50 requests a second per person, with short bursts above | Apps signed in with Raff are counted per person, not per network address, so people using the same app do not slow each other. With an API key, see [Rate limiting](/authentication#rate-limiting) |
 | Sign-in request | Expires after 10 minutes | Connect again from the app |
 
 ## Supported apps
