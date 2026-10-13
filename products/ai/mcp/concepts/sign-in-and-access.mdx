@@ -4,7 +4,7 @@ sidebarTitle: Sign-in and access
 description: How an AI app signs in to Raff, which account it works in, what it can reach, and how to remove its access.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 An AI app reaches your Raff account in one of two ways: you sign in with Raff in your browser (most apps), or you give it a Raff API key (tools that accept a header). Either way it acts as you, with your role in the account, and never as a Raff administrator.
 
@@ -22,6 +22,8 @@ When you add the server to an app such as Claude or ChatGPT, the app opens a Raf
 The app gets a token for that account and refreshes it on its own, so you sign in once. The request page expires after 10 minutes; if it says **This request has expired**, connect again from the app.
 
 The app never sees your Raff password.
+
+Every app you allow is listed in the Raff dashboard under **Settings → Security → Connected apps**, with where it signs in (for example `claude.ai`, or "App on your computer" for Claude Code) and when it was last active. Any app can give itself a name like "Claude", so the sign-in address is what tells the real one apart.
 
 ### API key
 
@@ -56,7 +58,7 @@ Every call is made through the public Raff API, so it follows the same permissio
 
 ## Remove access
 
-- **Signed in with Raff**: remove the Raff connector in the app (in Claude: **Customize → Connectors**; in Claude Code: `claude mcp remove raff`). The app can no longer call Raff.
+- **Signed in with Raff**: in the Raff dashboard, open **Settings → Security → Connected apps** and click **Remove** next to the app. It stops working within a minute, and anything it created stays. Removing the Raff connector in the app (in Claude: **Customize → Connectors**; in Claude Code: `claude mcp remove raff`) only deletes the app's copy; remove it in Raff to end the access itself.
 - **API key**: [delete the key](/products/manage/team-projects/quickstart-guides/rotate-api-key) in the dashboard. Every tool using it stops at once.
 
 ## Trade-offs

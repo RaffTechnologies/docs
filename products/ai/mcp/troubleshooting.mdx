@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common issues when connecting an AI app to the Raff MCP server, and how to fix them.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 13, 2026</sub>
 
 Issues you may run into with the Raff MCP server, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
 
@@ -23,6 +23,11 @@ Issues you may run into with the Raff MCP server, and how to resolve them. If yo
     1. Check the URL is exactly `https://mcp.rafftechnologies.com/mcp`, with `/mcp` at the end.
     2. Remove the Raff connector and add it again, then sign in.
     3. With an API key, check the header is `Authorization: Bearer raff_...` and the key has not been deleted.
+  </Accordion>
+  <Accordion title="The app says its access to Raff was removed">
+    **What's happening:** the app was removed under **Settings → Security → Connected apps** in the Raff dashboard, so Raff no longer accepts it.
+
+    **Fix:** connect Raff again from the app and allow it on the Raff page. If you did not remove it, check who else can sign in to your Raff account.
   </Accordion>
   <Accordion title="The assistant works in the wrong account">
     **What's happening:** an app signed in with Raff works in the account you chose on the Raff page. When you switch accounts in the Raff dashboard, the app follows within 5 minutes.
