@@ -3,12 +3,12 @@ title: SLA
 description: Uptime commitment, service credit schedule, and how to claim for services on the Raff Platform
 ---
 
-<sub>Updated August 22, 2026</sub>
+<sub>Updated October 14, 2026</sub>
 
 This page summarizes the Raff Service Level Agreement across platform services. The full, legally binding SLA is published at:
 
-<Card title="Service Level Agreement (legal)" icon="file-contract" href="https://app.rafftechnologies.com/legal#service-level-agreement">
-  app.rafftechnologies.com/legal#service-level-agreement
+<Card title="Service Level Agreement (legal)" icon="file-contract" href="https://rafftechnologies.com/legal/service-level-agreement">
+  rafftechnologies.com/legal/service-level-agreement
 </Card>
 
 Live availability for every covered service is recorded automatically at:
@@ -19,33 +19,25 @@ Live availability for every covered service is recorded automatically at:
 
 ## Uptime commitment
 
-Raff Technologies guarantees **99.90% monthly uptime** for the services below.
+Raff Technologies guarantees **99.90% monthly uptime** for every Raff product.
 
-| Service | Monthly uptime | Notes |
+| Service | Monthly uptime | What is measured |
 |---|---|---|
-| Virtual Machines | 99.90% | |
-| Block Storage (Volumes) | 99.90% | |
-| Snapshots | 99.90% | |
-| Backups | 99.90% | |
+| Virtual Machines | 99.90% | The VM is running and reachable |
+| Volumes | 99.90% | The volume is attached and readable |
+| Snapshots and Backups | 99.90% | Taking and restoring them |
 | Object Storage | 99.90% | S3 API availability |
-| VPC Networking & Floating IPs | 99.90% | |
-| Managed Kubernetes — nodes | 99.90% | Worker and storage nodes, covered as Virtual Machines |
-| Managed Kubernetes — endpoint & ingress path | 99.90% | Clusters with the **High Availability option** (see below) |
-| Managed Databases | 99.90% | Instances with the **High Availability option** (see below) |
+| VPC, Public IPs and Firewalls | 99.90% | Private and public networking |
+| Kubernetes | 99.90% | Worker nodes, the cluster endpoint and the ingress path, on every cluster |
+| Managed Databases | 99.90% | The database endpoint, for every engine and plan |
+| Raff Apps | 99.90% | Your running app at its address |
+| Functions | 99.90% | Invocations are accepted and run |
 
 Uptime is calculated as `(total minutes in the month - unavailable minutes) / total minutes × 100%`.
 
-### Managed Kubernetes
+High availability (Kubernetes HA, database HA) does not change the commitment; it keeps your service running through a node failure, so it is the right choice for production. Free plans, such as the free database, are covered, but have no monthly charge to credit.
 
-- **Worker and storage nodes** are Virtual Machines and carry the 99.90% VM commitment.
-- **The managed endpoint and ingress path** (public endpoint, load balancing, Kubernetes API reachability) carry the 99.90% commitment on clusters running the **High Availability option**, where the endpoint is a redundant gateway pair with automatic failover and the control plane runs 3 nodes.
-- On **non-HA clusters** the endpoint is a single managed instance: it is covered at the infrastructure (VM) level, without a separate endpoint-path commitment.
-- Workloads, Ingress resources, and add-on configuration inside the cluster are customer-managed and outside the SLA.
-
-### Managed Databases
-
-- Instances with the **High Availability option** (replicated, automatic failover) carry the 99.90% commitment on the database endpoint.
-- **Single-node instances** are covered at the infrastructure (VM) level, without a separate endpoint commitment.
+Workloads, Ingress resources, database queries and schema, and your app's own code are yours and outside the SLA.
 
 **Unavailability** means the service is completely inaccessible — returns errors or doesn't respond to API or console requests — for **more than 5 consecutive minutes**. The status page is the authoritative source for measurement.
 

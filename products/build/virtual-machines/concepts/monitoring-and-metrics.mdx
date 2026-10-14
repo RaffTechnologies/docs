@@ -3,7 +3,7 @@ title: Monitoring & metrics
 description: How Raff measures VM health, what each graph means, and where to read live state
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 14, 2026</sub>
 
 A running VM emits a continuous stream of operational signals — CPU, memory, network, disk, and aggregate data transfer. Raff collects these from the **hypervisor**, not from inside the guest OS, so there's no agent to install and metrics work the same way regardless of distro, kernel, or whether the OS is even healthy.
 
@@ -53,7 +53,7 @@ Inbound traffic isn't counted here; private VPC traffic between your own VMs is 
 Average CPU utilization (%) across all vCPUs over time. The dashed red line at **80%** is a soft threshold — sustained CPU above it means the VM is becoming a bottleneck.
 
 <Note>
-  **Raff does not throttle your VM.** The 80% line is a visual reference, not a cap. As long as your usage is legitimate, you are free to run at 100% across all vCPUs for as long as you need — no CPU credits, no burst quotas, no automatic slowdown.
+  **The 80% line is a visual reference, not a cap.** On Standard plans your VM can use all of its vCPUs, and use above the sustained level (40% of your vCPUs) is paced by CPU credit. The CPU card on the Information tab shows the current state. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting).
 </Note>
 
 What the shape tells you:

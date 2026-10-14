@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Full feature list for Virtual Machines on the Raff Platform, plus account, VM, and platform limits
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 14, 2026</sub>
 
 ## Features
 
@@ -12,7 +12,7 @@ description: Full feature list for Virtual Machines on the Raff Platform, plus a
 - **Flexible sizing** — General Purpose and CPU-Optimized plan families across CPU, RAM, and base disk
 - **On-demand resize** — change CPU and RAM by switching plans (VM must be stopped); the difference settles to your account balance
 - **Disk resize (one-way)** — grow the OS disk without rebuilding (VM must be stopped)
-- **No CPU throttling** — Raff never throttles your VM; sustain 100% CPU as long as your usage is legitimate
+- **Burstable CPU on Standard plans**: use all vCPUs whenever you need them, with a sustained level of 40% of your vCPUs that is always available; heavy use above it is paced by CPU credit. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting). Premium and Windows plans work differently, see [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
 - **Custom images** — save a VM's OS disk as a reusable image and create new VMs from it
 
 ### OS templates

@@ -3,7 +3,7 @@ title: Acceptable use
 description: What you can and can't run on a Raff VM, abuse handling, and how to report violations
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 14, 2026</sub>
 
 This page summarizes the Raff Acceptable Use Policy (AUP) as it applies to Virtual Machines. The full, legally binding AUP — which governs every Raff service and prevails over this summary — is published at:
 
@@ -14,10 +14,10 @@ This page summarizes the Raff Acceptable Use Policy (AUP) as it applies to Virtu
 ## What is acceptable
 
 - **Normal business use** — websites, applications, internal tools, dev/test environments, batch jobs, data processing, machine learning training and inference (your own models, your own data), gaming servers, build farms, CI runners, and similar workloads.
-- **Heavy resource use that's legitimate** — Raff does not throttle CPU; sustained 100% CPU is fine if your workload is genuine. See the note in [Monitoring & metrics](/products/build/virtual-machines/concepts/monitoring-and-metrics).
+- **Heavy resource use that's legitimate**: sustained high CPU is fine if your workload is genuine. On Standard plans, use above your sustained level (40% of your vCPUs) is paced by CPU credit, as described in [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting).
 - **All applicable laws** — what's legal in your jurisdiction *and* in the regions where you operate the VM.
 
-If your usage is excessive in a way that affects shared infrastructure, Raff may reach out to discuss capacity planning, additional fees, or limits — never silent throttling.
+If your usage affects shared infrastructure in other ways, Raff contacts you to discuss capacity, fees or limits before changing anything.
 
 ## What is prohibited
 
