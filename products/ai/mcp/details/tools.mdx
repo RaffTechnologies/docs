@@ -8,7 +8,7 @@ description: Every tool the Raff MCP server gives an AI assistant, its arguments
 
 The tools an AI assistant can call after you connect the Raff MCP server. You do not call them yourself: you ask in plain words and the assistant picks the tool. This page tells you what it can and cannot do.
 
-Every tool is labelled for the app: **read** tools only look; **write** tools change something; **destructive** tools can remove data. Apps such as Claude and ChatGPT use these labels to ask before a write. In [read-only mode](/products/ai/mcp/concepts/read-only-and-tool-groups) only the read tools are loaded.
+Every tool is labelled for the app: **read** tools only look, and every tool that changes something carries the app's destructive label, so apps such as Claude and ChatGPT ask before each one. In the tables below, **Destructive** marks the tools that can remove data. In [read-only mode](/products/ai/mcp/concepts/read-only-and-tool-groups) only the read tools are loaded.
 
 ## Databases: read
 
