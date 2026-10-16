@@ -4,7 +4,7 @@ sidebarTitle: How it works
 description: What runs on your Windows server, how Raff Guardian reports to Raff, how changes reach it, and how signed releases keep it safe.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated October 16, 2026</sub>
 
 Raff Guardian has two parts: a small agent that runs as a Windows service on your server, and Raff's side, which reads its reports, decides what needs doing and shows everything in the dashboard. The agent only connects out to Raff. It never opens a port on your server.
 
@@ -45,7 +45,7 @@ Raff Guardian always keeps itself up to date, in every mode, **Watch only** incl
 
 ### When the agent goes quiet
 
-If Raff hears nothing for 5 minutes, the Guardian tab shows "Raff Guardian is not reporting." above its sections and the finding **Contact with your server** opens. When reports come back, the finding closes and Activity says how long contact was lost. A server that was turned off shows that instead, for example "Server has been off since 14:02. You shut it down from the dashboard."
+If Raff hears nothing for 5 minutes, the Guardian tab shows "Raff Guardian is not reporting." above its sections and the finding **Contact with your server** opens. After 15 minutes without a report, Raff emails the server's project members, and again when reports come back. When reports come back, the finding closes and Activity says how long contact was lost. A server that was turned off shows that instead, for example "Server has been off since 14:02. You shut it down from the dashboard."
 
 ## When to use it
 

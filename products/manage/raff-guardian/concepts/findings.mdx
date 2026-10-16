@@ -4,7 +4,7 @@ sidebarTitle: Findings
 description: What each Raff Guardian finding means, its severity, what Raff Guardian does about it and how it closes.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated October 16, 2026</sub>
 
 A finding is a problem Raff Guardian sees on the server, such as low disk space, a stopped service or Windows Firewall turned off. Open findings are listed in **Needs attention** on the Guardian tab's **Overview**. Each closes by itself once the problem is gone.
 
@@ -15,7 +15,7 @@ A finding is a problem Raff Guardian sees on the server, such as low disk space,
 | Badge | Meaning |
 |---|---|
 | **Critical** | Fix now: the server is exposed or not working as it should. |
-| **Attention** | Worth fixing soon. |
+| **Needs attention** | Worth fixing soon. |
 | **Info** | Good to know. |
 
 Each finding shows when it started ("since"). Windows protection findings have **Show details** with "How to fix".
@@ -30,20 +30,20 @@ Each finding shows when it started ("since"). Windows protection findings have *
 
 | Finding | Severity | Opens when | Button |
 |---|---|---|---|
-| Security updates waiting | Attention | Windows Update reports at least one security update waiting | **Install now** |
-| Restart needed to finish updates | Attention | Windows needs a restart to finish installing | **Restart now** |
+| Security updates waiting | Needs attention | Windows Update reports at least one security update waiting | **Install now** |
+| Restart needed to finish updates | Needs attention | Windows needs a restart to finish installing | **Restart now** |
 | Server not healthy after updates | Critical | The server did not come back healthy within 25 minutes of an update install or restart | Restore offer in the Queue |
 
 ### Health
 
 | Finding | Severity | Opens when | Button |
 |---|---|---|---|
-| Low disk space on (drive) | Attention | A drive has less than 15% free | **Free space** |
+| Low disk space on (drive) | Needs attention | A drive has less than 15% free | **Free space** |
 | Very low disk space on (drive) | Critical | A drive has less than 5% free | **Free space** |
-| (service) service not running | Attention | A watched service that starts automatically is not running | **Restart service** |
-| Windows not activated | Attention | Windows is not activated | |
-| Windows evaluation edition | Attention | Windows runs an evaluation edition | |
-| Contact with your server | Attention | Raff has not heard from Raff Guardian for 5 minutes | |
+| (service) service not running | Needs attention | A watched service that starts automatically is not running | **Restart service** |
+| Windows not activated | Needs attention | Windows is not activated | |
+| Windows evaluation edition | Needs attention | Windows runs an evaluation edition | |
+| Contact with your server | Needs attention | Raff has not heard from Raff Guardian for 5 minutes | |
 
 ### Security
 
@@ -52,31 +52,41 @@ Each finding shows when it started ("since"). Windows protection findings have *
 | No antivirus protecting Windows | Critical | Microsoft Defender is not the active antivirus and no other known antivirus runs | |
 | Threat Microsoft Defender has not removed | Critical | Microsoft Defender detected a threat it has not removed | |
 | Windows Firewall off | Critical | Windows Firewall is off, or lets every inbound connection in, for the network the server uses | |
-| Microsoft Defender definitions out of date | Attention | Definitions are more than 3 days old | **Update now** |
-| No recent Microsoft Defender scan | Attention | No finished scan in 7 days | **Scan now** |
-| Remote Desktop without Network Level Authentication | Attention | Remote Desktop is on without Network Level Authentication | |
-| SMB version 1 on | Attention | The SMB version 1 server or client is on | |
-| Guest account on | Attention | The built-in Guest account is turned on | |
-| No account lockout | Attention | Windows never locks accounts, on a server not in a domain, and Raff Guardian has not taken the lockout over | |
-| New administrator account | Attention | An account joined Administrators that was not there in Raff Guardian's first 6 hours on the server | **This is expected** |
-| Port (port) open to every address | Attention | A risky port is open to any address: FTP, SSH, Telnet, Windows RPC, file sharing, SQL Server, MySQL, PostgreSQL, VNC, Windows Remote Management, Redis, Elasticsearch or MongoDB. Remote Desktop is never one | **This is expected** |
-| Remote access app (name) | Attention (Info if it was there when Raff Guardian first listed the apps) | A remote access app is installed or running that you have not confirmed | **This is mine** |
-| Certificate expiring | Attention | A machine certificate expires within 30 days | |
+| Microsoft Defender definitions out of date | Needs attention | Definitions are more than 3 days old | **Update now** |
+| No recent Microsoft Defender scan | Needs attention | No finished scan in 7 days | **Scan now** |
+| Remote Desktop without Network Level Authentication | Needs attention | Remote Desktop is on without Network Level Authentication | |
+| SMB version 1 on | Needs attention | The SMB version 1 server or client is on | |
+| Guest account on | Needs attention | The built-in Guest account is turned on | |
+| No account lockout | Needs attention | Windows never locks accounts, on a server not in a domain, and Raff Guardian has not taken the lockout over | |
+| New administrator account | Needs attention | An account joined Administrators that was not there in Raff Guardian's first 6 hours on the server | **This is expected** |
+| Port (port) open to every address | Needs attention | A risky port is open to any address: FTP, SSH, Telnet, Windows RPC, file sharing, SQL Server, MySQL, PostgreSQL, VNC, Windows Remote Management, Redis, Elasticsearch or MongoDB. Remote Desktop is never one | **This is expected** |
+| Remote access app (name) | Needs attention (Info if it was there when Raff Guardian first listed the apps) | A remote access app is installed or running that you have not confirmed | **This is mine** |
+| Certificate expiring | Needs attention | A machine certificate expires within 30 days | |
 | Remote Desktop attack from (address) | Critical | Many failed Remote Desktop sign-ins from one address in 15 minutes | **Block now** |
-| SSH password guesses | Attention | 10 or more SSH password guesses in 15 minutes | |
+| SSH password guesses | Needs attention | 10 or more SSH password guesses in 15 minutes | |
 
 ### Apps
 
 | Finding | Severity | Opens when |
 |---|---|---|
-| (app) past its end of support | Attention | An installed version passed its end of support date and gets no more security updates |
+| (app) past its end of support | Needs attention | An installed version passed its end of support date and gets no more security updates |
 | (app) support ending | Info | An installed version reaches its end of support within 180 days |
 
 ### Raff Guardian
 
 | Finding | Severity | Opens when |
 |---|---|---|
-| Raff Guardian update rolled back | Attention | A Raff Guardian update did not take and the agent went back to the version it had |
+| Raff Guardian update rolled back | Needs attention | A Raff Guardian update did not take and the agent went back to the version it had |
+
+### Emails
+
+Raff emails the server's project members, and shows it in the bell, when:
+
+- **A Critical finding opens.** **Remote Desktop attack from (address)** is the exception: Raff Guardian blocks the address by itself. The same problem on the same server emails at most once a day.
+- **Raff Guardian has not reported for 15 minutes** while the server is on. The email says when it last reported. A short silence, such as a restart, sends nothing.
+- **Raff Guardian reports again** after such an email. The email says how long it was silent.
+
+These emails always go out, whatever your notification settings. The button opens the server's Guardian tab, or its Raff Keep page on a server Kept by Raff. Nothing is emailed while Raff Keep is still installing the server.
 
 ### How findings close
 

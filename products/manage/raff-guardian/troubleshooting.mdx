@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common Raff Guardian issues, from the install command to blocked addresses, and how to fix them.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated October 16, 2026</sub>
 
 Issues you may run into with Raff Guardian, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
 
@@ -36,7 +36,7 @@ Issues you may run into with Raff Guardian, and how to resolve them. If your pro
     3. Check that the server can reach `api.rafftechnologies.com` over HTTPS.
   </Accordion>
   <Accordion title="Raff Guardian shows Not reporting">
-    **What's happening:** Raff has not had a report for over 5 minutes. The notice reads "Raff Guardian is not reporting." Until it reports, it cannot block attackers or act on findings. **Server is off** is different: the server was turned off.
+    **What's happening:** Raff has not had a report for over 5 minutes. The notice reads "Raff Guardian is not reporting." After 15 minutes the project's members get the email "Raff Guardian stopped reporting from your server ...". Until it reports, it cannot block attackers or act on findings. **Server is off** is different: the server was turned off.
 
     **Why:** the server is busy, restarting or offline, outbound HTTPS is blocked, or the **RaffGuardian** service was stopped.
 
@@ -74,7 +74,7 @@ Issues you may run into with Raff Guardian, and how to resolve them. If your pro
     **Fix:**
     1. Open the server's console and check whether Windows is still installing updates or stuck at start-up.
     2. If the server is broken, approve **Restore the pre-update snapshot** in the **Queue**. The server goes back to its disk from just before the updates; anything written since is lost.
-    3. If the server is fine, click **Not now** on the restore. The finding closes.
+    3. If the server is fine, click **Decline** on the restore. The finding closes.
   </Accordion>
   <Accordion title="Raff Guardian blocked an address I use">
     **What's happening:** too many failed sign-ins came from your address within 15 minutes, for example from a saved password that changed.
