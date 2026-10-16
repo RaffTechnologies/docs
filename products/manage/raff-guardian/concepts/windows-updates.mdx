@@ -1,0 +1,79 @@
+---
+title: Windows updates with Raff Guardian
+sidebarTitle: Windows updates
+description: How Raff Guardian installs Windows updates in your update window, with a snapshot before, a check after the restart and a restore offer if the server does not come back healthy.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian installs the Windows updates that are waiting, in the window you choose. Every install follows the same steps: protect the server, install, restart if needed, then check the server came back. If it did not, Raff Guardian tells you and offers to put the snapshot back.
+
+## How it works
+
+### The update window
+
+You choose the days, a start time on the hour or half hour, and a time zone. The default is every day at 03:00 UTC. On those days, Raff Guardian starts installing within an hour of the start time when:
+
+- Windows Update reports updates waiting, from a check in the last 48 hours,
+- no update install is already open, and
+- no install was started in the last 20 hours.
+
+What happens then follows **Install Windows updates on your schedule**:
+
+| Setting | In the window |
+|---|---|
+| **Auto** (default in **Raff manages everything**) | Raff Guardian installs the updates. |
+| **Ask me** (default in **Ask me before changes**) | Raff Guardian proposes the install in the **Queue**, once per scheduled day. |
+| **Off**, or **Watch only** | Raff Guardian only reports the waiting updates. |
+
+**Install now** on the **Updates** section starts the same steps at any time.
+
+### 1. Protect the server
+
+Before it installs anything, Raff Guardian takes a snapshot of the server's disk, named `guardian-pre-update-` followed by the date. On a server that uses Raff Backups, disk snapshots are not possible, so the backups protect the server instead.
+
+If the snapshot cannot be taken, nothing is installed. Raff Guardian tries again during the window, and Activity says so, for example "Not installed today: Raff Guardian could not take a snapshot first (3 tries)."
+
+### 2. Install
+
+Raff Guardian installs the waiting updates through Windows Update and shows each step in the **Queue**, for example "Downloading 5 updates · step 3 of 7".
+
+- **Driver updates** are left to you.
+- **Updates with a known issue** that Microsoft lists are held back until the fix they need is on the server. They show under **Held back**.
+
+### 3. Restart
+
+If the updates need a restart, Raff Guardian restarts the server, whatever the **Restart the server** setting says. Remote Desktop sessions end during the restart.
+
+### 4. Check
+
+After the restart, Raff Guardian checks that the server reports again from the new boot and that Remote Desktop is running. Activity: "Raff Guardian checked your server afterwards: it came back healthy." The snapshot is then deleted.
+
+If the check does not pass within 25 minutes, Raff Guardian opens the finding **Server not healthy after updates** and proposes **Restore the pre-update snapshot** in the **Queue**. A restore stops the server, puts its disk back to the snapshot and starts it again: anything written to the disk since then is lost, so this always asks, in every mode.
+
+### Restarts outside an update install
+
+Windows can need a restart outside an install Raff Guardian made. That shows as **Restart needed to finish updates** and follows **Restart the server**: on **Auto**, Raff Guardian restarts during your update window, at most once a day; outside the window, or on **Ask me**, it asks you.
+
+## When to use it
+
+- Put the window in the hours your server is least used: the restart ends Remote Desktop sessions.
+- Use **Ask me** on servers where someone must be ready when the server restarts.
+- Use **Install now** when a security update is urgent.
+
+## Trade-offs / limits
+
+- The pre-update snapshot is an ordinary snapshot in the server's **Snapshots** tab while it exists, and is billed like one. See [Pricing](/products/manage/raff-guardian/details/pricing).
+- Raff Guardian does not install driver updates.
+- An install and a restart never start while the other is still open.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Schedule Windows updates" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/schedule-windows-updates">
+    Days, time, time zone and Install now.
+  </Card>
+  <Card title="Snapshots vs backups" icon="lightbulb" href="/products/build/virtual-machines/concepts/snapshots-vs-backups">
+    How snapshots and Raff Backups differ.
+  </Card>
+</CardGroup>

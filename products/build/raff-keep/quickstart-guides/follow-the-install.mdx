@@ -1,0 +1,73 @@
+---
+title: Follow a Raff Keep install
+sidebarTitle: Follow the install
+description: Watch a Raff Keep install from payment to Installed, step by step, and know what each status means.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+After you pay, Raff creates the server and installs the stack on it. The server's page under **Keep** shows each step as it runs. You can close the page at any time: the install keeps going.
+
+## Before you start
+
+- A Raff Keep stack you paid for. See [Set up a MetaTrader server](/products/build/raff-keep/quickstart-guides/set-up-a-metatrader-server) or [Set up an ASP.NET server](/products/build/raff-keep/quickstart-guides/set-up-an-aspnet-server).
+
+## Steps
+
+<Steps>
+  <Step title="Open the install">
+    Checkout takes you to the server's page. Later, click **Keep** in the sidebar and click the stack's name, or **Open**, in the list. The list shows each stack's **Status** and the step it is on.
+  </Step>
+  <Step title="Watch the steps">
+    The page shows a progress bar ("3 of 11 steps", for example) and, on the **Overview** tab, every step with its result. While the server is being created, the bar shows the Windows licence setup instead, for example "Setting up the Windows licence: activating Windows".
+
+    Some steps restart the server. The step then ends with "Restarting the server ...; setup continues after the restart." and the install carries on by itself.
+
+    <Frame>
+      ![TODO: Install page with the progress bar and the step list](/images/products/build/raff-keep/install-01-steps.png)
+    </Frame>
+  </Step>
+  <Step title="Get the logins when it is installed">
+    When the status is **Installed**, a box at the top says "Raff Keep created logins for this server." Click **Show the logins** and save them. See [Get your logins and passwords](/products/build/raff-keep/quickstart-guides/get-your-logins).
+  </Step>
+</Steps>
+
+## Statuses
+
+| Status | What it means |
+|---|---|
+| **Awaiting payment** | Checkout was not finished. The page says "Payment was not completed. Nothing was created." and links back to the stack page. |
+| **Creating server** | Raff is creating the server and setting up its Windows licence. |
+| **Installing** | The server is running the install steps. |
+| **Checking** | The last step checks that everything came up. |
+| **Installed** | Ready. The page shows how to connect, and the Security, Users, Apps, Updates and Settings tabs open. |
+| **Removing** | The install did not finish. Raff is removing the server it created and returning your money to your Raff balance. |
+| **Failed** | The install did not finish. The banner says what Raff did. See [Failed installs](/products/build/raff-keep/concepts/failed-installs). |
+| **Deleting** / **Deleted** | You deleted the server. The page stays as the record of what was installed. |
+
+## The steps
+
+Every step's result is kept in the **Activity** tab.
+
+**MetaTrader**: Remote Desktop access and always-on tuning; creating the trader login; creating your admin login; installing MetaTrader; starting every terminal when the trader login signs in; auto sign-in after a restart; the update policy, closing the server's setup data to the trader login and turning SSH passwords off; installing [Raff Guardian](/products/manage/raff-guardian/index); starting the terminals (one restart, when auto start is on); keeping the built-in Administrator off Remote Desktop; and a final check that every terminal runs.
+
+**ASP.NET**: Remote Desktop access, then IIS; creating your admin login; the .NET 10 hosting bundle; Web Deploy; setting up the sites; free certificates; SQL Server Express (when chosen); the firewall, the update policy and turning SSH passwords off; installing Raff Guardian; keeping the built-in Administrator off Remote Desktop; and a final check of the server.
+
+With **Install only**, the Raff Guardian step reports "Install only: Raff Guardian is not installed".
+
+## When it takes longer
+
+Raff watches every install. When the server stops reporting, or the install runs longer than it should, the status line says "Taking longer than usual. Raff has been told." The install keeps going, and the line goes once it finishes.
+
+Do not restart or sign in to the server while it installs. If you sign in and a step then fails, Raff keeps the server for a person to check instead of removing it. See [Failed installs](/products/build/raff-keep/concepts/failed-installs).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="How an install works" icon="lightbulb" href="/products/build/raff-keep/concepts/how-an-install-works">
+    What Raff does on the server, and why.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-keep/troubleshooting">
+    An install that failed or seems stuck.
+  </Card>
+</CardGroup>

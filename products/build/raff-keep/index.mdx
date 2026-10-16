@@ -1,0 +1,108 @@
+---
+title: Raff Keep
+sidebarTitle: Overview
+description: Ready-made application servers. Pick a stack, answer a short setup page and pay. Raff creates the server, installs and checks the application, and keeps it running for you if you choose.
+icon: boxes-stacked
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Keep is where you get application servers that are ready to use. You pick a stack, answer a short setup page and pay. Raff creates the server, installs and configures the application, checks that it works and hands you the logins. Then, if you choose, Raff keeps it running with [Raff Guardian](/products/manage/raff-guardian/index), the agent that looks after your server from the inside.
+
+<Frame>
+  ![TODO: Keep page in the Raff dashboard with two installed stacks](/images/products/build/raff-keep/hero.png)
+</Frame>
+
+## Why it is called Keep
+
+Most one-click installs stop when the application is installed. The work that follows is yours: updates, restarts, attacks, full disks. Raff Keep is named for that part, the keeping. Raff installs the stack, and then Raff Guardian looks after the server so the application keeps running. On the setup page this is **Raff manages everything**.
+
+Three words are used across Raff:
+
+| Word | Meaning |
+|---|---|
+| **Keep** | The place in the dashboard where you find stacks and your installed servers. |
+| **Stack** | A ready-made application server: the application, everything it needs, and the setup questions that size it. |
+| **Kept by Raff** | A stack Raff looks after with Raff Guardian after the install. |
+
+If you would rather look after the server yourself, choose **Install only**. Raff installs the stack once and hands it over.
+
+## How it works
+
+1. **Pick a stack** under **Keep** in the dashboard.
+2. **Answer the setup page.** Raff picks the smallest server size that fits your answers; you can choose a bigger one.
+3. **Choose how Raff looks after it**, then pay. The price includes the server and its operating system licence.
+4. **Raff builds it.** Raff creates the server, installs and configures the application and checks that it works. You can follow each step.
+5. **Get your logins.** Raff shows them once, when the install finishes.
+6. **Raff keeps it running**, if you chose that: updates in your window, stopped services started again, attacks blocked, the application watched, everything recorded in **Activity**.
+
+If an install fails, Raff removes the server and returns everything you paid to your Raff balance. See [Failed installs](/products/build/raff-keep/concepts/failed-installs).
+
+## Stacks
+
+| Stack | Name in the dashboard | What Raff installs | Sized by | Runs on |
+|---|---|---|---|---|
+| **MetaTrader** | MetaTrader 4 and 5 | MetaTrader 5, MetaTrader 4 or both. Each terminal has its own folder and starts again by itself after a restart. | Terminals, up to 16 | Windows Server 2025 |
+| **ASP.NET** | ASP.NET / IIS host | IIS with .NET 10, Web Deploy publishing, free Let's Encrypt certificates, SQL Server Express if you want it. | Sites, up to 20 | Windows Server 2025 |
+
+Every stack runs in US East. Keep is built to hold stacks of every kind, and Raff adds new stacks over time.
+
+## How Raff looks after it
+
+The setup page asks **How Raff looks after it**:
+
+| Choice | What happens |
+|---|---|
+| **Raff manages everything** (default) | Raff Guardian installs updates in your maintenance window, starts stopped services again, blocks attacks, keeps the disk clean and tells you when the application stops and how to start it again. |
+| **Ask me before changes** | Raff Guardian prepares each change and waits for your OK. Attacks are still blocked at once. |
+| **Watch only** | Raff Guardian checks the server and tells you about problems. It changes nothing. |
+| **Install only** | No Raff Guardian. Raff installs the stack once and you look after the server yourself. |
+
+See [Kept by Raff](/products/build/raff-keep/concepts/raff-guardian-choice), and [everything Raff Guardian does](/products/manage/raff-guardian/index#what-it-does).
+
+## What you get
+
+- A server sized for your answers, with its operating system licence included.
+- The application installed, configured and checked by Raff.
+- Your own admin login for Remote Desktop, and on a MetaTrader server a trader login that runs the terminals. Their passwords are shown once.
+- A page for the server under **Keep** with how to connect, your terminals or sites, and every install step in **Activity**.
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Set up a MetaTrader server" icon="chart-line" href="/products/build/raff-keep/quickstart-guides/set-up-a-metatrader-server">
+    Terminals, platform, auto start and access, then pay.
+  </Card>
+  <Card title="Set up an ASP.NET server" icon="globe" href="/products/build/raff-keep/quickstart-guides/set-up-an-aspnet-server">
+    Sites, domains, SQL Server Express and publishing.
+  </Card>
+  <Card title="Get your logins and passwords" icon="key" href="/products/build/raff-keep/quickstart-guides/get-your-logins">
+    Shown once when the server is ready.
+  </Card>
+  <Card title="Connect with Remote Desktop" icon="desktop" href="/products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop">
+    Which login to use and where.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={2}>
+  <Card title="Set up a MetaTrader server" icon="rocket" href="/products/build/raff-keep/quickstart-guides/set-up-a-metatrader-server">
+    Step-by-step dashboard tasks.
+  </Card>
+  <Card title="How an install works" icon="lightbulb" href="/products/build/raff-keep/concepts/how-an-install-works">
+    Installs, logins, Raff Guardian, failed installs and billing.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/build/raff-keep/details/features-and-limits">
+    Features, limits and pricing.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-keep/troubleshooting">
+    Common issues and recovery.
+  </Card>
+</CardGroup>
+
+Raff Keep is managed from the dashboard. A Raff Keep server is also a normal Raff server, so it shows in **Compute** with a **Keep** tag, and the full server controls (snapshots, backups, networking, graphs) work there.

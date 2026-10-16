@@ -1,0 +1,137 @@
+---
+title: Raff Guardian features and limits
+sidebarTitle: Features & limits
+description: Supported systems, network needs, timings and every limit of Raff Guardian in one place.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+The facts about Raff Guardian in one place.
+
+## Supported servers
+
+| Item | Value | Notes |
+|---|---|---|
+| Operating system | Windows Server | Offered on every Windows server on Raff. Raff tests each release on Windows Server 2025 |
+| Linux | Not supported yet | The Guardian tab of a Linux server says so and offers no install |
+| Install | From the server's Guardian tab, or on the Windows create page | |
+| Runs as | The **RaffGuardian** Windows service | `C:\Program Files\Raff\Guardian`, data in `C:\ProgramData\Raff\Guardian` |
+
+## Network
+
+| Item | Value |
+|---|---|
+| Inbound ports | None. Raff Guardian never opens a port |
+| Outbound | HTTPS to `api.rafftechnologies.com` (reports) and `raff-releases.s3.raffusercloud.com` (install and updates) |
+| Windows updates and Defender definitions | From Microsoft, as Windows normally gets them |
+
+## Install
+
+| Item | Value |
+|---|---|
+| Install command | Single use, expires after 15 minutes |
+| Where to run it | Windows PowerShell, as administrator |
+| First-boot install (create page) | Keeps trying for up to 10 minutes while the network comes up |
+| Mode after a first install | **Watch only** from the Guardian tab; the chosen mode from the create page |
+| Reinstall | New key; keeps the server's mode and settings |
+
+## Reports and timings
+
+| Item | Value |
+|---|---|
+| Report | Every minute; full state every 15 minutes |
+| Windows protection check | Every hour, or at once with **Check now** |
+| Windows users | Checked every minute, sent when they change and every 15 minutes |
+| Apps | Listed daily and when they change |
+| Not reporting | After 5 minutes without a report |
+| Change not run | Expires after 30 minutes |
+| Proposal not answered | Expires after 7 days |
+| Copy of reports kept on the server | 7 days |
+
+## Updates
+
+| Item | Value | Notes |
+|---|---|---|
+| Update window | Chosen days, start on the hour or half hour, your time zone | Default every day at 03:00 UTC |
+| Start | Within an hour of the start time | |
+| Before the install | Disk snapshot, or Raff Backups on servers that use them | |
+| Check after the restart | Up to 25 minutes | Then the restore offer |
+| Driver updates | Not installed | Left to you |
+
+## Security
+
+| Item | Value | Notes |
+|---|---|---|
+| Block after | 5 to 200 failed sign-ins from one address in 15 minutes | Default 8 |
+| Counts | Remote Desktop, and SSH when OpenSSH Server is installed | |
+| Automatic blocks | Lifted after 7 days | Blocked again at once on a new attack |
+| Blocks you add | Stay until you unblock them | |
+| Automatic blocks on a server | Up to 500 | IPv4 only |
+| Remote Desktop allow list | Up to 500 IPv4 addresses or ranges | The browser console always works |
+| Never blocked | Allowed addresses, Raff's browser console, private and reserved ranges | |
+
+## Maintenance and power
+
+| Item | Value |
+|---|---|
+| Watched services | Built in: Remote Desktop, Windows Update, Microsoft Defender, IIS, SQL Server, the guest agent; plus up to 40 you add |
+| Service names you add | Letters, digits and `. _ $ -`, up to 80 characters |
+| Automatic service restarts | Up to 3 a day per service, then Raff Guardian asks |
+| Free disk space | When a drive has less than 15% free, at most once a day per drive |
+| Restart or shut down countdown | 1, 5 or 10 minutes |
+| Restart or shut down reason | Optional, up to 120 characters |
+| Force off offer | Windows still running 10 minutes after a shut down (45 while updates may be installing) |
+| Hard restart offer | Windows not back 15 minutes after a restart (45 while updates may be installing) |
+
+## Windows users
+
+| Item | Value |
+|---|---|
+| Accounts listed | Up to 200 |
+| Sessions listed | Up to 50 |
+| New password | At least 20 characters |
+| Show a new password again | For 10 minutes after you first see it |
+| New password nobody opened | Deleted after 24 hours |
+
+## Questions and Activity
+
+| Item | Value |
+|---|---|
+| Questions | Up to 10 a minute per server |
+| Answers | Deleted after 7 days |
+| Activity list | 20 threads a page; search up to 100 characters |
+| Activity export | CSV or JSON lines, up to 13 months and 100,000 entries per file |
+
+## What needs a mode other than Watch only
+
+On **Watch only**, Raff Guardian changes nothing. These need **Raff manages everything** or **Ask me before changes**:
+
+- Installing Windows updates, also with **Install now**.
+- Blocking addresses, and **Block now**.
+- Changing who can reach Remote Desktop.
+- Restarting a service, freeing disk space, updating Microsoft Defender's definitions, quick scans.
+- **Restart** and **Shut down** through Raff Guardian (on Watch only they use the standard way).
+
+These work in every mode: unblocking an address, signing out, unlocking or setting a new password for a Windows user, questions about the server, and Raff Guardian's own updates.
+
+## Who can do what
+
+| Task | Permission |
+|---|---|
+| See Raff Guardian, findings and activity | `vm.view` |
+| Install, uninstall, change settings, approve or decline, block and unblock, ask questions, export activity | `vm.manage` |
+| Restart or shut down through Raff Guardian | `vm.power` |
+| Set a new Windows password | `vm.manage` and `vm.console`, signed in to the dashboard |
+
+See [Permissions matrix](/products/manage/team-projects/details/permissions-matrix) for the roles that hold each permission.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/manage/raff-guardian/details/pricing">
+    What Raff Guardian costs.
+  </Card>
+  <Card title="Modes and permissions" icon="lightbulb" href="/products/manage/raff-guardian/concepts/modes-and-permissions">
+    Every action and its default.
+  </Card>
+</CardGroup>

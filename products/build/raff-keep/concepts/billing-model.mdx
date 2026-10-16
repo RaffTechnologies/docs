@@ -1,0 +1,71 @@
+---
+title: Raff Keep billing model
+sidebarTitle: Billing model
+description: How a Raff Keep server is billed. One price for the server and its operating system licence, paid up front for the period you choose, renewed automatically, with what happens when you resize or delete.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A Raff Keep server is billed like any Raff server: a subscription you pay up front at checkout for the period you choose, which renews automatically. The price is the server plan plus the Windows licence. Installing the stack costs nothing extra, and neither do the terminals, sites and .NET versions you add later.
+
+## How it works
+
+### The price
+
+```
+price for the period = server plan for the period
+                     + Windows licence ($15.00 a month × months in the period)
+```
+
+For example, a MetaTrader server with 1 to 4 terminals on 2 vCPU · 4 GB · 80 GB costs \$22.99 + \$15.00 = \$37.99 a month. See [Pricing](/products/build/raff-keep/details/pricing) for every size.
+
+The **Summary** on the setup page also lists [Raff Guardian](/products/manage/raff-guardian/index): "Raff Guardian: free for the first 6 months, then \$10.00 a month". It is not part of what you pay at checkout.
+
+### Billing periods
+
+| Period | You pay | Cheaper because |
+|---|---|---|
+| **Monthly** | One month at checkout | |
+| **Yearly** | 12 months up front | The server plan costs 10 months' price |
+| **24 months** | 24 months up front | The server plan costs 18 months' price |
+
+The Windows licence has no period discount: it is \$15.00 for every month of the period.
+
+### Paying and renewing
+
+You pay at checkout, from your Raff balance first, then your card. Raff Keep is for accounts on monthly billing: pay-as-you-go accounts cannot buy a stack yet.
+
+At the end of the period the subscription renews automatically, for the same period, from your Raff balance first, then your saved card.
+
+### Changes during the period
+
+| Change | What happens to the bill |
+|---|---|
+| Resize to a bigger size | The difference for the rest of the period is charged |
+| Resize to a smaller size | The difference for the rest of the period goes to your Raff balance |
+| Add a terminal, site, domain or .NET version | Nothing is charged |
+| Delete an installed server | The unused part of the server plan goes to your Raff balance. The Windows licence for the current period is not returned |
+| Stop an install with **Stop install and delete server** | Everything you paid for the order goes to your Raff balance |
+| The install fails | Everything you paid goes to your Raff balance, or Raff holds the server and charges nothing more while it checks. See [Failed installs](/products/build/raff-keep/concepts/failed-installs) |
+
+## When to use which period
+
+- **Monthly** while you try a stack, or for a server you may not need for long.
+- **Yearly** or **24 months** for a server you will keep: the per-month price is lower.
+
+## Trade-offs
+
+- Yearly and 24 months are paid in full at checkout.
+- Stopping the server in **Compute** does not pause the subscription.
+- Refunds for failed installs go to your Raff balance only.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/raff-keep/details/pricing">
+    Every size with its monthly, yearly and 24-month price.
+  </Card>
+  <Card title="Delete the server" icon="rocket" href="/products/build/raff-keep/quickstart-guides/delete-a-keep-server">
+    What a delete does to the bill.
+  </Card>
+</CardGroup>

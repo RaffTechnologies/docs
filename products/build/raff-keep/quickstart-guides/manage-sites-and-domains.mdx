@@ -1,0 +1,64 @@
+---
+title: Manage ASP.NET sites and domains
+sidebarTitle: Manage sites and domains
+description: Add a site or a domain with its free certificate, remove a site, and add a .NET version on a Raff Keep ASP.NET server.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+After the install you can change the sites on a Raff Keep ASP.NET server from its page. [Raff Guardian](/products/manage/raff-guardian/index) makes each change on the server the way setup made the first sites. Nothing is charged.
+
+## Before you start
+
+- A Raff Keep ASP.NET server that is **Installed**, with Raff Guardian on.
+- Permission to manage the server (`vm.manage`).
+
+## Steps
+
+<Steps>
+  <Step title="Add a site">
+    On the **Overview** tab, click **Add site** in **Your sites**. Give it a **Name** (letters, digits, dots, hyphens or underscores, such as `shop`) and, optionally, a **Domain**. Click **Add the site**.
+
+    The site gets its own folder in `C:\inetpub\sites` and its own application pool, like the sites Raff Keep set up. It shows in the list within 5 minutes and gets its own publishing login a few minutes later. A server holds up to 20 sites.
+  </Step>
+  <Step title="Add a domain to a site">
+    Open the site's **...** menu and click **Add a domain** (a site without one also shows **Add a domain** under its name). Type the **Domain** and click **Add the domain**.
+
+    Point the domain's A record at the server's address. Raff Keep checks every 15 minutes for 7 days and gets the free Let's Encrypt certificate as soon as the domain points at the server. The site then answers on the domain over HTTP and HTTPS, and the certificate renews by itself.
+  </Step>
+  <Step title="Remove a site">
+    Open the site's **...** menu and click **Remove site**. Raff Guardian removes the site, its application pool, its publishing login and its domains' certificates; the domains stop answering here and its publish profile stops working.
+
+    Tick **Also delete its files** to delete its folder too. Without it, the files stay in `C:\inetpub\sites` on the server. Click **Remove the site** (or **Remove with its files**). Site 1, **Default Web Site**, cannot be removed.
+  </Step>
+  <Step title="Add a .NET version">
+    On the **Apps** tab, the **.NET on this server** card lists the .NET versions with Microsoft's support dates. Click **Add a .NET version**, pick the version and click **Add .NET** with its number.
+
+    Raff Guardian installs the newest hosting bundle of that version from Microsoft, checks its signature and restarts the running sites once so they can use it. It takes a minute or two.
+  </Step>
+</Steps>
+
+## Verify
+
+Each change shows its progress under the site or the card, then Raff Guardian's result. Every change is also in the **Activity** tab.
+
+## A site does not start
+
+When a site does not answer, **Your sites** shows it as **Not starting** with Raff Guardian's reason and the fix:
+
+| Fix | When | What it does |
+|---|---|---|
+| **Add .NET** with its number | The app needs a .NET version the server does not have | Installs that version, as above |
+| **Bring the site back** | A publish did not finish and left the site offline | Removes the offline page. Publish again afterwards so every file is the new one |
+| **Start it again** | The app stopped or failed to start | Restarts the site's application pool. If the app fails again, fix it and publish again |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Publish an ASP.NET site" icon="upload" href="/products/build/raff-keep/quickstart-guides/publish-an-aspnet-site">
+    Publish profile and GitHub Actions.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/build/raff-keep/details/features-and-limits">
+    What an ASP.NET server includes.
+  </Card>
+</CardGroup>

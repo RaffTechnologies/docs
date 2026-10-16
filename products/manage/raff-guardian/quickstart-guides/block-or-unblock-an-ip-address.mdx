@@ -1,0 +1,63 @@
+---
+title: Block or unblock an IP address
+sidebarTitle: Block or unblock an IP address
+description: See which IP addresses Raff Guardian blocked, unblock one, block one yourself, and change how many wrong passwords trigger a block.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian blocks addresses that keep guessing passwords, at the server's own Windows Firewall. The **Security** section of the Guardian tab shows what is blocked and lets you unblock an address or block one yourself. To let only your own addresses reach Remote Desktop, see [Limit who can reach Remote Desktop](/products/manage/raff-guardian/quickstart-guides/limit-remote-desktop-access).
+
+## Before you start
+
+- Raff Guardian on the server.
+- Permission to manage the server (`vm.manage`). Other members see the lists without buttons.
+
+## See what is blocked
+
+Open the server under **Virtual Machines**, click **Guardian**, then **Security**.
+
+- The band at the top says whether blocking works, for example **Protected: blocking is working**, with **Blocked now**, **Failed sign-ins, last 15 min** and **Last report**.
+- **Blocked addresses** lists each block and why, for example "Blocked on the server on 26 Sept, 14:43 after 8 failed sign-ins. Raff Guardian lifts it on 3 Oct."
+- **Wrong passwords, last 24 hours** charts the failed Remote Desktop sign-ins hour by hour, and names the busiest address.
+
+<Frame>
+  ![TODO: Security section with the status band, Who can reach Remote Desktop and Blocked addresses](/images/products/manage/raff-guardian/security-01-overview.png)
+</Frame>
+
+## Unblock an address
+
+1. In **Blocked addresses**, click **Unblock** on the address.
+2. In **Unblock** followed by the address, click **Unblock**, or **Keep blocked**.
+
+Raff Guardian removes its firewall rule and the address can reach the server again. If it keeps failing to sign in, Raff Guardian blocks it again. Unblock works in every mode, **Watch only** included; on Watch only, Raff Guardian does not block the address again.
+
+To stop an address you use from being blocked at all, allow it to reach Remote Desktop (below). Addresses allowed to reach Remote Desktop are never blocked.
+
+## Block an attacking address yourself
+
+When an address attacks Remote Desktop, the **Overview** can list a finding such as **Remote Desktop attack from 203.0.113.7** with **Block now**. Click it to block the address. A block you add stays until you unblock it.
+
+Raff Guardian blocks IPv4 addresses only for now.
+
+## Change when it blocks
+
+1. Click **Settings**. In the **Raff Guardian** group, the row **Block an attacker after** shows the number of wrong passwords, for example "8 tries".
+2. Click **Change**, set a number from 5 to 200, and click **Save**.
+
+The count is per address within 15 minutes, and the block happens on the server within seconds. Whether Raff Guardian blocks on its own, asks you first or only reports is the **Block attacking addresses** action under **Each action on its own**: **Auto** (the default in both **Raff manages everything** and **Ask me before changes**), **Ask me** or **Off**. See [Automatic blocking and lockout](/products/manage/raff-guardian/concepts/automatic-blocking).
+
+## Verify
+
+The address leaves **Blocked addresses** (or appears there) within a minute or two, and **Activity**, category **Security**, records the change.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Automatic blocking and lockout" icon="lightbulb" href="/products/manage/raff-guardian/concepts/automatic-blocking">
+    How blocking works and why Windows no longer locks you out.
+  </Card>
+  <Card title="Open the browser console" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/open-browser-console">
+    Reach the server when Remote Desktop is closed to you.
+  </Card>
+</CardGroup>

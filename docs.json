@@ -176,6 +176,50 @@
                 "pages": [
                   "products/build/raff-apps/index"
                 ]
+              },
+              {
+                "group": "Raff Keep",
+                "icon": "boxes-stacked",
+                "pages": [
+                  "products/build/raff-keep/index",
+                  {
+                    "group": "Get a server",
+                    "pages": [
+                      "products/build/raff-keep/quickstart-guides/set-up-a-metatrader-server",
+                      "products/build/raff-keep/quickstart-guides/set-up-an-aspnet-server",
+                      "products/build/raff-keep/quickstart-guides/follow-the-install",
+                      "products/build/raff-keep/quickstart-guides/get-your-logins"
+                    ]
+                  },
+                  {
+                    "group": "Use your server",
+                    "pages": [
+                      "products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop",
+                      "products/build/raff-keep/quickstart-guides/add-a-metatrader-terminal",
+                      "products/build/raff-keep/quickstart-guides/publish-an-aspnet-site",
+                      "products/build/raff-keep/quickstart-guides/manage-sites-and-domains",
+                      "products/build/raff-keep/quickstart-guides/delete-a-keep-server"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/build/raff-keep/concepts/how-an-install-works",
+                      "products/build/raff-keep/concepts/logins-and-the-built-in-administrator",
+                      "products/build/raff-keep/concepts/raff-guardian-choice",
+                      "products/build/raff-keep/concepts/failed-installs",
+                      "products/build/raff-keep/concepts/billing-model"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/build/raff-keep/details/features-and-limits",
+                      "products/build/raff-keep/details/pricing"
+                    ]
+                  },
+                  "products/build/raff-keep/troubleshooting"
+                ]
               }
             ]
           },
@@ -423,6 +467,64 @@
                     ]
                   },
                   "products/manage/team-projects/troubleshooting"
+                ]
+              },
+              {
+                "group": "Raff Guardian",
+                "icon": "shield-check",
+                "pages": [
+                  "products/manage/raff-guardian/index",
+                  {
+                    "group": "Set up",
+                    "pages": [
+                      "products/manage/raff-guardian/quickstart-guides/add-while-creating-a-server",
+                      "products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server",
+                      "products/manage/raff-guardian/quickstart-guides/set-permissions",
+                      "products/manage/raff-guardian/quickstart-guides/uninstall"
+                    ]
+                  },
+                  {
+                    "group": "Everyday",
+                    "pages": [
+                      "products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change",
+                      "products/manage/raff-guardian/quickstart-guides/see-the-activity-log"
+                    ]
+                  },
+                  {
+                    "group": "Security",
+                    "pages": [
+                      "products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address",
+                      "products/manage/raff-guardian/quickstart-guides/limit-remote-desktop-access",
+                      "products/manage/raff-guardian/quickstart-guides/reset-passwords-and-manage-windows-users"
+                    ]
+                  },
+                  {
+                    "group": "Updates and power",
+                    "pages": [
+                      "products/manage/raff-guardian/quickstart-guides/schedule-windows-updates",
+                      "products/manage/raff-guardian/quickstart-guides/restart-or-shut-down-the-server"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/manage/raff-guardian/concepts/how-it-works",
+                      "products/manage/raff-guardian/concepts/modes-and-permissions",
+                      "products/manage/raff-guardian/concepts/automatic-blocking",
+                      "products/manage/raff-guardian/concepts/windows-updates",
+                      "products/manage/raff-guardian/concepts/findings",
+                      "products/manage/raff-guardian/concepts/activity",
+                      "products/manage/raff-guardian/concepts/privacy-and-data"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/manage/raff-guardian/details/features-and-limits",
+                      "products/manage/raff-guardian/details/pricing"
+                    ]
+                  },
+                  "products/manage/raff-guardian/troubleshooting"
                 ]
               }
             ]

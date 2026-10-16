@@ -1,0 +1,76 @@
+---
+title: "Set permissions: what Raff Guardian may do"
+sidebarTitle: "Set permissions: what it may do"
+description: Switch a server between Raff manages everything, Ask me before changes and Watch only, and set Auto, Ask me or Off for each action.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Pick one of three modes for each server, and change single actions only when you want to. Every choice saves the moment you make it and is recorded in Activity.
+
+| Mode | What Raff Guardian does |
+|---|---|
+| **Raff manages everything** | Fixes problems, installs updates in your update window and blocks attacks on its own. Every change is recorded in Activity. |
+| **Ask me before changes** | Asks you before it changes anything on the server. It still blocks attacks at once, answers your questions about the server and keeps itself up to date. |
+| **Watch only** | Reports what it sees and changes nothing. It still keeps itself up to date, and you can still remove its blocks and sign out, unlock or set new passwords for Windows users. |
+
+See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions) for what each mode does with every action.
+
+## Before you start
+
+- Raff Guardian on the server.
+- Permission to manage the server (`vm.manage`). Other members see the settings read only.
+
+## Choose how much it may do on its own
+
+<Steps>
+  <Step title="Open Settings">
+    Open the server under **Virtual Machines**, click **Guardian**, then **Settings**. The **Raff Guardian** group's first row, **How Raff looks after it**, shows the current mode.
+  </Step>
+  <Step title="Pick a mode">
+    Click **Change** and pick **Raff manages everything**, **Ask me before changes** or **Watch only**. It saves at once.
+
+    <Frame>
+      ![TODO: Settings with the How Raff looks after it row open on the three modes](/images/products/manage/raff-guardian/mode-01-choices.png)
+    </Frame>
+  </Step>
+  <Step title="Keep or replace your own choices">
+    If you set some actions yourself and the new mode would change them, Raff Guardian names them, for example "You set Free disk space to Off. With Ask me before changes it becomes Ask me." Click:
+
+    - **Use** followed by the mode name, to set every action to the mode's default.
+    - **Keep my choices**, to keep the actions you set yourself as they are.
+    - **Cancel**, to change nothing.
+  </Step>
+</Steps>
+
+Choosing **Watch only** cancels everything queued and stops what is running as soon as it safely can: "Raff Guardian is set to Watch only." It keeps your per-action choices for when you leave Watch only.
+
+## Set permissions for each action
+
+1. In the **Raff Guardian** group, on **Each action on its own**, click **Open**. The **Raff Guardian settings** panel opens.
+2. Click **Advanced: choose for each action**. Actions are grouped as **Updates**, **Security**, **Users**, **Licences**, **Power**, **Maintenance**, **Commands** and **Raff Guardian**.
+3. Set each action:
+   - **Auto**: Raff Guardian does it on its own and records it.
+   - **Ask me**: it asks you first. See [Approve or decline a change](/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change).
+   - **Off**: never.
+
+Some actions offer fewer choices: **Always asks** (restoring the pre-update snapshot), **Always on** (Raff Guardian keeping itself up to date), or **Ask me** and **Off** only (actions Raff Guardian never takes on its own, such as signing users out or forcing the server off).
+
+An action you set yourself shows **Your choice**. Under the mode, Raff Guardian shows how many actions you set differently and a link, **Use** followed by the mode name **for every action**, to clear them.
+
+When you start an action yourself, for example **Install now** or **Block now**, that counts as your yes. Only **Off** stops it.
+
+## Verify
+
+The **Raff Guardian** card on the **Overview** names the mode under its title. **Activity**, in the **Settings** category, has a line such as "You chose Ask me before changes. 4 actions changed."
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Schedule Windows updates" icon="calendar" href="/products/manage/raff-guardian/quickstart-guides/schedule-windows-updates">
+    When updates may install, and whether to ask first.
+  </Card>
+  <Card title="Approve or decline a change" icon="check" href="/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change">
+    Answer what Raff Guardian asks on Ask me.
+  </Card>
+</CardGroup>

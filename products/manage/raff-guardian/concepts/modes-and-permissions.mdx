@@ -1,0 +1,97 @@
+---
+title: Raff Guardian modes and permissions
+sidebarTitle: Modes and permissions
+description: What Raff manages everything, Ask me before changes and Watch only do, and the Auto, Ask me and Off setting of every Raff Guardian action.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Every server with Raff Guardian has one mode, and every action Raff Guardian can take has its own setting: **Auto**, **Ask me** or **Off**. The mode sets the defaults for all actions at once; you change single actions only when you want to.
+
+## How it works
+
+### The three modes
+
+| Mode | In short |
+|---|---|
+| **Raff manages everything** | Raff Guardian fixes problems, installs updates in your update window and blocks attacks on its own. Every change is recorded in Activity. |
+| **Ask me before changes** | Raff Guardian asks before it changes anything. It still blocks attacks at once, answers your questions about the server and keeps itself up to date. |
+| **Watch only** | Raff Guardian reports what it sees and changes nothing. It still keeps itself up to date, and you can still remove its blocks and sign out, unlock or set new passwords for Windows users. |
+
+A server you install Raff Guardian on from its Guardian tab starts on **Watch only**. A server where you added Raff Guardian on the create page starts in the mode you picked there. A reinstall keeps the mode the server had.
+
+### Auto, Ask me and Off
+
+- **Auto**: Raff Guardian does it on its own and records it in Activity.
+- **Ask me**: Raff Guardian prepares the change and waits in the **Queue** for **Approve** or **Not now**. See [Approve or decline a change](/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change).
+- **Off**: never, not even when you press its button.
+
+When you start an action yourself, for example **Install now** or **Unblock**, that counts as your yes. Only **Off** stops it.
+
+### Every action and its default
+
+| Group | Action | Raff manages everything | Ask me before changes | Choices |
+|---|---|---|---|---|
+| Updates | Install Windows updates on your schedule | Auto | Ask me | Auto, Ask me, Off |
+| Updates | Restore the pre-update snapshot | Always asks | Always asks | Fixed |
+| Security | Block attacking addresses | Auto | Auto | Auto, Ask me, Off |
+| Security | Change who can reach Remote Desktop | Ask me | Ask me | Auto, Ask me, Off |
+| Security | Update Microsoft Defender's definitions | Ask me | Ask me | Ask me, Off |
+| Security | Start Microsoft Defender quick scans | Ask me | Ask me | Ask me, Off |
+| Users | Sign out Windows users | Ask me | Ask me | Ask me, Off |
+| Users | Unlock Windows users | Ask me | Ask me | Ask me, Off |
+| Users | New passwords for Windows users | Ask me | Ask me | Ask me, Off |
+| Licences | Activate Windows with Raff's licence | Ask me | Ask me | Ask me, Off |
+| Power | Restart the server | Auto | Ask me | Auto, Ask me, Off |
+| Power | Force off when Windows does not shut down | Ask me | Ask me | Ask me, Off |
+| Power | Hard restart when Windows does not restart | Ask me | Ask me | Ask me, Off |
+| Maintenance | Restart a stopped service | Auto | Ask me | Auto, Ask me, Off |
+| Maintenance | Free disk space | Auto | Ask me | Auto, Ask me, Off |
+| Commands | Answer questions about this server | Auto | Auto | Auto, Off |
+| Raff Guardian | Keep Raff Guardian up to date | Always on | Always on | Fixed |
+
+The actions with **Ask me** and **Off** only are ones Raff Guardian never takes on its own: signing users out, unlocking them, new passwords and Windows activation run only when you press the button, and the Microsoft Defender and force actions only ever ask.
+
+### What each action does on Auto
+
+- **Install Windows updates**: in your update window, with a snapshot first and a check after the restart. See [Windows updates](/products/manage/raff-guardian/concepts/windows-updates).
+- **Restart the server**: restarts Windows when it asks for a restart outside an update install, during your update window, at most once a day. At other times it asks. Your own **Restart** always works.
+- **Restart a stopped service**: starts a watched service again when it stops, up to 3 times a day per service, then asks you. Services Windows needs are reported but never restarted.
+- **Free disk space**: when a drive runs low, removes Windows temp files, the recycle bin and the Delivery Optimization cache, at most once a day per drive. It never touches files Windows Update still needs.
+- **Block attacking addresses**: see [Automatic blocking and lockout](/products/manage/raff-guardian/concepts/automatic-blocking).
+
+### What Watch only still does
+
+On **Watch only**, Raff Guardian changes nothing on its own and refuses changes, with a few exceptions:
+
+- It keeps itself up to date.
+- You can still unblock an address, sign out, unlock or set a new password for a Windows user, and press the Windows licence buttons.
+- It answers your questions about the server.
+
+Choosing **Watch only** cancels everything queued and stops what is running as soon as it safely can. It also gives Windows its own account lockout back. Your per-action choices are kept for when you leave Watch only.
+
+On **Watch only**, **Restart** and **Shut down** in the server's power menu use the standard way instead of Raff Guardian. See [Restart or shut down the server](/products/manage/raff-guardian/quickstart-guides/restart-or-shut-down-the-server).
+
+## When to use it
+
+- **Raff manages everything**: servers you want looked after without daily attention.
+- **Ask me before changes**: production servers where every change needs a person's OK, while attacks are still blocked at once.
+- **Watch only**: to see what Raff Guardian would find before you let it change anything.
+- **Per action**: to keep one action as you want it, for example **Free disk space** on **Off** for a server with a strict disk layout.
+
+## Trade-offs / limits
+
+- On **Ask me**, a proposal waits until you answer it or for 7 days, then expires. Raff Guardian closes it earlier when the problem goes away.
+- On **Watch only**, Raff Guardian does not block attackers, so Windows' own account lockout applies again.
+- An action an older Raff Guardian cannot do yet shows a line saying so. Raff Guardian updates itself, so this clears on its own.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Set permissions: what it may do" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/set-permissions">
+    Change the mode or a single action.
+  </Card>
+  <Card title="Approve or decline a change" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change">
+    Answer proposals in the Queue.
+  </Card>
+</CardGroup>

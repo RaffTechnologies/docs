@@ -1,0 +1,62 @@
+---
+title: Add Raff Guardian while creating a server
+sidebarTitle: Add while creating a server
+description: Choose Raff Guardian and its mode on the Windows create page, so the new server installs it by itself at first boot.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Add Raff Guardian while you create a Windows server and you never run an install command. The server installs Raff Guardian by itself the first time it starts, in the mode you pick on the create page.
+
+## Before you start
+
+- Permission to create servers in the project (`vm.create`).
+- Raff Guardian is offered on the Windows create page only. It does not run on Linux yet.
+
+## Steps
+
+<Steps>
+  <Step title="Open the Windows create page">
+    Click **+ Create** at the top right and choose **Windows**.
+  </Step>
+  <Step title="Choose Add Raff Guardian">
+    Fill in **Region**, **Windows Edition** and **Windows License** as usual. In step 4, **Raff Guardian**, click **Add Raff Guardian** ("Free for 6 months, then \$10/mo"). **Not now** is selected by default.
+
+    Click **See what Raff Guardian does** for the full list of what it does.
+
+    <Frame>
+      ![TODO: Raff Guardian step on the Windows create page with Add Raff Guardian selected](/images/products/manage/raff-guardian/create-01-add.png)
+    </Frame>
+  </Step>
+  <Step title="Pick how Raff Guardian looks after the server">
+    Under **How Raff Guardian looks after the server**, pick one:
+
+    | Choice | What it does |
+    |---|---|
+    | **Raff manages everything** (default) | Updates in your maintenance window, stopped services restarted, the application watched, attacks blocked, disk kept clean. |
+    | **Ask me before changes** | Raff Guardian prepares each change and waits for your OK. Attacks are still blocked at once. |
+    | **Watch only** | Raff Guardian checks the server and tells you about problems. It changes nothing. |
+
+    You can change this any time on the server's Guardian tab. See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions).
+  </Step>
+  <Step title="Finish and create the server">
+    Complete the remaining steps and create the server. The step's summary reads, for example, "Raff manages everything · 6 months free".
+  </Step>
+</Steps>
+
+## Verify
+
+A few minutes after the server first starts, open it under **Virtual Machines** and click the **Guardian** tab. The tab shows the **Overview**, **Security**, **Users**, **Apps**, **Updates**, **Activity** and **Settings** sections, and the **Raff Guardian** card names the mode you picked.
+
+The first-boot install keeps trying for up to 10 minutes while the network comes up. If the tab still offers **Install Raff Guardian** after that, install it by hand: see [Install on an existing server](/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server). It still starts in the mode you picked on the create page.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Schedule Windows updates" icon="calendar" href="/products/manage/raff-guardian/quickstart-guides/schedule-windows-updates">
+    Choose the days and time Windows updates may install.
+  </Card>
+  <Card title="See what it did (activity log)" icon="list" href="/products/manage/raff-guardian/quickstart-guides/see-the-activity-log">
+    Every check, change and result in Activity.
+  </Card>
+</CardGroup>

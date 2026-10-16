@@ -1,0 +1,122 @@
+---
+title: Raff Guardian
+sidebarTitle: Overview
+description: Raff Guardian looks after your servers from the inside. It blocks attackers, installs updates in your window, keeps services and apps running, manages users and records everything it does.
+icon: shield-check
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian is a small program Raff installs on your server to look after it. It watches the server every minute and does the work a server needs every day: it blocks attackers, installs updates, restarts what stops and frees disk space. You decide how much it may do on its own, and every change it makes is recorded in **Activity** with what it was before and after.
+
+Raff Guardian is the engine behind [Raff Keep](/products/build/raff-keep/index): a stack **Kept by Raff** is a server Raff Guardian looks after. You can also add it to any server you create on Raff. It runs on Windows Server today.
+
+<Frame>
+  ![TODO: Guardian tab of a Windows server with Needs attention, Queue and the Raff Guardian card](/images/products/manage/raff-guardian/hero.png)
+</Frame>
+
+## Why it is called Guardian
+
+A server on the internet needs care every day. Bots start guessing its passwords within minutes of it going online, updates arrive every month, services stop and disks fill up. Most people do not log in every day to check.
+
+Raff Guardian is named for that job. It stays on the server, watches over it day and night, steps in when something goes wrong and tells you what it did.
+
+## How it works
+
+1. **Install it.** Run one command from the server's **Guardian** tab, or choose it when you create the server. A stack Kept by Raff gets it during the install.
+2. **It reports every minute.** Security, updates, services, apps, users and disk. It only connects out to Raff over HTTPS and never opens a port on the server.
+3. **Raff finds what needs attention.** Each problem becomes a finding on the Guardian tab, with what it means and what to do.
+4. **It acts as you allow.** In **Raff manages everything** it fixes problems on its own. In **Ask me before changes** it waits for your OK. In **Watch only** it only reports.
+5. **Only what Raff signed runs.** Every action is signed by Raff, and Raff Guardian checks the signature before it runs it. Its own updates are signed and checked the same way.
+6. **Everything is recorded.** Each finding, change, approval and question is in **Activity**, and you can export it.
+
+## What it does
+
+### Security
+- **Blocks attackers in seconds.** An address that fails to sign in 8 times in 15 minutes is blocked at the server's own firewall. You choose the number, from 5 to 200. It counts Remote Desktop, and SSH when OpenSSH Server is installed.
+- **Keeps you from being locked out.** Raff Guardian takes over Windows' account lockout, so bots guessing passwords block their own address instead of locking your accounts.
+- **Limits who can reach Remote Desktop**, if you ask, to the addresses you list. The browser console always works.
+- **Warns about what you did not add**: a new administrator, or a remote access app you did not install.
+- **Checks Windows' defences** every hour: the firewall, Microsoft Defender and Remote Desktop settings. It keeps Defender's definitions current and runs quick scans.
+
+### Updates
+- **Installs Windows updates in your window.** Raff Guardian takes a snapshot first (or uses Raff Backups if the server has them), installs, restarts if needed and checks that the server came back. If it did not, it offers to put the snapshot back. Driver updates are left to you.
+
+### Keeping things running
+- **Restarts services that stop**: Remote Desktop, Windows Update, Microsoft Defender, IIS, SQL Server and up to 40 services you add. Up to 3 restarts a day each, then it asks you.
+- **Frees disk space** when a drive has less than 15% free.
+- **Restarts and shuts down safely**, with a countdown you choose, and offers to force it when Windows hangs.
+- **Watches a Keep stack's application** on a server Kept by Raff. When a MetaTrader terminal or an IIS site stops, it tells you why and how to start it again.
+
+### Knowing your server
+- **Lists the apps installed** and warns before one reaches its end of support.
+- **Answers questions** from the dashboard: what uses the CPU, which services run, which ports are open, which folders fill the disk.
+- **Shows Windows users** and who is signed in. You can set a new password, unlock an account or sign a user out from the dashboard. These run only when you press the button.
+- **Activates Windows with Raff's licence** on servers that have one.
+
+## What it does not do
+
+- Run on Linux servers yet. Raff Guardian supports Windows Server today.
+- Run your own scripts or commands. It runs only the actions built into it, signed by Raff.
+- Open a port on your server. It only connects out to Raff.
+- Sign anyone out, unlock an account or change a password on its own. These run only when you press the button.
+- Replace backups. The snapshot it takes before updates is deleted once the server is healthy.
+- Install driver updates.
+
+## Three modes
+
+| Mode | What Raff Guardian does |
+|---|---|
+| **Raff manages everything** | Fixes problems, installs updates in your update window and blocks attacks on its own. Every change is recorded in Activity. |
+| **Ask me before changes** | Asks you before it changes anything on the server. It still blocks attacks at once, answers your questions about the server and keeps itself up to date. |
+| **Watch only** | Reports what it sees and changes nothing. It still keeps itself up to date. |
+
+See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions).
+
+## Price
+
+Free for 6 months, then \$10/mo. Uninstall any time. See [Pricing](/products/manage/raff-guardian/details/pricing).
+
+---
+
+## Most viewed
+
+<CardGroup cols={2}>
+  <Card title="Install on an existing server" icon="download" href="/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server">
+    One PowerShell command from the server's Guardian tab.
+  </Card>
+  <Card title="Set permissions: what it may do" icon="sliders" href="/products/manage/raff-guardian/quickstart-guides/set-permissions">
+    Raff manages everything, Ask me before changes or Watch only.
+  </Card>
+  <Card title="Schedule Windows updates" icon="calendar" href="/products/manage/raff-guardian/quickstart-guides/schedule-windows-updates">
+    When Windows updates may install.
+  </Card>
+  <Card title="Block or unblock an IP address" icon="shield-halved" href="/products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address">
+    Unblock an address, limit who can reach Remote Desktop.
+  </Card>
+</CardGroup>
+
+---
+
+## Browse
+
+<CardGroup cols={3}>
+  <Card title="Install on an existing server" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server">
+    Step-by-step dashboard tasks.
+  </Card>
+  <Card title="How it works" icon="lightbulb" href="/products/manage/raff-guardian/concepts/how-it-works">
+    How Raff Guardian works, modes, blocking, updates and findings.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/manage/raff-guardian/details/features-and-limits">
+    Features, limits and pricing.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/manage/raff-guardian/troubleshooting">
+    Common issues and recovery.
+  </Card>
+  <Card title="Privacy and data" icon="lock" href="/products/manage/raff-guardian/concepts/privacy-and-data">
+    What Raff Guardian reads and sends.
+  </Card>
+  <Card title="Activity" icon="list" href="/products/manage/raff-guardian/concepts/activity">
+    The record of everything it did.
+  </Card>
+</CardGroup>

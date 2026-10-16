@@ -1,0 +1,171 @@
+---
+title: Raff Keep troubleshooting
+sidebarTitle: Troubleshooting
+description: Common Raff Keep issues and how to fix them. Failed or slow installs, Remote Desktop sign-in, MetaTrader terminals, ASP.NET publishing and refunds.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Issues you may run into with Raff Keep, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
+
+## Installs
+
+<AccordionGroup>
+  <Accordion title="The install failed">
+    **What's happening:** the banner on the server's page says what Raff did.
+
+    - "This install did not finish: ... We removed the server it created and returned \$X to your Raff balance." Raff removed the server and returned everything you paid. Click **Try again** to start a new install.
+    - "We could not create the server. ... was returned to your Raff balance." The server was never created; your payment is back. Click **Try again**.
+    - "This install did not finish. We are checking it and will contact you. Nothing more is charged while we check." Raff kept the server for a person to check, usually because someone was signed in or the cause is not clear. Wait for Raff to contact you.
+
+    **Fix:** try again, or reply to the email "Your ... install did not finish" and we will help. See [Failed installs](/products/build/raff-keep/concepts/failed-installs).
+  </Accordion>
+  <Accordion title="The install seems stuck">
+    **What's happening:** some steps take several minutes, and some restart the server. While the server is being created, the progress line shows the Windows licence setup.
+
+    **Why:** when the server stops reporting, or the install runs longer than it should, the page says "Taking longer than usual. Raff has been told." Raff is already looking at it.
+
+    **Fix:**
+    1. Leave the server alone. A restart Raff did not ask for stops the install, and if you are signed in when a step fails, Raff holds the server for a person to check.
+    2. Close the page if you like; the install keeps going and the line goes once it finishes.
+    3. If it has not finished after 24 hours, Raff holds it and checks it, and nothing more is charged.
+  </Accordion>
+  <Accordion title="&quot;Payment was not completed. Nothing was created.&quot;">
+    **What's happening:** checkout was left before paying. No server was created and nothing was charged.
+
+    **Fix:** click **Start again from the stack page**. To clean up the list, use **Remove from list** in the **...** menu.
+  </Accordion>
+  <Accordion title="I cannot click Start">
+    **What's happening:** the line under **Start** says why:
+
+    - "Raff Keep stacks are paid through checkout. Pay as you go is not available for them yet.": your account is on pay-as-you-go. Contact support.
+    - "You need the vm.create permission to start a stack.": ask a project admin for a role that can create servers.
+    - "Choose a built-in Administrator password that meets the rules.": the password rules show under **Access**.
+    - "Give the server a name (3 to 63 letters, digits or hyphens)."
+    - "Fix the answers above to get a price.": an answer is not accepted; the **Summary** shows the reason, such as more terminals than one server takes.
+  </Accordion>
+  <Accordion title="&quot;Licence activation pending: our team is on it&quot;">
+    **What's happening:** Windows' licence activation did not finish on the server. Raff's team has been told and will finish it. It never removes the server or charges you more.
+
+    **Fix:** nothing to do. Contact support if you need it sooner.
+  </Accordion>
+</AccordionGroup>
+
+## Signing in
+
+<AccordionGroup>
+  <Accordion title="I cannot sign in over Remote Desktop">
+    **Fix:** check each of these.
+
+    1. **The login.** Sign in as your admin login (`admin-...`) or, on a MetaTrader server, the trader login (`trader-...`). The built-in Administrator cannot sign in over Remote Desktop. In the browser the console says "This server does not let the built-in Administrator sign in over Remote Desktop." and offers **Use VNC console instead**.
+    2. **Your address.** The **Connect with Remote Desktop** card says "Reachable only from ..." when Remote Desktop is limited. If your address changed, open the **Security** tab and change **Who can reach Remote Desktop**, or use **Open Remote Desktop in the browser**.
+    3. **A blocked address.** After 8 wrong passwords from one address in 15 minutes, [Raff Guardian](/products/manage/raff-guardian/index) blocks it for 7 days. The **Security** tab lists it under **Blocked addresses**: click **Unblock**.
+    4. **A locked account.** 10 wrong passwords lock an account for 15 minutes when Raff Guardian does not block attackers. Wait, or use **Unlock** on the **Users** tab.
+    5. **The password.** If you lost it, set a new one: see [Get your logins and passwords](/products/build/raff-keep/quickstart-guides/get-your-logins).
+    6. **The server.** If the server is off, click **Power on** on its page.
+  </Accordion>
+  <Accordion title="I lost the logins, or never opened them">
+    **What's happening:** the logins are shown once. Unopened logins are deleted after 7 days, and Raff keeps no copy after they were shown.
+
+    **Fix:** with Raff Guardian, open **Users** and click **New password** on the login. With **Install only**, sign in as the built-in Administrator in the VNC console and set a new password in Windows. If you lost the built-in Administrator's password too, use **Reset password** on the server's page in **Compute**: the new password goes to the account's billing email address and the server restarts.
+  </Accordion>
+  <Accordion title="&quot;Access is denied&quot; with PowerShell remoting or \\server\c$">
+    **What's happening:** Windows gives an administrator other than the built-in Administrator a limited token over the network. Raff keeps this Windows default.
+
+    **Fix:** sign in over Remote Desktop and use **Run as administrator**, or use SSH with one of your account's SSH keys as your admin login.
+  </Accordion>
+  <Accordion title="A program says access is denied">
+    **What's happening:** your admin login runs programs without administrator rights until you confirm.
+
+    **Fix:** right-click the program and choose **Run as administrator**.
+  </Accordion>
+</AccordionGroup>
+
+## MetaTrader
+
+<AccordionGroup>
+  <Accordion title="A terminal does not run">
+    **What's happening:** **Your terminals** shows it as **Stopped**, and Raff Guardian emails "... stopped on your server ..." after about 15 minutes. The terminals run as the trader login: **Sign out** of the trader login closes them.
+
+    **Fix:**
+    1. Sign in over Remote Desktop as the trader login. Every terminal starts when it signs in. To leave, close the Remote Desktop window instead of signing out.
+    2. With auto start on, a restart also starts them: the trader login signs in by itself.
+    3. If Raff Guardian warns that the trader login will not sign in by itself, follow the warning's fix. A **New password** for the trader login on the **Users** tab sets auto sign-in up again.
+    4. Click **Check now** on **Your terminals** for a fresh reading.
+  </Accordion>
+  <Accordion title="A terminal lost its broker">
+    **What's happening:** **Your terminals** says "A terminal lost its broker", or a terminal shows "connection lost".
+
+    **Fix:** sign in as the trader login, open the terminal and sign in to your trading account again. Check with your broker that the account and server name are right.
+  </Accordion>
+  <Accordion title="I cannot add a terminal">
+    **What's happening:** the card says why under **Add terminal**:
+
+    - "This server's size runs at most ... Resize it to ...": click **Resize the server**, then add the terminal.
+    - "Raff Guardian adds terminals, and this server runs without it.": install Raff Guardian from the server's **Guardian** tab in **Compute** first.
+    - "This server runs 16 MetaTrader terminals, the most Raff Keep sets up on one server.": use a second server.
+  </Accordion>
+</AccordionGroup>
+
+## ASP.NET
+
+<AccordionGroup>
+  <Accordion title="Publishing fails, or Visual Studio cannot connect">
+    **Fix:**
+    1. **Where Web Deploy answers from.** On the **Apps** tab, **Publishing** shows **Web Deploy (port 8172)**. **Closed** means nobody can publish; your address must be in the list, or choose **From anywhere** with **Change**. GitHub Actions needs **From anywhere**.
+    2. **An old profile.** Each **Publish profile** makes a new password, and older profiles of the site stop working. Download a new one and update `WEBDEPLOY_PASSWORD` in GitHub.
+    3. **The certificate.** Visual Studio asks once to trust the server's Web Deploy certificate; accept it. Once a site's domain has its certificate, Web Deploy uses it.
+    4. **A blocked address.** Raff Guardian blocks an address that keeps failing to sign in to Web Deploy. Check **Blocked addresses** on the **Security** tab.
+  </Accordion>
+  <Accordion title="The publish profile does not download">
+    **What's happening:** the site's row explains it:
+
+    - "Raff Guardian is setting up publishing for this site. Its profile is ready in a few minutes.": a new site gets its publishing login a few minutes after it appears.
+    - "This profile was already downloaded. Download a new one."
+    - "This browser no longer holds the key for this profile. Download a new one.": the profile was asked for in another browser.
+
+    **Fix:** click **Publish profile** again.
+  </Accordion>
+  <Accordion title="A site shows Not starting">
+    **What's happening:** Raff Guardian found why the site does not answer, and the row shows the reason with its fix.
+
+    **Fix:** click the fix: **Add .NET** (the app needs a version the server does not have), **Bring the site back** (a publish did not finish and left the site offline; publish again afterwards) or **Start it again** (the app stopped). If it fails again, fix the app and publish again. See [Manage sites and domains](/products/build/raff-keep/quickstart-guides/manage-sites-and-domains).
+  </Accordion>
+  <Accordion title="My domain has no certificate">
+    **What's happening:** Let's Encrypt issues the certificate only once the domain points at the server.
+
+    **Fix:** set the domain's A record to the server's address. Raff Keep checks every 15 minutes for 7 days and gets the certificate as soon as it does.
+  </Accordion>
+</AccordionGroup>
+
+## Money
+
+<AccordionGroup>
+  <Accordion title="Where did my money go after a failed install?">
+    **What's happening:** Raff returns money for a failed install to your Raff balance, never to a card.
+
+    **Fix:**
+    1. Check the banner on the install's page: it names the amount returned.
+    2. Open **Billing** to see the balance and the refund in your billing history.
+    3. Your next purchase or renewal uses the balance first.
+    4. If the page says Raff is checking the install, nothing more is charged until Raff decides. If it says removing the server is taking longer than usual, Raff's team is on it and returns the money when it is done.
+  </Accordion>
+  <Accordion title="I deleted my server. Why did the licence not come back?">
+    **What's happening:** when you delete an installed server, the unused part of the server plan goes back to your Raff balance. The Windows licence for the current period is not returned.
+
+    **Fix:** none. See [Billing model](/products/build/raff-keep/concepts/billing-model).
+  </Accordion>
+  <Accordion title="I cannot reinstall or factory reset the server">
+    **What's happening:** "This server was set up by Raff Keep. Delete it and create it again."
+
+    **Fix:** delete the server and set up a new one from **Keep**.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The stack and the server's name (on the server's page under **Keep**)
+- The exact message and the time it happened
+- What you have already tried

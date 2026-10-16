@@ -1,0 +1,77 @@
+---
+title: Get your Raff Keep logins
+sidebarTitle: Get your logins and passwords
+description: Show the logins Raff Keep created for your server once, save them, and get a new password if you lose one.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Keep creates the logins you use on the server: your own admin login on every server, and a trader login that runs the terminals on a MetaTrader server. Their passwords are shown once, in the dashboard, to one person. Raff keeps an encrypted copy only until you have seen them, then deletes it.
+
+## Before you start
+
+- A Raff Keep server whose status is **Installed**.
+- You are signed in to the Raff dashboard and may manage servers in the server's project (`vm.manage`). Other members see "The logins this install created are shown once, to someone who can manage servers in this project."
+- A password manager or another safe place to keep them.
+
+## Steps
+
+<Steps>
+  <Step title="Open the server's page">
+    Click **Keep** in the sidebar and open the stack. At the top, a box says "Raff Keep created logins for this server. They are shown once: after you open them you can show them again for 10 minutes, then Raff deletes its copy."
+  </Step>
+  <Step title="Show the logins">
+    Click **Show the logins**. The box turns green: "Everything you need to get in. Copy it now." Each row has a copy button:
+
+    | Row | Where |
+    |---|---|
+    | **Web address** | ASP.NET: site 1 on the server's address |
+    | **Publish with Web Deploy** | ASP.NET, when you listed addresses for publishing at setup |
+    | **Admin login (Remote Desktop)** and **Password** | Every server: `admin-` plus 3 characters, such as `admin-k7q` |
+    | **Trader login (runs your terminals)** and **Password** | MetaTrader: `trader-` plus 3 characters, such as `trader-m2p` |
+
+    Under the rows: "The built-in Administrator signs in only in the VNC console, with the password you chose when you created the server."
+
+    <Frame>
+      ![TODO: Logins box with the admin and trader logins and I saved them](/images/products/build/raff-keep/logins-01-shown.png)
+    </Frame>
+  </Step>
+  <Step title="Save them, then click I saved them">
+    Copy every row into your password manager. The box says who saw the logins and until when you can show them again, 10 minutes after you first opened them. Click **I saved them** to have Raff delete its copy at once.
+  </Step>
+</Steps>
+
+## Verify
+
+The box closes once the 10 minutes end or you click **I saved them**. The **Users** tab then says who the logins were shown to and that Raff keeps no copy. Sign in with them: see [Connect with Remote Desktop](/products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop).
+
+## Rules
+
+- **Shown once, to one person.** The first person to click **Show the logins** sees them, and only that person can show them again, for 10 minutes. Anyone else sees who they were shown to and when.
+- **Dashboard only.** The logins are never sent by email and never shown to an API key.
+- **Unopened for 7 days**: Raff deletes them. The box says "The logins this install created were not opened within 7 days, so Raff deleted them." Set new passwords as below.
+
+## Lost a password
+
+**With Raff Guardian** (every choice except **Install only**):
+
+1. Open the **Users** tab. Your logins are tagged "your admin login (Raff Keep)" and "Trader login (runs your terminals)".
+2. Click **New password** on the login and confirm **Set a new password**. If your account asks for a two-step code, enter it.
+3. The new password is shown once, only to you, in this browser. Copy it and click **I saved it**.
+
+The old password stops working at once, with no restart. On a MetaTrader server, auto sign-in gets the trader login's new password too, so the terminals still start by themselves after a restart.
+
+**With Install only**: there is no [Raff Guardian](/products/manage/raff-guardian/index) to set a password. Sign in as the built-in Administrator in the VNC console and set a new password for the login in Windows.
+
+**The built-in Administrator**: open the server in **Compute** and use **Reset password** ("New password for the built-in Administrator (VNC console)"). Raff generates a new password, emails it to the account's billing email address and restarts the server. Your admin login keeps its password.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect with Remote Desktop" icon="desktop" href="/products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop">
+    Which login to use and where.
+  </Card>
+  <Card title="Logins and the Administrator" icon="lightbulb" href="/products/build/raff-keep/concepts/logins-and-the-built-in-administrator">
+    Why Remote Desktop uses your own admin login.
+  </Card>
+</CardGroup>

@@ -1,0 +1,66 @@
+---
+title: Failed Raff Keep installs
+sidebarTitle: Failed installs
+description: What Raff does when a Raff Keep install does not finish. When it removes the server and returns your money to your Raff balance, and when it keeps the server for a person to check.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+When a Raff Keep install does not finish, you never pay for a server that does not work. When the cause is clear, Raff removes the server it created and returns everything you paid for it to your Raff balance, in about 5 minutes and with no person involved. When the cause is not clear, Raff keeps the server, charges nothing more, and a person checks it and contacts you.
+
+## How it works
+
+### Removed and refunded
+
+Raff removes the server and returns your money when:
+
+- A step of the install failed and nobody was signed in to the server.
+- The server could not start or continue the install.
+- The server could not be created after you paid.
+- [Raff Guardian](/products/manage/raff-guardian/index) could not be installed on the server.
+- You stopped the install with **Stop install and delete server**.
+
+The page shows **Removing**: "This install did not finish. Raff is removing the server it created and returning your money to your Raff balance." When it is done, the banner says why and how much came back, for example "This install did not finish: Raff Guardian could not be installed on this server. We removed the server it created and returned \$37.99 to your Raff balance.", with **Try again**. You also get one email, such as "Your MetaTrader 4 and 5 install did not finish", with the same details and a **Try again** button.
+
+Everything you paid for the order comes back: the server and the Windows licence. A discount code you used can be used again. The money always goes to your Raff balance, where your next purchase or renewal uses it first. It shows in your billing history.
+
+### Kept for a person to check
+
+Raff keeps the server instead when removing it could lose your work or when it cannot be sure what happened:
+
+- The install has not finished after 24 hours.
+- The install stopped in a way that may have worked, such as a restart Raff did not ask for.
+- Someone is or was signed in to the server during the install.
+- Several installs failed at the same step within an hour.
+- The Windows licence could not be activated.
+- Raff cannot match the payment to the install.
+
+The page says "This install did not finish. We are checking it and will contact you. Nothing more is charged while we check." and the bell shows, for example, "We are checking your MetaTrader 4 and 5 install". The server keeps running. If a renewal falls due while Raff checks, it is moved back, so nothing is charged and nothing ends.
+
+When the check ends, Raff either removes the server and returns your money, or marks the install installed. An install held at 24 hours that then finishes becomes **Installed** by itself.
+
+### When removing takes longer
+
+Rarely, deleting the server takes longer than usual. The page then says "Removing the server is taking longer than usual. Our team has been told. Nothing more is charged." Raff finishes the removal and returns the money.
+
+## When to use it
+
+- **Try again** opens the stack's setup page so you can start a new install. Your earlier answers are not kept.
+- If you delete a server Raff is checking, it is a normal delete: the unused part of its subscription comes back at once, and Raff still checks the install and contacts you.
+
+## Trade-offs and limits
+
+- Refunds go to your Raff balance only.
+- A server Raff removed is gone with its disks. Do not sign in and store anything on a server while it installs.
+- Once an install is **Installed**, later problems are not install failures. They are handled like any other server problem: Raff Guardian warns you and you can contact support.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Billing model" icon="lightbulb" href="/products/build/raff-keep/concepts/billing-model">
+    Subscriptions, renewals and deletes.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-keep/troubleshooting">
+    The install failed, or seems stuck.
+  </Card>
+</CardGroup>

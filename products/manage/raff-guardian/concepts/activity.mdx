@@ -1,0 +1,65 @@
+---
+title: Raff Guardian activity
+sidebarTitle: Activity
+description: What Raff Guardian records about a server in Activity, how threads and levels work, and who can read and export it.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Activity is one record per server of what Raff Guardian saw, decided and did. Every change it makes is there, with who asked for it, why, and what it was before and after. Raff Guardian writes the sentences itself, so the record reads the same in the dashboard and in an export.
+
+## How it works
+
+### What is recorded
+
+- **Findings**: when each opened and when it closed, and why.
+- **Changes**: every action, from the proposal or your press to the result, with the facts before and after. For example "Installed 4 Windows updates. Held back KB5122871 until its fix is installed."
+- **Decisions**: who approved or declined a proposal, and who stopped something.
+- **Blocks**: each address blocked on the server, with the failed sign-ins behind it, and each block lifted.
+- **Power**: restarts and shut downs, who asked for them, and how long the server took to come back. A restart nobody asked for reads "Your server restarted, not by Raff Guardian."
+- **Settings**: every change to the mode, a single action, the update window or the watched services, with who made it.
+- **Raff Guardian itself**: install, reinstall, uninstall, updates of itself, and contact lost and back, for example "Raff Guardian could not reach your server from 12:01 to 12:14. Your server kept running."
+- **Questions** you asked, with a short summary of the answer.
+
+### Threads
+
+Related entries form one thread. A Windows update install is one thread: the snapshot, the download, the install, the restart and the check. The list shows each thread's headline; **Show details** opens every step, oldest first.
+
+An orange dot marks a thread with a warning, a red dot one with something critical. A finding thread whose finding has closed has no dot.
+
+### Levels
+
+- The default list shows what matters to you.
+- **Show all activity** adds detail entries, such as each Remote Desktop attack Raff Guardian saw and each install command made.
+
+### Categories
+
+**Updates**, **Security**, **Licences**, **Power**, **Apps**, **Health**, **Settings**, **Install**, **Raff Guardian** and **Connection**. Combine them with a search.
+
+### Who can read it
+
+Members who can view the server can read its activity. Members who can manage it can also export it, as CSV or JSON lines, up to 13 months and 100,000 entries per file.
+
+After you uninstall Raff Guardian, its activity stays readable on the Guardian tab under **See what Raff Guardian did before it was removed**. When you delete the server, its activity is hidden from the dashboard at once.
+
+## When to use it
+
+- To answer "what changed on this server last night?".
+- To prove when updates were installed, for an audit.
+- To see why the server restarted.
+
+## Trade-offs / limits
+
+- The Overview shows the newest 3 threads; the **Activity** section has all of them, 20 a page.
+- Activity is a record of Raff Guardian's work, not of everything that happens on Windows. For the raw reports, use **Open full log** in the Raff Guardian card's **⋯** menu.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="See what it did (activity log)" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/see-the-activity-log">
+    Search, filter and export.
+  </Card>
+  <Card title="Privacy and data" icon="lightbulb" href="/products/manage/raff-guardian/concepts/privacy-and-data">
+    What Raff Guardian reads and sends.
+  </Card>
+</CardGroup>

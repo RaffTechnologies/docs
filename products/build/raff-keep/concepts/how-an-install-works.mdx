@@ -1,0 +1,70 @@
+---
+title: How a Raff Keep install works
+sidebarTitle: How an install works
+description: What Raff does between your payment and an installed Raff Keep server, including the Raff Guardian step, restarts and the final check.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A Raff Keep install turns your setup answers into a working server with no person involved. Raff prices the answers, creates the server, runs the stack's install steps on it, installs [Raff Guardian](/products/manage/raff-guardian/index) if you chose it, checks the result and hands over the logins. Every step is reported to the server's page as it runs.
+
+## How it works
+
+### 1. The setup page and the price
+
+Your answers decide the size: the number of terminals on a MetaTrader server, the number of sites on an ASP.NET server. Raff picks the smallest size that fits, and you may choose a bigger one. Answers the server would reject, such as a time zone Windows does not know or a domain that is not a domain name, are refused on the setup page, before you pay.
+
+The price is the server plan plus the Windows licence. See [Pricing](/products/build/raff-keep/details/pricing).
+
+### 2. Payment and the server
+
+You pay at checkout. Raff then creates the server in US East with the size you chose, on the stack's operating system (Windows Server 2025 for today's stacks), and sets up its licence. Raff keeps the built-in Administrator password you chose encrypted only until the server is set up, then deletes it.
+
+### 3. The install steps
+
+On its first start the server downloads the stack's install script from Raff and checks that it is exactly the version Raff published. If the check fails, nothing runs. The script then runs its steps one by one and reports each one, with a line that says what it did.
+
+Both stacks first set up Remote Desktop access (network level authentication, the account lockout and the addresses you allowed) and create your own admin login. Then each stack installs its application:
+
+- **MetaTrader**: a trader login, MetaTrader from MetaQuotes (its signature checked) into one folder per terminal, a task that starts every terminal when the trader login signs in, and auto sign-in after a restart.
+- **ASP.NET**: IIS, the .NET 10 hosting bundle, Web Deploy, the sites with their application pools, free certificates for the domains you gave and SQL Server Express if you chose it. Microsoft's installers are checked for Microsoft's signature before they run.
+
+Some steps need a restart. The server restarts, and the install continues where it stopped.
+
+### 4. Raff Guardian
+
+Near the end, the install installs Raff Guardian, which then looks after the server the way you chose on the setup page. A Raff Keep server is never marked installed without a running Raff Guardian: if it cannot be installed, the install fails. With **Install only**, this step reports "Install only: Raff Guardian is not installed".
+
+### 5. The built-in Administrator and the final check
+
+The last change keeps the built-in Administrator off Remote Desktop and network sign-in, so your admin login is the way in. A final step then checks the result: on a MetaTrader server, that every terminal is in place and, with auto start on, runs as the trader login after the restart, and that the trader login cannot read Raff's setup data; on an ASP.NET server, that IIS answers, .NET 10 and Web Deploy work, the sites and their domains are set up, SQL Server Express runs when chosen and your admin login signs in to Web Deploy.
+
+If anything after this change fails, the install puts the built-in Administrator back on Remote Desktop.
+
+### 6. Installed
+
+The server reports that it is done, with the logins it created. Raff keeps their passwords encrypted until someone opens them on the server's page, then deletes its copy. Raff also clears the setup data from the server, including the built-in Administrator password and the install's one-time key.
+
+## When to use it
+
+- You want MetaTrader or an ASP.NET host running without setting up Windows yourself.
+- You want the server set up the same safe way every time: an admin login nobody can guess, the built-in Administrator off Remote Desktop, a lockout and attack blocking.
+
+If you want to install everything yourself, start from a plain Windows server in **Compute** instead.
+
+## Trade-offs and limits
+
+- A Raff Keep server cannot be reinstalled or factory reset. To start over, delete it and create a new one.
+- A restart Raff did not ask for stops the install. If you sign in while it installs and a step then fails, Raff keeps the server for a person to check instead of removing it.
+- Raff does not promise an install time. When an install is slower than it should be, the page says "Taking longer than usual. Raff has been told."
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Failed installs" icon="lightbulb" href="/products/build/raff-keep/concepts/failed-installs">
+    What Raff does when an install does not finish.
+  </Card>
+  <Card title="Follow the install" icon="rocket" href="/products/build/raff-keep/quickstart-guides/follow-the-install">
+    Statuses and steps on the server's page.
+  </Card>
+</CardGroup>

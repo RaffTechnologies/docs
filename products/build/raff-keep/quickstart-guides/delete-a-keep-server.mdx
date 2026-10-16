@@ -1,0 +1,65 @@
+---
+title: Delete a Raff Keep server
+sidebarTitle: Delete the server
+description: Delete a Raff Keep server and its stack, stop an install that is still running, or remove a failed install from your list.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Deleting a Raff Keep server destroys the server and its disks and stops its subscription. What the delete button says, and what happens to your money, depends on where the install is.
+
+<Warning>
+Deleting a server cannot be undone. Copy anything you need off the server first, or take a snapshot in **Compute**.
+</Warning>
+
+## Before you start
+
+- Permission to delete servers in the project (`vm.delete`).
+
+## Steps
+
+<Steps>
+  <Step title="Open the delete action">
+    Open the server's page under **Keep**, click the **...** button (**More actions**) next to **Connect**, and choose the delete action. On an installed server it is also on the **Settings** tab, under **Server**: **Delete this server**.
+
+    | The install is | The action says | What happens |
+    |---|---|---|
+    | **Installed** | **Delete stack and server** | The server and its disks are destroyed, its subscription stops and the stack leaves Keep. |
+    | **Creating server**, **Installing** or **Checking** | **Stop install and delete server** | The install stops. Raff removes the server it created and returns everything you paid to your Raff balance. |
+    | **Failed**, and Raff is checking it | **Delete server** | The server and its disks are destroyed and its subscription stops. The unused part comes back to your Raff balance. Raff still checks the install and contacts you. |
+    | **Failed** or **Awaiting payment**, with no server | **Remove from list** | There is no server to delete. The install leaves your Keep list. |
+
+    <Frame>
+      ![TODO: More actions menu with Delete stack and server](/images/products/build/raff-keep/delete-01-menu.png)
+    </Frame>
+  </Step>
+  <Step title="Confirm">
+    The dialog repeats what happens. Click **Delete**, or **Keep it** to go back.
+  </Step>
+</Steps>
+
+## Verify
+
+The status changes to **Deleting**, then **Deleted** once the server is gone: "The server is gone. This page stays as the record." When you stopped an install, the status is **Removing** until Raff has removed the server and returned your money.
+
+## What happens to your money
+
+- **Delete an installed server**: the unused part of the server's subscription goes back to your Raff balance. The Windows licence for the current period is not returned.
+- **Stop an install**: everything you paid for the order goes back to your Raff balance.
+
+See [Billing model](/products/build/raff-keep/concepts/billing-model).
+
+## Delete it from Compute
+
+A Raff Keep server is also listed in **Compute**, and deleting it there works the same way. Reinstall and factory reset are not available for a Raff Keep server: "This server was set up by Raff Keep. Delete it and create it again."
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Set up a MetaTrader server" icon="chart-line" href="/products/build/raff-keep/quickstart-guides/set-up-a-metatrader-server">
+    Start a new MetaTrader server.
+  </Card>
+  <Card title="Set up an ASP.NET server" icon="globe" href="/products/build/raff-keep/quickstart-guides/set-up-an-aspnet-server">
+    Start a new ASP.NET server.
+  </Card>
+</CardGroup>

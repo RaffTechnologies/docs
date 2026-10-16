@@ -1,0 +1,108 @@
+---
+title: Publish an ASP.NET site
+description: Publish to a Raff Keep ASP.NET server with Web Deploy, from Visual Studio with a publish profile or from GitHub Actions on every push.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Every site on a Raff Keep ASP.NET server has its own publishing login, which can publish to that site only. You download a publish profile for Visual Studio, or set up GitHub Actions to publish on every push. Both use Web Deploy on port 8172.
+
+## Before you start
+
+- A Raff Keep ASP.NET server that is **Installed**, with Raff Guardian on. On an **Install only** server, see [Publish without Raff Guardian](#publish-without-raff-guardian).
+- Permission to manage the server (`vm.manage`) and to open its console.
+- Visual Studio, or a GitHub repository with your app.
+
+## Steps
+
+<Steps>
+  <Step title="Check where Web Deploy answers from">
+    Open the server's page under **Keep** and click the **Apps** tab. The **Publishing** card shows **Web Deploy (port 8172)**:
+
+    - **From your addresses: ...**: the addresses you listed at setup.
+    - **From anywhere**: any address, each site still protected by its own login.
+    - **Closed**: nobody can publish. This is the case when you listed no addresses at setup.
+
+    To change it, click **Change**, choose **Only your addresses** or **From anywhere** in **Where should Web Deploy answer from?**, and click **Save**. GitHub Actions and other build machines publish from changing addresses, so they need **From anywhere**. [Raff Guardian](/products/manage/raff-guardian/index) blocks addresses that keep failing to sign in.
+
+    <Frame>
+      ![TODO: Publishing card with Web Deploy, Certificate and Change](/images/products/build/raff-keep/publish-01-publishing.png)
+    </Frame>
+  </Step>
+  <Step title="Download the publish profile">
+    On the **Overview** tab, **Your sites** lists each site with its state, its domains and its **Publishing login**, such as `publish-site1`. Click **Publish profile** on the site.
+
+    Raff Guardian makes a new password for the site's publishing login, and your browser saves a `.publishsettings` file. The row then says "Saved. Import it in Visual Studio (Publish, Import Profile). An older profile of this site no longer works." Raff emails your project's members that a new publish profile was made.
+
+    <Frame>
+      ![TODO: Your sites card with the Publish profile button](/images/products/build/raff-keep/publish-02-sites.png)
+    </Frame>
+  </Step>
+  <Step title="Publish from Visual Studio">
+    In Visual Studio, open **Publish**, choose **Import Profile** and pick the file. Click **Publish**.
+
+    The first time, Visual Studio asks you to trust the server's Web Deploy certificate. Once a site's domain has its Let's Encrypt certificate, Web Deploy uses that certificate and Visual Studio trusts it without asking.
+  </Step>
+</Steps>
+
+## Verify
+
+Open the site's domain, or for site 1 the server's address, in a browser. In **Your sites** the site shows **Running**; Raff Guardian checks each site every 5 minutes.
+
+## Publish from GitHub Actions
+
+1. Set Web Deploy to **From anywhere** (step 1 above). The dialog reminds you when it is not.
+2. In **Your sites**, open the site's **...** menu and click **Set up GitHub Actions**. The dialog, such as **Publish site2 from GitHub Actions**, lists four secrets to add to your repository, each with a copy button: `WEBDEPLOY_URL`, `WEBDEPLOY_SITE`, `WEBDEPLOY_USER` and `WEBDEPLOY_PASSWORD`. The password is the one in your publish profile (`userPWD`).
+3. Add the file the dialog shows as `.github/workflows/deploy.yml` (**Copy the file**), and set `dotnet-version` to the .NET version your app targets. It looks like this:
+
+```yaml
+name: Publish
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: >
+          dotnet publish -c Release
+          -p:WebPublishMethod=MSDeploy
+          -p:MSDeployServiceURL=${{ secrets.WEBDEPLOY_URL }}
+          -p:DeployIisAppPath="${{ secrets.WEBDEPLOY_SITE }}"
+          -p:UserName=${{ secrets.WEBDEPLOY_USER }}
+          -p:Password=${{ secrets.WEBDEPLOY_PASSWORD }}
+          -p:AuthType=Basic
+          -p:AllowUntrustedCertificate=true
+          -p:SkipExtraFilesOnServer=true
+```
+
+Every push to `main` then builds your app on GitHub and publishes it. Once Web Deploy uses a site's domain certificate, the dialog's file leaves out `AllowUntrustedCertificate`.
+
+<Warning>
+Each **Publish profile** press makes a new password and the old one stops working. After you download a new profile, update `WEBDEPLOY_PASSWORD` in GitHub.
+</Warning>
+
+## Publish without Raff Guardian
+
+An **Install only** server has no per-site publishing logins or publish profiles in the dashboard. Publish with Web Deploy as your admin login instead:
+
+- **Server**: the **Publish with Web Deploy** address from your logins, `https://<address>:8172/msdeploy.axd`.
+- **Site**: `Default Web Site` for site 1, `site2`, `site3` and so on for the others.
+- **User name and password**: your admin login and its password.
+
+Web Deploy answers only the addresses you listed at setup; with none it is closed. To open it, change the Windows Firewall rule for port 8172 on the server.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage sites and domains" icon="sitemap" href="/products/build/raff-keep/quickstart-guides/manage-sites-and-domains">
+    Add sites, domains and .NET versions.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-keep/troubleshooting">
+    A site that does not publish or start.
+  </Card>
+</CardGroup>

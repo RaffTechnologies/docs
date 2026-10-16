@@ -1,0 +1,96 @@
+---
+title: Set up an ASP.NET server
+description: Buy a ready-made ASP.NET server with Raff Keep. Choose the sites, their domains, extra .NET versions, SQL Server Express, Raff Guardian and who can reach Remote Desktop and publishing, then pay.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+An ASP.NET server from Raff Keep is a Windows Server 2025 server with IIS, the .NET 10 hosting bundle and Web Deploy, ready for your ASP.NET site or API. Each site gets its own application pool and folder, and a free Let's Encrypt certificate as soon as its domain points at the server. You answer one setup page, pay at checkout, and Raff does the rest.
+
+## Before you start
+
+- A Raff account on monthly billing. Pay-as-you-go accounts see "Raff Keep stacks are paid through checkout. Pay as you go is not available for them yet."
+- Permission to create servers in the project (`vm.create`).
+- A card on file or enough Raff balance for the first period.
+- Optional: the domains your sites will use, and access to their DNS.
+
+## Steps
+
+<Steps>
+  <Step title="Open the ASP.NET stack">
+    Click **Keep** in the sidebar, then **Create**. On **What do you want to run?**, click **ASP.NET / IIS host** under **Websites and APIs**.
+
+    <Frame>
+      ![TODO: Create page with the ASP.NET / IIS host row](/images/products/build/raff-keep/aspnet-01-catalog.png)
+    </Frame>
+  </Step>
+  <Step title="Setup: sites, domains, .NET and SQL Server">
+    - **How many sites or APIs**: 1 to 20. Each site gets its own application pool and folder. Site 1 also answers on the server's address. You can add sites and domains later on the server's page.
+    - **Domains**: optional, one per site, such as `app.example.com`. A domain can belong to one site only. Point each domain's A record at the server's address once you have it: Raff Keep checks every 15 minutes for 7 days and gets each certificate as soon as the domain points at the server.
+    - **Email for Let's Encrypt**: optional. Let's Encrypt only adds the address to its mailing list; Raff Keep renews the certificates automatically.
+    - **Also install**: **.NET 9** and **.NET 8**, for an app that still needs them. .NET 10 is always installed. Microsoft ends support for both on 10 November 2026, after which they get no security fixes.
+    - **Install SQL Server Express alongside**: free, up to 10 GB per database. Windows sign-in only and not reachable from outside the server.
+
+    <Note>
+    [Raff Guardian](/products/manage/raff-guardian/index) adds .NET 9 and .NET 8 right after the install. On an **Install only** server there is no Raff Guardian, so only .NET 10 is installed.
+    </Note>
+
+    <Frame>
+      ![TODO: Setup group with sites, domains, Also install and SQL Server Express](/images/products/build/raff-keep/aspnet-02-setup.png)
+    </Frame>
+  </Step>
+  <Step title="Size: keep Raff's pick or choose bigger">
+    Raff picks the size from the number of sites and marks it **Raff pick for your answers**:
+
+    | Sites | Raff's pick |
+    |---|---|
+    | 1 | 2 vCPU · 4 GB · 80 GB |
+    | 2 to 3 | 4 vCPU · 8 GB · 120 GB |
+    | 4 to 8 | 8 vCPU · 16 GB · 180 GB |
+    | 9 to 20 | 8 vCPU · 32 GB · 240 GB |
+
+    You can choose a bigger size; smaller ones are not offered. **Show bigger sizes** lists the rest.
+
+    <Note>
+    The price beside each size is the server alone. The **Summary** on the right adds the Windows licence (\$15.00 a month) and shows the total. See [Pricing](/products/build/raff-keep/details/pricing).
+    </Note>
+  </Step>
+  <Step title="Raff Guardian: how Raff looks after it">
+    The **Raff Guardian** group shows **How Raff looks after it**, set to **Raff manages everything**. Click the row to choose **Ask me before changes**, **Watch only** or **Install only** instead.
+
+    Raff Guardian also sets up publishing for each site: its own Web Deploy login and a publish profile you download from the dashboard. Without it (**Install only**) you publish as your admin login instead. See [Kept by Raff](/products/build/raff-keep/concepts/raff-guardian-choice) and [Publish an ASP.NET site](/products/build/raff-keep/quickstart-guides/publish-an-aspnet-site).
+  </Step>
+  <Step title="Access: Remote Desktop, publishing, name and password">
+    - **Allow Remote Desktop and publishing from**: **Any address** (default), **Only my address** (your IPv4 address and the browser console in the dashboard) or **Addresses I choose** (up to 20 IPv4 addresses or ranges).
+      - Remote Desktop: any address keeps it open, protected by an admin login nobody can guess, a lockout after 10 failed sign-ins for 15 minutes, network level authentication and Raff Guardian blocking attackers. With addresses, only they and the browser console reach it.
+      - Publishing with Web Deploy (port 8172) answers only the addresses listed. With **Any address**, publishing stays off until you turn it on from the server's page.
+    - **Server name**: starts as `windows-iis-01`. 3 to 63 letters, digits or hyphens.
+    - **Built-in Administrator password**: type one or click **Generate**. It needs 12 to 128 characters, at least 2 uppercase letters, at least 2 digits, at least 1 of `@+-_.,!` and no other symbols, and no runs like `aaa` or `123` or common words.
+
+    <Note>
+    This is not the password you sign in with every day. Raff Keep creates your own admin login and shows its password once when the server is ready. The built-in Administrator signs in only in the VNC console and is your way back in if you lose your admin login. See [Logins and the Administrator](/products/build/raff-keep/concepts/logins-and-the-built-in-administrator).
+    </Note>
+  </Step>
+  <Step title="Choose the billing period and start">
+    In the **Summary**, check the lines and the total, then pick the **Billing period**: **Monthly**, **Yearly** or **24 months**. Yearly and 24 months are paid up front and cost less per month.
+
+    Click **Start**, then pay at checkout. Raff then creates the server, installs everything and records every step.
+  </Step>
+</Steps>
+
+## Verify
+
+After payment you land on the server's page under **Keep**. Its status moves from **Creating server** to **Installing**, **Checking** and **Installed**. When it is installed, a box at the top shows the site's **Web address** and offers **Show the logins**. See [Follow the install](/products/build/raff-keep/quickstart-guides/follow-the-install).
+
+The **Web address** is site 1 on the server's address (`http://<address>/`). Your other sites answer on their domains once you point them at the server.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get your logins and passwords" icon="key" href="/products/build/raff-keep/quickstart-guides/get-your-logins">
+    Your admin login, shown once.
+  </Card>
+  <Card title="Publish an ASP.NET site" icon="upload" href="/products/build/raff-keep/quickstart-guides/publish-an-aspnet-site">
+    Visual Studio publish profile or GitHub Actions.
+  </Card>
+</CardGroup>

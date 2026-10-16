@@ -1,0 +1,82 @@
+---
+title: What Raff Guardian reads and sends
+sidebarTitle: Privacy and data
+description: The data Raff Guardian reads on a Windows server, what it sends to Raff, what it never reads, and who at Raff can see it.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian reads the state of Windows, not your data. It sends Raff what it needs to look after the server: health, updates, security settings, sign-ins and the apps installed. This page lists what that is, what it never reads, and who can see it.
+
+## How it works
+
+### What it sends, and how often
+
+Every minute the agent sends a signed report over HTTPS to `api.rafftechnologies.com`. Only what changed goes each minute; everything is sent again every 15 minutes. Some checks run less often, noted below.
+
+| Report | What it holds |
+|---|---|
+| Heartbeat | Computer name, Windows version and build, uptime, processor and memory use, whether a restart is pending, Raff Guardian's own processor and memory use |
+| Disks | Size, free space and health of each drive |
+| Windows updates | Counts of waiting, security and driver updates, up to 25 update titles, the last update installed |
+| Services | Name, state and start type of the services Raff Guardian watches: Remote Desktop and its licensing, Windows Update, Microsoft Defender, IIS, SQL Server, OpenSSH Server, the guest agent, and the ones you add |
+| Remote Desktop sign-ins | Failed sign-ins and sessions of the last 15 minutes, counted by IP address |
+| SSH sign-ins | Counts of failed SSH sign-ins only, no addresses |
+| Blocks | The addresses Raff Guardian blocked, the failed sign-ins behind each, and the account name when bots were guessing one account's password |
+| Certificates | Subject and expiry date of the server's machine certificates |
+| Windows Server Backup | Whether it is installed and when it last ran |
+| Activation | Licence status and edition, and only the last 5 characters of the product key |
+| Windows protection (hourly) | Microsoft Defender state and detected threat names, Windows Firewall, Remote Desktop and sign-in settings, the members of the Administrators group, listening ports and the program behind each |
+| Apps (daily or when they change) | Installed programs with publisher, version and install folder, Windows features, runtimes, services installed outside Windows, remote access tools that are running |
+| Windows users (when they change, and every 15 minutes) | Local account names, whether each is an administrator, turned on or locked, when its password was set, last sign-in, sessions with the client IP address, and how many services or tasks run as it |
+| Remote Desktop licensing (hourly) | Licensing mode, licence servers and grace days |
+
+The agent also reports the start and result of every action, with what it was before and after.
+
+### What it never reads or sends
+
+- **Your files.** The **Disk space by folder** question adds up folder sizes from directory listings and never opens a file. Inside user profiles it names only standard folders such as Desktop, Documents and Downloads.
+- **Passwords.** No account password, and not the auto sign-in password: Raff Guardian only checks whether one is set. A new password you ask for is sealed to your browser, and Raff cannot open its copy.
+- **Account details** beyond those listed above: never an account's comment, full name or bad-password count.
+- **Your product key**, beyond its last 5 characters.
+- **Microsoft Defender exclusions.** It counts them and never lists them.
+- **Per-user programs.** The app list covers programs installed for the whole server. Paths inside user profiles are masked, for example `C:\Users\*\...`.
+- **The Security event log**, through a question. The **Recent errors** question reads only the System and Application logs.
+
+### Questions you ask
+
+The **Check your server now** card on the Overview asks Raff Guardian a read-only question, such as **What uses the CPU** or **Ports and connections**. A question only reads; nothing changes. Answers leave out command lines, program paths and account names, mask secrets they recognise in event messages and task names, and are deleted after 7 days. Only members who can manage the server can ask and read them.
+
+You can switch questions off with **Answer questions about this server** in the **Commands** group of the per-action settings.
+
+### What stays on the server
+
+The agent keeps a copy of its own reports for 7 days in `C:\ProgramData\Raff\Guardian`, which only Administrators and the system account can read, and writes its log to the Windows Application event log.
+
+### Who can see it
+
+- Members of the project with permission to view the server see Raff Guardian's reports, findings and activity. Answers to questions, exports and new passwords need permission to manage the server.
+- Raff staff cannot open your server's Raff Guardian pages through Raff's own tools or admin access.
+- When you delete a server, its Raff Guardian activity is hidden from the dashboard at once.
+
+## When to use it
+
+- Before installing Raff Guardian on a server that holds sensitive data, to know what leaves the server.
+- When your security team asks what the agent collects.
+
+## Trade-offs / limits
+
+- Raff Guardian sends account names, administrator names and the IP addresses of sign-ins and sessions. It needs them to block attackers, show who is signed in and warn about new administrators.
+- Secret masking in question answers recognises common patterns (passwords in connection strings, tokens, email addresses). It is not a guarantee that no secret ever appears in an answer.
+- When a check fails, its error report can include part of Windows' own error message.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="How it works" icon="lightbulb" href="/products/manage/raff-guardian/concepts/how-it-works">
+    The agent, its key and signed releases.
+  </Card>
+  <Card title="Activity" icon="lightbulb" href="/products/manage/raff-guardian/concepts/activity">
+    What Raff Guardian records about its own work.
+  </Card>
+</CardGroup>

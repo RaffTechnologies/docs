@@ -1,0 +1,59 @@
+---
+title: Uninstall Raff Guardian from a server
+sidebarTitle: Uninstall Raff Guardian
+description: Remove Raff Guardian from a Windows server from the dashboard, and what stays on the server afterwards.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Uninstall Raff Guardian from the server's Guardian tab. Raff Guardian removes its service and files itself, within about a minute. This is the only supported way to remove it.
+
+## Before you start
+
+- Permission to manage the server (`vm.manage`).
+- The server is running, so Raff Guardian can receive the request on its next report.
+- Decide what to do with its Windows Firewall changes. Addresses it blocked and the Remote Desktop allow list stay in Windows Firewall after the uninstall. To undo them, unblock the addresses and open Remote Desktop to every address first: see [Block or unblock an IP address](/products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address).
+
+## Steps
+
+<Steps>
+  <Step title="Open the Raff Guardian menu">
+    Open the server under **Virtual Machines**, click the **Guardian** tab and, on the **Raff Guardian** card on the right, click the **⋯** menu. Click **Uninstall Raff Guardian**.
+
+    You can also use **Uninstall Raff Guardian** at the end of the **Settings** section.
+  </Step>
+  <Step title="Confirm">
+    The dialog reads "Findings close now. Raff Guardian removes its service and files on its next report, within about a minute. You can install it again at any time."
+
+    Click **Uninstall**, or **Keep Raff Guardian** to cancel.
+  </Step>
+</Steps>
+
+## What happens
+
+1. Open findings close at once, and the card says "Uninstall requested. Raff Guardian removes itself on its next report."
+2. On its next report, Raff Guardian puts Windows' own account lockout policy back, if it had taken it over (see [Automatic blocking and lockout](/products/manage/raff-guardian/concepts/automatic-blocking)).
+3. It deletes the **RaffGuardian** Windows service, and 30 seconds later a one-time task removes `C:\Program Files\Raff\Guardian` and `C:\ProgramData\Raff\Guardian`.
+
+## What stays
+
+- **Windows Firewall rules**: addresses Raff Guardian blocked (rules named "Raff Guardian: block" followed by the address) and the Remote Desktop allow list.
+- **Snapshots** taken before Windows updates that Raff Guardian had not deleted yet. They are ordinary snapshots in the server's **Snapshots** tab.
+- **Activity**: what Raff Guardian did stays readable. On the Guardian tab, click **See what Raff Guardian did before it was removed**.
+
+## Verify
+
+The Guardian tab shows the **Install Raff Guardian** card again. On the server, the **RaffGuardian** service is gone from **Services**.
+
+If the service is still there after a few minutes, see [Troubleshooting](/products/manage/raff-guardian/troubleshooting).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Install on an existing server" icon="rotate" href="/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server">
+    A reinstall gets a new key and comes back with the mode and settings the server had.
+  </Card>
+  <Card title="Activity" icon="list" href="/products/manage/raff-guardian/concepts/activity">
+    What Raff Guardian recorded while it was on the server.
+  </Card>
+</CardGroup>

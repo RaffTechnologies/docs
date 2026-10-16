@@ -1,0 +1,104 @@
+---
+title: Raff Guardian findings
+sidebarTitle: Findings
+description: What each Raff Guardian finding means, its severity, what Raff Guardian does about it and how it closes.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A finding is a problem Raff Guardian sees on the server, such as low disk space, a stopped service or Windows Firewall turned off. Open findings are listed in **Needs attention** on the Guardian tab's **Overview**. Each closes by itself once the problem is gone.
+
+## How it works
+
+### Severity
+
+| Badge | Meaning |
+|---|---|
+| **Critical** | Fix now: the server is exposed or not working as it should. |
+| **Attention** | Worth fixing soon. |
+| **Info** | Good to know. |
+
+Each finding shows when it started ("since"). Windows protection findings have **Show details** with "How to fix".
+
+### What Raff Guardian does about a finding
+
+- Some findings have a button that fixes them, such as **Install now**, **Restart now**, **Free space**, **Restart service**, **Update now**, **Scan now** or **Block now**. On **Auto**, Raff Guardian presses it for you; on **Ask me**, it proposes it in the **Queue**. See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions).
+- Some findings can be marked as known. **This is expected** on a new administrator or an open port, and **This is mine** on a remote access app, close the finding and stop the warning for that item.
+- The rest tell you what to fix yourself.
+
+### Updates
+
+| Finding | Severity | Opens when | Button |
+|---|---|---|---|
+| Security updates waiting | Attention | Windows Update reports at least one security update waiting | **Install now** |
+| Restart needed to finish updates | Attention | Windows needs a restart to finish installing | **Restart now** |
+| Server not healthy after updates | Critical | The server did not come back healthy within 25 minutes of an update install or restart | Restore offer in the Queue |
+
+### Health
+
+| Finding | Severity | Opens when | Button |
+|---|---|---|---|
+| Low disk space on (drive) | Attention | A drive has less than 15% free | **Free space** |
+| Very low disk space on (drive) | Critical | A drive has less than 5% free | **Free space** |
+| (service) service not running | Attention | A watched service that starts automatically is not running | **Restart service** |
+| Windows not activated | Attention | Windows is not activated | |
+| Windows evaluation edition | Attention | Windows runs an evaluation edition | |
+| Contact with your server | Attention | Raff has not heard from Raff Guardian for 5 minutes | |
+
+### Security
+
+| Finding | Severity | Opens when | Button |
+|---|---|---|---|
+| No antivirus protecting Windows | Critical | Microsoft Defender is not the active antivirus and no other known antivirus runs | |
+| Threat Microsoft Defender has not removed | Critical | Microsoft Defender detected a threat it has not removed | |
+| Windows Firewall off | Critical | Windows Firewall is off, or lets every inbound connection in, for the network the server uses | |
+| Microsoft Defender definitions out of date | Attention | Definitions are more than 3 days old | **Update now** |
+| No recent Microsoft Defender scan | Attention | No finished scan in 7 days | **Scan now** |
+| Remote Desktop without Network Level Authentication | Attention | Remote Desktop is on without Network Level Authentication | |
+| SMB version 1 on | Attention | The SMB version 1 server or client is on | |
+| Guest account on | Attention | The built-in Guest account is turned on | |
+| No account lockout | Attention | Windows never locks accounts, on a server not in a domain, and Raff Guardian has not taken the lockout over | |
+| New administrator account | Attention | An account joined Administrators that was not there in Raff Guardian's first 6 hours on the server | **This is expected** |
+| Port (port) open to every address | Attention | A risky port is open to any address: FTP, SSH, Telnet, Windows RPC, file sharing, SQL Server, MySQL, PostgreSQL, VNC, Windows Remote Management, Redis, Elasticsearch or MongoDB. Remote Desktop is never one | **This is expected** |
+| Remote access app (name) | Attention (Info if it was there when Raff Guardian first listed the apps) | A remote access app is installed or running that you have not confirmed | **This is mine** |
+| Certificate expiring | Attention | A machine certificate expires within 30 days | |
+| Remote Desktop attack from (address) | Critical | Many failed Remote Desktop sign-ins from one address in 15 minutes | **Block now** |
+| SSH password guesses | Attention | 10 or more SSH password guesses in 15 minutes | |
+
+### Apps
+
+| Finding | Severity | Opens when |
+|---|---|---|
+| (app) past its end of support | Attention | An installed version passed its end of support date and gets no more security updates |
+| (app) support ending | Info | An installed version reaches its end of support within 180 days |
+
+### Raff Guardian
+
+| Finding | Severity | Opens when |
+|---|---|---|
+| Raff Guardian update rolled back | Attention | A Raff Guardian update did not take and the agent went back to the version it had |
+
+### How findings close
+
+A finding closes when Raff Guardian sees the problem is gone, for example after a restart or once disk space is freed. Uninstalling Raff Guardian closes every open finding. Each finding, its opening and closing, is in **Activity**.
+
+## When to use it
+
+- Check **Needs attention** after installing Raff Guardian: the first checks often find settings worth fixing.
+- Use **This is expected** only for items you know about, such as a port your app needs open to everyone.
+
+## Trade-offs / limits
+
+- Windows protection is checked every hour, so a change you make can take up to an hour to show. **Check now** on **Windows protection** checks at once.
+- Administrators already in the group during Raff Guardian's first 6 hours on the server count as known and raise no finding.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Activity" icon="lightbulb" href="/products/manage/raff-guardian/concepts/activity">
+    Every finding, action and result in one record.
+  </Card>
+  <Card title="Approve or decline a change" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change">
+    Answer the fixes Raff Guardian proposes.
+  </Card>
+</CardGroup>

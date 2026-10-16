@@ -1,0 +1,71 @@
+---
+title: How Raff Guardian works
+sidebarTitle: How it works
+description: What runs on your Windows server, how Raff Guardian reports to Raff, how changes reach it, and how signed releases keep it safe.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian has two parts: a small agent that runs as a Windows service on your server, and Raff's side, which reads its reports, decides what needs doing and shows everything in the dashboard. The agent only connects out to Raff. It never opens a port on your server.
+
+## How it works
+
+### The agent on your server
+
+The installer puts the agent in `C:\Program Files\Raff\Guardian` and its data in `C:\ProgramData\Raff\Guardian`, and runs it as the **RaffGuardian** Windows service. The service starts with Windows, and Windows restarts it if it fails. The **Server** card on the Overview shows how much processor and memory Raff Guardian itself uses.
+
+### Its own key
+
+At install, the agent makes its own key pair on the server. The private key stays in the data folder, which only Administrators and the system account can read; Raff only ever receives the public half. A reinstall makes a new key.
+
+### Reports every minute
+
+Every minute the agent checks the server and sends a signed report to Raff over HTTPS: processor and memory, disk space, pending Windows updates, services, failed sign-ins, firewall and Microsoft Defender state, and more. It sends the full state every 15 minutes and otherwise only what changed. Raff accepts a report only when its signature matches the key made at install.
+
+If Raff cannot be reached, the agent keeps its reports and sends them when the connection is back. Blocking attackers does not wait for Raff: the agent does that on the server itself. See [Privacy and data](/products/manage/raff-guardian/concepts/privacy-and-data).
+
+### Changes are signed by Raff
+
+Raff Guardian makes a change only through a plan that Raff signs, for example "install Windows updates" or "block this address". Plans travel back in the answer to the agent's own report, so nothing ever connects in to your server. Before it runs a plan, the agent checks that:
+
+- Raff's signature is valid,
+- the plan is for this server and has not expired (a plan not run within 30 minutes expires),
+- it is an action built into the agent. The agent has no way to run any other command.
+
+Which plans Raff makes depends on the mode you choose and on each action's setting. See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions).
+
+### Signed releases and self-update
+
+Raff signs every release of Raff Guardian, and the agent checks the signature before it installs anything:
+
+- **At install**, the command checks the installer against the fingerprint Raff published for it, and the installer checks the agent the same way before it changes anything on the server. If either does not match, it stops: "Nothing was installed."
+- **On every update**, the agent checks Raff's signature on the release with a key built into the agent itself, then downloads the new version only from Raff's release location, with the exact size and fingerprint the signed release names. A release that fails any check is refused.
+
+Raff Guardian always keeps itself up to date, in every mode, **Watch only** included. There is no update button. New versions reach servers gradually, and Raff can pause a version when updates to it fail; the dashboard then says "Raff Guardian updates are paused while Raff checks a problem with the new version." If an update does not take, the agent goes back to the version it had and you see the finding **Raff Guardian update rolled back**.
+
+### When the agent goes quiet
+
+If Raff hears nothing for 5 minutes, the Guardian tab shows "Raff Guardian is not reporting." above its sections and the finding **Contact with your server** opens. When reports come back, the finding closes and Activity says how long contact was lost. A server that was turned off shows that instead, for example "Server has been off since 14:02. You shut it down from the dashboard."
+
+## When to use it
+
+- You run Windows servers and want attackers blocked, updates installed and services kept running without logging in every day.
+- You want a record of every change made to the server, with what it was before and after.
+- You want to see problems (low disk, a stopped service, Windows not activated) before your users do.
+
+## Trade-offs / limits
+
+- Windows Server only. Raff Guardian does not run on Linux yet.
+- The agent needs outbound HTTPS to Raff. With no connection it keeps watching and blocking, but Raff cannot act on its reports until they arrive.
+- Raff Guardian runs only the actions built into it. It does not run your own scripts or commands.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Modes and permissions" icon="lightbulb" href="/products/manage/raff-guardian/concepts/modes-and-permissions">
+    What Raff Guardian may change on its own.
+  </Card>
+  <Card title="Install on an existing server" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server">
+    Run the install command.
+  </Card>
+</CardGroup>

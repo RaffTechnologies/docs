@@ -1,0 +1,83 @@
+---
+title: Raff Keep features and limits
+sidebarTitle: Features & limits
+description: What the MetaTrader and ASP.NET stacks of Raff Keep install, the logins and security every server gets, the region and every limit in one place.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+The facts about Raff Keep in one place.
+
+## Every Raff Keep server
+
+| Item | Value |
+|---|---|
+| Operating system | Windows Server 2025, licence included |
+| Region | US East |
+| Sizes | 2 vCPU · 4 GB up to 16 vCPU · 32 GB, NVMe storage. See [Pricing](/products/build/raff-keep/details/pricing) |
+| Billing | Monthly, yearly or 24 months, paid at checkout. Not available to pay-as-you-go accounts |
+| Logins | Your admin login (`admin-` plus 3 characters), shown once. The built-in Administrator signs in only in the VNC console |
+| Remote Desktop | Network level authentication; from any address or only the addresses you choose (up to 20 IPv4 addresses or ranges) |
+| Account lockout | 10 wrong passwords lock an account for 15 minutes. [Raff Guardian](/products/manage/raff-guardian/index) takes this over while it blocks attackers |
+| SSH | Keys only, where SSH runs |
+| Windows updates | **Raff manages everything**: installed by Raff Guardian in your maintenance window. **Ask me before changes**: after your OK. **Watch only** and **Install only**: Windows downloads them and waits for you to install them |
+| Raff Guardian | Raff manages everything (default), Ask me before changes, Watch only or Install only |
+| In Compute | Listed with a **Keep** tag; snapshots, backups, networking, console and graphs work there |
+| Reinstall, factory reset | Not available. Delete the server and create it again |
+
+## MetaTrader
+
+| Item | Value | Notes |
+|---|---|---|
+| Platforms | MetaTrader 5, MetaTrader 4 or both | From MetaQuotes; the installer and every terminal are checked for MetaQuotes' signature |
+| Terminals | 1 to 16 | With both platforms, at most 8 of each |
+| Terminals per size | 4 from 2 vCPU · 4 GB, 8 from 4 vCPU · 8 GB, 16 from 8 vCPU · 16 GB | Add more later with **Add terminal**, up to the size's limit |
+| Folders | `C:\MT5\1`, `C:\MT5\2` and on; `C:\MT4\1` and on | Each terminal runs in portable mode in its own folder |
+| Trader login | `trader-` plus 3 characters | The terminals run as this login; only it, SYSTEM and administrators can use their folders |
+| Start | When the trader login signs in | A shortcut per terminal on the desktop |
+| After a restart | With **Start the terminals after a restart** on: the trader login signs in by itself, every terminal starts and the screen locks | Its password is kept in Windows' protected store |
+| Always on | Sleep and screen saver off; Remote Desktop sessions kept when you disconnect | |
+| Updates | Each terminal updates itself from MetaQuotes when it starts | |
+| Time zone | Your choice on the setup page | |
+| Remote Desktop use | For one person who sets up and checks the terminals | A team working in the desktop every day needs Remote Desktop user licences: ask support |
+
+## ASP.NET
+
+| Item | Value | Notes |
+|---|---|---|
+| Web server | IIS with ASP.NET support and WebSockets | |
+| .NET | ASP.NET Core 10 hosting bundle and .NET Framework 4.8.1 | .NET 9 and .NET 8 on request, added by Raff Guardian; Microsoft ends their support on 10 November 2026 |
+| Sites | 1 to 20 | Site 1 is **Default Web Site** and also answers on the server's address; the others are `site2` and on, in `C:\inetpub\sites` |
+| Application pools | One per site, always running | |
+| Domains | One or more per site; a domain belongs to one site | Host binding on port 80 |
+| Certificates | Free from Let's Encrypt, requested once the domain points at the server (checked every 15 minutes for 7 days), renewed by themselves | |
+| Publishing | Web Deploy on port 8172, from the addresses you list, or from anywhere | With Raff Guardian, each site has its own publishing login (`publish-site1` and on) and a publish profile in the dashboard |
+| SQL Server Express | Optional, SQL Server 2025 Express | Windows sign-in only, this server only, 10 GB per database; your admin login is an administrator |
+| Firewall | Ports 80 and 443 open | |
+| IIS logs | Deleted after 30 days | |
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| Stacks | MetaTrader 4 and 5, ASP.NET / IIS host |
+| Operating system | Windows Server 2025 for today's stacks |
+| Region | US East |
+| Terminals per server | 16 |
+| Sites per server | 20 |
+| Allowed addresses at setup | 20 IPv4 addresses or ranges |
+| Logins shown | Once, to one person, again for 10 minutes; unopened logins are deleted after 7 days |
+| Install held when not finished | After 24 hours |
+
+For more terminals or sites than one server takes, contact Raff and we size it with you.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/raff-keep/details/pricing">
+    Every size and period.
+  </Card>
+  <Card title="Kept by Raff" icon="lightbulb" href="/products/build/raff-keep/concepts/raff-guardian-choice">
+    What Raff Guardian does on a Keep server.
+  </Card>
+</CardGroup>

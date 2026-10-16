@@ -1,0 +1,71 @@
+---
+title: "See what Raff Guardian did: the activity log"
+sidebarTitle: See what it did (activity log)
+description: Read, search and filter a server's Raff Guardian activity, and export it as CSV or JSON lines.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+**Activity** is the server's record of what Raff Guardian saw, decided and did: every finding, proposal, answer, change and result, with who asked for it. Each story, for example one Windows update install from the snapshot to the check after the restart, is one thread.
+
+## Before you start
+
+- Raff Guardian on the server, now or before. After an uninstall, the activity stays readable.
+- To read: `vm.view`. To export: `vm.manage`.
+
+## Read the activity
+
+<Steps>
+  <Step title="Open Activity">
+    Open the server under **Virtual Machines**, click **Guardian**, then **Activity**. The Overview's **Recent activity** shows the newest 3 threads; **All activity** opens the full list.
+
+    <Frame>
+      ![TODO: Activity list with category chips, search and threads](/images/products/manage/raff-guardian/activity-01-list.png)
+    </Frame>
+  </Step>
+  <Step title="Read a thread">
+    Each thread shows its headline, who asked (**You**, or nothing when Raff Guardian acted on its own) and when. An orange dot marks a warning, a red dot something critical.
+
+    Click **Show details** to see every step oldest first, with its time, the reason and facts such as what it was before and after.
+  </Step>
+  <Step title="Narrow it down">
+    - **Categories**: **All**, **Updates**, **Security**, **Licences**, **Power**, **Apps**, **Health**, **Settings**, **Install**, **Raff Guardian**, **Connection**. Combine as many as you like.
+    - **Search activity**: words from the sentences, an address, a service name or a KB number, up to 100 characters.
+    - **Show all activity**: adds the detail entries, for example each Remote Desktop attack Raff Guardian saw and each install command made.
+
+    The list shows 20 threads a page.
+  </Step>
+</Steps>
+
+## Export the activity
+
+1. In **Activity**, click **Export**.
+2. Pick the period: **Last 30 days** (default), **Last 3 months**, **Last 12 months**, or **Custom dates** (at most 13 months).
+3. Pick the format: **CSV** ("Opens in a spreadsheet.") or **JSON lines** ("One entry per line, with its facts and details.").
+4. Tick **Include all activity** to add the detail entries.
+5. Click **Download**.
+
+The file lists entries oldest first, up to 100,000 entries, with times in your browser's time zone. It is named `raff-guardian-activity-<server id>-<from>-<to>.csv` (or `.jsonl`).
+
+## See the raw reports
+
+For the reports themselves, open the **⋯** menu on the **Raff Guardian** card and click **Open full log**. **Guardian log** lists every report from the server, newest first, with filters by kind and severity and a search.
+
+## After an uninstall
+
+On the Guardian tab, click **See what Raff Guardian did before it was removed** to open **Past activity**.
+
+## Verify
+
+A search or a category shows only matching threads, with the count at the bottom, for example "Showing 21 to 40 of 312". An export downloads a file and shows "Raff Guardian activity downloaded".
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Activity" icon="lightbulb" href="/products/manage/raff-guardian/concepts/activity">
+    What is recorded and for how long.
+  </Card>
+  <Card title="Findings" icon="lightbulb" href="/products/manage/raff-guardian/concepts/findings">
+    What each finding means.
+  </Card>
+</CardGroup>

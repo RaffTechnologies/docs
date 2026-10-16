@@ -51,6 +51,13 @@ Each product follows the same 5-section taxonomy: **Overview / Quickstart & guid
 - `docs/products/_template-details.mdx` — spec sheet
 - `docs/products/_template-troubleshooting.mdx` — issue list
 
+### Names a customer looks for (Serdar, 2026-10-16)
+
+- **Name each guide by the customer's need**, in the words they search with: "Set permissions: what it may do", not "Choose a mode"; "Install on an existing server" and "Add while creating a server", not "Install on a server".
+- **Group guides by need, in the order a customer uses the product.** "Quickstart & guides" may be split into task groups such as Set up, Everyday, Security, Updates and power (Raff Guardian) or Get a server, Use your server (Raff Keep). Concepts, Details and Troubleshooting stay as they are.
+- **One page, one name.** Every card and every "See ..." link to a page uses that page's `sidebarTitle`.
+- **Quote YAML values with a colon**: `title: "Set permissions: what Raff Guardian may do"`, or Mintlify fails to parse the page.
+
 ### Sidebar rule — nested sub-groups, no products dropdown
 
 The Products tab uses **nested sub-groups** in `docs.json`: pillar group → product group → section group → pages. Sub-pages are reachable directly from the sidebar, not just via cards on the Overview page. See `feedback_no_products_switcher.md` — we deliberately do NOT use Mintlify's `navigation.products` dropdown switcher.

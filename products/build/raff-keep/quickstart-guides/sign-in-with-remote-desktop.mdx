@@ -1,0 +1,84 @@
+---
+title: Sign in to a Raff Keep server
+sidebarTitle: Connect with Remote Desktop
+description: Connect to a Raff Keep server with Remote Desktop as your admin login or the trader login, in your Remote Desktop app or in the browser, and reach the VNC console when you need the built-in Administrator.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+You sign in to a Raff Keep server over Remote Desktop with the logins Raff Keep created for you. The built-in Administrator cannot sign in over Remote Desktop: it signs in only in the VNC console, the server's own screen in the dashboard.
+
+## Which login to use
+
+| Login | Signs in | Use it for |
+|---|---|---|
+| **Admin login** (`admin-` plus 3 characters) | Remote Desktop, in your app or the browser | Installing software and changing Windows settings. It is an administrator. |
+| **Trader login** (`trader-` plus 3 characters, MetaTrader only) | Remote Desktop | Seeing and using your terminals. They run as this login. |
+| **Built-in Administrator** | VNC console only | Your way back in if you lose your admin login. Its password is the one you chose at setup. |
+
+## Before you start
+
+- The server is **Installed** and you saved its logins. See [Get your logins and passwords](/products/build/raff-keep/quickstart-guides/get-your-logins).
+- A Remote Desktop app: Windows App on Windows, Mac, iPhone and iPad, or Remote Desktop Connection on Windows. Or use the browser.
+- Your address may reach the server. The **Connect with Remote Desktop** card says "Reachable only from ..." or "Open to every address".
+
+## Steps
+
+<Steps>
+  <Step title="Open Connect">
+    Open the server's page under **Keep** and click **Connect**. The menu offers:
+
+    - **Download Remote Desktop file**: a file for your admin login.
+    - **Remote Desktop file for the trader** (MetaTrader): a file for the trader login.
+    - **Open Remote Desktop in the browser**: Remote Desktop in a new tab, no app needed.
+    - **Open VNC console**: the server's own screen.
+    - **Copy address**: the server's address with the Remote Desktop port, such as `203.0.113.10:3389`.
+
+    The **Overview** tab's **Connect with Remote Desktop** card shows the same: the **Address**, **Sign in as** (the trader login on a MetaTrader server, your admin login on an ASP.NET server) and the buttons **Download Remote Desktop file** and **Open in the browser**.
+
+    <Frame>
+      ![TODO: Connect menu on a MetaTrader server](/images/products/build/raff-keep/sign-in-01-connect.png)
+    </Frame>
+  </Step>
+  <Step title="Sign in">
+    Open the downloaded file in your Remote Desktop app, or use the browser. Enter the login's password. In the browser the sign-in fills in your admin login and says "Raff Keep server: sign in as admin-k7q, or as trader-m2p to see your terminals. The built-in Administrator signs in only in the VNC console."
+  </Step>
+  <Step title="Leave without stopping anything">
+    On a MetaTrader server, close the Remote Desktop window to leave: your terminals keep running. **Sign out** closes them.
+  </Step>
+</Steps>
+
+## Verify
+
+You see the Windows desktop. On a MetaTrader server signed in as the trader login, every terminal is open. With [Raff Guardian](/products/manage/raff-guardian/index) on, the **Users** tab lists your session.
+
+## Work as an administrator
+
+- Your admin login is an administrator, but programs that change Windows ask you to confirm. If a tool says access is denied, right-click it and choose **Run as administrator**.
+- PowerShell remoting (`Enter-PSSession`, `Invoke-Command`) and admin shares such as `\\server\c$` answer "Access is denied" for your admin login. Windows gives an administrator other than the built-in Administrator a limited token over the network, and Raff keeps that default. Sign in over Remote Desktop and use **Run as administrator**, or use SSH with one of your account's SSH keys as your admin login.
+- Where SSH runs on a Raff Keep server, it takes keys only; passwords are off.
+
+## Use the VNC console
+
+The VNC console is the server's own screen, so it works even when Remote Desktop does not. Click **Connect**, then **Open VNC console**.
+
+- Sign in as **Administrator** with the password you chose at setup, or as any other login.
+- To type a password, use **Type text** in the console's bar: it types into the field that has focus, key by key. Paste only fills the server's clipboard.
+- On a MetaTrader server with auto start on, the trader login is signed in and the screen is locked. Choose **Other user** on the Windows screen to sign in as someone else.
+
+## Change who can reach Remote Desktop
+
+With Raff Guardian on, open the **Security** tab. **Who can reach Remote Desktop** offers **Any address**, **Only my address** or **A list of addresses**, and Raff Guardian applies the change on the server. The VNC console does not use Remote Desktop, so it works whatever you choose.
+
+With **Install only**, change the Windows Firewall rules on the server yourself.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Logins and the Administrator" icon="lightbulb" href="/products/build/raff-keep/concepts/logins-and-the-built-in-administrator">
+    Why the built-in Administrator is off Remote Desktop.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-keep/troubleshooting">
+    Cannot sign in over Remote Desktop.
+  </Card>
+</CardGroup>

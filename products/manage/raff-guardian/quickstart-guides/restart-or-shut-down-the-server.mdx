@@ -1,0 +1,80 @@
+---
+title: Restart or shut down the server safely
+sidebarTitle: Restart or shut down the server
+description: Restart or shut down a Windows server through Raff Guardian, with a countdown that warns signed-in users and can be cancelled.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+On a Windows server with Raff Guardian, **Restart** and **Shut down** in the server's power menu go through Raff Guardian. It warns the people signed in to Windows, counts down, and then restarts or shuts down Windows cleanly. You can cancel until the countdown ends.
+
+## Before you start
+
+- Raff Guardian on the server, in **Raff manages everything** or **Ask me before changes**. On **Watch only** the server restarts the standard way.
+- Permission to power the server (`vm.power`).
+- The server is running.
+
+## Steps
+
+<Steps>
+  <Step title="Open the power menu">
+    Open the server under **Virtual Machines** and click the power state button at the top right (it shows **Running**). While Raff Guardian can act, **Restart** reads "Raff Guardian warns signed-in users, then restarts Windows" and **Shut down** reads "Raff Guardian shuts Windows down cleanly · still billed while off".
+  </Step>
+  <Step title="Choose Restart or Shut down">
+    The dialog says what happens, for example: "Raff Guardian tells people signed in to Windows, then restarts the server in 1 minute. You can cancel until then."
+
+    Click **Show details** to change:
+
+    - **Restart in** or **Shut down in**: 1, 5 or 10 minutes.
+    - **Reason** (optional): shown to people signed in to Windows and in Activity. Letters A to Z, digits and `. , : ; ( ) ' / -` only, up to 120 characters.
+
+    <Frame>
+      ![TODO: Restart dialog with the countdown and reason details open](/images/products/manage/raff-guardian/power-01-dialog.png)
+    </Frame>
+  </Step>
+  <Step title="Confirm">
+    Click **Restart** or **Shut down**. The power state button shows the countdown, for example "Restarting in 0:42".
+  </Step>
+</Steps>
+
+## Cancel during the countdown
+
+Open the power menu and click **Cancel restart** (or **Cancel shut down**). "Your server keeps running." While Raff Guardian stops it, the button shows **Stopping…**.
+
+## When Windows does not respond
+
+Windows may hold a restart or shut down while it installs updates; Raff Guardian waits and says so in Activity. If Windows still does not respond, Raff Guardian offers a forced option instead of acting alone:
+
+| The button shows | Menu item | What it does |
+|---|---|---|
+| **Still running** | **Force off now** | Turns the server off at once, like holding the power button. Unsaved work is lost. |
+| **Not back yet** | **Hard restart now** | Restarts the server at once, like pressing the reset button. Unsaved work is lost. |
+| **Not started** | **Restart the standard way** / **Shut down the standard way** | Raff Guardian's restart or shut down did not start in 3 minutes. This sends Raff's standard signal instead. |
+
+A shut down that Windows has not carried out within 10 minutes leads to the force off offer. Whether Raff Guardian offers it at all follows the **Force off when Windows does not shut down** and **Hard restart when Windows does not restart** settings, which are **Ask me** or **Off** only.
+
+## When the standard way is used
+
+The dialog says when Raff Guardian cannot take the press and the server restarts or shuts down the standard way, with the reason, for example:
+
+- Raff Guardian is set to Watch only.
+- Raff Guardian has not heard from your server in the last 2 minutes.
+- **Restart the server** is switched off in the server's Raff Guardian settings.
+- The server runs an older Raff Guardian that cannot do this yet.
+
+The standard way sends the signal to Windows from outside: if Windows ignores it, the server does not restart.
+
+## Verify
+
+The power state button returns to **Running** (or shows the server off), and **Activity** has the restart or shut down with who asked for it and, for a restart, how long the server took to come back.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="See what it did (activity log)" icon="list" href="/products/manage/raff-guardian/quickstart-guides/see-the-activity-log">
+    Find the restart in Activity.
+  </Card>
+  <Card title="Manage power" icon="power-off" href="/products/build/virtual-machines/quickstart-guides/manage-power">
+    Power on, stop and hard restart any server.
+  </Card>
+</CardGroup>

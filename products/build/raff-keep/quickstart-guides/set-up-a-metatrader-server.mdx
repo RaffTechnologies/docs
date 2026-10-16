@@ -1,0 +1,96 @@
+---
+title: Set up a MetaTrader server
+description: Buy a ready-made MetaTrader 4 or 5 server with Raff Keep. Choose the terminals, the platform, auto start, Raff Guardian and who can reach Remote Desktop, then pay.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A MetaTrader server from Raff Keep is a Windows Server 2025 server with MetaTrader 5, MetaTrader 4 or both installed by Raff. Each terminal has its own folder, and by default every terminal starts again by itself after a restart. You answer one setup page, pay at checkout, and Raff does the rest.
+
+## Before you start
+
+- A Raff account on monthly billing. Pay-as-you-go accounts see "Raff Keep stacks are paid through checkout. Pay as you go is not available for them yet."
+- Permission to create servers in the project (`vm.create`).
+- A card on file or enough Raff balance for the first period.
+
+## Steps
+
+<Steps>
+  <Step title="Open the MetaTrader stack">
+    Click **Keep** in the sidebar, then **Create**. On **What do you want to run?**, click **MetaTrader 4 and 5** under **Trading**.
+
+    <Frame>
+      ![TODO: Create page with the MetaTrader 4 and 5 row](/images/products/build/raff-keep/metatrader-01-catalog.png)
+    </Frame>
+  </Step>
+  <Step title="Setup: terminals, platform and auto start">
+    - **MetaTrader terminals**: how many terminals you want, from 1 to 16. Each gets its own folder.
+    - **Platform**: **MetaTrader 5** (default), **MetaTrader 4** or **Both**. With **Both**, you get that many terminals of each platform and every one counts toward the size, so at most 8 of each.
+    - **Start the terminals after a restart** (on by default): after any restart, for example one for Windows updates, a trader login signs in by itself, starts every terminal and locks the screen. Its password is kept in Windows' protected store. Turn it off and the terminals start only when you sign in as the trader login.
+
+    <Frame>
+      ![TODO: Setup group with terminals, platform and auto start](/images/products/build/raff-keep/metatrader-02-setup.png)
+    </Frame>
+  </Step>
+  <Step title="Size: keep Raff's pick or choose bigger">
+    Raff picks the size from your answers and marks it **Raff pick for your answers**:
+
+    | Terminals (with **Both**, count each platform) | Raff's pick |
+    |---|---|
+    | 1 to 4 | 2 vCPU · 4 GB · 80 GB |
+    | 5 to 8 | 4 vCPU · 8 GB · 120 GB |
+    | 9 to 16 | 8 vCPU · 16 GB · 180 GB |
+
+    You can choose a bigger size; smaller ones are not offered. **Show bigger sizes** lists the rest. If you change your answers and a size you chose no longer fits, Raff picks one that does and says so.
+
+    <Note>
+    The price beside each size is the server alone. The **Summary** on the right adds the Windows licence (\$15.00 a month) and shows the total. See [Pricing](/products/build/raff-keep/details/pricing).
+    </Note>
+  </Step>
+  <Step title="Raff Guardian: how Raff looks after it">
+    The **Raff Guardian** group shows **How Raff looks after it**, set to **Raff manages everything**. Click the row to choose another:
+
+    - **Raff manages everything**: updates in your maintenance window, stopped services restarted, the application watched, attacks blocked, disk kept clean.
+    - **Ask me before changes**: [Raff Guardian](/products/manage/raff-guardian/index) prepares each change and waits for your OK. Attacks are still blocked at once.
+    - **Watch only**: Raff Guardian checks the server and tells you about problems. It changes nothing.
+    - **Install only**: no Raff Guardian. Raff installs it once and you look after the server yourself.
+
+    With Raff Guardian, Raff also tells you when a terminal stops, and you can add terminals later from the dashboard. The **Windows licence** row says **Included**. See [Kept by Raff](/products/build/raff-keep/concepts/raff-guardian-choice).
+  </Step>
+  <Step title="Access: time zone, Remote Desktop, name and password">
+    - **Time zone**: the server's Windows time zone. It starts at your browser's time zone.
+    - **Allow Remote Desktop from**: **Any address** (default), **Only my address** (your IPv4 address and the browser console in the dashboard) or **Addresses I choose** (up to 20 IPv4 addresses or ranges, such as `203.0.113.7, 198.51.100.0/24`). Any address keeps Remote Desktop open, protected by logins nobody can guess, a lockout after 10 failed sign-ins for 15 minutes, network level authentication and Raff Guardian blocking attackers.
+    - **Server name**: starts as `forex-mt-01`. 3 to 63 letters, digits or hyphens.
+    - **Built-in Administrator password**: type one or click **Generate**. It needs 12 to 128 characters, at least 2 uppercase letters, at least 2 digits, at least 1 of `@+-_.,!` and no other symbols, and no runs like `aaa` or `123` or common words.
+
+    <Note>
+    This is not the password you sign in with every day. Raff Keep creates your own admin login and shows its password once when the server is ready. The built-in Administrator signs in only in the VNC console and is your way back in if you lose your admin login. Raff keeps this password encrypted only until the server is set up, then deletes it. See [Logins and the Administrator](/products/build/raff-keep/concepts/logins-and-the-built-in-administrator).
+    </Note>
+  </Step>
+  <Step title="Choose the billing period and start">
+    In the **Summary**, check the lines and the total, then pick the **Billing period**: **Monthly**, **Yearly** or **24 months**. Yearly and 24 months are paid up front and cost less per month; the Summary shows how much you save.
+
+    Click **Start**, then pay at checkout. Raff then creates the server, installs everything and records every step.
+
+    <Frame>
+      ![TODO: Summary card with lines, billing period and Start](/images/products/build/raff-keep/metatrader-03-summary.png)
+    </Frame>
+  </Step>
+</Steps>
+
+## Verify
+
+After payment you land on the server's page under **Keep**. Its status moves from **Creating server** to **Installing**, **Checking** and **Installed**, and the steps show as they run. When it is installed, a box at the top offers **Show the logins**. See [Follow the install](/products/build/raff-keep/quickstart-guides/follow-the-install).
+
+With **Start the terminals after a restart** on, the install restarts the server once at the end, so the trader login signs in by itself and every terminal is running when you get the server.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get your logins and passwords" icon="key" href="/products/build/raff-keep/quickstart-guides/get-your-logins">
+    The admin and trader logins, shown once.
+  </Card>
+  <Card title="Connect with Remote Desktop" icon="desktop" href="/products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop">
+    Sign in as the trader to see your terminals.
+  </Card>
+</CardGroup>

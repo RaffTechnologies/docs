@@ -1,0 +1,49 @@
+---
+title: Limit who can reach Remote Desktop
+sidebarTitle: Limit who can reach Remote Desktop
+description: Let only your own IP addresses connect to the server with Remote Desktop, so bots cannot even try passwords.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian can close Remote Desktop to everyone except the addresses you choose. It changes the Windows Firewall rules for Remote Desktop on the server, and the browser console in Raff always keeps working.
+
+## Before you start
+
+- Raff Guardian on the server, in **Raff manages everything** or **Ask me before changes**. On **Watch only** the change is refused.
+- Permission to manage the server (`vm.manage`).
+- Your own public IPv4 address or range, if you want a list.
+
+## Choose who may connect
+
+Bots try passwords on open Remote Desktop all day. Allowing only your addresses keeps them from reaching it at all.
+
+<Steps>
+  <Step title="Pick who may connect">
+    In **Security**, on **Who can reach Remote Desktop**, choose:
+
+    - **Any address**: Remote Desktop is open to every address.
+    - **Only my address**: only the IPv4 address your browser uses now.
+    - **A list of addresses**: IPv4 addresses or ranges, comma separated, for example `203.0.113.7, 198.51.100.0/24`. Up to 500 entries.
+  </Step>
+  <Step title="Apply">
+    Confirm with **Apply**. Raff Guardian changes the Windows Firewall rules for Remote Desktop on the server. "Allowed now" shows the result.
+  </Step>
+</Steps>
+
+The browser console in Raff always works, whatever you choose. This change needs **Raff manages everything** or **Ask me before changes**; it is refused on **Watch only**. If your address changes, set it again here or use the browser console.
+
+## Verify
+
+**Allowed now** on the **Who can reach Remote Desktop** card shows the new setting, and **Activity**, category **Security**, records the change. Try a Remote Desktop connection from an allowed address.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Block or unblock an IP address" icon="shield-halved" href="/products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address">
+    See and change the addresses Raff Guardian blocked.
+  </Card>
+  <Card title="Open the browser console" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/open-browser-console">
+    Reach the server when Remote Desktop is closed to you.
+  </Card>
+</CardGroup>

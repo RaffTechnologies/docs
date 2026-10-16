@@ -1,0 +1,74 @@
+---
+title: Approve or decline a change Raff Guardian proposes
+sidebarTitle: Approve or decline a change
+description: Answer the changes Raff Guardian asks about in the Queue, stop what it is doing, or stop everything at once.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+When an action is set to **Ask me**, Raff Guardian prepares the change and waits for your answer in the **Queue**. The Queue also lists what is waiting to run or running now, and every item in it can be stopped.
+
+## Before you start
+
+- Raff Guardian on the server, in **Ask me before changes**, or with some actions set to **Ask me**. See [Set permissions: what it may do](/products/manage/raff-guardian/quickstart-guides/set-permissions).
+- Permission to manage the server (`vm.manage`). Other members see the Queue without buttons.
+
+## Approve or decline
+
+<Steps>
+  <Step title="Open the Queue">
+    Open the server under **Virtual Machines**, click **Guardian**. On the **Overview**, the **Queue** card shows how many items are open, for example "2 open". The card is hidden when nothing is open.
+  </Step>
+  <Step title="Read the proposal">
+    Each proposal says what Raff Guardian wants to do, why (for example "Windows updates are waiting and your update schedule is due."), and "Waiting for your approval" with when it asked. Click **Show details** for more.
+
+    <Frame>
+      ![TODO: Queue card with a proposal and the Approve and Not now buttons](/images/products/manage/raff-guardian/queue-01-proposal.png)
+    </Frame>
+  </Step>
+  <Step title="Answer">
+    - Click **Approve**: "Approved. Raff Guardian starts on it now."
+    - Click **Not now** to decline: "Raff Guardian will not do this one."
+  </Step>
+</Steps>
+
+A proposal you do not answer stays in the Queue for 7 days, then expires. Raff Guardian also closes a proposal itself when it is no longer needed, for example "No longer needed: Windows reports no pending updates."
+
+You can also approve from the place the problem shows: on Ask me, a finding's button such as **Install now** or **Restart now** approves the waiting proposal.
+
+### Restoring the pre-update snapshot
+
+When a server does not come back healthy after Windows updates, Raff Guardian proposes to restore the snapshot it took before them. This proposal always asks, in every mode. **Approve** opens **Restore the snapshot?**: "Raff Guardian stops the server, puts its disk back to the snapshot taken before the updates and starts it again. Anything written to the disk since then is lost." Click **Restore** to go ahead.
+
+## Stop something that is waiting or running
+
+Each item in the Queue has a stop button:
+
+| The item is | Button | What happens |
+|---|---|---|
+| Waiting to run | **Cancel** | "Cancelled. Raff Guardian will not do this." |
+| Running | **Stop** | "Raff Guardian stops this as soon as it safely can." The item shows **Stopping…** |
+| Counting down to a restart, update switch-over or shut down | **Cancel restart**, **Cancel update**, **Cancel shutdown** | The countdown stops and the server keeps running. |
+
+A few steps cannot be stopped once started, and say so: forcing the server off, a hard restart, setting a new password, and restoring a snapshot.
+
+## Stop everything
+
+Click **Stop everything** on the Queue card. It shows while the Queue has items and Raff Guardian may change the server. The dialog explains: Raff Guardian cancels everything queued, stops what is running as soon as it safely can, and is set to **Watch only**, so it changes nothing until you choose another option in Settings. It still keeps itself up to date.
+
+Click **Stop everything** to confirm, or **Keep going**.
+
+## Verify
+
+The item leaves the Queue. **Activity** shows the proposal, your answer and, once it ran, the result with what changed.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="See what it did (activity log)" icon="list" href="/products/manage/raff-guardian/quickstart-guides/see-the-activity-log">
+    Follow the change through Activity.
+  </Card>
+  <Card title="Modes and permissions" icon="lightbulb" href="/products/manage/raff-guardian/concepts/modes-and-permissions">
+    Which actions ask, and which run on their own.
+  </Card>
+</CardGroup>

@@ -1,0 +1,67 @@
+---
+title: Kept by Raff and Raff Guardian
+sidebarTitle: Kept by Raff
+description: How Raff Guardian looks after a Raff Keep server, the four choices on the setup page, what Install only leaves to you, and how to change your choice later.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A Raff Keep server is kept by Raff when Raff Guardian runs on it. Raff Guardian is Raff's agent on the server: it keeps Windows updated, restarts your apps when they stop, blocks attackers and tells you about problems. You choose how far it goes on the setup page, in the **Raff Guardian** group, under **How Raff looks after it**.
+
+This page covers Raff Guardian on a Raff Keep server. For everything it does on any Windows server, see [Raff Guardian](/products/manage/raff-guardian).
+
+## How it works
+
+### The four choices
+
+| Choice | What Raff Guardian does |
+|---|---|
+| **Raff manages everything** (default) | Updates in your maintenance window, stopped services restarted, the application watched, attacks blocked, disk kept clean. |
+| **Ask me before changes** | Prepares each change and waits for your OK. Attacks are still blocked at once. |
+| **Watch only** | Checks the server and tells you about problems. It changes nothing. |
+| **Install only** | Not installed. Raff installs the stack once and you look after the server yourself. |
+
+Raff Guardian takes your choice when it first connects from the server. You can then change it, or set each action on its own.
+
+### What it does on a Raff Keep server
+
+On top of what it does on any Windows server, Raff Guardian knows the stack Raff Keep installed:
+
+- **MetaTrader**: checks every terminal, tells you by email when one stops, shows each terminal's broker connection and algo trading, adds terminals (**Add terminal**) and takes on terminals you installed by hand (**Look after it**). A new password for the trader login keeps auto sign-in working, and you get a warning when the trader login will not sign in by itself.
+- **ASP.NET**: checks each site every 5 minutes and says why one does not start, with the fix. It sets up a publishing login per site, makes publish profiles, adds sites, domains and .NET versions, and changes where Web Deploy answers from.
+- **Both**: shows your admin and trader logins on the **Users** tab and sets new passwords for them, and changes who can reach Remote Desktop.
+
+Your own presses, such as **Add terminal** or **Publish profile**, run on **Watch only** too.
+
+### Install only
+
+With **Install only**, Raff installs the stack, checks it and hands it over, and Raff Guardian is never installed. Windows still downloads updates, but waits for you to install them. Windows' account lockout (10 wrong passwords, 15 minutes) still protects the logins.
+
+These need Raff Guardian, so they do not work on an **Install only** server: adding terminals, publish profiles and per-site publishing logins, adding sites, domains and .NET versions, **New password** on the **Users** tab, changing who can reach Remote Desktop from the dashboard, attack blocking, and the warnings and emails when something stops. The **Settings** tab says "Raff Guardian is not on this server".
+
+## When to use it
+
+- **Raff manages everything**: you want the server to look after itself, such as a trading server that must keep running.
+- **Ask me before changes**: you want to approve each update or change, but still have attacks blocked.
+- **Watch only**: you manage the server yourself and want Raff's warnings.
+- **Install only**: you have your own tools for updates and monitoring.
+
+## Change your choice
+
+- **With Raff Guardian**: open the server's **Settings** tab. Under **Raff Guardian**, change **How Raff looks after it**, set **Block an attacker after**, or open **Each action on its own**. On a Raff Keep server Raff Guardian cannot be uninstalled from here: Keep needs it to manage the server. See [Set permissions: what it may do](/products/manage/raff-guardian/quickstart-guides/set-permissions).
+- **Install only**: install Raff Guardian later from the server's **Guardian** tab in **Compute**. See [Install on an existing server](/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server).
+
+## Price
+
+The **Summary** on the setup page shows Raff Guardian as its own line: "Raff Guardian: free for the first 6 months, then \$10.00 a month". It is not part of what you pay at checkout. With **Install only**, the line is not shown.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Logins and the Administrator" icon="lightbulb" href="/products/build/raff-keep/concepts/logins-and-the-built-in-administrator">
+    Lockout and attack blocking.
+  </Card>
+  <Card title="Add a MetaTrader terminal" icon="rocket" href="/products/build/raff-keep/quickstart-guides/add-a-metatrader-terminal">
+    A terminal installed by Raff Guardian.
+  </Card>
+</CardGroup>

@@ -1,0 +1,87 @@
+---
+title: Raff Guardian automatic blocking and account lockout
+sidebarTitle: Automatic blocking and lockout
+description: How Raff Guardian blocks addresses that guess passwords within seconds, and why it takes over Windows' account lockout so bots never lock you out.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Every Windows server on the internet gets password guesses on Remote Desktop all day. Raff Guardian watches the failed sign-ins on the server and blocks an address at the Windows Firewall as soon as it crosses your limit. While it does, it switches off Windows' own account lockout, so bots guessing passwords can no longer lock your real users out.
+
+## How it works
+
+### Counting failed sign-ins
+
+The agent watches Windows' sign-in events on the server itself. It counts, per address:
+
+- failed Remote Desktop sign-ins, and
+- failed SSH password sign-ins, when OpenSSH Server is installed.
+
+When one address reaches the limit within 15 minutes, the agent blocks it at once, on the server, within seconds. It does not wait for Raff: blocking works even while the server cannot reach Raff.
+
+The limit is **Block an attacker after** in **Settings**: 8 failed sign-ins by default, from 5 to 200.
+
+### Attacks on one account from many addresses
+
+Some bots spread their guesses over many addresses. When one account gets 6 or more failed sign-ins from 3 or more addresses within 15 minutes, every address that fails on that account again is blocked at its next failure. Activity names the account: "...it guessed passwords for an account several addresses were attacking."
+
+### What is never blocked
+
+- Addresses you allowed to reach Remote Desktop. See [Block or unblock an IP address](/products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address).
+- The addresses of Raff's browser console, so the console always reaches your server.
+- Private and reserved ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `100.64.0.0/10` and the ranges Windows reserves for itself.
+
+### How long blocks last
+
+- **Automatic blocks** end after 7 days. If the address attacks again, Raff Guardian blocks it again at once. A block is not lifted while the address is still attacking.
+- **Blocks you add** with **Block now** stay until you unblock them.
+- An address you later allow to reach Remote Desktop is unblocked automatically (except on **Watch only**).
+
+Each block is a Windows Firewall rule named "Raff Guardian: block" followed by the address.
+
+### Auto, Ask me and Off
+
+Blocking follows the **Block attacking addresses** action:
+
+| Setting | What happens |
+|---|---|
+| **Auto** (default in **Raff manages everything** and **Ask me before changes**) | Blocks on the server within seconds, and takes over the account lockout. |
+| **Ask me** | Asks you after the limit is reached; the address keeps trying until you approve. |
+| **Off** | Reports failed sign-ins, blocks nothing. |
+
+On **Watch only**, Raff Guardian blocks nothing and lifts no block on its own. You can still unblock an address.
+
+### The account lockout handover
+
+Windows can lock an account after a number of wrong passwords. On a server reachable from the internet, that protects nobody: bots guess the **Administrator** password all day, and the lockout locks out you instead of them.
+
+So while blocking is on **Auto** and Raff Guardian may change the server, it hands the lockout over:
+
+1. Raff Guardian keeps Windows' lockout setting, then sets Windows to stop locking accounts after wrong passwords. Activity: "Windows no longer locks accounts after wrong passwords: Raff Guardian blocks the attackers instead."
+2. Attackers are blocked by address instead, so your accounts stay usable.
+3. Windows gets its own lockout back when you choose **Watch only**, set blocking to **Ask me** or **Off**, or uninstall Raff Guardian. It gets the setting it had before, or 10 wrong passwords within 15 minutes locking for 15 minutes when there was none. Activity: "Windows' own account lockout is back".
+
+In **Windows protection** on the **Security** section, **Wrong passwords** then reads **Raff Guardian blocks**.
+
+## When to use it
+
+- Keep it on **Auto** on any server with Remote Desktop open to the internet.
+- Add the addresses you work from to the Remote Desktop allow list, so a typo on your side never blocks you.
+- Use **Ask me** or **Off** only if another tool already blocks attackers on the server.
+
+## Trade-offs / limits
+
+- IPv4 only. Raff Guardian keeps at most 500 automatic blocks on a server.
+- If you mistype your own password enough times from an address that is not on the allow list, that address is blocked too. Unblock it from the dashboard, or use the browser console.
+- With the lockout handed over, a person who knows a valid account name can keep guessing from new addresses. Each address is blocked after your limit, and accounts attacked from many addresses are guarded.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Block or unblock an IP address" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/block-or-unblock-an-ip-address">
+    Unblock, change the limit, set the allow list.
+  </Card>
+  <Card title="Reset passwords and manage users" icon="rocket" href="/products/manage/raff-guardian/quickstart-guides/reset-passwords-and-manage-windows-users">
+    Unlock an account Windows locked.
+  </Card>
+</CardGroup>

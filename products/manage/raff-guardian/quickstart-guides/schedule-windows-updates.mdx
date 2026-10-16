@@ -1,0 +1,71 @@
+---
+title: Schedule Windows updates
+sidebarTitle: Schedule Windows updates
+description: Choose the days, start time and time zone in which Raff Guardian installs Windows updates, or install the waiting updates now.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Raff Guardian installs Windows updates in a window you choose: the days, the start time and your time zone. By default it is every day at 03:00 UTC. Each install takes a snapshot first, restarts the server if the updates need it, and checks that the server came back.
+
+## Before you start
+
+- Raff Guardian on the server, in **Raff manages everything** or **Ask me before changes**. On **Watch only** it reports updates and installs nothing.
+- Permission to manage the server (`vm.manage`). Other members see "Only members who can manage this server can change these settings."
+
+## Set the window
+
+<Steps>
+  <Step title="Open Updates">
+    Open the server under **Virtual Machines**, click **Guardian**, then **Updates**. Scroll to **When Raff Guardian installs updates**.
+
+    <Frame>
+      ![TODO: When Raff Guardian installs updates card with days, start time and time zone](/images/products/manage/raff-guardian/updates-01-window.png)
+    </Frame>
+  </Step>
+  <Step title="Choose what Raff Guardian does in the window">
+    Set the control at the top of the card:
+
+    - **Auto**: "On these days Raff Guardian starts installing waiting updates within an hour of this time."
+    - **Ask me**: "At these times Raff Guardian asks you instead of installing." The proposal waits in the **Queue**.
+    - **Off**: Raff Guardian does not install updates on this server and only reports them.
+  </Step>
+  <Step title="Pick the days, time and time zone">
+    - **Days**: **Every day**, **Weekdays**, or any of Mon to Sun. At least one day stays selected.
+    - **Starts at**: any hour or half hour, 00:00 to 23:30.
+    - **Time zone**: your zone. Until you save one, the times are UTC; click **Use** followed by your browser's zone to switch.
+
+    Each change saves at once. The footer shows the next run, for example "Next: Monday 29 September, 06:00 Europe/Istanbul".
+  </Step>
+  <Step title="Choose how restarts are handled">
+    The same card has **Restart the server**. It covers restarts Windows asks for outside an update install: on **Auto**, Raff Guardian restarts in your update window and asks you at other times. An update install restarts the server when its updates need it, whatever this setting says.
+  </Step>
+</Steps>
+
+## Install the waiting updates now
+
+At the top of **Updates**, Raff Guardian says how many updates are waiting, for example "3 updates are waiting, 2 of them for security." Click **Install now**, then **Install now** in **Install Windows updates now?**
+
+Raff Guardian protects the server first (a snapshot, or your Raff Backups), installs the waiting updates and restarts the server if they need it. Remote Desktop sessions end during the restart. The progress shows step by step, for example "Checking the server came back · step 6 of 7".
+
+## What the Updates section shows
+
+- **Found by Windows Update**: the updates Windows reports as waiting. Driver updates are left to you: "This includes 1 driver update, which Raff Guardian leaves to you."
+- **Held back**: updates with a known issue Microsoft lists. Raff Guardian installs one once its fix is on the server.
+- **Installed**: the updates Raff Guardian installed, newest first.
+- **Restart pending**: shown while Windows needs a restart to finish updates, with **Restart now**.
+
+## Verify
+
+After the window, **Activity** (category **Updates**) shows the install, for example "Installed 4 Windows updates.", the restart, and "Raff Guardian checked your server afterwards: it came back healthy." The **Raff Guardian** card on the Overview shows the update policy under **Windows updates**.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Windows updates" icon="lightbulb" href="/products/manage/raff-guardian/concepts/windows-updates">
+    The snapshot, the check after the restart and the restore offer.
+  </Card>
+  <Card title="Approve or decline a change" icon="check" href="/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change">
+    Answer an update proposal on Ask me.
+  </Card>
+</CardGroup>

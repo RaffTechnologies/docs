@@ -1,0 +1,125 @@
+---
+title: Raff Guardian troubleshooting
+sidebarTitle: Troubleshooting
+description: Common Raff Guardian issues, from the install command to blocked addresses, and how to fix them.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+Issues you may run into with Raff Guardian, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
+
+## Common issues
+
+<AccordionGroup>
+  <Accordion title="&quot;This Raff Guardian install command was already used or has expired&quot;">
+    **What's happening:** each install command works once, for 15 minutes.
+
+    **Fix:** on the server's **Guardian** tab, click **Install Raff Guardian** again and run the new command within 15 minutes. Keep the dialog open until the install has finished.
+  </Accordion>
+  <Accordion title="The install command stops with an error">
+    **What's happening:** the installer stops before it changes anything when a step fails. The message says which:
+
+    | Message | Fix |
+    |---|---|
+    | "Could not download the Raff Guardian installer." or "Could not download Raff Guardian from ... Nothing was installed." | Allow outbound HTTPS from the server to `api.rafftechnologies.com` and `raff-releases.s3.raffusercloud.com`, then get a new command. |
+    | "The Raff Guardian installer did not match. Nothing was installed." or "The Raff Guardian agent did not match. Nothing was installed." | The download was changed on the way, often by a proxy that rewrites files. Run the command again from a network without one. |
+    | "Could not lock Raff's data folder; the install stopped." or "Could not lock Raff Guardian's key file; the install stopped." | Open PowerShell with **Run as administrator** and get a new command. |
+    | "enrolment failed" | The code was used or expired while the install ran. Get a new command. |
+    | "Raff Guardian cannot be installed right now. Try again in a few minutes." (in the dashboard) | Wait a few minutes and click **Install Raff Guardian** again. |
+  </Accordion>
+  <Accordion title="I ran the command, but the Guardian tab still offers Install">
+    **What's happening:** Raff has not received the first report yet.
+
+    **Fix:**
+    1. Check the end of the PowerShell output: it lists the **RaffGuardian** service and its status. **Running** means the install worked; the tab updates within a minute or two.
+    2. If PowerShell showed an error, see the issue above.
+    3. Check that the server can reach `api.rafftechnologies.com` over HTTPS.
+  </Accordion>
+  <Accordion title="Raff Guardian shows Not reporting">
+    **What's happening:** Raff has not had a report for over 5 minutes. The notice reads "Raff Guardian is not reporting." Until it reports, it cannot block attackers or act on findings. **Server is off** is different: the server was turned off.
+
+    **Why:** the server is busy, restarting or offline, outbound HTTPS is blocked, or the **RaffGuardian** service was stopped.
+
+    **Fix:**
+    1. Check the server is running and you can connect to it.
+    2. On the server, run `Get-Service RaffGuardian` in PowerShell. If it is not **Running**, run `Start-Service RaffGuardian` as administrator.
+    3. Check outbound HTTPS to `api.rafftechnologies.com`.
+    4. If it still does not report, open the **⋯** menu on the **Raff Guardian** card and click **Reinstall Raff Guardian**, then run the new command. A reinstall keeps the server's mode and settings.
+  </Accordion>
+  <Accordion title="Raff Guardian did not make a change, or its button is disabled">
+    **What's happening:** something stops the change. The disabled button or the Queue says what. The common reasons:
+
+    - **Watch only**: "Raff Guardian is set to Watch only on this server, so it changes nothing." Choose another mode. See [Set permissions: what it may do](/products/manage/raff-guardian/quickstart-guides/set-permissions).
+    - **The action is Off**: for example "Installing Windows updates is off in Raff Guardian's settings. Set it to Auto or Ask me first."
+    - **The action is Ask me**: the change waits in the **Queue** for **Approve**. See [Approve or decline a change](/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change).
+    - **A daily limit**: a service is restarted automatically up to 3 times a day, then Raff Guardian asks; disk space is freed at most once a day per drive.
+    - **A core Windows service**: "Windows needs this service, so Raff Guardian does not restart it."
+    - **An older Raff Guardian**: "This server runs an older Raff Guardian that cannot do this yet." Raff Guardian updates itself; to get it at once, reinstall it.
+    - **Not reporting**: see the issue above.
+  </Accordion>
+  <Accordion title="Windows updates did not install">
+    **Fix:** check, in this order:
+
+    1. **Mode and setting**: on **Watch only**, or with **Install Windows updates on your schedule** on **Off**, Raff Guardian only reports updates. On **Ask me**, the install waits in the **Queue**.
+    2. **The window**: on **Updates**, **When Raff Guardian installs updates** shows the days, time zone and the next run. Raff Guardian starts within an hour of the start time, and not within 20 hours of the last install.
+    3. **The snapshot**: Activity may say "Not installed today: Raff Guardian could not take a snapshot first." Nothing installs without protection. Check the server's **Snapshots** tab and storage, then use **Install now**.
+    4. **Held back**: updates with a known issue wait under **Held back** until their fix is installed. Driver updates are left to you.
+    5. **Nothing waiting**: "Nothing to install: Windows reports no pending updates."
+
+    If the server did not come back healthy after an install, see the next issue.
+  </Accordion>
+  <Accordion title="&quot;Server not healthy after updates&quot;">
+    **What's happening:** after an update install or restart, the server did not report again with Remote Desktop running within 25 minutes.
+
+    **Fix:**
+    1. Open the server's console and check whether Windows is still installing updates or stuck at start-up.
+    2. If the server is broken, approve **Restore the pre-update snapshot** in the **Queue**. The server goes back to its disk from just before the updates; anything written since is lost.
+    3. If the server is fine, click **Not now** on the restore. The finding closes.
+  </Accordion>
+  <Accordion title="Raff Guardian blocked an address I use">
+    **What's happening:** too many failed sign-ins came from your address within 15 minutes, for example from a saved password that changed.
+
+    **Fix:**
+    1. Connect through the browser console if Remote Desktop is blocked for you. See [Open the browser console](/products/build/virtual-machines/quickstart-guides/open-browser-console).
+    2. On **Security**, **Blocked addresses**, click **Unblock** on your address.
+    3. To stop it happening again, add your address in **Who can reach Remote Desktop** with **A list of addresses**. Allowed addresses are never blocked.
+    4. Update the saved password that keeps failing, or raise **Block an attacker after** in **Settings**.
+  </Accordion>
+  <Accordion title="I cannot reach Remote Desktop after changing who can reach it">
+    **What's happening:** your current address is not on the allow list, for example because it changed.
+
+    **Fix:** on **Security**, **Who can reach Remote Desktop**, choose **Only my address** or add your address to the list. The browser console always works, whatever you choose.
+  </Accordion>
+  <Accordion title="&quot;Raff Guardian cannot block attackers on the server&quot;">
+    **What's happening:** blocking is on, but the agent cannot watch the failed sign-ins on the server. The notice shows Windows' reason when there is one.
+
+    **Fix:** check that the **RaffGuardian** service is running (`Get-Service RaffGuardian`) and wait for the next report. If the notice stays, contact support with its text.
+  </Accordion>
+  <Accordion title="Uninstall left something on the server">
+    **What's happening:** Raff Guardian removes its service and its two folders, and gives back Windows' account lockout. It leaves your Windows Firewall rules and snapshots as they are.
+
+    **Fix:**
+    - **Blocked addresses**: in **Windows Defender Firewall with Advanced Security**, **Inbound Rules**, delete the rules named "Raff Guardian: block" followed by an address. Or run, as administrator: `Get-NetFirewallRule -Name 'RaffGuardian-Block-*' | Remove-NetFirewallRule`
+    - **Remote Desktop allow list**: in the same window, open each **Remote Desktop** inbound rule, **Scope**, and set **Remote IP address** to **Any IP address**.
+    - **Snapshots**: delete leftover `guardian-pre-update-` snapshots from the server's **Snapshots** tab if you no longer need them.
+    - **The service is still there**: the server was off or not reporting when you uninstalled. Raff Guardian removes itself at its next report. If the server can no longer reach Raff, remove it by hand as administrator: `Stop-Service RaffGuardian`, then `sc.exe delete RaffGuardian`, then delete `C:\Program Files\Raff\Guardian` and `C:\ProgramData\Raff\Guardian`. Removing it by hand does not give Windows its account lockout back: set it again under **Local Security Policy**, **Account Lockout Policy**.
+  </Accordion>
+  <Accordion title="&quot;Raff Guardian cannot send the security email for a new password just now&quot;">
+    **What's happening:** every new Windows password sends a security email to the project's members. When Raff cannot send it, nothing changes.
+
+    **Fix:** try again in a minute.
+  </Accordion>
+  <Accordion title="A question does not answer">
+    **What's happening:** "Your server did not answer within 2 minutes. It may be busy or restarting." Or the card says questions are off, or that Raff Guardian has not heard from the server.
+
+    **Fix:** try again once the server is reporting. If the card says "Questions are off for this server.", click **Turn on in Settings**. Each server takes up to 10 questions a minute.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The server's ID (in the dashboard URL)
+- The exact message and the time it happened
+- What you have already tried

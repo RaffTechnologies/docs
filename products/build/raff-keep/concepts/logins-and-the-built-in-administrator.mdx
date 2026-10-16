@@ -1,0 +1,61 @@
+---
+title: Logins and the built-in Administrator
+sidebarTitle: Logins and the Administrator
+description: Why a Raff Keep server gives you your own admin login for Remote Desktop, keeps the built-in Administrator for the VNC console, and how the lockout and attack blocking protect them.
+---
+
+<sub>Updated October 15, 2026</sub>
+
+A Raff Keep server signs you in with logins it created for you, not with Windows' built-in Administrator. Bots try the name Administrator on open Remote Desktop all day, so Raff Keep turns it off for Remote Desktop and gives you an admin login with a name nobody can guess. The built-in Administrator stays as your way back in, through the VNC console.
+
+## How it works
+
+### The logins Raff Keep creates
+
+| Login | Name | Member of | Signs in |
+|---|---|---|---|
+| **Admin login** | `admin-` plus 3 random characters, such as `admin-k7q` | Administrators, Remote Desktop Users | Remote Desktop, SSH with a key, Web Deploy; SQL Server Express on an ASP.NET server |
+| **Trader login** (MetaTrader) | `trader-` plus 3 random characters, such as `trader-m2p` | Users, Remote Desktop Users | Remote Desktop; runs the terminals |
+| **Built-in Administrator** | `Administrator` | Administrators | VNC console only |
+
+Raff Keep makes a 20-character password for each login it creates, never expiring and never forced to change. The passwords are shown once on the server's page; see [Get your logins and passwords](/products/build/raff-keep/quickstart-guides/get-your-logins).
+
+### The built-in Administrator
+
+At the end of the install, Raff Keep denies the built-in Administrator "Log on through Remote Desktop Services" and "Access this computer from the network". Guessing its password over the internet then opens nothing. It still signs in at the VNC console, the server's own screen in the dashboard, with the password you chose on the setup page.
+
+If the install fails after this change, Raff Keep puts the built-in Administrator back on Remote Desktop at once. With Raff Guardian on, you get a warning if the built-in Administrator can sign in over Remote Desktop or from the network again.
+
+### Lockout and attack blocking
+
+- **Network level authentication**: Windows checks the sign-in before a Remote Desktop session opens.
+- **Account lockout**: 10 wrong passwords lock an account for 15 minutes.
+- **Raff Guardian blocking** (every choice except **Watch only** and **Install only**): after 8 wrong passwords from one address in 15 minutes, Raff Guardian blocks that address on the server within seconds, for 7 days. While it blocks, it takes over from Windows' lockout, so guessing bots cannot lock you out of your own accounts. Change the number on the **Settings** tab (**Block an attacker after**, 5 to 200), and see or lift blocks on the **Security** tab. See [Automatic blocking and lockout](/products/manage/raff-guardian/concepts/automatic-blocking).
+- **Allowed addresses**: Remote Desktop can be limited to your addresses on the setup page, or later on the **Security** tab.
+
+### Administrator rights over the network
+
+Windows gives an administrator other than the built-in Administrator a limited token when it signs in over the network. So PowerShell remoting and admin shares such as `\\server\c$` answer "Access is denied" for your admin login. Raff keeps this Windows default. Use Remote Desktop with **Run as administrator**, or SSH with one of your account's SSH keys as your admin login, which gets full administrator rights. SSH takes keys only; passwords are off.
+
+## When to use which
+
+- **Every day**: your admin login over Remote Desktop, or the trader login on a MetaTrader server.
+- **Lost your admin login's password**: with Raff Guardian, **Users**, **New password**. Without it, sign in as the built-in Administrator in the VNC console and set a new password in Windows.
+- **Lost the built-in Administrator's password**: **Reset password** on the server's page in **Compute**. Raff emails the new password to the account's billing email address and restarts the server.
+
+## Trade-offs and limits
+
+- The built-in Administrator cannot use Remote Desktop, PowerShell remoting or admin shares on a Raff Keep server.
+- Remote Desktop on a MetaTrader server is for one person who sets up and checks the terminals. A team working in the desktop every day needs Remote Desktop user licences: ask support.
+- Raff keeps no copy of your passwords once they have been shown, so it cannot tell you a password later.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Connect with Remote Desktop" icon="rocket" href="/products/build/raff-keep/quickstart-guides/sign-in-with-remote-desktop">
+    Connect, and reach the VNC console.
+  </Card>
+  <Card title="Kept by Raff" icon="lightbulb" href="/products/build/raff-keep/concepts/raff-guardian-choice">
+    What Raff Guardian does on a Keep server.
+  </Card>
+</CardGroup>
