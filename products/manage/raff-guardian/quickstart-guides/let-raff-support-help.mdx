@@ -1,0 +1,65 @@
+---
+title: Let Raff support help with your server
+sidebarTitle: Let Raff support help
+description: Allow Raff support to look at your server and fix common problems through Raff Guardian, for 1, 7 or 30 days, and see every time they did.
+---
+
+<sub>Updated October 16, 2026</sub>
+
+When you ask Raff support for help, they can work on your server through Raff Guardian, but only after you allow it. You choose for how long, you can turn it off at any time, and every visit is listed for you.
+
+## Before you start
+
+- Raff Guardian on the server.
+- Permission to manage the server (`vm.manage`).
+
+## Turn on Raff support access
+
+<Steps>
+  <Step title="Open the Raff support access card">
+    Open the server under **Virtual Machines**, click **Guardian**, then **Security**. The **Raff support access** card shows whether it is on.
+  </Step>
+  <Step title="Choose for how long">
+    Next to **Turn on for** (or **Change to**, when it is on), click **1 day**, **7 days** or **30 days**. The card then reads "On until ..." with the time it ends by itself.
+  </Step>
+</Steps>
+
+To end it early, click **Turn off** on the same card. Raff support's open visit ends at once.
+
+On a server **Kept by Raff**, access is on while Raff Keep manages the server: "On while Raff Keep manages this server." You can turn it off under **Settings**, **Help from Raff**, on the server's Raff Keep page.
+
+## What Raff support can do
+
+Each visit is a session that lasts at most 60 minutes and needs a written reason, which you see in **Activity**. Inside it, Raff support can:
+
+- See what Raff Guardian sees: its findings, its recent changes and the activity of the server.
+- Ask Raff Guardian read-only questions: what uses the processor, which services run, which folders fill the disk, which ports are open, and on a MetaTrader server how the terminals are doing.
+- Run four actions: unblock an address, restart a service, free disk space and update Raff Guardian.
+- Stop a change that is waiting or running, and set the server to **Watch only** for the visit. Your own setting comes back when the visit ends.
+
+Raff support can never turn changes on, change these settings, remove Raff Guardian or restore a snapshot.
+
+## See every visit
+
+- The **Raff support access** card lists **Recent access** from the last 90 days: when each visit opened and ended, and how many requests it made to Raff Guardian.
+- **Activity** records when each visit opened, its reason and everything done in it.
+- The project's members get a notice when a visit opens. The notice does not include the reason; Activity does.
+
+## Emergency access
+
+In an emergency with Raff Guardian on your server, a senior Raff engineer can open **Raff emergency access** even while your switch is off. It needs a longer written reason, can only stop or fix what Raff Guardian did, and shows as **Raff emergency access** in **Recent access** and in Activity. You get the same notice.
+
+## Verify
+
+The card reads "On until ..." (or "Off. Raff support cannot act on or ask about this server."). After a visit, it appears under **Recent access** and in **Activity**.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="See what it did (activity log)" icon="list" href="/products/manage/raff-guardian/quickstart-guides/see-the-activity-log">
+    Read what was done during a visit.
+  </Card>
+  <Card title="Privacy and data" icon="lightbulb" href="/products/manage/raff-guardian/concepts/privacy-and-data">
+    What Raff Guardian reads and who can see it.
+  </Card>
+</CardGroup>
