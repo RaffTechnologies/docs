@@ -1,0 +1,116 @@
+---
+title: Deploy a Docker image
+description: Run any public Docker image on Raff Apps, from Docker Hub, GitHub Packages or another registry, with an https address.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Run an image you already built, or any public image, without a build step. Raff pulls the image, starts it and gives a website or API an https address.
+
+Use this when your CI builds the image, or to run an open-source app that ships as an image.
+
+## Before you start
+
+- A Raff account and a project to create the app in.
+- A public image on Docker Hub, GitHub Packages or another registry, for example `nginx:1.27-alpine` or `ghcr.io/you/app:latest`.
+- The port the image listens on, for a website, API or private service.
+
+## Steps
+
+<Steps>
+  <Step title="Open the create page">
+    Go to **Apps** and click **New service**. On the **Deploy an app** page, choose **Docker image**.
+  </Step>
+  <Step title="Enter the image">
+    Type the image in **Image**, for example `nginx:1.27-alpine`, and click **Continue**.
+
+    <Frame>
+      ![TODO: Docker image tab with the Image field](/images/products/build/raff-apps/image-source.png)
+    </Frame>
+  </Step>
+  <Step title="Name it and say what it is">
+    Under **App**, set the **Name** and pick **What it is**: **Website or API**, **Background worker**, **Private service**, **Scheduled task** or **Runs once**. See [App types](/products/build/raff-apps/concepts/app-types).
+
+    For a website, API or private service, set **Port** to the port the image listens on. It starts at 8080; `nginx` listens on 80.
+  </Step>
+  <Step title="Pick a size">
+    Under **Size**, pick the CPU and memory for each instance, from 0.25 vCPU · 512 MB ($3 a month) to 8 vCPU · 16 GB ($119.99 a month). You can change it any time.
+  </Step>
+  <Step title="Add a database and settings (optional)">
+    - **Database**: keep **No database**, or create Postgres with the app. See [Add a Postgres database to an app](/products/build/raff-apps/quickstart-guides/add-a-database).
+    - **Environment variables**: paste a `.env` file, one `KEY=value` per line.
+    - **Start command**: leave it empty to use the image's own command, or type one to replace it.
+  </Step>
+  <Step title="Deploy">
+    Check the **Summary** and click **Deploy**. On a monthly account you pay at checkout first.
+  </Step>
+</Steps>
+
+## Verify
+
+The app page shows **Got the image**, **Starting** and **Live**. There is no build step. Raff marks the app **Live** once it answers on its port.
+
+If the deploy fails, the app page says why, for example that Raff cannot pull the image or that the app does not accept connections on its port. For a wrong port, fix **HTTP port** in **Settings** > **Runtime** and the app deploys again.
+
+## Run a new version of the image
+
+**Redeploy** runs the exact image that is live now. It does not pull a newer image, even for a tag such as `latest`. To run a new version, deploy it by its tag with the API or the CLI below.
+
+## Use the API
+
+Create the app and deploy it at once. Set `builder` to `image` and `deploy_now` to `true`:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "website",
+    "service_type": "web",
+    "source_type": "image",
+    "builder": "image",
+    "image_ref": "nginx:1.27-alpine",
+    "http_port": 80,
+    "tier_id": 1,
+    "deploy_now": true
+  }'
+```
+
+`tier_id` is the size: `1` is 0.25 vCPU · 512 MB, `2` is 0.5 vCPU · 1 GB, up to `6`. List them with [List Apps tiers](/api-reference/apps/list-app-tiers). The response has the new app with its `service_id`, which the other calls use. See [Create app service](/api-reference/apps/create-app-service).
+
+Deploy a new version of the image:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/deployments \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "image_ref": "ghcr.io/you/app:v2" }'
+```
+
+See [Create deployment](/api-reference/apps/create-app-deployment).
+
+## Use the CLI
+
+```bash
+# Create a website from an image and deploy it
+raff apps create --name website --type web \
+  --source image --builder image --image ghcr.io/you/app:latest \
+  --tier 1 --deploy-now
+
+# Deploy a new version
+raff apps deploy SERVICE_ID --image ghcr.io/you/app:v2
+```
+
+The CLI has no port option, so a website created with it listens on 8080. For another port, create the app in the dashboard or with the API.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Set environment variables" icon="key" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Add settings and secrets.
+  </Card>
+  <Card title="Add a custom domain" icon="globe" href="/products/build/raff-apps/quickstart-guides/add-a-custom-domain">
+    Serve the app on your own domain.
+  </Card>
+</CardGroup>

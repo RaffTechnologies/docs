@@ -1,0 +1,97 @@
+---
+title: View logs, metrics and a shell
+sidebarTitle: Logs, metrics and shell
+description: Read a Raff app's runtime and build logs, watch CPU, memory and request charts, open a terminal inside a running instance and see what changed.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Each app page has what you need to see how the app is doing: its logs, charts for the last hour to the last week, a terminal inside a running instance, and a list of what happened to it.
+
+## Runtime logs
+
+Open the app and go to **Logs**. Lines appear within seconds of your app writing to stdout or stderr, newest first, and the list refreshes every 10 seconds.
+
+- Type in **Filter logs…** to show only lines with that text.
+- Pick a level: **All**, **Info**, **Warn** or **Error**.
+- Click **Download** to save the lines you see.
+- When the app has [pull request previews](/products/build/raff-apps/quickstart-guides/preview-pull-requests) running, pick **Production** or a pull request under **Source**.
+
+<Frame>
+  ![TODO: Logs tab with the filter box, level buttons and log lines](/images/products/build/raff-apps/logs-tab.png)
+</Frame>
+
+## Build logs
+
+Go to **Deploys** and click **Log** on a deploy to see its build output. A failed deploy shows why it failed in plain words, and a failed build ends with the last lines of its log.
+
+## Metrics
+
+Go to **Metrics** and pick the window: **1h**, **6h**, **24h** or **7d**.
+
+- **CPU**, **Memory** and **Instances** for every app type that runs instances.
+- **Requests / second**, **p95 latency** and **Responses by class** (2xx to 5xx) for websites and APIs, and for private services that scale to zero.
+- Tiles at the top show the current values, the error rate and the app's cost this month.
+
+Cron jobs and one-off jobs have no **Metrics** tab: see their **Runs** tab instead.
+
+## Shell
+
+Go to **Shell** to open a terminal inside a running instance of a website, private service or background worker. The tab appears once the app is live.
+
+- Pick **newest running** or a specific instance on the left.
+- Click **Save command** to keep a command you run often. Clicking a saved command types it into the terminal; press Enter to run it. Saved commands are shared with your team.
+
+Commands run inside the live instance, and nothing you change there survives the next deploy. An app that scales to zero has no running instance while it sleeps: open its address first to wake it.
+
+<Frame>
+  ![TODO: Shell tab with the instance list, saved commands and the terminal](/images/products/build/raff-apps/shell-tab.png)
+</Frame>
+
+## What happened to the app
+
+- **Overview**, **Recent events** lists the latest events: deploys that went live or failed, scaling changes, pauses and resumes.
+- The **Activity** tab lists the changes made to the app and who made them. **Export CSV** downloads the list.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key). The shell is in the dashboard only.
+
+**API**: [List runtime logs](/api-reference/apps/list-app-logs), [Get deployment build logs](/api-reference/apps/get-app-deployment-logs), [Get service metrics](/api-reference/apps/get-app-service-metrics)
+
+```bash
+# The last 100 error lines
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/logs?level=error&limit=100" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Build log of one deploy ($DEPLOYMENT_ID from the app's deployments)
+curl "https://api.rafftechnologies.com/api/v1/apps/deployments/$DEPLOYMENT_ID/logs" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# CPU, memory, instances and request series for the last 24 hours
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/metrics?window=24h" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+Logs also take `search`, and `since` and `until` as RFC 3339 times. Metrics take `window` `1h`, `6h`, `24h` or `7d`.
+
+**CLI**
+
+```bash
+# Runtime logs, filtered
+raff apps logs $APP_ID --level error --search timeout --limit 100
+
+# Deploy history, to find a deploy's ID
+raff apps deployments $APP_ID
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Scale an app and let it sleep" icon="up-right-and-down-left-from-center" href="/products/build/raff-apps/quickstart-guides/scale-an-app">
+    Add instances when the charts say so.
+  </Card>
+  <Card title="Roll back a deploy" icon="clock-rotate-left" href="/products/build/raff-apps/quickstart-guides/roll-back-a-deploy">
+    Go back to a deploy that worked.
+  </Card>
+</CardGroup>

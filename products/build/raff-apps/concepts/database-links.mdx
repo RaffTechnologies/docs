@@ -1,0 +1,93 @@
+---
+title: How apps connect to databases
+sidebarTitle: Database links
+description: How a Raff app links to a managed PostgreSQL database, the DATABASE_* variables it gets, TLS and certificate checks, and what happens on delete.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A link connects an app to a Raff managed PostgreSQL database. Raff creates a database user for the app, puts the connection settings in the app's environment variables and redeploys it. Connections go over Raff's private network, always with TLS.
+
+## How it works
+
+### Three ways to add a database
+
+- **When you create the app.** The **Database** section offers **No database**, **Postgres, free** and **Postgres** (\$7.99 a month, the smallest paid plan). Templates that need Postgres choose it for you. Raff creates the database, named `<app>-db`, shows **Starting the database**, links it as soon as it runs, then deploys the app.
+- **From the app.** On the **Bindings** tab, press **Attach** and choose a running database.
+- **From the database.** On the database's **Apps** tab, press **Link an app**, or **Start a new app** to create one that is linked from its first deploy.
+
+Each account has one free database. On monthly billing, an app and a new Postgres are bought in one checkout, as one order: the app, with the database as a line under it. If the database is not running within 30 minutes, the app deploys without it and you can attach one later.
+
+### What the app gets
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The full connection string |
+| `DATABASE_HOST` | `<database id>.private.db.raffusercloud.com` |
+| `DATABASE_PORT` | The port |
+| `DATABASE_USER` | The app's own database user |
+| `DATABASE_PASSWORD` | Its password |
+| `DATABASE_NAME` | The database name |
+| `DATABASE_CA_CERT` | The database's CA certificate, in PEM |
+
+A template also gets its own database settings filled in, so it uses the database without any change. A second linked database uses its own prefix, set in **Env var prefix** when you attach it (for example `ANALYTICS_URL`). `DATABASE_URL` stays with the first link.
+
+### TLS and certificate checks
+
+Every link uses TLS, and new databases refuse connections without it. The host name is on the database's certificate, so your app can check the server with `DATABASE_CA_CERT`.
+
+Most PostgreSQL clients, such as psql, psycopg, pgx, Prisma and JDBC, try TLS first and connect with `DATABASE_URL` as it is. Node.js `pg` does not use TLS unless you pass it:
+
+```js
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { ca: process.env.DATABASE_CA_CERT },
+});
+```
+
+Without the `ssl` option, Node.js fails with `pg_hba.conf rejects connection ... no encryption`.
+
+For a full check with psql or another libpq client, write the CA to a file and require verification:
+
+```bash
+printf '%s\n' "$DATABASE_CA_CERT" > /tmp/db-ca.crt
+PGSSLMODE=verify-full PGSSLROOTCERT=/tmp/db-ca.crt psql "$DATABASE_URL"
+```
+
+### Users, previews and rotation
+
+- Each app gets its own database user, removed when the app is deleted.
+- **Rotate credentials** on the **Bindings** tab issues a new password and redeploys the app. The old password stops working at once.
+- Pull request previews never get a link's credentials. A preview starts without the database.
+- Links made before October 15, 2026 get the host name and `DATABASE_CA_CERT` on their next rotation.
+
+### Deleting
+
+- **Deleting an app** lists its databases with **Keep** (the default) or **Delete**, and the price of keeping each one. A database that another app also uses is always kept.
+- **Deleting a database** that apps use lists them with **Keep** (the default) or **Delete**. A kept app loses the link and its `DATABASE_*` variables, and its next deploy starts without them.
+
+The database stays a product of its own: you can resize it, link it to other apps and keep it after the app is gone. See [Managed Databases](/products/store/databases).
+
+## When to use it
+
+- Any app that keeps data. Files written inside an app are lost when it restarts or redeploys.
+- Templates that can use Postgres (n8n, Metabase, Grafana, Vaultwarden and Vikunja): with a database, their data survives restarts and redeploys.
+
+## Trade-offs
+
+- A database is billed on its own, separately from the app. See [Managed Databases pricing](/products/store/databases/details/pricing).
+- The free database pauses after 7 days without connections.
+- Attaching, rotating and removing a link redeploy the app.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Add a database" icon="rocket" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    At create, from the app or from the database.
+  </Card>
+  <Card title="Database networking and security" icon="lightbulb" href="/products/store/databases/concepts/networking-and-security">
+    TLS, certificates and addresses on the database side.
+  </Card>
+</CardGroup>

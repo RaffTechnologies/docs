@@ -1,0 +1,103 @@
+---
+title: Add a custom domain to an app
+sidebarTitle: Add a custom domain
+description: Serve a Raff app on your own domain. Add two DNS records and Raff verifies the domain and sets up HTTPS for you.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Serve a website or API on your own domain, such as `app.example.com`. You add two DNS records; Raff checks them and sets up the HTTPS certificate for you, at no extra cost.
+
+The app keeps its Raff address as well, so it stays reachable while your DNS changes spread.
+
+## Before you start
+
+- A live app of the type **Website or API**. Other app types have no public address.
+- Access to the DNS settings of your domain, at your registrar or DNS provider.
+
+## Steps
+
+<Steps>
+  <Step title="Open Domains">
+    Open the app and go to the **Connect** tab. Find **Domains**.
+  </Step>
+  <Step title="Add the domain">
+    Type the domain, for example `app.example.com`, and click **Add domain**. It shows as **Waiting for DNS**.
+  </Step>
+  <Step title="Create the two DNS records">
+    At your DNS provider, create both records Raff shows. Each has a **Name / Host** and a **Value / Points to** you can copy:
+
+    | Type | What it does |
+    |---|---|
+    | **TXT** | Proves you own the domain |
+    | **CNAME** | Points traffic to Raff |
+
+    <Frame>
+      ![TODO: Domains section with the TXT and CNAME records to copy](/images/products/build/raff-apps/domain-records.png)
+    </Frame>
+  </Step>
+  <Step title="Wait for verification">
+    Raff checks the records every 30 seconds. To check now, click **Check now**. The domain moves through **Verifying DNS**, **DNS verified** and **Issuing certificate** to **Active**.
+  </Step>
+</Steps>
+
+## Verify
+
+When the domain shows **Active**, open `https://` and your domain. It serves the app with a valid certificate.
+
+If the domain shows **Error**, its message says what is wrong. Fix the record and click **Check now**.
+
+## Good to know
+
+- **Cloudflare**: set both records to **DNS only** (grey cloud, not orange). A proxied record hides the CNAME and blocks the HTTPS certificate.
+- **Root domains** such as `example.com`: most providers cannot put a CNAME on the root. Use your provider's CNAME flattening or ALIAS record, or an A record to the same IP as the CNAME target.
+- **Remove a domain** with the trash icon next to it. Deleting the app also frees its domains.
+
+## Use the API
+
+Add the domain. The response has the records to create, `cname_target`, `verification_txt_name` and `verification_txt_value`:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/domains \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "domain": "app.example.com" }'
+```
+
+Follow its `status` (`pending_dns`, `verifying`, `dns_verified`, `issuing_cert`, `active` or `error`) and check again after you change DNS:
+
+```bash
+# List the app's domains and their status
+curl https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/domains \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Check DNS now
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/domains/DOMAIN_ID/retry \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+See [Add custom domain](/api-reference/apps/add-app-custom-domain), [List custom domains](/api-reference/apps/list-app-custom-domains), [Retry domain verification](/api-reference/apps/retry-app-domain-verification) and [Delete custom domain](/api-reference/apps/delete-app-custom-domain).
+
+## Use the CLI
+
+```bash
+# Add a domain and print the DNS records to create
+raff apps domains add SERVICE_ID app.example.com
+
+# Status of the app's domains
+raff apps domains list SERVICE_ID
+
+# Remove a domain
+raff apps domains delete DOMAIN_ID
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy from GitHub" icon="github" href="/products/build/raff-apps/quickstart-guides/deploy-from-github">
+    Deploy on every push.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-apps/troubleshooting">
+    Common issues and recovery.
+  </Card>
+</CardGroup>

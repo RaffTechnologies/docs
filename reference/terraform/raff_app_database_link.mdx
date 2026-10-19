@@ -1,0 +1,67 @@
+---
+title: "raff_app_database_link"
+description: "Link a Raff managed PostgreSQL database to a Raff Apps app with Terraform: its own database user and the DATABASE_* variables, over the private network with TLS."
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Manages a **database link**: it connects an app to a running managed PostgreSQL database. The app gets its own database user and `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` and `DATABASE_CA_CERT`, then redeploys. Connections go over Raff's private network with TLS. Destroying the link removes the user and the variables and redeploys the app.
+
+`link_database_id` on [`raff_app_service`](/reference/terraform/raff_app_service#link-a-database) does the same when the app is created. Use one of the two per database, not both.
+
+## Example
+
+```hcl
+resource "raff_database" "main" {
+  name = "main"
+}
+
+resource "raff_app_database_link" "main" {
+  service_id  = raff_app_service.web.id
+  database_id = raff_database.main.id
+}
+
+output "link_variables" {
+  value = raff_app_database_link.main.injected_keys
+}
+```
+
+A second database needs its own prefix. This link sets `ANALYTICS_URL`, `ANALYTICS_HOST` and so on:
+
+```hcl
+resource "raff_app_database_link" "analytics" {
+  service_id  = raff_app_service.web.id
+  database_id = raff_database.analytics.id
+  env_prefix  = "ANALYTICS"
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `service_id` | string | Yes | The app's UUID, `raff_app_service.<name>.id` |
+| `database_id` | string | Yes | A running managed database: `raff_database.<name>.id`, or its UUID |
+| `env_prefix` | string | No | Prefix of the variables: uppercase letters, digits and underscores, not starting with a digit. Default `DATABASE` |
+
+Changing any argument replaces the link. To give the app new database credentials without replacing it, run [`raff apps links rotate <link-id>`](/reference/cli/app#links).
+
+The app must not already have a variable with one of the link's names, such as `DATABASE_URL`, or the link is refused.
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | `<service_id>/<link id>` |
+| `database_name` | Name of the linked database |
+| `injected_keys` | The variables the link sets |
+| `status` | `provisioning`, `active`, `rotating`, `error`, or `deleting` |
+| `status_message` | Details of the status, such as why it failed |
+
+## Import
+
+```bash
+terraform import raff_app_database_link.main <app-uuid>/<link-id>
+```
+
+The link ID is in [`raff apps links list <app-id>`](/reference/cli/app#links). After an import, `database_id` holds the database's UUID. If your configuration names the database by its short ID, such as `raff_database.main.id`, list `database_id` in `lifecycle { ignore_changes }`, or Terraform plans to replace the link.

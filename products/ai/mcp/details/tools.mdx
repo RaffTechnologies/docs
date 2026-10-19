@@ -43,6 +43,34 @@ Every tool is labelled for the app: **read** tools only look, and every tool tha
 | `create_database_user` | Adds a user with read-write or read-only access and returns its password once | `database_id`, `name`, `role` | |
 | `delete_database` | Deletes a database, its data and its backups | `database_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the database's name. Cannot be undone |
 
+## Apps: read
+
+| Tool | What it does | Arguments |
+|---|---|---|
+| `list_apps` | Lists the account's apps with type, status, address, size and instances | none |
+| `get_app` | Status (and why it failed), address, source, size, instances and scaling, and the databases linked to it | `app_id` |
+| `list_app_templates` | Ready-to-run templates (n8n, Metabase, Grafana, Umami, Uptime Kuma, ...) with their size and whether they need a PostgreSQL database | none |
+| `list_app_sizes` | Sizes an app can run on (vCPU, memory) with the hourly and monthly price of one instance | none |
+| `get_app_logs` | The newest lines of the app's log, or with `deployment_id` the build log of that deploy | `app_id`, `deployment_id`, `lines`, `search`, `since` |
+| `list_app_deployments` | Deploys, newest first: status, what started it, commit, and why a failed one failed | `app_id`, `limit` |
+| `get_app_env` | Environment variables; secret values only with `reveal` | `app_id`, `reveal` |
+| `list_app_domains` | Custom domains with their status and the DNS records each one needs | `app_id` |
+
+## Apps: write
+
+| Tool | What it does | Arguments | Notes |
+|---|---|---|---|
+| `create_app` | Creates an app from a template, a Docker image or a GitHub repository and deploys it, waits until it is live and returns its address | `name`, `template` or `image` or `github_repo`, `branch`, `root_dir`, `dockerfile_path`, `type`, `port`, `start_command`, `cron_schedule`, `size_id`, `instances`, `scale_to_zero`, `env`, `link_database_id`, `project_id`, `confirm_monthly_price_usd` | Always needs a [confirmed quote](/products/ai/mcp/concepts/paid-changes). The repository must be in a GitHub account already connected to Raff in the dashboard. `link_database_id` links a database before the first deploy |
+| `deploy_app` | Deploys the app again, or switches an image app to a new image | `app_id`, `image` | A GitHub app also deploys every push to its branch |
+| `rollback_app` | Goes back to an earlier deploy that went live | `app_id`, `deployment_id` | Without `deployment_id`: the deploy that ran before the current one |
+| `set_app_env` | Adds or changes environment variables and rolls them out | `app_id`, `vars`, `redeploy` | **Destructive**: replaces the old values. Variables set by a linked database cannot be changed |
+| `add_app_domain` | Adds a custom domain to a web app and returns the DNS records to create | `app_id`, `domain` | Raff checks DNS and issues the certificate by itself |
+| `scale_app` | Changes the number of instances, autoscaling or scale to zero | `app_id`, `instances`, `autoscaling`, `min_instances`, `max_instances`, `target_concurrency`, `scale_to_zero`, `confirm_monthly_price_usd` | A change that can cost more needs a confirmed quote. Not for cron and job apps |
+| `pause_app` | Stops every instance; settings, variables, domains and links are kept | `app_id` | Running time is not billed while paused |
+| `resume_app` | Starts a paused app again with the instances it had | `app_id` | |
+| `link_database_to_app` | Links a running database: sets `DATABASE_URL` and the other `DATABASE_*` variables and redeploys the app | `app_id`, `database_id`, `env_prefix` | A second database needs its own `env_prefix` |
+| `delete_app` | Deletes an app | `app_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the app's name. Linked databases are kept and keep their price; delete them with `delete_database` |
+
 ## Documentation
 
 | Tool | What it does | Arguments |
@@ -55,7 +83,7 @@ Every tool is labelled for the app: **read** tools only look, and every tool tha
   <Card title="Features and limits" icon="circle-info" href="/products/ai/mcp/details/features-and-limits">
     Row limits, timeouts and request size.
   </Card>
-  <Card title="Managed databases API" icon="code" href="/api-reference/endpoints">
+  <Card title="Raff API" icon="code" href="/api-reference/endpoints">
     The API these tools call.
   </Card>
 </CardGroup>

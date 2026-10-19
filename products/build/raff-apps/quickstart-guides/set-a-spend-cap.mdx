@@ -1,0 +1,101 @@
+---
+title: Set an Apps spend cap
+sidebarTitle: Spend cap
+description: Set a monthly limit on Raff Apps spending, get emails at 75%, 90% and 100% of it, and choose whether apps keep running or pause when it is reached.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+The spend cap is a monthly limit on what your apps cost. It is on for every account from the start, at $50 a month, and only sends emails. You can change the amount, turn it off, or have it pause your apps when it is reached.
+
+## How the cap works
+
+- It covers all the apps in your account, for each calendar month.
+- It counts usage: pay-as-you-go apps, and apps on a monthly plan only for what they run above their plan. The price of a monthly plan paid at checkout does not count.
+- The account owners and billing contacts get an email and a notice in the dashboard at 75% and 90% of the cap, and again when it is reached.
+- Raff checks spending every few minutes, so usage can pass the cap by a little before apps pause.
+
+## Set the cap
+
+<Steps>
+  <Step title="Open the Apps page">
+    Go to **Apps**. The bar at the top shows what you spent this month and the cap, for example "$12.40 spent this month · cap $50, email only".
+  </Step>
+  <Step title="Open the cap settings">
+    Click **Manage cap**.
+
+    <Frame>
+      ![TODO: Monthly spend cap dialog with the amount and the two choices](/images/products/build/raff-apps/spend-cap-dialog.png)
+    </Frame>
+  </Step>
+  <Step title="Set the amount">
+    Leave **Spend cap enabled** on and enter the **Monthly cap (USD)**, at least $1.
+  </Step>
+  <Step title="Choose what happens at the cap">
+    - **Keep apps running and email me**: apps keep serving past the cap. The bar shows **Over cap, still running**.
+    - **Pause my apps**: pay-as-you-go apps stop until next month, or until you raise the cap. Apps on a monthly plan keep running unless they run above their plan. Your data is kept.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The new cap applies at once.
+  </Step>
+</Steps>
+
+To remove the cap, turn **Spend cap enabled** off and click **Save**. Raff keeps the amount and choice for when you turn it on again.
+
+## When the cap pauses your apps
+
+The bar on **Apps** shows **Paused by cap**. Raff stops:
+
+- Pay-as-you-go apps, and apps on a monthly plan that run above their plan.
+- Cron job and one-off job runs that are in progress.
+- [Pull request previews](/products/build/raff-apps/quickstart-guides/preview-pull-requests) of the paused apps.
+
+While they are paused, resuming, creating, deploying, scaling up and running jobs of pay-as-you-go apps is refused. Raise the cap or turn it off, and Raff starts the apps it paused within seconds. Apps you paused yourself stay paused.
+
+## Do it from your tools
+
+`$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key). The cap is set for the whole account.
+
+**API**: [Get spend cap settings](/api-reference/apps/get-app-spend-settings), [Update spend cap settings](/api-reference/apps/update-app-spend-settings), [Get Apps usage](/api-reference/apps/get-apps-usage)
+
+```bash
+# Read the cap; paused_by_cap is true while the cap has apps paused
+curl "https://api.rafftechnologies.com/api/v1/apps/spend-settings" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Cap at $100 a month and pause apps when it is reached
+curl -X PATCH "https://api.rafftechnologies.com/api/v1/apps/spend-settings" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true, "monthly_cap_usd": 100, "cap_action": "pause"}'
+
+# Turn the cap off
+curl -X PATCH "https://api.rafftechnologies.com/api/v1/apps/spend-settings" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+
+# Spending this month, per app
+curl "https://api.rafftechnologies.com/api/v1/apps/usage" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+Send only the fields you want to change. `cap_action` is `notify_only` or `pause`. While apps are paused by the cap, the refused calls return `412`.
+
+**CLI**
+
+```bash
+# Spending this month, per app
+raff apps usage
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Scale an app and let it sleep" icon="up-right-and-down-left-from-center" href="/products/build/raff-apps/quickstart-guides/scale-an-app">
+    Spend less with apps that sleep when idle.
+  </Card>
+  <Card title="Pause and resume an app" icon="pause" href="/products/build/raff-apps/quickstart-guides/pause-and-resume">
+    Stop an app and its billing yourself.
+  </Card>
+</CardGroup>

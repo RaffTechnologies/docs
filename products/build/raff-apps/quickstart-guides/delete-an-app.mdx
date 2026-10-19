@@ -1,0 +1,77 @@
+---
+title: Delete an app
+sidebarTitle: Delete an app
+description: Delete a Raff app, choose whether its linked databases are kept or deleted, and what happens to its address, domains and billing.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Deleting an app stops it, removes its address and stops billing. Databases linked to the app are kept unless you choose to delete them in the same dialog. A delete cannot be undone.
+
+## Before you start
+
+- Decide what happens to each database the app uses. The dialog offers **Keep** or **Delete** for each one.
+- To stop an app for a while instead, [pause it](/products/build/raff-apps/quickstart-guides/pause-and-resume).
+
+## Steps
+
+<Steps>
+  <Step title="Open the delete dialog">
+    Open the app and go to **Settings**. Under **Danger zone**, **Delete this service**, click **Delete**. You can also click **...** (More actions) at the top of the app page and choose **Delete service**.
+  </Step>
+  <Step title="Keep or delete each linked database">
+    The dialog lists each database linked to the app, with its plan and price.
+
+    - **Keep** (the default): the database keeps running and billing, for example "Keeps running and billing $7.99/mo". Only the app's login to it is removed.
+    - **Delete**: the database is deleted with the app. Its backups are kept for 14 days, and on a monthly plan the unused part of the month goes back to your account balance.
+
+    A database that another app also uses is always kept, and the dialog names the other app.
+
+    <Frame>
+      ![TODO: Delete service dialog with a linked database and the Keep and Delete choice](/images/products/build/raff-apps/delete-app-dialog.png)
+    </Frame>
+  </Step>
+  <Step title="Confirm">
+    Under **Why are you deleting this service?**, pick a reason, then click **Delete service**.
+  </Step>
+</Steps>
+
+To delete several apps at once, select them in the **Apps** list and click **Delete**. Their linked databases are all kept.
+
+## What happens
+
+- All instances stop and the app's address is removed. Its deploy history and [pull request previews](/products/build/raff-apps/quickstart-guides/preview-pull-requests) are deleted too.
+- The delete finishes in the background. Then the app's name and address can be used again, and its custom domains are freed. Remove their DNS records if you no longer need them.
+- The app's own login to each linked database is removed. A database you kept keeps its data and keeps billing.
+- **Billing**: usage up to the delete is billed, nothing after it. On a monthly plan, the unused part of the month goes back to your account balance.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+**API**: [Delete app service](/api-reference/apps/delete-app-service)
+
+```bash
+curl -X DELETE "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+The API keeps every linked database. To delete one too, [delete the database](/products/store/databases/quickstart-guides/delete-a-database) on its own.
+
+**CLI**
+
+```bash
+# Asks to confirm; --force skips the question
+raff apps delete $APP_ID
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Pause and resume an app" icon="pause" href="/products/build/raff-apps/quickstart-guides/pause-and-resume">
+    Stop an app and its billing without deleting it.
+  </Card>
+  <Card title="Delete a database" icon="database" href="/products/store/databases/quickstart-guides/delete-a-database">
+    Remove a database you kept.
+  </Card>
+</CardGroup>

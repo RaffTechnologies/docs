@@ -1,0 +1,119 @@
+---
+title: Deploy n8n, Metabase and other templates
+sidebarTitle: Deploy a template
+description: Deploy n8n, Metabase, Uptime Kuma, Grafana, Umami and other ready apps on Raff Apps, with the port, health check, size and Postgres already set.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A template is a ready app you deploy in a few clicks. Raff already knows its port, the page that says it is ready, the smallest size it runs on and, when it keeps data in Postgres, the database it needs.
+
+You get the app at its own https address, and you can add your own domain once it is live.
+
+## Templates
+
+| Template | What it is | Postgres |
+|---|---|---|
+| **n8n** | Workflow automation | Optional |
+| **Metabase** | Business intelligence and dashboards | Optional |
+| **Grafana** | Observability dashboards | Optional |
+| **Vaultwarden** | Bitwarden-compatible password manager | Optional |
+| **Vikunja** | To-do lists and project management | Optional |
+| **Umami** | Privacy-friendly web analytics | Required |
+| **Wiki.js** | Wiki and documentation | Required |
+| **Uptime Kuma** | Status and uptime monitoring | No |
+| **Excalidraw** | Whiteboard for sketching diagrams | No |
+| **IT-Tools** | Tools for developers and sysadmins | No |
+| **Stirling-PDF** | PDF toolkit | No |
+| **LibreTranslate** | Machine translation API | No |
+| **Kroki** | Diagrams from text | No |
+| **CyberChef** | Encode, decode and convert data | No |
+| **NGINX** | Static content and reverse proxy | No |
+| **Hello World** | A sample page for a first deploy | No |
+
+Three templates need a minimum size: **Metabase** and **LibreTranslate** need 1 vCPU · 2 GB, **Stirling-PDF** needs 0.5 vCPU · 1 GB. See [Raff Apps templates](/products/build/raff-apps/details/templates) for each one in detail.
+
+## Before you start
+
+- A Raff account and a project to create the app in.
+- For a template that keeps data in Postgres: your account's free database still unused, or the $7.99 a month plan. Every account has one free database.
+
+## Steps
+
+<Steps>
+  <Step title="Open the templates">
+    Go to **Apps** and click **New service**. On the **Deploy an app** page, choose **Template**.
+  </Step>
+  <Step title="Pick a template">
+    Search, for example `n8n`, `analytics` or `wiki`, or browse **Popular** and the categories below it. A template that keeps its data in Postgres says **Needs a database.** or **Works best with a database.**
+
+    <Frame>
+      ![TODO: Template tab with the search box and the Popular group](/images/products/build/raff-apps/templates.png)
+    </Frame>
+  </Step>
+  <Step title="Name it">
+    Under **App**, set the **Name**. **Address** shows the https address the app gets. **What it is** is set by the template.
+  </Step>
+  <Step title="Pick a size">
+    Raff preselects a size that suits the template. Sizes too small for it are turned off and say so, for example **Too small for Metabase**. You can change the size any time.
+  </Step>
+  <Step title="Choose the database">
+    For a template that uses Postgres, the **Database** section offers **No database** (only when the template runs without one), **Postgres, free** and **Postgres** ($7.99 a month).
+
+    Raff picks the free Postgres when your account's free database is unused. Otherwise it picks **No database** for templates where Postgres is optional, and **Postgres** for Umami and Wiki.js, which do not start without one. Raff links the database before the first deploy and fills in the template's own database settings.
+  </Step>
+  <Step title="Check the settings">
+    Under **Optional**, **Environment variables** already holds what the template needs to start, for example the languages LibreTranslate loads (`LT_LOAD_ONLY=en,es,fr`) or Vikunja's public address. Change them if you need to.
+  </Step>
+  <Step title="Deploy">
+    Check the **Summary** and click **Deploy**. On a monthly account the app and its database are one order at checkout.
+  </Step>
+</Steps>
+
+## Verify
+
+A template turns **Live** only when its own health page answers, not only when its port opens. When the app page shows **Live**, open the address and start using the app.
+
+## Keep your data
+
+Without a database, n8n, Metabase, Grafana, Vaultwarden and Vikunja keep their data inside the app. That data is lost when the app restarts or redeploys. Pick Postgres for these apps when the data matters; you can also add a database later, see [Add a Postgres database to an app](/products/build/raff-apps/quickstart-guides/add-a-database).
+
+Uptime Kuma has no database option, so its data is lost on a restart or redeploy too.
+
+## Use the API
+
+A template is a public image with known settings, so you create it like any [image app](/products/build/raff-apps/quickstart-guides/deploy-a-docker-image). This creates n8n with a Postgres database you already have:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "n8n",
+    "service_type": "web",
+    "source_type": "image",
+    "builder": "image",
+    "image_ref": "n8nio/n8n:latest",
+    "http_port": 5678,
+    "health_check_path": "/healthz",
+    "tier_id": 2,
+    "deploy_now": true,
+    "link_database_id": "DATABASE_UUID"
+  }'
+```
+
+`link_database_id` is the database's `id` (a UUID) from [List databases](/api-reference/databases/list-databases). Leave it out to deploy without a database. When the image is a template's image, the database link also fills in that app's own database settings.
+
+Each template's image, port, health check path and settings are listed in [Raff Apps templates](/products/build/raff-apps/details/templates). For Metabase, LibreTranslate and Vikunja, which need settings to start, create the app without `deploy_now`, add the settings with `"redeploy": false` (see [Set app environment variables](/products/build/raff-apps/quickstart-guides/set-environment-variables)), then start the first deploy with [Create deployment](/api-reference/apps/create-app-deployment) and the body `{}`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Add a Postgres database" icon="database" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    Keep a template's data in Postgres.
+  </Card>
+  <Card title="Add a custom domain" icon="globe" href="/products/build/raff-apps/quickstart-guides/add-a-custom-domain">
+    Serve the app on your own domain.
+  </Card>
+</CardGroup>

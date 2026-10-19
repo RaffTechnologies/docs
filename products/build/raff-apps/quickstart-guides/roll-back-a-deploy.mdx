@@ -1,0 +1,82 @@
+---
+title: Roll back a deploy
+sidebarTitle: Roll back a deploy
+description: Put a Raff app back on an earlier deploy that worked, from the dashboard, the API or the CLI, and what a rollback keeps and changes.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A rollback puts your app back on the code of an earlier deploy that went live. Raff runs that deploy's built image again as a new deploy, without building anything, so it is the fastest way back after a bad release.
+
+## Before you start
+
+- An app with at least one earlier deploy that went live. A deploy that failed cannot be a rollback target.
+
+## Roll back to the previous deploy
+
+Open the app. On **Overview**, **Live deploy**, click **Roll back**. The app goes back to the deploy that was live before the current one.
+
+There is no confirmation step: the rollback starts when you click.
+
+## Roll back to an older deploy
+
+<Steps>
+  <Step title="Open Deploys">
+    Open the app and go to **Deploys**. Each row shows the deploy number, its state, the commit, what started it, how long it took and when.
+  </Step>
+  <Step title="Pick the deploy">
+    Find the deploy you want. Deploys that were live and then replaced show the state **Replaced**. Click **Log** on a row to check what it built.
+  </Step>
+  <Step title="Roll back">
+    Click **Roll back** on that row.
+
+    <Frame>
+      ![TODO: Deploys tab with a Replaced deploy and its Roll back button](/images/products/build/raff-apps/deploys-roll-back.png)
+    </Frame>
+  </Step>
+</Steps>
+
+## What happens
+
+- The rollback runs as a new deploy with the trigger **rollback**. It goes live the same way as any deploy: once the app answers its health check, or its port opens when it has none. Until then the current deploy keeps serving.
+- Only the code goes back. Environment variables, scaling and other settings stay as they are now.
+- On an app from GitHub, the next push to the branch deploys that commit as usual. Fix or revert the change in Git before you push again.
+- To go back to the newer code, roll back to that deploy the same way.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+**API**: [List deployments](/api-reference/apps/list-app-deployments), [Roll back to a deployment](/api-reference/apps/rollback-app-service)
+
+```bash
+# Find the deploy: newest first, with id, deployment_number, status and commit
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/deployments" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Roll back to it
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/rollback" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"target_deployment_id": "DEPLOYMENT_ID"}'
+```
+
+Pick a deploy with status `live` or `superseded`.
+
+**CLI**
+
+```bash
+raff apps deployments $APP_ID
+raff apps rollback $APP_ID --target DEPLOYMENT_ID
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="View logs, metrics and a shell" icon="scroll" href="/products/build/raff-apps/quickstart-guides/view-logs-and-metrics">
+    Find out what broke.
+  </Card>
+  <Card title="Preview pull requests" icon="code-pull-request" href="/products/build/raff-apps/quickstart-guides/preview-pull-requests">
+    Try changes before they reach the live app.
+  </Card>
+</CardGroup>

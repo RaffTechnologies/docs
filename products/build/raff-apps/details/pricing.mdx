@@ -1,0 +1,65 @@
+---
+title: Raff Apps pricing
+sidebarTitle: Pricing
+description: The price of every Raff Apps size per hour and per month, Postgres for apps, the spend cap, and how monthly and pay-as-you-go billing differ.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Prices are in USD per instance, region US East. An app with three instances costs three times its size's price. HTTPS, custom domains and pull request previews are included. See [Billing model](/products/build/raff-apps/concepts/billing-model).
+
+## Sizes
+
+| Size | vCPU | Memory | Temporary disk | Per hour | Per month |
+|---|---|---|---|---|---|
+| Micro | 0.25 | 512 MB | 2 GB | \$0.00411 | \$3.00 |
+| Starter | 0.5 | 1 GB | 5 GB | \$0.009575 | \$6.99 |
+| Standard | 1 | 2 GB | 10 GB | \$0.023274 | \$16.99 |
+| Pro | 2 | 4 GB | 20 GB | \$0.038342 | \$27.99 |
+| Pro Max | 4 | 8 GB | 40 GB | \$0.084918 | \$61.99 |
+| Scale | 8 | 16 GB | 80 GB | \$0.16437 | \$119.99 |
+
+The monthly price is the hourly price for 730 hours.
+
+## Monthly or pay-as-you-go
+
+| | Monthly (the default) | Pay-as-you-go |
+|---|---|---|
+| How you pay | The monthly price per instance, at checkout | Per second of running time, from your account balance |
+| Instances above the plan | Billed per second at the hourly price | Every instance is billed per second |
+| A sleeping app (scale to zero) | Plan paid in advance | Nothing while it sleeps |
+| Delete | The unused part of the month goes to your balance | Billing stops |
+
+On pay-as-you-go, a cron or job app costs only while a run is going, and a paused app costs nothing.
+
+## Postgres for an app
+
+Add a managed PostgreSQL database when you create the app, or link one later. It is billed as a database, on its own.
+
+| Plan | vCPU | Memory | Storage | Price |
+|---|---|---|---|---|
+| Postgres, free | 1 | 1 GB | 2 GB | Free. One per account, pauses after 7 days without connections. |
+| Postgres | 1 | 1 GB | 25 GB | \$7.99 per month |
+
+Bigger plans and high availability: see [Managed Databases pricing](/products/store/databases/details/pricing).
+
+## Spend cap
+
+| Setting | Default | Range |
+|---|---|---|
+| Monthly cap | On, \$50 | \$1 to \$1,000,000, or off |
+| At the cap | Keep apps running and email me | Or pause pay-as-you-go apps |
+| Emails | 75%, 90% and 100% of the cap | To account owners and billing contacts |
+
+The cap counts pay-as-you-go instances and the instances of monthly apps above their plan. Monthly plans paid at checkout and databases are not counted.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Features and limits" icon="circle-info" href="/products/build/raff-apps/details/features-and-limits">
+    What every app includes.
+  </Card>
+  <Card title="List Apps tiers" icon="code" href="/api-reference/apps/list-app-tiers">
+    The same sizes and prices from the API.
+  </Card>
+</CardGroup>

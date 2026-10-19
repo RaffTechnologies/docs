@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Endpoint, protocol, sign-in methods, supported apps and the limits of the Raff MCP server.
 ---
 
-<sub>Updated October 13, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 The facts about the Raff MCP server in one place.
 
@@ -16,7 +16,7 @@ The facts about the Raff MCP server in one place.
 | Transport | Streamable HTTP | Stateless: no session to keep alive |
 | Protocol | Model Context Protocol, current specification | Includes MCP Apps for the order card in Claude |
 | Sign-in | OAuth 2.1 (PKCE, dynamic client registration, refresh tokens) or a Raff API key as `Authorization: Bearer` | See [Sign-in and access](/products/ai/mcp/concepts/sign-in-and-access) |
-| URL options | `read_only=true`, `features=databases,docs` | See [Read-only mode and tool groups](/products/ai/mcp/concepts/read-only-and-tool-groups) |
+| URL options | `read_only=true`, `features=databases,apps,docs` | See [Read-only mode and tool groups](/products/ai/mcp/concepts/read-only-and-tool-groups) |
 | Price | Free | You pay only for the resources you create, at the normal price |
 
 ## Products
@@ -24,8 +24,9 @@ The facts about the Raff MCP server in one place.
 | Product | Status |
 |---|---|
 | Managed databases (PostgreSQL, MySQL, Valkey, ClickHouse, Kafka) | Available, 23 tools |
+| Raff Apps | Available, 18 tools |
 | Raff documentation search | Available |
-| Raff Apps and Functions | Planned |
+| Functions | Planned |
 | Virtual machines | Planned |
 
 ## Limits
@@ -37,10 +38,12 @@ The facts about the Raff MCP server in one place.
 | Statement time | 15 seconds | Longer statements are stopped |
 | Rows returned | 100 by default, up to 1,000 | Set `max_rows`; the answer says when more rows existed or did not fit |
 | Answer size | 70,000 characters | A longer answer is cut and says so: query rows from the end, log lines from the oldest |
-| Log lines | 100 by default, up to 1,000 | Set `lines` on `get_database_logs` |
+| Log lines | 100 by default, up to 1,000 | Set `lines` on `get_database_logs` and `get_app_logs` |
+| App deploys listed | 20 by default, up to 100 | Set `limit` on `list_app_deployments` |
 | Slow queries | 10 by default, up to 50 | Set `limit` on `get_slow_queries` |
 | Wait for a new database | Up to 150 seconds | A slower one comes back as starting; the order card and `get_database` follow it until it runs |
 | Wait for a new public address | Up to 1 minute after the database runs | The address is handed over once it accepts connections. One call never runs past 200 seconds |
+| Wait for a new app | Up to 150 seconds | A slower deploy (a build from source can take minutes) comes back as building; `get_app` follows it. An app linked to a database that is still starting comes back at once as waiting for it |
 | Free databases | 1 per account | |
 | Rate limit | 50 requests a second per person, with short bursts above | Apps signed in with Raff are counted per person, not per network address, so people using the same app do not slow each other. With an API key, see [Rate limiting](/authentication#rate-limiting) |
 | Sign-in request | Expires after 10 minutes | Connect again from the app |

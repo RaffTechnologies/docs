@@ -1,0 +1,69 @@
+---
+title: Deploys, health checks and rollbacks
+sidebarTitle: Deploys and health checks
+description: What starts a Raff app deploy, when a deploy counts as live, what health checks do and how rollbacks work.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A deploy is one rollout of your app: get the code or image, build it when needed, start it and wait until it answers. The **Deploys** tab lists every deploy with its status, its build log and the reason when it failed.
+
+## How it works
+
+### What starts a deploy
+
+- Creating the app.
+- A push to the app's branch, for apps deployed from GitHub.
+- **Redeploy** on the app page, which runs what is live now. On an app in error the button reads **Retry build**.
+- Saving a setting that changes the running app: the port, the start command or the health check path. On a failed app, saving one of them starts a deploy.
+- Saving environment variables with **Save and redeploy**, attaching a database or rotating its credentials.
+
+Changing the size restarts the app on the new size. An app runs one deploy at a time. If several deploys wait their turn, only the newest runs and the older ones show **Canceled**.
+
+### Statuses
+
+A deploy moves through **Queued**, **Building** (apps that Raff builds), **Deploying** and **Live**. When a new deploy goes live, the one before it shows **Replaced**. A deploy that does not go live shows **Failed** with the reason.
+
+### When a deploy counts as live
+
+Raff moves traffic to a new deploy only once it answers:
+
+| The app has | Live when | Time allowed |
+|---|---|---|
+| A health check path, such as `/healthz` | The path returns a success status (200 to 399) on the app's port | 10 minutes |
+| No health check path | The app accepts connections on its port | 5 minutes |
+
+Workers have no port and no health check: they are live once they start. Raff keeps checking a running app, and one that stops answering shows **Error** with the reason.
+
+Every template has a health check. Add one to your own app when it needs time after its port opens, for example to run migrations at start. Set it in **Settings**, **Runtime**, **Health check path**; the path must start with `/`.
+
+### Failed deploys
+
+A failed deploy says why in plain words, on the app page and on the **Deploys** tab. A failed build shows the last 10 lines of its build log; **Log** on the deploy shows the whole log. [Troubleshoot Raff Apps](/products/build/raff-apps/troubleshooting) lists each message and its fix.
+
+### Rollbacks
+
+**Roll back** on an earlier deploy runs that deploy's image again, without a new build. Only a deploy that went live can be the target: the button shows on deploys marked **Replaced**. The rollback is listed as a new deploy, and the app keeps its current environment variables and settings.
+
+## When to use it
+
+- Add a health check path to any app with a slow first start, or one that exposes a ready page.
+- Roll back when a new deploy went live but behaves wrongly.
+- Redeploy to restart an app on the same code.
+
+## Trade-offs
+
+- An app without a health check counts as live as soon as its port opens, even if it is still setting up.
+- A rollback brings back code, not data. Changes your newer code made to a database stay.
+- An app that needs more than 10 minutes to start cannot go live.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Roll back a deploy" icon="rocket" href="/products/build/raff-apps/quickstart-guides/roll-back-a-deploy">
+    Go back to an earlier deploy.
+  </Card>
+  <Card title="View logs and metrics" icon="rocket" href="/products/build/raff-apps/quickstart-guides/view-logs-and-metrics">
+    Build logs, runtime logs and the timeline.
+  </Card>
+</CardGroup>

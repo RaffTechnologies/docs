@@ -1,0 +1,74 @@
+---
+title: App sizes, scaling and sleeping
+sidebarTitle: Sizes and scaling
+description: Raff Apps instance sizes, fixed instances, autoscaling on requests, scale to zero and the instance limits.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Every instance of an app has the same size: a share of CPU, an amount of memory and a temporary disk. You choose how many instances run, whether Raff adds instances under load, and whether a web or private app sleeps when nobody uses it.
+
+## How it works
+
+### Sizes
+
+| Size | vCPU | Memory | Temporary disk | Good for |
+|---|---|---|---|---|
+| Micro | 0.25 | 512 MB | 2 GB | Tests and hobby projects |
+| Starter | 0.5 | 1 GB | 5 GB | Small sites and APIs |
+| Standard | 1 | 2 GB | 10 GB | Most production apps |
+| Pro | 2 | 4 GB | 20 GB | Busy apps |
+| Pro Max | 4 | 8 GB | 40 GB | Heavy work |
+| Scale | 8 | 16 GB | 80 GB | The largest apps |
+
+The create page lists sizes by their specs, for example **0.5 vCPU · 1 GB**. For prices, see [Raff Apps pricing](/products/build/raff-apps/details/pricing).
+
+An app cannot use more CPU than its size: a busy app runs slower instead. An app that runs out of memory is stopped and restarted. Change the size in **Settings**, **Instance size**; the app restarts on the new size.
+
+### Fixed instances
+
+Web, private and worker apps run 1 to 6 instances. Each instance runs all the time and is billed at the size's price. Set the number in **Settings**, **Scaling**, **Instances**.
+
+### Autoscaling
+
+Web apps, and private apps that scale to zero, can scale between **Min instances** and **Max instances**. Raff adds instances as the number of requests in progress per instance grows, and removes them as traffic drops. Workers and private apps that run all the time use a fixed number of instances.
+
+### Scale to zero
+
+Web and private apps can sleep. With **Scale to zero** on, the app sleeps about 15 minutes after its last request and wakes on the next one. The first request after sleeping takes a few seconds longer while an instance starts.
+
+On pay-as-you-go, a sleeping app costs nothing; the minutes it is awake are billed like any running time. With autoscaling, scale to zero lets **Min instances** be 0.
+
+### Instance limits
+
+| Limit | Value | Notes |
+|---|---|---|
+| Instances per app | 6 | Fixed instances, or the autoscaling maximum |
+| Instances per account | 20 | Web, private and worker apps. Paused, failed and not yet deployed apps count too, because resuming starts them again |
+
+Cron and job apps do not count. Scaling down is always allowed, even above a limit. Contact support to raise either limit.
+
+## When to use it
+
+- **One fixed instance**: most small apps, and any app that keeps state in memory.
+- **Several fixed instances**: steady traffic, no waiting for new instances.
+- **Autoscaling**: traffic that rises and falls during the day.
+- **Scale to zero**: test apps, internal tools and sites with little traffic.
+
+## Trade-offs
+
+- The first request after sleeping is slower by a few seconds.
+- Workers cannot sleep or autoscale.
+- Instances do not share memory or disk. Keep shared data in a [database](/products/build/raff-apps/concepts/database-links).
+- On monthly billing, the size cannot be changed from the dashboard yet. Contact support to change it.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Scale an app" icon="rocket" href="/products/build/raff-apps/quickstart-guides/scale-an-app">
+    Instances, autoscaling and scale to zero.
+  </Card>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/raff-apps/details/pricing">
+    The price of every size.
+  </Card>
+</CardGroup>

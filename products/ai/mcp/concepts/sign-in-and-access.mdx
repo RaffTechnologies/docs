@@ -4,7 +4,7 @@ sidebarTitle: Sign-in and access
 description: How an AI app signs in to Raff, which account it works in, what it can reach, and how to remove its access.
 ---
 
-<sub>Updated October 13, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 An AI app reaches your Raff account in one of two ways: you sign in with Raff in your browser (most apps), or you give it a Raff API key (tools that accept a header). Either way it acts as you, with your role in the account, and never as a Raff administrator.
 
@@ -39,7 +39,7 @@ The key works in the account it was created in, with the permissions it was give
 
 Access is granted once for the whole account, the same way you would give a teammate access:
 
-- Create and manage databases, and apps, functions and servers as Raff adds them to the MCP server.
+- Create and manage databases and apps, and functions and servers as Raff adds them to the MCP server.
 - Read and change data in your databases with SQL.
 - Only what your role allows in this account. A member without permission to delete databases cannot delete them through an AI app either.
 
@@ -47,8 +47,9 @@ What an app signed in with Raff can reach today:
 
 | Reaches | Does not reach |
 |---|---|
-| Managed databases (all tools on the [Tools](/products/ai/mcp/details/tools) page) | Virtual machines, Kubernetes, volumes, object storage, networking |
-| Your projects (to create databases in the right one) | Team members, roles and API keys |
+| Managed databases and Raff Apps (all tools on the [Tools](/products/ai/mcp/details/tools) page) | Virtual machines, Kubernetes, volumes, object storage, networking |
+| Your projects (to create databases and apps in the right one) | Team members, roles and API keys |
+| Your GitHub connections, to deploy a repository you already connected | Connecting GitHub, and an app's shell (both stay in the dashboard) |
 | Your saved card, as "Visa ending in 4242" (to show what a paid change is charged to) | Card numbers, invoices, billing settings |
 | Raff documentation | Raff admin access |
 

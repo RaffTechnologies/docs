@@ -1,0 +1,258 @@
+---
+title: Troubleshoot Raff Apps
+sidebarTitle: Troubleshooting
+description: The messages Raff Apps shows when a deploy, a limit, a database link, a domain or GitHub goes wrong, and how to fix each one.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Raff Apps tells you what went wrong in plain words, on the app page and on the **Deploys** tab. Find the message below. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
+
+## Deploys
+
+<AccordionGroup>
+  <Accordion title="&quot;Your app is running but does not accept connections on port 8080&quot;">
+    **What's happening:** the app started, but nothing answers on the port Raff sends traffic to, so the deploy failed.
+
+    **Why:** the app listens on a different port.
+
+    **Fix:**
+    1. Make the app listen on the port in the `PORT` environment variable (8080 unless you set another). In Node.js, for example: `app.listen(process.env.PORT || 8080)`.
+    2. Or set the port your app really uses in **Settings**, **Runtime**, **HTTP port**. Saving it starts a new deploy.
+  </Accordion>
+  <Accordion title="&quot;Raff could not pull the image&quot;">
+    **What's happening:** the full message is `Raff could not pull the image "<image>". Check the image name and tag, and that the image is public.`
+
+    **Why:** the image name or tag is wrong, or the image is private. Raff Apps pulls public images only.
+
+    **Fix:** check the reference with `docker pull <image>` on a computer that is not signed in to the registry. Make the image public, then create the app again with the right reference, or deploy the corrected image through [Create deployment](/api-reference/apps/create-app-deployment).
+  </Accordion>
+  <Accordion title="&quot;The build failed&quot;">
+    **What's happening:** the message shows the last lines of the build log. A line such as `The command exited with code 1.` means a step of your build failed.
+
+    **Fix:**
+    1. Open the **Deploys** tab and press **Log** on the failed deploy for the whole log.
+    2. Fix the error in your code or Dockerfile and push again, or press **Retry build**.
+    3. If the build needs settings, such as `NEXT_PUBLIC_*` or `VITE_*` values, give those variables the **build** or **both** scope. See [How Raff builds and runs your code](/products/build/raff-apps/concepts/builds-and-sources).
+
+    If the message says the log is no longer available, deploy again and follow the log on the **Deploys** tab.
+  </Accordion>
+  <Accordion title="&quot;Raff could not find a Dockerfile at ...&quot;">
+    **What's happening:** for example, `Raff could not find a Dockerfile at "Dockerfile". Check the Dockerfile path in the app's settings.`
+
+    **Why:** the Dockerfile path points at a file that is not in the repository, on that branch, in that folder. The path is relative to the app's root directory.
+
+    **Fix:** in **Settings**, **Repository**, correct **Dockerfile path** and **Root directory**, then redeploy.
+  </Accordion>
+  <Accordion title="&quot;The build did not finish within 15 minutes&quot;">
+    **What's happening:** builds stop after 15 minutes.
+
+    **Fix:** make the build faster: install only what the app needs, and leave tests and other slow steps to your CI. Automatic builds (without a Dockerfile) reuse a cache from the previous build. If the build cannot be shortened, contact support.
+  </Accordion>
+  <Accordion title="&quot;Raff could not read the source code for this deploy&quot;">
+    **What's happening:** Raff could not fetch the code it had staged for this deploy.
+
+    **Fix:** press **Retry build** or push again. Contact support if it keeps happening.
+  </Accordion>
+  <Accordion title="&quot;Your app stopped with exit code 1 and keeps restarting&quot;">
+    **What's happening:** the app starts, then exits. Raff starts it again, and it exits again.
+
+    **Why:** an error at start, such as a missing environment variable, a wrong start command or a database it cannot reach.
+
+    **Fix:**
+    1. Open the **Logs** tab: the last lines before each exit show the error.
+    2. Check the start command in **Settings**, **Runtime**, and the variables on the **Environment** tab.
+    3. Fix it and redeploy.
+  </Accordion>
+  <Accordion title="&quot;Your app ran out of memory and was stopped&quot;">
+    **What's happening:** the full message names the memory of the app's size, for example `Your app ran out of memory (512 MiB on its size) and was stopped.`
+
+    **Fix:** choose a larger size in **Settings**, **Instance size**, or make the app use less memory. See [App sizes, scaling and sleeping](/products/build/raff-apps/concepts/sizes-and-scaling).
+  </Accordion>
+  <Accordion title="&quot;Your app is running but does not answer the health check&quot;">
+    **What's happening:** for example, `Your app is running but does not answer the health check at "/healthz" on port 8080. Check the health check path and the port.`
+
+    **Why:** the path does not exist, it returns an error status, or the app listens on another port.
+
+    **Fix:** open the path on your app locally and check it returns a status from 200 to 399. Then correct **Health check path** or **HTTP port** in **Settings**, **Runtime**. Saving starts a new deploy.
+  </Accordion>
+  <Accordion title="&quot;Your app did not become ready within 5 minutes&quot;">
+    **What's happening:** the app did not answer in time, and nothing else explains it.
+
+    **Fix:** check the **Logs** tab for what the app was doing. If it needs longer to set up after its port opens, add a health check path: an app with one has 10 minutes. If the logs show nothing, contact support.
+  </Accordion>
+  <Accordion title="&quot;Your app is not healthy&quot;">
+    **What's happening:** an app that was live stopped answering.
+
+    **Fix:** check the **Logs** and **Metrics** tabs for errors or memory at the size's limit. Redeploy, or choose a larger size. If the logs show nothing, contact support.
+  </Accordion>
+  <Accordion title="&quot;Port 9090 is reserved by the platform&quot;">
+    **What's happening:** ports 8008, 8012, 8013, 8022, 9090 and 9091 are reserved on web apps and on private apps that scale to zero.
+
+    **Fix:** make your app listen on another port, such as 8080, and set the app's port to match.
+  </Accordion>
+  <Accordion title="A template size is marked &quot;Too small&quot;, or a template keeps failing">
+    **What's happening:** some templates need more memory: Metabase and LibreTranslate need at least Standard (1 vCPU · 2 GB), Stirling-PDF at least Starter (0.5 vCPU · 1 GB). The create page turns smaller sizes off and marks them **Too small for** the template.
+
+    **Why:** on a smaller size, set later in **Settings** or through the API, the app runs out of memory, restarts or never turns ready.
+
+    **Fix:** in **Settings**, **Instance size**, choose at least the template's smallest size. See [Raff Apps templates](/products/build/raff-apps/details/templates).
+  </Accordion>
+  <Accordion title="&quot;... is a build variable, but this app runs a ready image and is never built&quot;">
+    **What's happening:** apps that run a Docker image are not built, so a variable with the **build** scope has nowhere to go.
+
+    **Fix:** give the variable the **runtime** scope.
+  </Accordion>
+  <Accordion title="&quot;This app has not run yet. Deploy it to start it.&quot;">
+    **What's happening:** you resumed an app that never went live, so there is nothing to start.
+
+    **Fix:** press **Retry build** or **Redeploy** to deploy it.
+  </Accordion>
+</AccordionGroup>
+
+## Cron and job runs
+
+<AccordionGroup>
+  <Accordion title="&quot;The run exited with code 1&quot;">
+    **What's happening:** the command of a cron or job app ended with an error. The message says how many times it was tried.
+
+    **Fix:** find the run on the **Runs** tab and read the **Logs** tab around its time. Fix the command or its variables, then press **Run now**.
+  </Accordion>
+  <Accordion title="&quot;The run ran out of memory&quot;">
+    **Fix:** choose a larger size in **Settings**, **Instance size**, or make the command use less memory, for example by working in smaller batches.
+  </Accordion>
+</AccordionGroup>
+
+## Names and limits
+
+<AccordionGroup>
+  <Accordion title="&quot;An app named ... already exists in this project&quot;">
+    **What's happening:** app names are unique within a project.
+
+    **Fix:** choose another name, or create the app in another project. The create page suggests a free name, such as `n8n-2`.
+  </Accordion>
+  <Accordion title="&quot;Your apps can have 20 instances in total&quot;">
+    **What's happening:** an account can run 20 instances across its web, private and worker apps. Paused, failed and not yet deployed apps count too, because resuming starts them again.
+
+    **Fix:** scale down or delete an app you do not need, or contact support to raise the limit. Scaling down is always allowed.
+  </Accordion>
+  <Accordion title="&quot;An app can have at most 6 instances&quot;">
+    **What's happening:** one app can run 6 instances, fixed or as its autoscaling maximum.
+
+    **Fix:** use a larger size for more capacity per instance, or contact support.
+  </Accordion>
+  <Accordion title="&quot;A private service needs the port your app listens on&quot;">
+    **What's happening:** other apps reach a private app on its port, so Raff needs it at create.
+
+    **Fix:** enter the port your app listens on, for example 8080.
+  </Accordion>
+  <Accordion title="&quot;Apps on a subscription cannot change instance size here yet&quot;">
+    **What's happening:** on monthly billing, the size is part of the app's plan and cannot be changed from the dashboard yet.
+
+    **Fix:** contact support to change the plan.
+  </Accordion>
+</AccordionGroup>
+
+## Spend cap
+
+<AccordionGroup>
+  <Accordion title="&quot;Your spend cap is reached, so your pay-as-you-go apps are paused&quot;">
+    **What's happening:** your account's app usage reached its monthly spend cap, and the cap is set to **Pause my apps**. Pay-as-you-go apps are paused with their data kept. Monthly apps within their plan keep running. Until the cap allows it, Raff refuses to resume, create, deploy or scale up these apps.
+
+    **Fix:** on the Apps page, press **Manage cap** and raise the cap, turn it off, or choose **Keep apps running and email me**. The paused apps start again within seconds. Otherwise they start again next month. See [Set a spend cap](/products/build/raff-apps/quickstart-guides/set-a-spend-cap).
+  </Accordion>
+</AccordionGroup>
+
+## Databases
+
+<AccordionGroup>
+  <Accordion title="Node.js: &quot;pg_hba.conf rejects connection ... no encryption&quot;">
+    **What's happening:** the database refuses connections without TLS, and Node.js `pg` does not use TLS unless you ask for it.
+
+    **Fix:** pass the database's CA when you create the pool: `new Pool({ connectionString: process.env.DATABASE_URL, ssl: { ca: process.env.DATABASE_CA_CERT } })`. Most other clients, such as psql, psycopg, pgx, Prisma and JDBC, use TLS by themselves. See [How apps connect to databases](/products/build/raff-apps/concepts/database-links).
+  </Accordion>
+  <Accordion title="DATABASE_CA_CERT is missing">
+    **What's happening:** links made before October 15, 2026 connect by IP address and have no `DATABASE_CA_CERT`, so the app cannot check the certificate.
+
+    **Fix:** on the **Bindings** tab, rotate the link's credentials. The app redeploys with the new password, the host name and `DATABASE_CA_CERT`.
+  </Accordion>
+  <Accordion title="The app deployed without its database">
+    **What's happening:** an app created with a database waits for it to run, up to 30 minutes. If the database is not running by then, the app deploys without it.
+
+    **Fix:** when the database runs, attach it on the app's **Bindings** tab. Attaching redeploys the app with the `DATABASE_*` variables.
+  </Accordion>
+</AccordionGroup>
+
+## Sleeping, domains and network
+
+<AccordionGroup>
+  <Accordion title="The first request after a quiet period is slow">
+    **What's happening:** the app has **Scale to zero** on. It sleeps about 15 minutes after its last request, and the next request waits a few seconds while an instance starts.
+
+    **Fix:** if every request must be fast, turn off **Scale to zero** in **Settings**, **Scaling**. On pay-as-you-go, the app is then billed all the time it runs.
+  </Accordion>
+  <Accordion title="A custom domain stays on Waiting for DNS or Verifying DNS">
+    **What's happening:** Raff cannot see the right DNS records yet. The message under the domain says which one:
+
+    - `We could not find the TXT record _raff-verify.<domain>`: add the TXT record with the verification value shown.
+    - `The TXT record ... does not match`: copy the value into the record exactly.
+    - `This domain does not resolve yet`: add the CNAME record to the target shown.
+    - `This domain is proxied through Cloudflare (orange cloud)`: set the record to **DNS only** (grey cloud).
+    - `This domain points to ..., not ...`: change the CNAME, or the A record, to the target shown.
+
+    **Fix:** correct the records at your DNS provider, then press **Check now**. For a root domain, use an A record to the target's IP or your provider's ALIAS record. After 24 hours without working DNS the domain turns to **Error**; fixing the records and pressing **Check now** retries it. See [Add a custom domain](/products/build/raff-apps/quickstart-guides/add-a-custom-domain).
+  </Accordion>
+  <Accordion title="&quot;The certificate for this domain was not issued within an hour&quot;">
+    **What's happening:** DNS was verified, but the certificate could not be issued. Usually the record changed or became proxied after verification.
+
+    **Fix:** check that the CNAME still points to the target shown and is not proxied, then retry with **Check now**.
+  </Accordion>
+  <Accordion title="&quot;This domain is already connected to another app&quot;">
+    **What's happening:** a domain can serve one app at a time.
+
+    **Fix:** remove the domain from the other app first, or use another subdomain. If the other app is not yours, contact support.
+  </Accordion>
+  <Accordion title="My app cannot send email">
+    **What's happening:** outbound TCP port 25 is blocked for every app.
+
+    **Fix:** send through your email provider's submission port (587 or 465) or its HTTP API.
+  </Accordion>
+</AccordionGroup>
+
+## GitHub
+
+<AccordionGroup>
+  <Accordion title="&quot;Raff lost access to the GitHub account this app deploys from&quot;">
+    **What's happening:** the Raff GitHub app was uninstalled from the GitHub account, or its access was removed. Pushes no longer deploy; the app keeps running its last deploy. The app page shows a banner with **Reconnect GitHub**.
+
+    **Fix:** press **Reconnect GitHub** and sign in to GitHub. Raff then deploys the latest commit on the branch if it is not already running. See [Reconnect GitHub](/products/build/raff-apps/quickstart-guides/reconnect-github).
+  </Accordion>
+  <Accordion title="&quot;The Raff GitHub App is suspended&quot;">
+    **What's happening:** an owner of the GitHub account suspended the Raff GitHub app, so pushes do not deploy.
+
+    **Fix:** press **Open GitHub settings** on the banner and unsuspend the app there.
+  </Accordion>
+  <Accordion title="&quot;Raff cannot see ... on GitHub&quot; or &quot;Raff cannot find ... on GitHub&quot;">
+    **What's happening:** the repository was removed from the Raff GitHub app's access, or it was renamed, moved or deleted.
+
+    **Fix:** in GitHub, give the Raff GitHub app access to the repository, then deploy again. If you renamed or moved it, press **Reconnect GitHub** on the app page.
+  </Accordion>
+  <Accordion title="&quot;Raff could not download branch ...&quot;">
+    **What's happening:** the branch does not exist, or Raff has no access to the repository.
+
+    **Fix:** check the branch name in **Settings**, **Repository**, and that the Raff GitHub app still has access to the repository.
+  </Accordion>
+  <Accordion title="&quot;The repository is larger than 100 MB&quot;">
+    **What's happening:** Raff builds repositories up to 100 MB.
+
+    **Fix:** remove large files from the repository, or build the image in your own pipeline and deploy it as a public Docker image.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
+
+- The app ID, from the dashboard URL
+- The exact message and the time it happened
+- What you have already tried

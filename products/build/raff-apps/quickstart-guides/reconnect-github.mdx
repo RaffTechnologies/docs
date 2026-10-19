@@ -1,0 +1,75 @@
+---
+title: Reconnect GitHub to Raff Apps
+sidebarTitle: Reconnect GitHub
+description: Fix Raff apps whose GitHub pushes stopped deploying, after the Raff GitHub app was removed, paused or lost access to a repository.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Apps from GitHub deploy every push to their branch. When Raff loses access to the repository, pushes stop deploying and the app shows a banner that says why. The app keeps running its last deploy in the meantime.
+
+## What the banner says
+
+| Banner | Cause | Fix |
+|---|---|---|
+| Raff lost access to GitHub account @name | The Raff GitHub app was removed from that GitHub account | **Reconnect GitHub** |
+| Raff cannot find owner/repo on GitHub | The repository was renamed, moved or deleted | If it was renamed or moved, **Reconnect GitHub** |
+| The Raff GitHub app is paused on @name | An owner of that GitHub account suspended the app | **Open GitHub settings**, then an owner unsuspends it |
+| Raff can no longer see owner/repo | The repository was taken out of the Raff GitHub app's access | **Open GitHub settings** and give the app access to the repository again |
+
+The banner shows on the app page, in **Settings**, **Repository**, and once for all affected apps on the **Apps** list.
+
+## Reconnect GitHub
+
+<Steps>
+  <Step title="Click Reconnect GitHub">
+    Click **Reconnect GitHub** on the banner. From the **Apps** list, one reconnect repairs every app on that GitHub account.
+
+    <Frame>
+      ![TODO: App page banner saying Raff lost access to the GitHub account, with the Reconnect GitHub button](/images/products/build/raff-apps/github-reconnect-banner.png)
+    </Frame>
+  </Step>
+  <Step title="Sign in with GitHub">
+    A GitHub window opens. Sign in with a GitHub account that can see the app's repository. Raff links only what that GitHub account can see.
+  </Step>
+  <Step title="Install the Raff GitHub app if asked">
+    If the Raff GitHub app is no longer installed, GitHub asks you to install it. Pick the account and the repositories your apps use, and finish the install.
+  </Step>
+  <Step title="Check the result">
+    The window closes and the dashboard says "GitHub reconnected", with the branch it is deploying. The banner goes away.
+  </Step>
+</Steps>
+
+If your browser blocks the GitHub window, the sign-in runs in the same tab and brings you back when it is done.
+
+## What happens after
+
+- Each repaired app deploys the latest commit on its branch when that differs from what it runs.
+- Apps you paused, and apps paused by the [spend cap](/products/build/raff-apps/quickstart-guides/set-a-spend-cap), are left alone.
+- After you give the Raff GitHub app access to a repository again in GitHub settings, its apps deploy their latest commit by themselves.
+
+If an app uses a private repository that your GitHub account cannot see, the reconnect is refused. Ask someone in that GitHub organization who can see the repository to reconnect.
+
+## Do it from your tools
+
+Reconnecting needs the dashboard, because it signs you in to GitHub. API keys cannot start it.
+
+To check an app from the API, read `github_status` from [Get app service](/api-reference/apps/get-app-service). It is empty when the link works, otherwise `disconnected`, `suspended`, `no_repo_access` or `repo_not_found`.
+
+```bash
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Preview pull requests" icon="code-pull-request" href="/products/build/raff-apps/quickstart-guides/preview-pull-requests">
+    Build every pull request at its own address.
+  </Card>
+  <Card title="Roll back a deploy" icon="clock-rotate-left" href="/products/build/raff-apps/quickstart-guides/roll-back-a-deploy">
+    Go back to an earlier deploy.
+  </Card>
+</CardGroup>

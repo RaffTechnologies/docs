@@ -1,0 +1,133 @@
+---
+title: Set app environment variables
+sidebarTitle: Set environment variables
+description: Add settings and secrets to a Raff app as environment variables, at create or later, for the running app, the build or both.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Environment variables hold your app's settings and secrets, such as API keys or a feature flag. Raff stores every value encrypted and hides secrets on the app page.
+
+Set them when you create the app, or later on the app's **Environment** tab. A change reaches the app with a new deploy.
+
+## Set them when you create the app
+
+On the **Deploy an app** page, under **Optional**, open **Environment variables** and paste a `.env` file, one `KEY=value` per line:
+
+```bash .env
+API_KEY=your-key
+LOG_LEVEL=info
+```
+
+Blank lines and `#` comments are skipped, an `export ` in front is dropped, and quotes around a value are removed. The values are stored as secrets and are in place for the first deploy.
+
+## Add or change a variable
+
+<Steps>
+  <Step title="Open the Environment tab">
+    Open the app and go to the **Environment** tab.
+  </Step>
+  <Step title="Add the variable">
+    Click **Add variable** and fill in:
+
+    - **Key**: letters, digits and underscores, not starting with a digit.
+    - **Value**.
+    - **Injected into**: **Runtime only** (the default), **Build only** or **Build and runtime**. See [Runtime or build](#runtime-or-build).
+    - **Secret (masked in the console)**: ticked by default. Untick it for values that are safe to show.
+
+    <Frame>
+      ![TODO: Add variable dialog with Key, Value, Injected into and Secret](/images/products/build/raff-apps/env-add-variable.png)
+    </Frame>
+  </Step>
+  <Step title="Save">
+    Click **Add variable**. A runtime value redeploys the app with it. A build value rebuilds the app, which takes longer.
+  </Step>
+</Steps>
+
+To change a variable, click its pencil icon and **Save variable**. To remove one, click its trash icon. Both redeploy the app.
+
+## Import a .env file
+
+On the **Environment** tab, click **Import .env**, paste `KEY=value` lines and click **Import variables**. Imported values are stored as secrets.
+
+An import is all or nothing: if Raff refuses one line, for example a name with a space, it saves none of them and says which one to fix.
+
+## Runtime or build
+
+| Injected into | Reaches |
+|---|---|
+| **Runtime only** | The running app. Use this for passwords and keys. |
+| **Build only** | The build of the app, not the running app. |
+| **Build and runtime** | Both. |
+
+Some frameworks write settings into the code at build time: Next.js `NEXT_PUBLIC_*`, Vite `VITE_*`, Create React App `REACT_APP_*`, SvelteKit and Astro `PUBLIC_*`. These need **Build only** or **Build and runtime**. Left on runtime, they ship as empty strings and the deploy still succeeds.
+
+Build values can be read back from the built image, so keep credentials on **Runtime only**.
+
+Apps from a Docker image, a template or a Docker Compose file are never built. On those apps Raff refuses **Build only**; **Build and runtime** still reaches the running app.
+
+## Good to know
+
+- **Database variables** such as `DATABASE_URL` come from a database link and show the database as their source. Change them through the link on the **Bindings** tab, not here. See [Add a Postgres database to an app](/products/build/raff-apps/quickstart-guides/add-a-database).
+- **Paused apps** keep your changes. Runtime values apply when you resume the app; a build value needs a deploy after you resume it.
+- **Seeing a secret**: click the eye icon on its row. You need permission to manage the app.
+
+## Use the API
+
+Set one variable. The app redeploys unless you send `"redeploy": false`, which saves it for the next deploy:
+
+```bash
+curl -X PUT https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/env \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "API_KEY",
+    "value": "your-key",
+    "is_secret": true,
+    "scope": "runtime"
+  }'
+```
+
+Set several at once, with one deploy:
+
+```bash
+curl -X PUT https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/env/bulk \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vars": [
+      { "key": "LOG_LEVEL", "value": "info" },
+      { "key": "SMTP_PASSWORD", "value": "your-password", "is_secret": true }
+    ]
+  }'
+```
+
+`scope` is `runtime` (default), `build` or `both`. List the variables with secrets masked using `GET .../env`, or with their values using `GET .../env/reveal`. Remove one with `DELETE .../env/KEY`. See [Set environment variable](/api-reference/apps/set-app-env-var), [Bulk set environment variables](/api-reference/apps/bulk-set-app-env-vars) and [Delete environment variable](/api-reference/apps/delete-app-env-var).
+
+## Use the CLI
+
+```bash
+# Set a secret for the running app
+raff apps env set SERVICE_ID API_KEY --value your-key --secret
+
+# Set a value the build needs
+raff apps env set SERVICE_ID NEXT_PUBLIC_API_URL --value https://api.example.com --scope build
+
+# List, with or without the secret values
+raff apps env list SERVICE_ID
+raff apps env list SERVICE_ID --reveal
+
+# Remove one
+raff apps env delete SERVICE_ID API_KEY
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Add a Postgres database" icon="database" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    Get `DATABASE_URL` without copying passwords.
+  </Card>
+  <Card title="Deploy from GitHub" icon="github" href="/products/build/raff-apps/quickstart-guides/deploy-from-github">
+    Build and deploy on every push.
+  </Card>
+</CardGroup>

@@ -174,7 +174,50 @@
                 "group": "Raff Apps",
                 "icon": "rocket",
                 "pages": [
-                  "products/build/raff-apps/index"
+                  "products/build/raff-apps/index",
+                  {
+                    "group": "Quickstart & guides",
+                    "pages": [
+                      "products/build/raff-apps/quickstart-guides/deploy-from-github",
+                      "products/build/raff-apps/quickstart-guides/deploy-a-docker-image",
+                      "products/build/raff-apps/quickstart-guides/deploy-a-template",
+                      "products/build/raff-apps/quickstart-guides/import-docker-compose",
+                      "products/build/raff-apps/quickstart-guides/add-a-database",
+                      "products/build/raff-apps/quickstart-guides/set-environment-variables",
+                      "products/build/raff-apps/quickstart-guides/add-a-custom-domain",
+                      "products/build/raff-apps/quickstart-guides/scale-an-app",
+                      "products/build/raff-apps/quickstart-guides/run-cron-jobs-and-jobs",
+                      "products/build/raff-apps/quickstart-guides/preview-pull-requests",
+                      "products/build/raff-apps/quickstart-guides/view-logs-and-metrics",
+                      "products/build/raff-apps/quickstart-guides/roll-back-a-deploy",
+                      "products/build/raff-apps/quickstart-guides/pause-and-resume",
+                      "products/build/raff-apps/quickstart-guides/set-a-spend-cap",
+                      "products/build/raff-apps/quickstart-guides/reconnect-github",
+                      "products/build/raff-apps/quickstart-guides/delete-an-app"
+                    ]
+                  },
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "products/build/raff-apps/concepts/app-types",
+                      "products/build/raff-apps/concepts/builds-and-sources",
+                      "products/build/raff-apps/concepts/deploys-and-health-checks",
+                      "products/build/raff-apps/concepts/sizes-and-scaling",
+                      "products/build/raff-apps/concepts/networking-and-domains",
+                      "products/build/raff-apps/concepts/database-links",
+                      "products/build/raff-apps/concepts/isolation-and-security",
+                      "products/build/raff-apps/concepts/billing-model"
+                    ]
+                  },
+                  {
+                    "group": "Details",
+                    "pages": [
+                      "products/build/raff-apps/details/features-and-limits",
+                      "products/build/raff-apps/details/pricing",
+                      "products/build/raff-apps/details/templates"
+                    ]
+                  },
+                  "products/build/raff-apps/troubleshooting"
                 ]
               },
               {
@@ -752,10 +795,13 @@
                       "api-reference/apps/list-app-services",
                       "api-reference/apps/create-app-service",
                       "api-reference/apps/get-app-service",
+                      "api-reference/apps/update-app-service",
                       "api-reference/apps/delete-app-service",
                       "api-reference/apps/pause-app-service",
                       "api-reference/apps/resume-app-service",
-                      "api-reference/apps/scale-app-service"
+                      "api-reference/apps/scale-app-service",
+                      "api-reference/apps/list-app-templates",
+                      "api-reference/apps/list-app-github-connections"
                     ]
                   },
                   {
@@ -773,7 +819,9 @@
                     "group": "Observability",
                     "pages": [
                       "api-reference/apps/list-app-logs",
-                      "api-reference/apps/get-app-service-metrics"
+                      "api-reference/apps/get-app-service-metrics",
+                      "api-reference/apps/list-app-events",
+                      "api-reference/apps/list-app-instances"
                     ]
                   },
                   {
@@ -793,6 +841,23 @@
                       "api-reference/apps/add-app-custom-domain",
                       "api-reference/apps/delete-app-custom-domain",
                       "api-reference/apps/retry-app-domain-verification"
+                    ]
+                  },
+                  {
+                    "group": "Database links",
+                    "pages": [
+                      "api-reference/apps/list-app-bindings",
+                      "api-reference/apps/create-app-binding",
+                      "api-reference/apps/delete-app-binding",
+                      "api-reference/apps/rotate-app-binding"
+                    ]
+                  },
+                  {
+                    "group": "Previews",
+                    "pages": [
+                      "api-reference/apps/list-app-previews",
+                      "api-reference/apps/delete-app-preview",
+                      "api-reference/apps/redeploy-app-preview"
                     ]
                   },
                   {
@@ -1047,6 +1112,7 @@
               "reference/cli/vm",
               "reference/cli/kubernetes",
               "reference/cli/database",
+              "reference/cli/app",
               "reference/cli/volume",
               "reference/cli/snapshot",
               "reference/cli/backup",
@@ -1088,6 +1154,9 @@
               "reference/terraform/raff_k8s_node_pool",
               "reference/terraform/raff_database",
               "reference/terraform/raff_database_user",
+              "reference/terraform/raff_app_service",
+              "reference/terraform/raff_app_custom_domain",
+              "reference/terraform/raff_app_database_link",
               "reference/terraform/data-sources"
             ]
           }

@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 13, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,31 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 19, 2026
+
+**Raff Apps**
+
+- 🟢 **Added**: **[Update app service](/api-reference/apps/update-app-service)** `PATCH /api/v1/apps/services/{service_id}`: rename, size, start command, port, health check, cron settings, branch and previews. A change to how a live app runs rolls out as a new deployment; a change to a failed app deploys it; an empty `description` clears it.
+- 🟢 **Added**: **Database links**: [link a managed database to an app](/api-reference/apps/create-app-binding), [list](/api-reference/apps/list-app-bindings), [unlink](/api-reference/apps/delete-app-binding) and [rotate the password](/api-reference/apps/rotate-app-binding). A link sets `DATABASE_URL` and the other `DATABASE_*` variables, including `DATABASE_CA_CERT` so the app can check the server's certificate.
+- 🟢 **Added**: [List app templates](/api-reference/apps/list-app-templates), [List GitHub connections](/api-reference/apps/list-app-github-connections), [pull request previews](/api-reference/apps/list-app-previews) (list, delete, redeploy), [List app events](/api-reference/apps/list-app-events) and [List app instances](/api-reference/apps/list-app-instances).
+- 🔵 **Updated**: **Create app service** accepts `link_database_id` (the app waits for the database, links it and then deploys), `env_vars` (set before the first deploy), `github_installation_id` and `cron_concurrency`. `deploy_now` is refused for an app built from uploaded source.
+- 🔵 **Updated**: the app object adds `waiting_for_database`, `github_status`, `previews_enabled`, `max_previews`, `primary_domain`, `cron_concurrency` and `current_deployment_number`. Job runs: `exit_code` is null while a run is going and for a canceled run.
+- 🔵 **Updated**: **Scale app service**: `autoscaling_metric` is `concurrency` only (`cpu` was accepted but not applied), and autoscaling is refused for workers and always-on private apps, which run a fixed number of instances.
+
+**Raff Apps: CLI** (raff-cli v0.6.4)
+
+- 🟢 **Added**: [`raff apps`](/reference/cli/app) `update`, `templates`, `github`, `links` (list, add, delete, rotate), `previews` (list, redeploy, delete), `events` and `instances`.
+- 🔵 **Updated**: `raff apps create` accepts `--port`, `--health-check`, `--env`, `--database`, `--github-connection`, `--cron-timezone`, `--cron-concurrency`, `--autoscale`, `--min-replicas`, `--max-replicas` and `--scale-to-zero`.
+- 🔵 **Updated**: `raff apps deploy --dir` uploads a folder and builds it. Files in `.raffignore` are skipped; the archive can be at most 100 MB.
+- 🟣 **Fixed**: `raff apps scale --scale-to-zero` works on its own and keeps the app's other settings.
+
+**Raff Apps: Terraform** (provider v0.4.4)
+
+- 🟢 **Added**: [`raff_app_custom_domain`](/reference/terraform/raff_app_custom_domain) and [`raff_app_database_link`](/reference/terraform/raff_app_database_link) resources.
+- 🔵 **Updated**: [`raff_app_service`](/reference/terraform/raff_app_service) takes `env`, `secret_env`, `cron_concurrency`, `github_installation_id` and `link_database_id`.
+- 🔵 **Updated**: `raff_app_service` updates settings in place, rolls a changed `image_ref` out as a deploy, and deploys image and GitHub apps when they are created.
+- 🟣 **Fixed**: `raff_app_service` no longer plans a replacement when `builder` or `region` is left out.
 
 ### October 13, 2026
 

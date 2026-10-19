@@ -1,0 +1,359 @@
+---
+title: "raff apps"
+description: "Manage Raff Apps from the CLI: create apps from an image, GitHub or a local folder, deploy, roll back, scale, set environment variables, link databases, add domains, and read logs."
+---
+
+<sub>Updated October 19, 2026</sub>
+
+The `raff apps` command group (alias: `raff app`) covers every Raff Apps operation in the public API: web services, private services, workers, cron jobs and one-off jobs. Each subcommand supports `--output json` for scripting.
+
+```bash
+raff apps create --name hello --image nginx:1.27-alpine --port 80 --deploy-now
+```
+
+This creates a web app from a public Docker image and deploys it right away. The command prints the app's ID, such as `svc-abc12345`; once the deploy is live, [`get`](#get) shows the app's https address.
+
+Commands take the app's ID (`svc-abc12345`) or its UUID, not its name. [`list`](#list) shows the IDs. Creating an app needs a project: pass `--project-id`, set `RAFF_PROJECT_ID`, or set a default with `raff configure`.
+
+## Deploy from a folder
+
+```bash
+raff apps create --name api --builder dockerfile --port 8080
+raff apps deploy svc-abc12345 --dir .
+```
+
+The first command creates an app that builds from uploaded source, here with the folder's Dockerfile. The second zips the folder, uploads it and starts a build. Without `--builder dockerfile`, Raff detects the stack and builds it.
+
+Files and folders listed in `.raffignore` are skipped (one pattern per line, `#` starts a comment). So are `.git`, `node_modules`, `.venv`, `venv`, `__pycache__`, `.DS_Store` and `.env`. Build output such as `dist` and `bin` is uploaded, so a Dockerfile can copy it. The archive can be at most 100 MB. Local `.env` files are never uploaded: set variables with [`env set`](#env).
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`tiers`](#tiers) | List sizes and prices |
+| [`templates`](#templates) | List ready-to-run templates |
+| [`github`](#github) | List GitHub connections |
+| [`list`](#list) | List apps |
+| [`get`](#get) | Show one app |
+| [`create`](#create) | Create an app |
+| [`update`](#update) | Change an app's settings |
+| [`delete`](#delete) | Delete an app |
+| [`deploy`](#deploy) | Upload a folder, switch the image, or redeploy |
+| [`deployments`](#deployments) | List deploys |
+| [`rollback`](#rollback) | Go back to an earlier deploy |
+| [`scale`](#scale) | Instances, autoscaling and scale to zero |
+| [`pause`](#pause), [`resume`](#resume) | Stop and start an app and its billing |
+| [`env`](#env) | Environment variables |
+| [`links`](#links) | Link managed databases |
+| [`domains`](#domains) | Custom domains |
+| [`previews`](#previews) | Pull request previews |
+| [`logs`](#logs), [`events`](#events), [`instances`](#instances) | Observe the app |
+| [`usage`](#usage) | Month-to-date usage and estimated charge |
+
+---
+
+## tiers
+
+```bash
+raff apps tiers
+```
+
+Lists each size with its ID, vCPU, memory, disk and monthly and yearly price. Pass the ID to [`create --tier`](#create) or [`update --tier`](#update).
+
+## templates
+
+```bash
+raff apps templates
+```
+
+Lists the templates with their image, port, the smallest size they run on (`MIN TIER`) and whether they need Postgres (`required`, `optional` or `no`). To run one, pass its image and port to [`create`](#create). A template that needs Postgres also needs a [database link](#links).
+
+## github
+
+```bash
+raff apps github
+```
+
+Lists the account's GitHub connections with their ID, GitHub account, type and status. Connect GitHub in the dashboard first, then pass the ID to [`create --github-connection`](#create).
+
+## list
+
+```bash
+raff apps list [--output table|json]
+```
+
+Shows each app's ID, address name, type, size, status and URL. With a project set, only that project's apps are listed.
+
+## get
+
+```bash
+raff apps get <app-id>
+```
+
+Shows the name, type, source, size, instances, status, URL, region and billing type.
+
+## create
+
+```bash
+raff apps create --name <name> [--type web|private|worker|cron|job] [--image <ref> | --repo <owner/name> --github-connection <id>] [--tier <tier-id>] [--port <n>] [--env KEY=VALUE] [--deploy-now]
+```
+
+| Flag | Description |
+|---|---|
+| `--name` | Required. The app's name. Its address is made from the name (up to 50 characters) and does not change when you rename the app. |
+| `--description` | Description. |
+| `--type` | `web` (default), `private`, `worker`, `cron`, or `job`. |
+| `--source` | `image` (a Docker image), `git` (a GitHub repository), or `console` (source you upload with [`deploy --dir`](#deploy)). Default: `image` with `--image`, `git` with `--repo`, otherwise `console`. |
+| `--builder` | How source is built: `buildpacks` (detects the stack, the default), `dockerfile`, or `image`. Image apps always use `image`. |
+| `--image` | A public image, such as `nginx:1.27-alpine`. |
+| `--repo` | GitHub repository as `owner/name`. Needs `--github-connection`. |
+| `--github-connection` | GitHub connection ID, see [`github`](#github). |
+| `--branch` | Branch to deploy. Default: `main`. |
+| `--root-dir` | Folder inside the source to build from. |
+| `--dockerfile` | Dockerfile path, for `--builder dockerfile`. |
+| `--start-command` | Command that starts the app, instead of the image's own. |
+| `--tier` | Size: a tier ID from [`tiers`](#tiers). |
+| `--replicas` | Fixed number of instances. Default: 1. |
+| `--autoscale` | Autoscale between `--min-replicas` and `--max-replicas` on requests in progress per instance. Setting either of those turns it on too. Web apps, and private apps that scale to zero. |
+| `--min-replicas`, `--max-replicas` | Autoscaling range. Default: 1 to 3. An app has at most 6 instances. |
+| `--scale-to-zero` | Let the app sleep when idle. Web and private apps. |
+| `--port` | Port the app listens on. Web apps default to 8080; private apps need it. Web apps, and private apps that scale to zero, cannot use 8008, 8012, 8013, 8022, 9090 or 9091. |
+| `--health-check` | HTTP path that answers 200 when the app is ready, such as `/healthz`. A deploy goes live when it answers. |
+| `--env` | Environment variable as `KEY=VALUE`, set before the first deploy. Repeat the flag for more. |
+| `--database` | ID of a managed PostgreSQL database to link (the ID `raff db list` shows). The app waits until the database runs, then deploys with `DATABASE_URL` and the other `DATABASE_*` variables set. |
+| `--cron` | Schedule for `--type cron`, five fields, such as `0 3 * * *`. |
+| `--cron-timezone` | Time zone for the schedule, such as `Europe/London`. Default: UTC. |
+| `--cron-concurrency` | When a run is due while the last one still runs: `forbid` (skip the new run, the default), `allow` (run both) or `replace` (stop the old run). |
+| `--region` | Region. Default: `us-east`, the only region. |
+| `--deploy-now` | Deploy right away. For image and GitHub apps; an app built from uploaded source deploys when you run [`deploy --dir`](#deploy). |
+
+<Note>
+Creating an app from GitHub (`--repo` with `--github-connection`) needs a recent GitHub sign-in by the API key's owner: in the last 7 days they must have pressed **Continue with GitHub** on the dashboard's create page, and their GitHub account must be able to see the repository in that connection. Otherwise the create is refused with "Continue with GitHub, then choose the repository again. Raff only deploys repositories your GitHub account can see."
+</Note>
+
+```bash
+raff apps create --name hello --image nginx:1.27-alpine --port 80 --scale-to-zero --deploy-now
+raff apps create --name api --repo acme/api --github-connection <connection-id> --port 8080 --health-check /healthz --deploy-now
+raff apps create --name worker --type worker --image ghcr.io/acme/worker:1.4 --env QUEUE=emails --deploy-now
+raff apps create --name nightly --type cron --image ghcr.io/acme/report:1.2 --cron "0 3 * * *" --cron-timezone Europe/London --deploy-now
+```
+
+## update
+
+```bash
+raff apps update <app-id> [--name <name>] [--tier <tier-id>] [--port <n>] [--start-command <cmd>] [--health-check <path>] [--previews | --previews=false] [--redeploy]
+```
+
+Only the flags you pass change. A change to how a live app runs (size, port, start command, health check, cron settings) rolls out as a new deploy, and on a failed app it starts one. A paused app keeps the change and applies it when resumed.
+
+| Flag | Description |
+|---|---|
+| `--name` | New name. The app's address does not change. |
+| `--description` | New description. `--description ""` clears it. |
+| `--tier` | New size from [`tiers`](#tiers). The app restarts on it. Apps on a subscription change size through support. |
+| `--port` | Port the app listens on. Web and private apps. |
+| `--start-command` | Command that starts the app. |
+| `--health-check` | Health check path, starting with `/`. |
+| `--cron`, `--cron-timezone`, `--cron-concurrency` | Cron apps: schedule, time zone, and `forbid`, `allow` or `replace`. |
+| `--branch`, `--root-dir`, `--dockerfile` | GitHub apps: branch, folder and Dockerfile path, used from the next deploy. |
+| `--previews` | Pull request previews on (`--previews`) or off (`--previews=false`). Web apps from GitHub. Turning them off removes the running previews. |
+| `--redeploy` | Roll the app out again now with its current version, even when the change alone would not. |
+
+```bash
+raff apps update svc-abc12345 --port 3000
+raff apps update svc-abc12345 --previews
+```
+
+## delete
+
+```bash
+raff apps delete <app-id> [--force]
+```
+
+Deletion runs in the background; the name and address are released once it completes. Usage up to deletion is billed. Linked databases are not deleted. `--force` skips the confirmation prompt.
+
+## deploy
+
+```bash
+raff apps deploy <app-id> [--dir <folder> | --image <ref> | --source-blob-key <key>] [--channel cli]
+```
+
+| Flag | Description |
+|---|---|
+| `--dir` | Zip this folder, upload it and build it. See [Deploy from a folder](#deploy-from-a-folder). |
+| `--image` | Switch an image app to this image. |
+| `--source-blob-key` | Deploy source uploaded earlier through the API's source upload. |
+| `--channel` | Channel recorded on the deploy. Default: `cli`. |
+
+With no flag, `deploy` redeploys what runs now. `--dir`, `--image` and `--source-blob-key` cannot be combined. A paused app must be [resumed](#resume) first.
+
+```bash
+raff apps deploy svc-abc12345 --dir .
+raff apps deploy svc-abc12345 --image nginx:1.27
+```
+
+## deployments
+
+```bash
+raff apps deployments <app-id> [--limit 20]
+```
+
+Lists deploys with their ID, number, channel, status, commit and creation time. Pass an ID to [`rollback`](#rollback).
+
+## rollback
+
+```bash
+raff apps rollback <app-id> --target <deployment-id>
+```
+
+Starts a new deploy from an earlier deploy's image and settings. The target must be a deploy that went live.
+
+## scale
+
+```bash
+raff apps scale <app-id> [--replicas <n>] [--autoscale | --autoscale=false] [--min-replicas <n>] [--max-replicas <n>] [--metric concurrency] [--target <n>] [--scale-to-zero | --scale-to-zero=false]
+```
+
+Flags you leave out keep the app's current settings.
+
+| Flag | Description |
+|---|---|
+| `--replicas` | Fixed number of instances. |
+| `--autoscale` | Autoscaling on (`--autoscale`) or off for a fixed count (`--autoscale=false`). Web apps, and private apps that scale to zero. Setting `--min-replicas` or `--max-replicas` turns it on. |
+| `--min-replicas`, `--max-replicas` | Autoscaling range. |
+| `--metric` | Autoscaling metric: `concurrency`, requests in progress per instance. |
+| `--target` | Requests in progress per instance that the autoscaler aims for. |
+| `--scale-to-zero` | Sleep when idle (`--scale-to-zero`) or stay awake (`--scale-to-zero=false`). Web and private apps. |
+
+An app has at most 6 instances and an account at most 20; contact support to raise them. Workers and private apps that stay awake run a fixed count. An app that scales to zero sleeps about 15 minutes after its last request and wakes on the next one, which takes a few seconds longer.
+
+```bash
+raff apps scale svc-abc12345 --replicas 3
+raff apps scale svc-abc12345 --min-replicas 1 --max-replicas 4
+raff apps scale svc-abc12345 --scale-to-zero
+```
+
+## pause
+
+```bash
+raff apps pause <app-id>
+```
+
+Stops the app and its billing.
+
+## resume
+
+```bash
+raff apps resume <app-id>
+```
+
+Starts a paused app again. Resuming an app that never went live puts it back in error; deploy it instead.
+
+## env
+
+```bash
+raff apps env list <app-id> [--reveal]
+raff apps env set <app-id> <KEY> --value <value> [--secret] [--scope runtime|build|both]
+raff apps env delete <app-id> <KEY>
+```
+
+`list` masks secret values; `--reveal` shows them and needs permission to manage apps. The `SYSTEM` column marks variables a [database link](#links) sets. Setting a variable rolls it out to the running app.
+
+| Flag (`set`) | Description |
+|---|---|
+| `--value` | Required. The value. |
+| `--secret` | Store it as a secret, masked when read. |
+| `--scope` | `runtime` (default, the running app only), `build` (the build only) or `both`. |
+
+Frameworks that read configuration at build time need `--scope build` or `--scope both`: Next.js `NEXT_PUBLIC_*`, Vite `VITE_*`, Create React App `REACT_APP_*`, SvelteKit and Astro `PUBLIC_*`. Without it those values are empty. A change to a build variable rebuilds the app. Image apps are never built, so they refuse build variables. Build values can be read from the image history, so keep credentials at `runtime`.
+
+```bash
+raff apps env set svc-abc12345 API_TOKEN --value <token> --secret
+raff apps env set svc-abc12345 NEXT_PUBLIC_API_URL --value https://api.example.com --scope both
+```
+
+## links
+
+```bash
+raff apps links list <app-id>
+raff apps links add <app-id> <database-id> [--prefix <PREFIX>]
+raff apps links rotate <link-id>
+raff apps links delete <link-id>
+```
+
+`add` links a running managed PostgreSQL database: the app gets its own database user and `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` and `DATABASE_CA_CERT`, then redeploys. Connections go over Raff's private network with TLS. `<database-id>` is the ID from `raff db list`, or the database's UUID.
+
+| Flag (`add`) | Description |
+|---|---|
+| `--prefix` | Prefix of the variables. Default: `DATABASE`. Give a second database its own prefix: `--prefix ANALYTICS` sets `ANALYTICS_URL`, `ANALYTICS_HOST` and so on. |
+
+`rotate` gives the app new database credentials and redeploys it. `delete` removes the link, the app's database user and the variables. `list` shows each link's ID.
+
+```bash
+raff apps links add svc-abc12345 a1b2c3d4
+```
+
+## domains
+
+```bash
+raff apps domains list <app-id>
+raff apps domains add <app-id> <domain>
+raff apps domains delete <domain-id>
+```
+
+For web apps. `add` prints a CNAME target and a TXT record name and value: create both at your DNS provider, then verification and the TLS certificate run automatically. `list` shows each domain's ID and status: `pending_dns`, `verifying`, `dns_verified`, `issuing_cert`, `active` or `error`.
+
+```bash
+raff apps domains add svc-abc12345 www.example.com
+```
+
+## previews
+
+```bash
+raff apps previews list <app-id>
+raff apps previews redeploy <preview-id>
+raff apps previews delete <preview-id>
+```
+
+For web apps from GitHub, after [`update --previews`](#update). Every pull request gets its own copy at its own address; how many depends on the app's size. Previews never get the app's database link credentials. `redeploy` builds and deploys the pull request's latest commit again.
+
+## logs
+
+```bash
+raff apps logs <app-id> [--level info|warn|error] [--search <text>] [--since <RFC 3339>] [--until <RFC 3339>] [--limit 200]
+```
+
+| Flag | Description |
+|---|---|
+| `--level` | Only this level: `info`, `warn` or `error`. |
+| `--search` | Only lines that contain this text. |
+| `--since`, `--until` | Time range, RFC 3339, such as `2026-10-19T09:00:00Z`. |
+| `--limit` | Maximum lines. Default: 200. |
+
+```bash
+raff apps logs svc-abc12345 --level error --since 2026-10-19T09:00:00Z
+```
+
+## events
+
+```bash
+raff apps events <app-id> [--limit 50]
+```
+
+The app's activity timeline: deploys, setting changes, scaling, database links, domains, previews, pauses and errors.
+
+## instances
+
+```bash
+raff apps instances <app-id>
+```
+
+Lists the running instances with their phase, whether they are ready, restarts and start time.
+
+## usage
+
+```bash
+raff apps usage [--service <app-id>]
+```
+
+Month-to-date instance hours and estimated charge per app, with the total. `--service` shows one app.

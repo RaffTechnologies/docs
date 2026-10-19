@@ -1,0 +1,120 @@
+---
+title: Run cron jobs and one-off jobs
+sidebarTitle: Cron and one-off jobs
+description: Run code on a schedule or on demand with Raff Apps, set the time zone and overlap rule, start a run now and read the run history.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A cron job runs your code on a schedule, then stops. A one-off job runs once each time you start it. Both deploy from GitHub or a Docker image like any other app, and keep no instance running between runs.
+
+## Before you start
+
+- Code that exits when its work is done. A run that exits with code 0 succeeded; any other exit code means it failed.
+
+## Create a cron job or a one-off job
+
+<Steps>
+  <Step title="Start a new app">
+    On **Apps**, click **New service**. Pick **GitHub** or **Docker image** and choose your code.
+  </Step>
+  <Step title="Choose the type">
+    Under **What it is**, choose **Scheduled task** for a cron job, or **Runs once** for a one-off job.
+
+    <Frame>
+      ![TODO: What it is options on the create page with Scheduled task selected and the Schedule field](/images/products/build/raff-apps/cron-create-type.png)
+    </Frame>
+  </Step>
+  <Step title="Set the schedule">
+    For a scheduled task, enter the **Schedule** as a five-field cron expression, in UTC. `0 2 * * *` runs every day at 02:00. You can pick another time zone later in **Settings**.
+  </Step>
+  <Step title="Deploy">
+    Pick a **Size**, add environment variables if the code needs them, and click **Deploy**.
+  </Step>
+</Steps>
+
+Once the deploy is live, a cron job runs on its schedule. A one-off job waits until you start it.
+
+## Start a run now
+
+Open the app and click **Run now** at the top of the page. It works for both cron jobs and one-off jobs, once the app is live, and opens the **Runs** tab.
+
+## Read the run history
+
+The **Runs** tab lists each run, newest first:
+
+- Its state: pending, running, succeeded, failed or canceled.
+- What started it: the schedule, or a manual run.
+- When it started, and why it failed for a failed run.
+
+Click **Cancel** to stop a run that is pending or running. The output of each run is on the **Logs** tab.
+
+For a cron job, **Schedule** at the top of the tab shows the cron expression, the time zone, the overlap rule and when the next run is due.
+
+## Change the schedule, time zone or overlap rule
+
+Open **Settings**, **Cron**:
+
+- **Schedule**: five fields, minute, hour, day of month, month and day of week. `*/15 * * * *` runs every 15 minutes.
+- **Timezone**: a time zone name such as `Europe/London`. The default is UTC. Set it here, not inside the schedule.
+- **Concurrency**: what happens when a run is due while the last one is still running.
+
+| Concurrency | When a new run is due during a run |
+|---|---|
+| **forbid** (default) | The new run is skipped |
+| **allow** | Both runs go ahead at the same time |
+| **replace** | The running one is canceled and the new one starts |
+
+Click **Save**.
+
+## Pause a cron job
+
+**Pause** at the top of the app page stops the schedule. A run missed while the app is paused is skipped, not started when you resume. See [Pause and resume an app](/products/build/raff-apps/quickstart-guides/pause-and-resume).
+
+A one-off job has nothing to pause: it runs only when you start it.
+
+## How runs are billed
+
+On pay-as-you-go, each run is billed per second while it runs, at the app's size. Nothing is billed between runs.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+To create one with the API, send `service_type` `cron` (with `cron_schedule`) or `job` to [Create app service](/api-reference/apps/create-app-service).
+
+**API**: [Trigger a manual job run](/api-reference/apps/run-app-job), [List job runs](/api-reference/apps/list-app-job-runs), [Cancel a job run](/api-reference/apps/cancel-app-job-run)
+
+```bash
+# Start a run now
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/jobs/run" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# List runs, newest first
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/jobs/runs" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Cancel a run ($RUN_ID is the run's id from the list)
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/jobs/runs/$RUN_ID/cancel" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+Change the schedule, time zone or overlap rule of a cron job:
+
+```bash
+curl -X PATCH "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"cron_schedule": "*/15 * * * *", "cron_timezone": "Europe/London", "cron_concurrency": "forbid"}'
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="View logs, metrics and a shell" icon="scroll" href="/products/build/raff-apps/quickstart-guides/view-logs-and-metrics">
+    Read the output of each run.
+  </Card>
+  <Card title="Pause and resume an app" icon="pause" href="/products/build/raff-apps/quickstart-guides/pause-and-resume">
+    Stop a schedule for a while.
+  </Card>
+</CardGroup>

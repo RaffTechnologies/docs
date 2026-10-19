@@ -1,0 +1,88 @@
+---
+title: Raff Apps templates
+sidebarTitle: Templates
+description: The 16 ready apps you can deploy on Raff Apps, what each one is, whether it uses Postgres, its smallest size, image, port and health check.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A template is a ready app: Raff fills in its image, port, health check and the settings it needs to start. Every template is a web app with its own https address. Choose **Template** on the create page.
+
+## Templates
+
+| Template | What it is | Postgres | Smallest size | Preselected size |
+|---|---|---|---|---|
+| NGINX | Static content and reverse proxy | No | Micro | Micro |
+| n8n | Workflow automation | Optional | Micro | Starter |
+| Uptime Kuma | Self-hosted status monitoring | No | Micro | Micro |
+| Metabase | Business intelligence and dashboards | Optional | Standard | Pro |
+| Grafana | Observability dashboards | Optional | Micro | Starter |
+| Vaultwarden | Bitwarden-compatible password manager | Optional | Micro | Micro |
+| Hello World | A small sample web app for a first deploy | No | Micro | Micro |
+| Excalidraw | Virtual whiteboard for sketching diagrams | No | Micro | Micro |
+| IT-Tools | Developer and sysadmin utilities | No | Micro | Micro |
+| Stirling-PDF | Self-hosted PDF toolkit | No | Starter | Starter |
+| LibreTranslate | Self-hosted machine translation API | No | Standard | Standard |
+| Kroki | Diagrams-as-code rendering service | No | Micro | Micro |
+| CyberChef | Tools to encode, decode and analyze data | No | Micro | Micro |
+| Umami | Privacy-friendly web analytics | Required | Micro | Micro |
+| Wiki.js | Wiki and documentation platform | Required | Micro | Starter |
+| Vikunja | To-do lists and project management | Optional | Micro | Micro |
+
+Sizes: Micro is 0.25 vCPU · 512 MB, Starter 0.5 vCPU · 1 GB, Standard 1 vCPU · 2 GB, Pro 2 vCPU · 4 GB. See [Raff Apps pricing](/products/build/raff-apps/details/pricing).
+
+## Postgres
+
+- **Required** (Umami, Wiki.js): the app does not start without a database. The create page offers Postgres only: the free plan when your account's free database is still open, else the \$7.99 plan.
+- **Optional** (n8n, Metabase, Grafana, Vaultwarden, Vikunja): the create page also offers **No database**. Without one, the app keeps its data inside itself, and that data is lost when the app restarts or redeploys. Use Postgres for anything you want to keep.
+- **No** (the rest): the app needs no database. Any data it keeps inside itself is lost when the app restarts or redeploys.
+
+With Postgres, Raff links the database before the first deploy and fills in the template's own database settings, always with TLS. See [How apps connect to databases](/products/build/raff-apps/concepts/database-links).
+
+## Sizes
+
+The create page lists smaller sizes than a template's smallest, but turns them off and marks them **Too small for** the template. Metabase, LibreTranslate and Stirling-PDF run out of memory on smaller sizes. You can move to a bigger size at any time.
+
+## Images, ports and health checks
+
+Each template turns live only when its health check page answers.
+
+| Template | Image | Port | Health check |
+|---|---|---|---|
+| NGINX | `nginx:1.27-alpine` | 80 | `/` |
+| n8n | `n8nio/n8n:latest` | 5678 | `/healthz` |
+| Uptime Kuma | `louislam/uptime-kuma:1` | 3001 | `/` |
+| Metabase | `metabase/metabase:latest` | 3000 | `/api/health` |
+| Grafana | `grafana/grafana:11.4.0` | 3000 | `/api/health` |
+| Vaultwarden | `vaultwarden/server:1.32.7` | 80 | `/alive` |
+| Hello World | A small sample image in Go | 8080 | `/` |
+| Excalidraw | `excalidraw/excalidraw:latest` | 80 | `/` |
+| IT-Tools | `corentinth/it-tools:latest` | 80 | `/` |
+| Stirling-PDF | `stirlingtools/stirling-pdf:latest` | 8080 | `/` |
+| LibreTranslate | `libretranslate/libretranslate:latest` | 5000 | `/` |
+| Kroki | `yuzutech/kroki:latest` | 8000 | `/` |
+| CyberChef | `mpepping/cyberchef:latest` | 8000 | `/` |
+| Umami | `ghcr.io/umami-software/umami:postgresql-latest` | 3000 | `/api/heartbeat` |
+| Wiki.js | `ghcr.io/requarks/wiki:2` | 3000 | `/healthz` |
+| Vikunja | `vikunja/vikunja:latest` | 3456 | `/api/v1/info` |
+
+## Settings Raff fills in
+
+These appear under **Environment variables** on the create page, and you can change them:
+
+| Template | Setting | Why |
+|---|---|---|
+| Metabase | `JAVA_OPTS=-XX:MaxRAMPercentage=75` | Lets Java use most of the app's memory |
+| LibreTranslate | `LT_LOAD_ONLY=en,es,fr` | Loads English, Spanish and French. All languages take several GB and too long to start. On Standard, keep to three languages. |
+| Vikunja | `VIKUNJA_SERVICE_PUBLICURL` | Set to the app's address; Vikunja does not start without it |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Deploy a template" icon="rocket" href="/products/build/raff-apps/quickstart-guides/deploy-a-template">
+    Pick a template, a size and a database.
+  </Card>
+  <Card title="Add a database" icon="rocket" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    Postgres for an app.
+  </Card>
+</CardGroup>

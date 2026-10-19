@@ -3,7 +3,7 @@ title: "Catalog data sources"
 description: "Terraform data sources for Raff catalog/lookup endpoints — regions, OS templates, and pricing for VMs, volumes, backups, snapshots, and floating IPs."
 ---
 
-<sub>Updated May 10, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 Catalog data sources let you discover region codes, OS templates, and pricing dynamically — useful for picking the cheapest plan that meets your minimums, finding the latest Ubuntu LTS template, or driving region selection from data.
 
@@ -168,6 +168,38 @@ Read an existing database by its short `database_id` or by `name`: status, endpo
 data "raff_database" "orders" {
   name = "orders"
 }
+```
+
+## raff_app_tiers
+
+Raff Apps sizes with their specs and prices. Use a `tiers[*].id` as `tier_id` on [`raff_app_service`](/reference/terraform/raff_app_service).
+
+```hcl
+data "raff_app_tiers" "all" {}
+# .tiers[*]: id, name, vcpu, memory_mib, ephemeral_gib, price_per_hour, price_per_month, yearly_price, region
+
+locals {
+  starter = [for t in data.raff_app_tiers.all.tiers : t.id if t.name == "Starter"][0]
+}
+```
+
+## raff_app_service
+
+Read an existing app by its UUID or its short `service_id` (such as `svc-abc12345`): status, address, size, source, and scaling.
+
+```hcl
+data "raff_app_service" "api" {
+  id = "svc-abc12345"
+}
+```
+
+## raff_app_services
+
+Lists the apps in the provider's project, or in the whole account when no project is set. Each entry has the same attributes as the `raff_app_service` data source.
+
+```hcl
+data "raff_app_services" "all" {}
+# .services[*]: id, service_id, name, slug, service_type, source_type, status, url, internal_host, tier_id, tier_name, replicas, ...
 ```
 
 ## Related

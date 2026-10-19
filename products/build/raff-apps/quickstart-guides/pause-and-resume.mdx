@@ -1,0 +1,76 @@
+---
+title: Pause and resume an app
+sidebarTitle: Pause and resume
+description: Stop a Raff app and its billing without deleting anything, then start it again with the same settings.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Pausing stops every instance of an app and stops billing for them. Nothing is deleted: the code, settings, environment variables, deploy history and address all stay. Resume starts the app again with the scaling it had.
+
+## Before you start
+
+- A live app. One-off jobs have nothing to pause: they run only when you start them.
+
+## Pause an app
+
+Open the app and click **Pause** at the top of the page. You can also go to **Settings**, **Danger zone**, **Pause service** and click **Pause**.
+
+<Frame>
+  ![TODO: App page header with the Pause button](/images/products/build/raff-apps/pause-button.png)
+</Frame>
+
+While the app is paused:
+
+- **Websites and private services** stop answering. Their address comes back when you resume.
+- **Background workers** stop working.
+- **Cron jobs** stop their schedule. A run missed while paused is skipped, not started when you resume.
+- **Billing** for the app's instances stops.
+- The app still counts toward your account's limit of 20 instances.
+
+To pause several apps at once, select them in the **Apps** list and click **Pause**.
+
+## Resume an app
+
+Open the app and click **Resume**, or use **Settings**, **Danger zone**, **Resume service**. The app starts again with its scaling, and billing starts again with it.
+
+- Environment variables you changed while it was paused apply when it resumes.
+- An app that never went live before you paused it cannot resume: it goes back to its error state, and you deploy it again.
+
+## Apps paused by the spend cap
+
+When a [spend cap](/products/build/raff-apps/quickstart-guides/set-a-spend-cap) set to **Pause my apps** is reached, Raff pauses your pay-as-you-go apps. Their **Overview** says **Paused by the monthly spend cap**, and resuming them is refused while the cap still applies. Raise the cap or turn it off: the apps start again within seconds.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+**API**: [Pause app service](/api-reference/apps/pause-app-service), [Resume app service](/api-reference/apps/resume-app-service)
+
+```bash
+# Pause
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/pause" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Resume
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/resume" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+**CLI**
+
+```bash
+raff apps pause $APP_ID
+raff apps resume $APP_ID
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Set an Apps spend cap" icon="gauge" href="/products/build/raff-apps/quickstart-guides/set-a-spend-cap">
+    Pause apps on their own at a monthly limit.
+  </Card>
+  <Card title="Delete an app" icon="trash" href="/products/build/raff-apps/quickstart-guides/delete-an-app">
+    Remove an app you no longer need.
+  </Card>
+</CardGroup>

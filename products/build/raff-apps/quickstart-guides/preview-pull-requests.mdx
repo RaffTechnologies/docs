@@ -1,0 +1,104 @@
+---
+title: Preview pull requests
+sidebarTitle: Pull request previews
+description: Give every pull request its own copy of a Raff Apps website at its own address, rebuilt on every push and removed when the pull request closes.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+With previews on, every open pull request gets its own copy of your app at its own https address. The copy is built from the pull request's latest commit, rebuilt on every push and deleted when the pull request is closed or merged. Previews are free.
+
+## Before you start
+
+- A website or API deployed from GitHub. Other app types, and apps from a Docker image or a template, have no previews.
+- Pull requests from a branch of the same repository. Pull requests from forks are never built. Draft pull requests are built.
+
+## How many previews you get
+
+The app's size sets how many previews can run at the same time.
+
+| App size | Previews at once |
+|---|---|
+| Micro (0.25 vCPU, 512 MB) | 2 |
+| Starter (0.5 vCPU, 1 GB) | 3 |
+| Standard (1 vCPU, 2 GB) | 5 |
+| Pro (2 vCPU, 4 GB) | 8 |
+| Pro Max (4 vCPU, 8 GB) | 10 |
+| Scale (8 vCPU, 16 GB) | 10 |
+
+When all of them are in use, a new pull request gets no preview until one closes. Running previews are never removed to make room.
+
+## Turn on previews
+
+<Steps>
+  <Step title="Open Settings">
+    Open the app and go to **Settings**, **Preview environments**.
+  </Step>
+  <Step title="Turn them on">
+    Tick **Preview environments** and click **Save**.
+
+    <Frame>
+      ![TODO: Preview environments section in app Settings with the toggle on](/images/products/build/raff-apps/previews-settings.png)
+    </Frame>
+  </Step>
+  <Step title="Open a pull request">
+    Open a pull request on the app's repository. Its preview appears on the **Deploys** tab within a minute.
+  </Step>
+</Steps>
+
+## Find and manage previews
+
+On the **Deploys** tab, **Preview environments** lists one row per pull request, with its state, its address and when it expires.
+
+- **Redeploy** builds the preview again from the pull request's latest commit.
+- **Delete** removes the preview. Your app is not touched, and the next push to the pull request builds a new preview.
+
+To read a preview's output, open **Logs** and pick the pull request under **Source**.
+
+## What a preview runs with
+
+- **Environment variables**: the app's own, secrets included.
+- **Databases**: none. A preview never gets the login of a database linked to the app, and a preview of an app that needs its database starts without one. A connection string you added yourself as an environment variable does reach previews.
+- **Sleeping**: previews sleep when idle. The first request after a quiet period takes a few seconds longer.
+- **Expiry**: a preview is deleted when its pull request closes, or 7 days after its last push.
+
+When a [spend cap](/products/build/raff-apps/quickstart-guides/set-a-spend-cap) set to pause stops your apps, their previews pause too.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+```bash
+# Turn previews on (false turns them off)
+curl -X PATCH "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"previews_enabled": true}'
+
+# List the app's previews, with their address and state
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/previews" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Build one preview again ($PREVIEW_ID is its id from the list)
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/previews/$PREVIEW_ID/redeploy" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Delete one preview
+curl -X DELETE "https://api.rafftechnologies.com/api/v1/apps/previews/$PREVIEW_ID" \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Read one preview's logs
+curl "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/logs?preview_id=$PREVIEW_ID" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Roll back a deploy" icon="clock-rotate-left" href="/products/build/raff-apps/quickstart-guides/roll-back-a-deploy">
+    Go back if a merged change breaks the app.
+  </Card>
+  <Card title="Reconnect GitHub to Raff Apps" icon="github" href="/products/build/raff-apps/quickstart-guides/reconnect-github">
+    Fix pushes that stopped deploying.
+  </Card>
+</CardGroup>

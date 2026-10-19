@@ -1,0 +1,53 @@
+---
+title: "raff_app_custom_domain"
+description: "Add a custom domain to a Raff Apps web app with Terraform and get the CNAME and TXT records to create. Verification and the TLS certificate run automatically."
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Manages a **custom domain on a web app**. Terraform adds the domain and exports the two DNS records to create at your DNS provider: a CNAME that points the domain at the app, and a TXT record that proves you own it. Once both exist, verification and the TLS certificate run automatically.
+
+Terraform does not wait for verification: `status` shows its progress at the next refresh.
+
+## Example
+
+```hcl
+resource "raff_app_custom_domain" "www" {
+  service_id = raff_app_service.web.id
+  domain     = "www.example.com"
+}
+
+output "dns_records" {
+  value = {
+    cname = "${raff_app_custom_domain.www.domain} CNAME ${raff_app_custom_domain.www.cname_target}"
+    txt   = "${raff_app_custom_domain.www.verification_txt_name} TXT ${raff_app_custom_domain.www.verification_txt_value}"
+  }
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `service_id` | string | Yes | The web app's UUID, `raff_app_service.<name>.id` |
+| `domain` | string | Yes | The hostname, such as `www.example.com` |
+
+Changing any argument replaces the domain. Destroying the resource removes the domain from the app.
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | `<service_id>/<domain id>` |
+| `cname_target` | Where the domain's CNAME record points |
+| `verification_txt_name`, `verification_txt_value` | Name and value of the TXT record that proves you own the domain |
+| `status` | `pending_dns`, `verifying`, `dns_verified`, `issuing_cert`, `active`, or `error` |
+| `status_message` | Details of the status, such as why it failed |
+
+## Import
+
+```bash
+terraform import raff_app_custom_domain.www <app-uuid>/<domain-id>
+```
+
+The domain ID is in [`raff apps domains list <app-id>`](/reference/cli/app#domains).

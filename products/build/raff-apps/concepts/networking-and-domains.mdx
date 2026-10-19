@@ -1,0 +1,77 @@
+---
+title: App networking and domains
+sidebarTitle: Networking and domains
+description: Public https addresses, private addresses, ports, custom domains with automatic certificates and outbound traffic for Raff Apps.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+A web app gets a public https address and can serve your own domains. A private app gets a private address that your other apps call. Apps reach Raff managed databases over Raff's private network.
+
+## How it works
+
+### Public address
+
+Every web app gets `https://<name>-<account id>.onraff.com`. The account id is 12 hex characters from your account. The name part comes from the app name, at most 50 characters; if it is already taken in your account, Raff adds a short suffix.
+
+The address is fixed when the app is created. Renaming the app later changes only the name you see. HTTPS is automatic.
+
+### Ports
+
+Raff sends requests to the app's port: 8080 unless you set another. Your app should listen on the port in the `PORT` environment variable. Change the port in **Settings**, **Runtime**, **HTTP port**.
+
+The platform reserves ports 8008, 8012, 8013, 8022, 9090 and 9091 on web apps and on private apps that scale to zero, so your app cannot use them.
+
+A request to a web app can run for up to 5 minutes. Run longer work in a worker or a job.
+
+### Private address
+
+A private app is reached at `<name>.<namespace>.svc.cluster.local` on its port, for example `http://api.<namespace>.svc.cluster.local:8080`. The app page shows the exact address. A private app that scales to zero is reached on port 80 instead, and the app page shows that address.
+
+### Custom domains
+
+Web apps can serve your own domains, with an automatic HTTPS certificate at no extra cost. On the app's **Connect** tab, under **Domains**, enter the domain and press **Add domain**. Raff then shows two DNS records to create at your DNS provider:
+
+| Type | Name | Value | What it does |
+|---|---|---|---|
+| TXT | `_raff-verify.<your domain>` | The verification value shown | Proves you own the domain |
+| CNAME | Your domain | The target shown | Sends traffic to Raff |
+
+Raff checks the records every 30 seconds, and **Check now** checks at once (5 times in 10 minutes). Once the records are right, Raff issues the certificate and the domain turns **Active**. The statuses on the way are **Waiting for DNS**, **Verifying DNS**, **DNS verified** and **Issuing certificate**.
+
+- **Root domain** (`example.com`): most DNS providers cannot put a CNAME on it. Use an A record to the same IP as the target, or your provider's ALIAS or CNAME flattening record.
+- **Cloudflare**: set the record to **DNS only** (grey cloud). A proxied record hides the CNAME and blocks the certificate.
+- A domain whose DNS is still not right after 24 hours turns to **Error**. Fix the records, then press **Check now**.
+- A domain can serve one app at a time. Addresses under `onraff.com` cannot be added as custom domains.
+- Deleting the app frees its domains.
+
+### Outbound traffic
+
+Apps can connect out to the internet, except on TCP port 25 (SMTP), which is blocked. Send email through your provider's submission port (587 or 465) or its HTTP API.
+
+### Databases
+
+Links to Raff managed PostgreSQL databases go over Raff's private network, always with TLS. See [How apps connect to databases](/products/build/raff-apps/concepts/database-links).
+
+## When to use it
+
+- **The onraff.com address**: testing, and APIs that only your own code calls.
+- **A custom domain**: everything your users see.
+- **A private app**: services that only your other apps call, such as an internal API.
+
+## Trade-offs
+
+- Requests are cut after 5 minutes.
+- Outbound port 25 is closed.
+- The onraff.com address cannot be changed after the app is created.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Add a custom domain" icon="rocket" href="/products/build/raff-apps/quickstart-guides/add-a-custom-domain">
+    DNS records, verification and the certificate.
+  </Card>
+  <Card title="App types" icon="lightbulb" href="/products/build/raff-apps/concepts/app-types">
+    Which apps get which address.
+  </Card>
+</CardGroup>

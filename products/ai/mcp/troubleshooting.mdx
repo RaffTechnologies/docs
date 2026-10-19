@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common issues when connecting an AI app to the Raff MCP server, and how to fix them.
 ---
 
-<sub>Updated October 13, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 Issues you may run into with the Raff MCP server, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
 
@@ -59,6 +59,16 @@ Issues you may run into with the Raff MCP server, and how to resolve them. If yo
 
     **Fix:** add a `LIMIT`, filter on an indexed column, or run long jobs (large imports, index builds on big tables) from your own client with the connection string.
   </Accordion>
+  <Accordion title="The assistant cannot deploy my GitHub repository">
+    **What's happening:** connecting GitHub needs your own GitHub sign-in, which only the Raff dashboard can do. The assistant can deploy only repositories of a GitHub account already connected, that your GitHub sign-in can see.
+
+    **Fix:** in the Raff dashboard, open **Apps**, click **Deploy an app** and **Continue with GitHub**, then ask the assistant again.
+  </Accordion>
+  <Accordion title="A new app stays in building or fails">
+    **What's happening:** a build from source can take a few minutes, and the assistant stops waiting after 150 seconds. A failed deploy keeps its reason and build log.
+
+    **Fix:** ask the assistant to check the app again, or why the last deploy failed: it reads the build log with `get_app_logs`.
+  </Accordion>
   <Accordion title="My client rejects the database certificate">
     **What's happening:** each database has its own certificate authority, which your computer does not trust by default. Clients that verify the certificate (`sslmode=verify-full`, `--cacert`) need it.
 
@@ -71,5 +81,5 @@ Issues you may run into with the Raff MCP server, and how to resolve them. If yo
 Contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
 
 - The AI app you use (Claude, ChatGPT, Cursor, ...)
-- The database ID, if a database is involved
+- The database ID or app ID, if one is involved
 - The exact error message and the time it happened

@@ -1,0 +1,71 @@
+---
+title: "App types: web, private, worker, cron and job"
+sidebarTitle: App types
+description: The five kinds of Raff app, how each one is reached, when it runs and which settings it has.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Every Raff app has a type. The type decides whether the app gets an address, whether it runs all the time or only when needed, and which settings it has. You choose it under **What it is** when you create the app.
+
+## How it works
+
+| Type | On the create page | In the Apps list | Address | Runs |
+|---|---|---|---|---|
+| Web | Website or API | Web Service | Public https address, custom domains | All the time, or sleeps when idle |
+| Private | Private service | Private Service | Private address for your other apps | All the time, or sleeps when idle |
+| Worker | Background worker | Background Worker | None | All the time |
+| Cron | Scheduled task | Cron Job | None | On a schedule, then stops |
+| Job | Runs once | One-off Job | None | When you start it, then stops |
+
+### Web
+
+A web app gets a public https address, `https://<name>-<account id>.onraff.com`, with an automatic certificate. You can add your own domains, and apps deployed from GitHub can get a copy per pull request.
+
+Raff sends requests to the app's port, 8080 unless you set another. Your app should listen on the port in the `PORT` environment variable.
+
+### Private
+
+A private app has no public address. Your other apps reach it at `<name>.<namespace>.svc.cluster.local` on its port; the app page shows the exact address. Raff asks for the port when you create a private app, so the address points at the port your app listens on.
+
+### Worker
+
+A worker runs all the time and has no address. It has a fixed number of instances and no health check: it is live once it starts.
+
+### Cron
+
+A cron app runs its command on a schedule and stops when the command ends. Its settings, under **Settings**, **Cron**:
+
+- **Schedule**: five fields (minute, hour, day of month, month, day of week). `0 2 * * *` runs every day at 02:00.
+- **Timezone**: an IANA name such as `UTC` or `Europe/London`. The default is UTC.
+- **Concurrency**: what happens when a run is due while the last one is still going. **forbid** (the default) skips the new run, **allow** lets runs overlap, **replace** cancels the running one.
+
+### Job
+
+A job runs once each time you press **Run now**, then stops. Every run of a cron or job app is listed on its **Runs** tab with its result, and you can start a cron app's command with **Run now** too.
+
+## When to use it
+
+- **Web**: sites, APIs, webhooks, dashboards.
+- **Private**: an internal API or service that only your web app calls.
+- **Worker**: queue consumers, chat bots, stream processors.
+- **Cron**: nightly reports, cleanups, syncs.
+- **Job**: database migrations, one-off imports, backfills.
+
+## Trade-offs
+
+- The type is set when you create the app. To change it, create a new app.
+- Only web apps get custom domains and pull request previews.
+- Workers, cron and job apps have no address, so other apps cannot call them.
+- Cron and job apps have no scaling settings. Web, private and worker apps can run up to 6 instances each.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Networking and domains" icon="lightbulb" href="/products/build/raff-apps/concepts/networking-and-domains">
+    Public and private addresses, custom domains.
+  </Card>
+  <Card title="Run cron jobs and jobs" icon="rocket" href="/products/build/raff-apps/quickstart-guides/run-cron-jobs-and-jobs">
+    Schedules, Run now and the Runs tab.
+  </Card>
+</CardGroup>

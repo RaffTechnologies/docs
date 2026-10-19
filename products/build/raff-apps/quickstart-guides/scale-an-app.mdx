@@ -1,0 +1,146 @@
+---
+title: Scale an app and let it sleep
+sidebarTitle: Scale an app
+description: Run a fixed number of instances, autoscale on traffic, let a web or private app sleep when idle, and change the size of a Raff app.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+You choose how many copies of your app run and how big each one is. An app can run a fixed number of instances, add instances as requests grow, or sleep when nobody uses it. Each running instance is billed at the app's size.
+
+## Before you start
+
+- A website or API, a private service or a background worker. Scheduled tasks and one-off jobs have no scaling settings: see [Run cron jobs and one-off jobs](/products/build/raff-apps/quickstart-guides/run-cron-jobs-and-jobs).
+- An app can run at most 6 instances, and your account 20 in total. Paused, failed and not yet deployed apps count toward the 20. Contact support to raise either limit.
+
+## Choose how it scales
+
+| Option | What it does | Available for |
+|---|---|---|
+| Fixed instances | Runs the same number of instances, 1 to 6, all the time | All three app types |
+| Autoscaling | Adds instances between a minimum and a maximum as the requests in progress per instance grow | Websites and APIs, and private services that scale to zero |
+| Scale to zero | Stops every instance when the app is idle and starts one on the next request | Websites and APIs, and private services |
+
+A background worker always runs a fixed number of instances.
+
+## Change the scaling
+
+<Steps>
+  <Step title="Open Settings">
+    Open the app and go to **Settings**. **Scaling** shows how the app runs now.
+  </Step>
+  <Step title="Set instances or autoscaling">
+    - **Fixed**: leave **Autoscaling** off and set **Instances**.
+    - **Autoscaling**: turn on **Autoscaling**, then set **Min instances** and **Max instances**.
+
+    <Frame>
+      ![TODO: Scaling section in app Settings with Autoscaling, Min instances, Max instances and Scale to zero](/images/products/build/raff-apps/scaling-settings.png)
+    </Frame>
+  </Step>
+  <Step title="Let it sleep (optional)">
+    Tick **Scale to zero** to let the app sleep when it is idle. On a private service, tick it first: **Autoscaling** then appears.
+  </Step>
+  <Step title="Apply">
+    Click **Apply scaling**. A live app takes the change without downtime.
+  </Step>
+</Steps>
+
+## How sleeping works
+
+- The app stops its last instance about 15 minutes after its last request.
+- The next request wakes it. That first request takes a few seconds longer than usual.
+- On pay-as-you-go, a sleeping app costs nothing. The minutes it stays awake are billed like any running time.
+
+Scale to zero suits test sites, internal tools and APIs with little traffic. Keep it off for an app that must answer at once, or that does work between requests.
+
+Websites, and private services that scale to zero, cannot listen on ports 8008, 8012, 8013, 8022, 9090 or 9091. The platform reserves them.
+
+## Change the size
+
+Open **Settings**, **Instance size**, pick a size and click **Change tier**. The app restarts on the new size, and every instance uses it.
+
+| Size | vCPU | Memory | Disk | Per hour | Per month |
+|---|---|---|---|---|---|
+| Micro | 0.25 | 512 MB | 2 GB | $0.00411 | $3.00 |
+| Starter | 0.5 | 1 GB | 5 GB | $0.009575 | $6.99 |
+| Standard | 1 | 2 GB | 10 GB | $0.023274 | $16.99 |
+| Pro | 2 | 4 GB | 20 GB | $0.038342 | $27.99 |
+| Pro Max | 4 | 8 GB | 40 GB | $0.084918 | $61.99 |
+| Scale | 8 | 16 GB | 80 GB | $0.16437 | $119.99 |
+
+Prices are per instance. The disk is wiped on every deploy.
+
+For an app on a monthly plan, size changes go through support.
+
+## How scaling is billed
+
+- **Pay-as-you-go**: every running instance is billed per second at the app's size. With autoscaling, you pay for the instances that actually run.
+- **Monthly plan**: the plan covers the instances you bought at checkout. Instances above it, with a higher fixed count or autoscaling maximum, are billed as usage.
+
+A [spend cap](/products/build/raff-apps/quickstart-guides/set-a-spend-cap) emails you at 75%, 90% and 100% of a monthly limit, and can pause your apps when it is reached.
+
+## Do it from your tools
+
+`$APP_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services) or `raff apps list`. `$RAFF_API_KEY` is an [API key](/products/manage/team-projects/quickstart-guides/generate-api-key).
+
+**API**: [Scale app service](/api-reference/apps/scale-app-service)
+
+`autoscaling_enabled` and `scale_to_zero` apply only when you send `autoscaling_set: true`. With it, leaving either one out turns it off.
+
+```bash
+# 2 fixed instances, always on
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/scale" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"autoscaling_set": true, "autoscaling_enabled": false, "scale_to_zero": false, "replicas": 2}'
+
+# Autoscale between 1 and 4 instances
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/scale" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"autoscaling_set": true, "autoscaling_enabled": true, "min_replicas": 1, "max_replicas": 4}'
+
+# Autoscale up to 3 instances and sleep when idle
+curl -X POST "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID/scale" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"autoscaling_set": true, "autoscaling_enabled": true, "min_replicas": 1, "max_replicas": 3, "scale_to_zero": true}'
+```
+
+`autoscaling_target` sets how many requests in progress one instance takes before another starts.
+
+To change the size, get the size IDs from [List Apps tiers](/api-reference/apps/list-app-tiers) and send the new `tier_id`:
+
+```bash
+curl -X PATCH "https://api.rafftechnologies.com/api/v1/apps/services/$APP_ID" \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"tier_id": 3}'
+```
+
+**CLI**
+
+```bash
+# Fixed instances (for an app that does not autoscale)
+raff apps scale $APP_ID --replicas 2
+
+# Autoscale between 1 and 4 instances
+raff apps scale $APP_ID --min-replicas 1 --max-replicas 4
+
+# Autoscale up to 3 instances and sleep when idle
+raff apps scale $APP_ID --min-replicas 1 --max-replicas 3 --scale-to-zero
+
+# List sizes and their IDs
+raff apps tiers
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Set an Apps spend cap" icon="gauge" href="/products/build/raff-apps/quickstart-guides/set-a-spend-cap">
+    Get an email or pause apps at a monthly limit.
+  </Card>
+  <Card title="View logs, metrics and a shell" icon="chart-line" href="/products/build/raff-apps/quickstart-guides/view-logs-and-metrics">
+    See CPU, memory and requests before you scale.
+  </Card>
+</CardGroup>

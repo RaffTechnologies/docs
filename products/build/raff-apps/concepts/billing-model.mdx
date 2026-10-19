@@ -1,0 +1,69 @@
+---
+title: How Raff Apps billing works
+sidebarTitle: Billing model
+description: How Raff Apps are billed monthly or per second, what a sleeping, paused or deleted app costs, and how the spend cap works.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Raff Apps bills the time your instances run, at the price of the app's size. Your account's billing mode decides whether you pay each app monthly in advance or per second from your balance. A spend cap, on by default, emails you as app usage grows and can pause apps at a limit you choose.
+
+## How it works
+
+### Monthly or pay-as-you-go
+
+- **Monthly (the default)**: each app is a monthly subscription for its size and number of instances. The first month is paid at checkout, at the price the create page shows. Instances above the plan, from scaling up or from an autoscaling maximum above it, are billed per second as usage.
+- **Pay-as-you-go**: every running instance is billed per second. The month's usage is charged at the end of the month, from your account balance first, then your card. The create page shows an estimate (`~$6.99/mo`). A month counts as 730 hours, so a size's monthly price is its hourly price for 730 hours.
+
+Apps you create with the API, the CLI, Terraform or an AI assistant (Raff MCP) are always pay-as-you-go. Monthly billing comes only from the dashboard's checkout.
+
+A database linked to an app is billed as a database, on its own. See [Database billing model](/products/store/databases/concepts/billing-model).
+
+### What costs money on pay-as-you-go
+
+| The app is | It costs |
+|---|---|
+| Running | Its instances, per second |
+| Sleeping (scale to zero) | Nothing. The minutes it is awake are billed. |
+| A cron or job app | Only the time a run is going |
+| Paused | Nothing |
+| Deleted | Nothing after the delete. Usage up to it is billed. |
+
+Pull request previews are not billed.
+
+### Pause and delete
+
+**Pause** stops the app and its billing; **Resume** starts it again. Deleting an app bills its usage up to the moment of deletion and nothing after. On monthly billing, the unused part of the month goes back to your account balance.
+
+### Spend cap
+
+The spend cap watches app usage across your account. It is on by default at \$50 a month with **Keep apps running and email me**. Change it with **Manage cap** on the Apps page.
+
+- Raff emails the account owners and billing contacts at 75% and 90% of the cap, and again when it is reached.
+- With **Pause my apps**, pay-as-you-go apps stop when the cap is reached, until next month or until you raise the cap. Monthly apps within their plan keep running, and data is kept.
+- While apps are paused by the cap, Raff refuses to resume, create, deploy or scale up apps that count toward it, and to start job runs. Raise the cap or turn it off, and the paused apps start again within seconds.
+- The cap counts usage: pay-as-you-go instances, and the instances of monthly apps above their plan. Monthly plans paid at checkout and databases are not counted.
+- The cap is at least \$1 and at most \$1,000,000.
+
+## When to use it
+
+- **Monthly** for apps that run all the time: one known price.
+- **Pay-as-you-go** for apps that sleep, cron jobs and short tests.
+- **Pause my apps** when a hard limit matters more than uptime, for example on test accounts.
+
+## Trade-offs
+
+- Raff checks usage against the cap every 5 minutes, so spending can pass the cap by a few minutes of usage before apps pause.
+- On monthly billing, the size cannot be changed from the dashboard yet. Contact support to change it.
+- A sleeping app saves money only on pay-as-you-go. A monthly app's plan is paid in advance.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/raff-apps/details/pricing">
+    The price of every size.
+  </Card>
+  <Card title="Set a spend cap" icon="rocket" href="/products/build/raff-apps/quickstart-guides/set-a-spend-cap">
+    Change the cap and what happens at it.
+  </Card>
+</CardGroup>

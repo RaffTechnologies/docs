@@ -1,0 +1,68 @@
+---
+title: App isolation and security
+sidebarTitle: Isolation and security
+description: How Raff Apps keeps each app in its own sandbox, protects source code and secrets, and secures database links.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Each Raff app runs in its own sandbox, separate from other customers' apps. Builds fetch your code over HTTPS with certificate checks, environment variable values are encrypted, and database links use TLS with a certificate your app can check.
+
+## How it works
+
+### A sandbox per app
+
+Every app runs in its own sandbox with its own kernel interface, instead of sharing the host's kernel directly with other customers' apps. For the same reason, privileged containers and added Linux capabilities (`privileged` and `cap_add` in Docker Compose) are not available.
+
+### Network
+
+Only your own apps and functions can open a connection to your app's instances. Other customers' apps cannot reach them, including a private app's internal address. Public traffic reaches a web app only through its Raff address and your custom domains.
+
+### Source code
+
+- Builds download your source over HTTPS and check the server's certificate.
+- Raff deploys only GitHub repositories that your own GitHub account can see.
+- A push deploys only the apps linked to that repository through your GitHub connection.
+- Pull requests from forks never get previews. Only branches in the repository itself do.
+
+### Environment variables
+
+- Values are stored encrypted.
+- Values that look like secrets are hidden on the app page: names containing `KEY`, `SECRET`, `TOKEN`, `PASS` or `PASSWORD`, and URLs that carry a login.
+- A variable passed to the build can be read back from the built image. Keep credentials as runtime variables; the dashboard warns when you give a secret the build scope.
+
+### Database links
+
+- Each app gets its own database user, removed when the app is deleted.
+- Links connect over Raff's private network, always with TLS. `DATABASE_CA_CERT` lets the app check the database's certificate.
+- Pull request previews never get a link's credentials, so unmerged code cannot reach the production database.
+
+### Outbound mail
+
+Outbound connections on TCP port 25 are blocked for every app. Send email through a provider's submission port (587 or 465) or its HTTP API.
+
+### Team access
+
+The **Shell** tab opens a terminal inside a running instance. It is available only to team members whose role allows it, and only while the app is live.
+
+## When to use it
+
+- Keep API keys and passwords as runtime environment variables, not in your repository or image.
+- Check the database's certificate with `DATABASE_CA_CERT` instead of turning certificate checks off.
+- Give the shell only to team members who need to work inside running apps.
+
+## Trade-offs
+
+- Software that needs privileged mode, kernel modules or added capabilities does not run on Raff Apps. Use a [virtual machine](/products/build/virtual-machines) instead.
+- Build variables are not secret inside the image.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Set environment variables" icon="rocket" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Secrets, scopes and redeploys.
+  </Card>
+  <Card title="How apps connect to databases" icon="lightbulb" href="/products/build/raff-apps/concepts/database-links">
+    Users, TLS and certificate checks.
+  </Card>
+</CardGroup>

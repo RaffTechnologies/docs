@@ -1,18 +1,16 @@
 ---
 title: Raff Apps
 sidebarTitle: Overview
-description: Push-to-deploy web services, workers, and jobs on the Raff PaaS
+description: Run websites, APIs, workers and scheduled jobs on Raff from GitHub, a Docker image, a template or a Docker Compose file, with an https address and Postgres in one step.
 icon: rocket
 ---
 
-<sub>Updated July 8, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
-Raff Apps is a push-to-deploy platform for running your code. Ship a **web service** with a public HTTPS URL and custom domains, a **private service** reachable only inside your project, a **background worker**, a **cron job**, or a **one-off job** — all from a connected GitHub repo, a prebuilt image, a starter template, or a Docker Compose import.
-
-Each service runs on a fixed compute tier and scales the way you choose: a fixed replica count, autoscaling, or scale-to-zero. Billing is per second from your account balance, and **a spend cap is on by default** at $50 a month: you get an email at 75%, 90% and 100% of it, and you can choose to pause your apps automatically when it is reached, so a runaway deploy never surprises you. Attack and DDoS traffic is never billed, there is no per-seat pricing, and price increases come with 30 days' notice.
+Raff Apps runs your code without servers to manage: websites and APIs with an https address, private services, background workers, scheduled tasks and one-off jobs. Deploy from a GitHub repository (every push deploys), a public Docker image, one of 16 ready templates such as n8n and Metabase, or a Docker Compose file. Link a Postgres database in one step, add your own domain, and start from 0.25 vCPU and 512 MB for $3 a month, in US East.
 
 <Frame>
-  ![TODO: hero screenshot of Raff Apps in the dashboard](/images/products/build/raff-apps/hero.png)
+  ![TODO: Apps list in the Raff dashboard](/images/products/build/raff-apps/hero.png)
 </Frame>
 
 ---
@@ -20,17 +18,17 @@ Each service runs on a fixed compute tier and scales the way you choose: a fixed
 ## Most viewed
 
 <CardGroup cols={2}>
-  <Card title="Create a service" icon="plus" href="/api-reference/apps/create-app-service">
-    Deploy a web service, worker, cron, or job.
+  <Card title="Deploy from GitHub" icon="github" href="/products/build/raff-apps/quickstart-guides/deploy-from-github">
+    Pick a repository. Raff builds it, and every push deploys.
   </Card>
-  <Card title="Deploy new code" icon="rocket" href="/api-reference/apps/create-app-deployment">
-    Build and roll out a new deployment.
+  <Card title="Deploy a template" icon="wand-magic-sparkles" href="/products/build/raff-apps/quickstart-guides/deploy-a-template">
+    n8n, Metabase, Uptime Kuma and 13 more ready apps.
   </Card>
-  <Card title="Add a custom domain" icon="globe" href="/api-reference/apps/add-app-custom-domain">
-    Point your own domain at a web service.
+  <Card title="Add a Postgres database" icon="database" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    Link Postgres and the app gets `DATABASE_URL`.
   </Card>
-  <Card title="Set spend caps" icon="gauge" href="/api-reference/apps/update-app-spend-settings">
-    Cap monthly spend: get emails, or pause your apps at the limit.
+  <Card title="Add a custom domain" icon="globe" href="/products/build/raff-apps/quickstart-guides/add-a-custom-domain">
+    Serve the app on your own domain with automatic HTTPS.
   </Card>
 </CardGroup>
 
@@ -39,17 +37,17 @@ Each service runs on a fixed compute tier and scales the way you choose: a fixed
 ## Browse
 
 <CardGroup cols={3}>
-  <Card title="Service types" icon="layer-group" href="/api-reference/apps/list-app-services">
-    Web, private, worker, cron, and job services.
+  <Card title="Quickstart & guides" icon="rocket" href="/products/build/raff-apps/quickstart-guides/deploy-from-github">
+    Step-by-step dashboard tasks.
   </Card>
-  <Card title="Deployments & rollback" icon="clock-rotate-left" href="/api-reference/apps/list-app-deployments">
-    Build history, logs, and instant rollback.
+  <Card title="Concepts" icon="lightbulb" href="/products/build/raff-apps/concepts/app-types">
+    App types and how Raff Apps works.
   </Card>
-  <Card title="Environment variables" icon="key" href="/api-reference/apps/list-app-env-vars">
-    Configuration and secrets, rolled out safely.
+  <Card title="Details" icon="circle-info" href="/products/build/raff-apps/details/features-and-limits">
+    Features, sizes and limits.
   </Card>
-  <Card title="Scaling" icon="up-right-and-down-left-from-center" href="/api-reference/apps/scale-app-service">
-    Replicas, autoscaling, and scale-to-zero.
+  <Card title="Troubleshooting" icon="life-ring" href="/products/build/raff-apps/troubleshooting">
+    Common issues and recovery.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/apps/list-app-services">
     Endpoints for Raff Apps.

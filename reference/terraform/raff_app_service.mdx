@@ -1,0 +1,164 @@
+---
+title: "raff_app_service"
+description: "Manage Raff Apps with Terraform: web services, private services, workers, cron jobs and jobs from a Docker image, GitHub or uploaded source, with environment variables, scaling and settings updated in place."
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Manages a **Raff Apps app**: a web service, private service, worker, cron job or one-off job. Image and GitHub apps deploy when created. Settings change in place, a new `image_ref` rolls out as a deploy, and scaling changes apply to the running app. An app built from uploaded source (`source_type = "console"`) deploys when you upload it with [`raff apps deploy --dir`](/reference/cli/app#deploy).
+
+Terraform does not wait for a deploy to finish: `status` shows its progress at the next refresh. The app is created in the provider's project, so set `project_id` in the provider block or `RAFF_PROJECT_ID`.
+
+## Example
+
+```hcl
+data "raff_app_tiers" "all" {}
+
+locals {
+  starter = [for t in data.raff_app_tiers.all.tiers : t.id if t.name == "Starter"][0]
+}
+
+resource "raff_app_service" "web" {
+  name         = "web"
+  service_type = "web"
+  source_type  = "image"
+  image_ref    = "nginx:1.27-alpine"
+  tier_id      = local.starter
+  http_port    = 80
+
+  env = {
+    GREETING = "hello"
+  }
+  secret_env = {
+    API_TOKEN = var.api_token
+  }
+}
+
+output "web_url" {
+  value = raff_app_service.web.url
+}
+```
+
+From GitHub, with a health check and autoscaling. The connection ID comes from [`raff apps github`](/reference/cli/app#github):
+
+```hcl
+resource "raff_app_service" "api" {
+  name                   = "api"
+  service_type           = "web"
+  source_type            = "git"
+  github_installation_id = var.github_connection_id
+  repo_full_name         = "acme/api"
+  repo_branch            = "main"
+  tier_id                = local.starter
+  http_port              = 8080
+  health_check_path      = "/healthz"
+
+  autoscaling_enabled = true
+  min_replicas        = 1
+  max_replicas        = 4
+}
+```
+
+<Note>
+Creating an app from GitHub needs a recent GitHub sign-in by the API key's owner: in the last 7 days they must have pressed **Continue with GitHub** on the dashboard's create page, and their GitHub account must be able to see the repository in that connection. Otherwise the apply is refused with "Continue with GitHub, then choose the repository again. Raff only deploys repositories your GitHub account can see."
+</Note>
+
+A cron job:
+
+```hcl
+resource "raff_app_service" "nightly" {
+  name             = "nightly-report"
+  service_type     = "cron"
+  source_type      = "image"
+  image_ref        = "ghcr.io/acme/report:1.2.0"
+  tier_id          = local.starter
+  cron_schedule    = "0 3 * * *"
+  cron_timezone    = "Europe/London"
+  cron_concurrency = "forbid"
+}
+```
+
+## Argument reference
+
+| Argument | Type | Required? | Description |
+|---|---|---|---|
+| `name` | string | Yes | Name, unique within the project. Renames in place; the app's address does not change |
+| `service_type` | string | Yes | `web`, `private`, `worker`, `cron`, or `job`. Changing it replaces the app |
+| `tier_id` | int | Yes | Size from [`raff_app_tiers`](/reference/terraform/data-sources#raff_app_tiers). Changes in place and the app restarts on the new size. Apps on a subscription change size through support |
+| `source_type` | string | Yes | `image` (a public Docker image), `git` (a GitHub repository), or `console` (source uploaded with `raff apps deploy --dir`). Changing it replaces the app |
+| `description` | string | No | Description |
+| `builder` | string | No | `buildpacks` (detects the stack; the default for `git` and `console`), `dockerfile`, or `image` (always used for `source_type = "image"`). Changing it replaces the app; leaving it out keeps the one the app has |
+| `image_ref` | string | No | Image apps: the image, such as `nginx:1.27-alpine`. A change rolls out as a deploy of the new image |
+| `repo_full_name` | string | No | GitHub apps: the repository as `owner/name`. Changing it replaces the app |
+| `github_installation_id` | string | No | GitHub apps: the GitHub connection ID from `raff apps github`. Changing it replaces the app |
+| `repo_branch` | string | No | GitHub apps: branch to deploy. Default `main`. Changes in place, used from the next deploy |
+| `repo_root_dir` | string | No | Folder inside the source to build from |
+| `dockerfile_path` | string | No | Dockerfile path, for `builder = "dockerfile"` |
+| `start_command` | string | No | Command that starts the app, instead of the image's own. A change redeploys a live app |
+| `http_port` | int | No | Port the app listens on. Web apps default to 8080; private apps need it. Web apps, and private apps that scale to zero, cannot use 8008, 8012, 8013, 8022, 9090 or 9091. A change redeploys a live app |
+| `health_check_path` | string | No | Path that answers 200 when the app is ready, starting with `/`. A deploy goes live when it answers. A change redeploys a live app |
+| `region` | string | No | Default `us-east`, the only region. Changing it replaces the app; leaving it out keeps the app's region |
+| `cron_schedule` | string | No | Cron apps: schedule in five fields, such as `0 3 * * *` |
+| `cron_timezone` | string | No | Cron apps: time zone, such as `Europe/London`. Default UTC |
+| `cron_concurrency` | string | No | Cron apps: when a run is due while the last one still runs, `forbid` (skip the new run, the default), `allow` (run both) or `replace` (stop the old run) |
+| `replicas` | int | No | Fixed number of instances. Default 1. Ignored while autoscaling is on |
+| `autoscaling_enabled` | bool | No | Autoscale between `min_replicas` and `max_replicas` on requests in progress per instance. Web apps, and private apps that scale to zero |
+| `min_replicas` | int | No | Autoscaling minimum. Default 1 |
+| `max_replicas` | int | No | Autoscaling maximum. Default 3 |
+| `scale_to_zero` | bool | No | Web and private apps: sleep about 15 minutes after the last request and wake on the next one |
+| `env` | map(string) | No | Environment variables. A change redeploys the app. See [Environment variables](#environment-variables) |
+| `secret_env` | map(string) | No | Environment variables stored as secrets, masked on the app page (sensitive). A change redeploys the app |
+| `link_database_id` | string | No | ID of a managed PostgreSQL database (`raff_database.<name>.id`) to link before the first deploy. See [Link a database](#link-a-database). Changing it replaces the app |
+
+An app has at most 6 instances and an account at most 20. Scaling arguments (`replicas`, `autoscaling_enabled`, `min_replicas`, `max_replicas`, `scale_to_zero`) change the running app in place. Workers and private apps that stay awake run a fixed count.
+
+Destroying the resource deletes the app. Usage up to deletion is billed, and linked databases are not deleted.
+
+## Environment variables
+
+`env` and `secret_env` track only the keys you set in them. Variables a database link sets, and ones added in the dashboard or with the CLI, are left alone and never show as changes. Removing a key from either map deletes the variable. New and changed keys are set together in one call, so they redeploy the app once.
+
+The variables reach the running app (runtime scope). For build-time variables, use [`raff apps env set --scope build`](/reference/cli/app#env). Do not set the names a database link uses, such as `DATABASE_URL`: a link is refused when the app already has a variable with one of its names.
+
+## Link a database
+
+There are two ways to link a managed PostgreSQL database. They do the same thing, so use one per database:
+
+- **`link_database_id`** links it when the app is created. The app waits until the database runs, then deploys with `DATABASE_URL` and the other `DATABASE_*` variables set from its first deploy. If the database is not running within 30 minutes, the app deploys without it.
+- **[`raff_app_database_link`](/reference/terraform/raff_app_database_link)** links a database to an app that already exists and redeploys it.
+
+Both take `raff_database.<name>.id`:
+
+```hcl
+resource "raff_database" "main" {
+  name = "main"
+}
+
+resource "raff_app_database_link" "main" {
+  service_id  = raff_app_service.web.id
+  database_id = raff_database.main.id
+}
+```
+
+## Attribute reference (computed)
+
+| Attribute | Description |
+|---|---|
+| `id` | The app's UUID |
+| `service_id` | Short app ID, such as `svc-abc12345`, used by the CLI |
+| `project_id` | Project the app belongs to |
+| `slug` | Address name made from the app's name |
+| `tier_name` | Name of the size |
+| `url` | Public https address (web apps). Set once the app is live, so it can be empty right after the first apply until the next refresh |
+| `internal_host` | Address your other apps in the project use to reach a private app, on its port. Set once the app is live |
+| `status`, `status_message` | App status and, when something failed, why |
+| `billing_type` | `payg` or `subscription` |
+| `created_at`, `updated_at` | Timestamps |
+
+## Import
+
+```bash
+terraform import raff_app_service.web <app-uuid>
+```
+
+The UUID is the `id` that `raff apps get <app-id> --output json` prints. An import does not read back `github_installation_id` or `link_database_id`. Leave them out of an imported app's configuration, or list them in `lifecycle { ignore_changes }`, or Terraform plans to replace the app. `env` and `secret_env` start empty after an import, so the next apply sets the keys in your configuration and redeploys the app once.

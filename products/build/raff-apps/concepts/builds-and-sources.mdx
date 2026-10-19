@@ -1,0 +1,80 @@
+---
+title: How Raff builds and runs your code
+sidebarTitle: Builds and sources
+description: Where a Raff app's code comes from (GitHub, a Docker image, a template or Docker Compose), how Raff builds it and how it runs.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+An app's code comes from one of four places: a GitHub repository, a public Docker image, a template or a Docker Compose file. Raff turns it into an image when it needs building, then runs that image with the CPU and memory of the app's size.
+
+## How it works
+
+### GitHub
+
+Connect GitHub once for your account, then pick a repository and a branch. Under **Build and start** you can set a **Folder** (for a repository that holds several apps), a **Dockerfile** path and a **Start command**.
+
+Raff downloads the branch over HTTPS and builds it in one of two ways:
+
+- **With a Dockerfile.** If the folder has a Dockerfile, Raff builds it and the create page shows **Dockerfile found**. The Dockerfile path is relative to the folder.
+- **Without one.** Raff detects the stack and builds it with buildpacks: Node.js, Python, Go, Ruby, PHP, Java and more. The create page shows, for example, **Node.js app found**, and finds the start command for you.
+
+Every push to the branch builds and deploys the app. You can change the branch, root directory and Dockerfile path later in **Settings**, **Repository**.
+
+### Docker image
+
+Give the reference of a public image, such as `nginx:1.27-alpine`. Raff pulls it and runs it as it is: nothing is built. Set the **Port** the image listens on and, if you need to, a **Start command** that replaces the image's own.
+
+### Template
+
+A template is a ready app: its image, port, health check and the settings it needs are filled in. See [Raff Apps templates](/products/build/raff-apps/details/templates).
+
+### Docker Compose
+
+Paste a compose file and Raff proposes one app per service, which you review before creating them:
+
+- The first service with a port becomes a web app. Other services with a port become private apps, and services without one become workers.
+- Each service's `image`, `command`, `environment` and ports are imported. The `environment` values are stored as secrets.
+- Not imported, each with a warning: volumes, `env_file` (paste its contents on the **Environment** tab), `privileged` and `cap_add`.
+- A service that builds from source (`build:`) is imported without code. Connect its repository before you deploy it.
+
+### Build variables
+
+Environment variables reach the running app only, unless you give them the **build** or **both** scope. Then Raff also passes them to the build: as build arguments for a Dockerfile (declare each one with `ARG`), and as environment variables for an automatic build.
+
+Frameworks that read settings at build time, such as Next.js `NEXT_PUBLIC_*` or Vite `VITE_*`, need this scope. Changing a build variable rebuilds the app. Apps that run a Docker image are never built, so they cannot have build variables.
+
+### Running
+
+The image runs in its own sandbox. Its disk is temporary: files the app writes are lost on every deploy and restart. Keep data in a [database](/products/build/raff-apps/concepts/database-links).
+
+## When to use it
+
+- **GitHub**: your own code, deployed on every push, with a preview per pull request.
+- **Docker image**: software that already ships an image, or images you build in your own pipeline and publish to a public registry.
+- **Template**: a known tool, running in minutes.
+- **Docker Compose**: moving a small multi-service project.
+
+## Trade-offs
+
+- Images must be public. Private registries are not supported.
+- A build can run for 15 minutes. Repositories larger than 100 MB cannot be built.
+- Automatic builds keep a cache between builds; Dockerfile builds start from scratch each time.
+- Privileged containers and added Linux capabilities are not supported.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Deploy from GitHub" icon="rocket" href="/products/build/raff-apps/quickstart-guides/deploy-from-github">
+    Connect a repository and deploy on every push.
+  </Card>
+  <Card title="Deploy a Docker image" icon="rocket" href="/products/build/raff-apps/quickstart-guides/deploy-a-docker-image">
+    Run a public image as it is.
+  </Card>
+  <Card title="Import Docker Compose" icon="rocket" href="/products/build/raff-apps/quickstart-guides/import-docker-compose">
+    One app per compose service.
+  </Card>
+  <Card title="Set environment variables" icon="rocket" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Runtime and build scopes.
+  </Card>
+</CardGroup>

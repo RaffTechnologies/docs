@@ -4,7 +4,7 @@ sidebarTitle: Paid changes
 description: How the Raff MCP server shows a price and the card it is charged to before an AI assistant creates or upgrades anything paid.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated October 19, 2026</sub>
 
 An AI assistant cannot spend money in your Raff account without you seeing the price first. Every change that costs more is a two-step call: the first answer is a quote and changes nothing; only a second call that repeats the quoted price goes ahead.
 
@@ -12,7 +12,7 @@ An AI assistant cannot spend money in your Raff account without you seeing the p
 
 ### The quote
 
-When the assistant creates a paid database or upgrades one, the first call returns:
+When the assistant creates a paid database or an app, upgrades a database, or scales an app up, the first call returns:
 
 | Field | Example |
 |---|---|
@@ -27,7 +27,7 @@ If the account has no card that can be charged automatically, the quote says so 
 
 The assistant shows you the quote and asks. When you agree, it calls again with the quoted monthly price. If the price does not match, because the plan or the price changed in between, nothing happens and a new quote comes back.
 
-In Claude, the quote appears as an order card in the chat with **Confirm** and, when no card is saved, **Add a card**. After you confirm, the card follows the database until it runs and shows the connection string with a **Copy** button. Other apps show the same quote as text.
+In Claude, a database quote appears as an order card in the chat with **Confirm** and, when no card is saved, **Add a card**. After you confirm, the card follows the database until it runs and shows the connection string with a **Copy** button. App quotes, and every quote in other apps, come as text.
 
 <Frame>
   ![TODO: Raff order card in Claude with price, card and Confirm button](/images/products/ai/mcp/order-card.png)
@@ -43,10 +43,15 @@ In Claude, the quote appears as an order card in the chat with **Confirm** and, 
 | Resize to something that costs less | No, the difference is credited |
 | Move a free database to a paid plan | Yes |
 | Delete a database | No charge; the assistant must repeat the database's name to delete it |
+| Create an app | Yes, always |
+| Scale an app to more instances, a higher autoscaling maximum or minimum, or turn scale to zero off | Yes |
+| Scale an app down or let it sleep when idle | No, it costs less |
+| Link a database to an app, deploy, roll back, change environment variables, add a domain | No charge |
+| Delete an app | No charge; the assistant must repeat the app's name to delete it. Its linked databases are kept and keep their price |
 
 ## Billing
 
-Changes made through an AI assistant are billed exactly like changes made in the dashboard:
+Changes made through an AI assistant are billed like the same changes made with the Raff API:
 
 - **Paid database**: a monthly subscription. The first month is charged within seconds of the create, from the account balance first and then the card.
 - **Upgrade**: the rest of the current month is charged at the new price before the change applies. The monthly price changes with it.
@@ -54,6 +59,7 @@ Changes made through an AI assistant are billed exactly like changes made in the
 - **Free to paid**: the database becomes a monthly subscription and keeps its data, address and password.
 - **Delete**: the unused part of the month is credited to the account balance.
 - Accounts on pay-as-you-go billing are billed by the hour instead.
+- **App**: billed by running time, the hourly price of its size for each running instance, charged at the end of the month from the account balance first, then the card. The quoted monthly price is the most instances it can run, running the whole month; a paused app, or one asleep with scale to zero, costs nothing for that time. App running time counts toward the account's Apps spend cap. Monthly app plans are bought in the dashboard.
 
 ## Trade-offs
 

@@ -1,0 +1,102 @@
+---
+title: Raff Apps features and limits
+sidebarTitle: Features & limits
+description: App types, sources, sizes, deploy timeouts, ports, domains, previews, logs and every limit of Raff Apps in one place.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+The facts about Raff Apps in one place.
+
+## App types
+
+| Type | Address | Scaling | Custom domains | Previews |
+|---|---|---|---|---|
+| Web | `https://<name>-<account id>.onraff.com` | Fixed, autoscaling, scale to zero | Yes | Yes, from GitHub |
+| Private | `<name>.<namespace>.svc.cluster.local` | Fixed; autoscaling with scale to zero | No | No |
+| Worker | None | Fixed | No | No |
+| Cron | None | None. **Concurrency** decides if runs overlap | No | No |
+| Job | None | None. One run per **Run now** | No | No |
+
+See [App types](/products/build/raff-apps/concepts/app-types).
+
+## Sources
+
+| Source | What Raff does |
+|---|---|
+| GitHub | Builds the repository's Dockerfile, or detects the stack (Node.js, Python, Go, Ruby, PHP, Java and more) and builds it. Every push to the branch deploys. |
+| Docker image | Pulls a public image and runs it. Nothing is built. |
+| Template | Runs one of 16 ready apps. See [Raff Apps templates](/products/build/raff-apps/details/templates). |
+| Docker Compose | Proposes one app per service in a pasted compose file. |
+
+## Sizes
+
+| Size | vCPU | Memory | Temporary disk | Previews per app |
+|---|---|---|---|---|
+| Micro | 0.25 | 512 MB | 2 GB | 2 |
+| Starter | 0.5 | 1 GB | 5 GB | 3 |
+| Standard | 1 | 2 GB | 10 GB | 5 |
+| Pro | 2 | 4 GB | 20 GB | 8 |
+| Pro Max | 4 | 8 GB | 40 GB | 10 |
+| Scale | 8 | 16 GB | 80 GB | 10 |
+
+## Limits
+
+| Item | Limit | Notes |
+|---|---|---|
+| Region | US East | |
+| Instances per app | 6 | Fixed instances or the autoscaling maximum. Contact support to raise. |
+| Instances per account | 20 | Web, private and worker apps. Paused, failed and not yet deployed apps count too. Contact support to raise. |
+| App name in the address | 50 characters | A short suffix is added when the name is taken in your account |
+| Default port | 8080 | Web apps get the port in `PORT` |
+| Reserved ports | 8008, 8012, 8013, 8022, 9090, 9091 | Web apps and private apps that scale to zero |
+| Build time | 15 minutes | |
+| Repository size | 100 MB | GitHub |
+| Time to turn ready | 5 minutes, or 10 minutes with a health check | Per deploy |
+| Request duration | 5 minutes | Web apps |
+| Sleep after | About 15 minutes without requests | Apps with scale to zero |
+| Outbound TCP port 25 | Blocked | Use port 587 or 465, or an HTTP API |
+| Environment variable names | 253 characters | Letters, digits and underscores, not starting with a digit |
+| Database link prefix | 64 characters | |
+| Custom domains | Web apps | Error after 24 hours without working DNS |
+| DNS checks | Every 30 seconds | **Check now**: 5 times in 10 minutes |
+| Previews | Per size, table above | Web apps from GitHub. A preview runs on Micro and is removed 7 days after its last push. Forks are skipped. |
+| Free database | 1 per account | Pauses after 7 days without connections |
+| Saved shell commands | 50 per app | |
+
+## History kept
+
+| Item | Kept |
+|---|---|
+| Runtime logs | 14 days |
+| Metrics | Views of the last 1 hour, 6 hours, 24 hours or 7 days |
+| Activity timeline | 30 days |
+| Cron and job runs | 30 days |
+
+## Template minimum sizes
+
+| Template | Smallest size |
+|---|---|
+| Metabase | Standard (1 vCPU · 2 GB) |
+| LibreTranslate | Standard (1 vCPU · 2 GB) |
+| Stirling-PDF | Starter (0.5 vCPU · 1 GB) |
+| Every other template | Micro (0.25 vCPU · 512 MB) |
+
+## Included with every app
+
+- Automatic HTTPS for the onraff.com address and custom domains.
+- Build logs, runtime logs, metrics (CPU, memory, instances, and requests for web apps), a shell inside running instances and an activity timeline.
+- Deploy history with rollback to any deploy that went live.
+- Encrypted environment variables.
+- A spend cap, on by default at \$50 a month.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Pricing" icon="circle-dollar" href="/products/build/raff-apps/details/pricing">
+    Sizes, databases and the spend cap.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/apps/list-app-services">
+    Endpoints for Raff Apps.
+  </Card>
+</CardGroup>

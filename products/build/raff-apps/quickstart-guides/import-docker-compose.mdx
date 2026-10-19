@@ -1,0 +1,120 @@
+---
+title: Import a Docker Compose file
+sidebarTitle: Import Docker Compose
+description: Paste a docker-compose.yml and Raff Apps creates one app for each service that runs an image, with its port, command and environment.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Paste a `docker-compose.yml` and Raff makes one app for each service that runs an image. You review the list, untick what you do not want, and deploy them in one click.
+
+Each service becomes its own app, with its own address, size, logs and deploys.
+
+## Before you start
+
+- A Raff account and a project to create the apps in.
+- A compose file whose services run public images (`image:`). Services that build from a folder (`build:`) are listed but not deployed: deploy those [from GitHub](/products/build/raff-apps/quickstart-guides/deploy-from-github).
+
+## How Raff reads the file
+
+Raff goes through the services by name, A to Z:
+
+| In the file | On Raff |
+|---|---|
+| A service with `image:` | An app that runs that image |
+| The first service with `ports:` or `expose:` | **Website or API**, on the container port (`8080` in `"80:8080"`) |
+| Every other service with a port | **Private service** on that port |
+| A service with no port | **Background worker** |
+| `command:` | The app's start command |
+| `environment:` | The app's environment variables, stored as secrets |
+| `env_file:` | Not imported. Paste its contents on the app's **Environment** tab |
+| `privileged:`, `cap_add:` | Not supported, because apps run in a sandbox |
+
+For example, this file:
+
+```yaml docker-compose.yml
+services:
+  app:
+    image: ghcr.io/acme/app:latest
+    ports:
+      - "80:8080"
+    environment:
+      SEARCH_URL: http://search:7700
+  search:
+    image: ghcr.io/acme/search:latest
+    expose:
+      - "7700"
+  worker:
+    image: ghcr.io/acme/worker:latest
+    command: ["node", "worker.js"]
+```
+
+becomes three apps: `app`, a website on port 8080 with `SEARCH_URL` set; `search`, a private service on port 7700; and `worker`, a background worker that runs `node worker.js`.
+
+## Steps
+
+<Steps>
+  <Step title="Open the create page">
+    Go to **Apps** and click **New service**. On the **Deploy an app** page, choose **Docker Compose**.
+  </Step>
+  <Step title="Add the file">
+    Paste the file into **docker-compose.yml**, or click **Choose a file** to pick it from your computer. Click **Read the file**.
+  </Step>
+  <Step title="Review the services">
+    **Services** lists one row per service: its name, what it becomes, its image and its port. Notes in amber say what Raff cannot carry over, for example an `env_file`.
+
+    Untick any service you do not want. To make a different choice for one service, untick it here and deploy its image on its own from [Docker image](/products/build/raff-apps/quickstart-guides/deploy-a-docker-image).
+
+    <Frame>
+      ![TODO: Services list after reading a compose file, with checkboxes](/images/products/build/raff-apps/compose-services.png)
+    </Frame>
+  </Step>
+  <Step title="Deploy">
+    Click **Deploy 3 apps** (the button counts the services you ticked). Each app starts at 1 vCPU · 2 GB; change the size on its app page.
+  </Step>
+</Steps>
+
+## Verify
+
+Each row gets a check mark when its app is created. When all are created, Raff opens the **Apps** list, where each app deploys on its own and turns **Live**.
+
+If one cannot be created, its row says why and you stay on the page. The others are still created.
+
+## After the import
+
+- **Point apps at each other.** A private service's address is on its **Connect** tab, under **Private network**. Put that address in the variables of the apps that call it, for example `SEARCH_URL` above. See [Set app environment variables](/products/build/raff-apps/quickstart-guides/set-environment-variables).
+- **Move databases to Raff Postgres.** A database container from the file, such as `postgres`, keeps its data inside the app, so the data is lost when it restarts or redeploys. Use a Raff Postgres database instead and link it to the apps. See [Add a Postgres database to an app](/products/build/raff-apps/quickstart-guides/add-a-database).
+
+## Use the API
+
+Reading a compose file is a dashboard step. With the API, create one app per service, the same way the import does:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "worker",
+    "service_type": "worker",
+    "source_type": "image",
+    "builder": "image",
+    "image_ref": "ghcr.io/acme/worker:latest",
+    "start_command": "node worker.js",
+    "tier_id": 3,
+    "deploy_now": true
+  }'
+```
+
+Use `"service_type": "web"` or `"private"` with `http_port` for services with a port. A private service needs its port. Then set each app's variables with [Bulk set environment variables](/api-reference/apps/bulk-set-app-env-vars).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Set environment variables" icon="key" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Add what `env_file` held.
+  </Card>
+  <Card title="App types" icon="lightbulb" href="/products/build/raff-apps/concepts/app-types">
+    Websites, private services and workers.
+  </Card>
+</CardGroup>

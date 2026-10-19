@@ -936,18 +936,38 @@ paths:
       tags:
         - Virtual Machines
       summary: Reset VM password
-      description: Reset the root/admin password of a virtual machine. The new password will be emailed to the account owner.
+      description: >-
+        Set a new root (Linux) or Administrator (Windows) password and email it to the account owner. On a running
+        server Raff sets it in the server itself and the server confirms it, without a restart (`result: set`). A
+        server Raff cannot reach that way gets it through its settings (`result: applying`): a running Linux server
+        restarts to apply it, Windows takes it within about a minute, and a stopped server when it starts; `message`
+        says which. If the server refuses the new password (for example its password policy), `success` is false,
+        `error` gives the server's reason, and the old password still works.
       operationId: resetVMPassword
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
         - $ref: '#/components/parameters/ProjectIDHeader'
       responses:
         '200':
-          description: Password reset initiated
+          description: The reset's outcome
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    description: Where the password went and when it takes effect.
+                    example: "Password reset successfully. New password sent to you@example.com. It works now, and your server did not restart."
+                  result:
+                    type: string
+                    enum: [set, applying]
+                    description: "`set`: the server confirmed the new password. `applying`: it takes effect as `message` says."
+                  error:
+                    type: string
+                    description: Why the password was not reset (only when `success` is false).
         '400':
           $ref: '#/components/responses/MissingProjectID'
         '401':
@@ -6586,9 +6606,10 @@ paths:
       tags:
         - Raff Apps
       summary: List Apps tiers
-      description: The Apps pricing catalog — compute sizes and prices. No authentication required.
+      description: |
+        The Apps sizes and prices. Needs an API key; the same catalog is
+        public at `GET /api/v1/public/pricing/apps`.
       operationId: listAppTiers
-      security: []
       parameters:
         - name: region
           in: query
@@ -6751,6 +6772,49 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+    patch:
+      tags:
+        - Raff Apps
+      summary: Update app service
+      description: |
+        Change an app's settings. Fields you leave out stay as they are. A
+        change to how a live app runs (size, start command, port, health
+        check, schedule) rolls out as a new deployment of the current image,
+        and a change to a failed app deploys it. A paused app keeps the change
+        and applies it when resumed. Scaling has its own endpoint.
+      operationId: updateAppService
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAppServiceRequest'
+      responses:
+        '200':
+          description: App updated. `deployment_id` is set when a deployment started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  service:
+                    $ref: '#/components/schemas/AppService'
+                  deployment_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
   /api/v1/apps/services/{service_id}/pause:
     post:
       tags:
@@ -6907,7 +6971,9 @@ paths:
       description: |
         Build and roll out a new deployment. Provide a `source_blob_key` from
         a completed source upload, or an `image_ref` for a prebuilt image.
-        Git-connected services deploy their branch head when neither is given.
+        With neither, the app redeploys what runs now (an app whose first
+        build failed builds its last source again). It does not fetch a new
+        commit: a GitHub app deploys new commits when you push to its branch.
       operationId: createAppDeployment
       parameters:
         - $ref: '#/components/parameters/AppServiceRef'
@@ -7630,6 +7696,349 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/templates:
+    get:
+      tags:
+        - Raff Apps
+      summary: List app templates
+      description: |
+        Ready apps you can deploy in one step (n8n, Metabase, Uptime Kuma and
+        more). Create one with `source_type` `template`, the template's
+        `image_ref`, `http_port` and `health_check_path`, a size of at least
+        `min_tier_id`, and its `env` (replace `{url}` with the app's address).
+        Templates with `database:postgres` in `companions` use a Postgres
+        database: link one with `link_database_id`.
+      operationId: listAppTemplates
+      responses:
+        '200':
+          description: Templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  templates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/github/installations:
+    get:
+      tags:
+        - Raff Apps
+      summary: List GitHub connections
+      description: |
+        The GitHub accounts and organizations connected to Raff Apps. Connect
+        GitHub once in the dashboard (Apps, Deploy an app, GitHub). Use a
+        connection's `id` as `github_installation_id` when you create an app
+        from a repository.
+      operationId: listAppGitHubConnections
+      responses:
+        '200':
+          description: GitHub connections
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  installations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppGitHubConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/apps/services/{service_id}/bindings:
+    get:
+      tags:
+        - Raff Apps
+      summary: List database links
+      description: The managed databases linked to an app.
+      operationId: listAppBindings
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Links
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  bindings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppBinding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - Raff Apps
+      summary: Link a database to an app
+      description: |
+        Link a running managed database to an app. Raff creates a database user
+        for this app, sets `{PREFIX}_URL`, `_HOST`, `_PORT`, `_USER`,
+        `_PASSWORD`, `_NAME` and `_CA_CERT` (prefix `DATABASE` by default; the
+        first link also fills a template's own settings) and redeploys the app.
+        Connections go over Raff's private network and always use TLS; check
+        the server with `{PREFIX}_CA_CERT`.
+
+        <Note>
+        Before linking, you need the **database ID**: get it from
+        [List Databases](/api-reference/databases/list-databases).
+        </Note>
+      operationId: createAppBinding
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppBindingRequest'
+      responses:
+        '200':
+          description: Linked; the app redeploys with the new settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  binding:
+                    $ref: '#/components/schemas/AppBinding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/apps/bindings/{binding_id}:
+    delete:
+      tags:
+        - Raff Apps
+      summary: Unlink a database
+      description: |
+        Remove a database link: its database user is dropped, its variables are
+        removed and the app redeploys without them. The database keeps running.
+      operationId: deleteAppBinding
+      parameters:
+        - $ref: '#/components/parameters/AppBindingIDPath'
+      responses:
+        '200':
+          description: Unlinked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accepted:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/bindings/{binding_id}/rotate:
+    post:
+      tags:
+        - Raff Apps
+      summary: Rotate a link's password
+      description: |
+        Give the link's database user a new password, update the app's
+        variables and redeploy it. The old password stops working.
+      operationId: rotateAppBinding
+      parameters:
+        - $ref: '#/components/parameters/AppBindingIDPath'
+      responses:
+        '200':
+          description: Rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  binding:
+                    $ref: '#/components/schemas/AppBinding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/apps/services/{service_id}/previews:
+    get:
+      tags:
+        - Raff Apps
+      summary: List pull request previews
+      description: |
+        The preview copies of a web app from GitHub, one per open pull request.
+        Turn previews on with `previews_enabled` in Update app service.
+      operationId: listAppPreviews
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Previews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  previews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppPreview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/previews/{preview_id}:
+    delete:
+      tags:
+        - Raff Apps
+      summary: Delete a preview
+      operationId: deleteAppPreview
+      parameters:
+        - $ref: '#/components/parameters/AppPreviewIDPath'
+      responses:
+        '200':
+          description: Deletion accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accepted:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/previews/{preview_id}/redeploy:
+    post:
+      tags:
+        - Raff Apps
+      summary: Redeploy a preview
+      description: Build and deploy the pull request's latest commit again.
+      operationId: redeployAppPreview
+      parameters:
+        - $ref: '#/components/parameters/AppPreviewIDPath'
+      responses:
+        '200':
+          description: Redeploy started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  preview:
+                    $ref: '#/components/schemas/AppPreview'
+                  deployment_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          description: The preview limit for this app's size is reached
+
+  /api/v1/apps/services/{service_id}/events:
+    get:
+      tags:
+        - Raff Apps
+      summary: List app events
+      description: The app's timeline, newest first (deploys, settings changes, links, failures).
+      operationId: listAppEvents
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+        - name: limit
+          in: query
+          description: How many events to return (1 to 200, default 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/apps/services/{service_id}/instances:
+    get:
+      tags:
+        - Raff Apps
+      summary: List app instances
+      description: The app's running instances right now, with their state and restarts.
+      operationId: listAppInstances
+      parameters:
+        - $ref: '#/components/parameters/AppServiceRef'
+      responses:
+        '200':
+          description: Instances
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  instances:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AppInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v1/public/pricing/apps:
     get:
@@ -8720,6 +9129,22 @@ components:
       description: App service ID (UUID) or short id (the `service_id` field)
       schema:
         type: string
+    AppBindingIDPath:
+      name: binding_id
+      in: path
+      required: true
+      description: Link ID (the `id` of an AppBinding)
+      schema:
+        type: string
+        format: uuid
+    AppPreviewIDPath:
+      name: preview_id
+      in: path
+      required: true
+      description: Preview ID (the `id` of an AppPreview)
+      schema:
+        type: string
+        format: uuid
     AppDeploymentIDPath:
       name: deployment_id
       in: path
@@ -12145,6 +12570,10 @@ components:
           description: Cron services only
         cron_timezone:
           type: string
+        cron_concurrency:
+          type: string
+          enum: [forbid, allow, replace]
+          description: Cron services only. What happens when a run is due while the last one still runs.
         region:
           type: string
         url:
@@ -12152,21 +12581,46 @@ components:
           description: Public HTTPS endpoint (web services; automatic TLS)
         internal_host:
           type: string
-          description: In-cluster hostname (private services)
+          description: In-cluster hostname (private services); reach it on `http_port`
+        primary_domain:
+          type: string
+          description: The first verified custom domain, if any
         status:
           type: string
           enum: [pending, building, deploying, live, paused, suspended, error, deleting, deleted]
         status_message:
           type: string
+          description: When status is error, what went wrong, in plain words.
         paused_by_cap:
           type: boolean
           description: True when a spend cap paused the service
         billing_type:
           type: string
           enum: [payg, subscription]
+        previews_enabled:
+          type: boolean
+          description: Pull request previews are on (web apps from GitHub)
+        preview_count:
+          type: integer
+        max_previews:
+          type: integer
+          description: Previews this app's size allows
+        waiting_for_database:
+          type: boolean
+          description: Created with `link_database_id`; the app deploys once the database runs and is linked
+        github_status:
+          type: string
+          enum: ["", disconnected, suspended, no_repo_access, repo_not_found]
+          description: Empty when Raff can reach the app's repository; otherwise why not (reconnect GitHub in the dashboard)
+        github_login:
+          type: string
+        github_settings_url:
+          type: string
         current_deployment_id:
           type: string
-          format: uuid
+          description: Empty until a deployment goes live
+        current_deployment_number:
+          type: integer
         created_at:
           type: string
           format: date-time
@@ -12187,7 +12641,16 @@ components:
           enum: [web, private, worker, cron, job]
         source_type:
           type: string
-          enum: [git, image, template, compose]
+          enum: [image, git, console, template, compose]
+          description: |
+            `image` runs `image_ref` (the builder is `image`); use it for a
+            Docker image and for a template, with the template's `image_ref`,
+            `http_port`, `env` and `health_check_path` from
+            [List app templates](/api-reference/apps/list-app-templates).
+            `git` builds a GitHub repository. `console` builds source you
+            upload ([Request source upload](/api-reference/apps/request-app-source-upload),
+            then create a deployment). `template` and `compose` are labels
+            only and build like `console`.
         builder:
           type: string
           enum: [buildpacks, dockerfile, image]
@@ -12197,6 +12660,15 @@ components:
         repo_full_name:
           type: string
           description: GitHub repo (owner/name) for source_type `git`
+        github_installation_id:
+          type: string
+          format: uuid
+          description: |
+            For source_type `git`: the `id` of a GitHub connection, from
+            [List GitHub connections](/api-reference/apps/list-app-github-connections).
+            The API key's owner must have used **Continue with GitHub** on
+            the Raff create page in the last 7 days, and their GitHub account
+            must see the repository; otherwise the create is refused.
         repo_branch:
           type: string
         repo_root_dir:
@@ -12232,11 +12704,30 @@ components:
           type: string
         cron_timezone:
           type: string
+        cron_concurrency:
+          type: string
+          enum: [forbid, allow, replace]
+          default: forbid
+          description: Cron services only
         region:
           type: string
         deploy_now:
           type: boolean
-          description: Queue a deployment immediately (prebuilt-image services)
+          description: |
+            Deploy right away. For apps from an image or GitHub; refused for an
+            app built from uploaded source (upload, then create a deployment).
+        env_vars:
+          type: array
+          description: Environment variables set before the first deploy
+          items:
+            $ref: '#/components/schemas/AppEnvVarInput'
+        link_database_id:
+          type: string
+          description: |
+            A managed Postgres of this account (its short ID or UUID) to link
+            before the first deploy.
+            The app waits until the database runs (`waiting_for_database`),
+            links it and then deploys, so `DATABASE_URL` is set from the start.
 
     ScaleAppServiceRequest:
       type: object
@@ -12249,9 +12740,15 @@ components:
           description: Fixed number of instances.
         autoscaling_set:
           type: boolean
-          description: Set true to apply the autoscaling fields
+          description: |
+            Send `true` to change the autoscaling fields: `autoscaling_enabled`,
+            `min_replicas`, `max_replicas`, `autoscaling_metric`,
+            `autoscaling_target` and `scale_to_zero`. With it,
+            `autoscaling_enabled` and `scale_to_zero` are set exactly as sent,
+            so leaving one out turns it off. Without it, only `replicas` changes.
         autoscaling_enabled:
           type: boolean
+          description: Only read when `autoscaling_set` is true.
         min_replicas:
           type: integer
           description: Fewest instances when autoscaling. Cannot be more than `max_replicas`.
@@ -12260,12 +12757,21 @@ components:
           description: Most instances when autoscaling.
         autoscaling_metric:
           type: string
-          enum: [concurrency, cpu]
+          enum: [concurrency]
+          description: |
+            What autoscaling follows: `concurrency`, the requests in progress
+            per instance. Autoscaling is for `web` apps and for `private` apps
+            with `scale_to_zero`; a worker or an always-on private app runs a
+            fixed number of instances.
         autoscaling_target:
           type: integer
+          description: Requests in progress per instance before another instance starts.
         scale_to_zero:
           type: boolean
-          description: Stop every instance when idle. Only for `web` and `private` apps.
+          description: |
+            Stop every instance when idle (the app sleeps about 15 minutes
+            after its last request and wakes on the next one). Only for `web`
+            and `private` apps, and only read when `autoscaling_set` is true.
 
     AppTier:
       type: object
@@ -12303,7 +12809,7 @@ components:
           type: integer
         channel:
           type: string
-          enum: [console, git_push, cli, compose, rollback]
+          enum: [console, git_push, cli, compose, rollback, preview]
         status:
           type: string
           enum: [queued, building, deploying, live, superseded, failed, canceled]
@@ -12319,6 +12825,7 @@ components:
           type: string
         error:
           type: string
+          description: Why the deploy failed or was canceled, in plain words. A failed build ends with the last lines of its build log.
         build_duration_ms:
           type: integer
         started_at:
@@ -12333,7 +12840,7 @@ components:
 
     CreateAppDeploymentRequest:
       type: object
-      description: Provide a source_blob_key or an image_ref. Git-connected services deploy their branch head when neither is given.
+      description: Provide a source_blob_key or an image_ref. With neither, the app redeploys what runs now; it does not fetch a new commit.
       properties:
         channel:
           type: string
@@ -12426,10 +12933,14 @@ components:
           enum: [schedule, manual]
         status:
           type: string
+          enum: [pending, running, succeeded, failed, canceled]
         exit_code:
           type: integer
+          nullable: true
+          description: The program's exit code. Null while the run is still going and for a canceled run.
         error:
           type: string
+          description: Why the run failed or was canceled, in plain words.
         scheduled_for:
           type: string
           format: date-time
@@ -12439,6 +12950,261 @@ components:
         finished_at:
           type: string
           format: date-time
+
+    UpdateAppServiceRequest:
+      type: object
+      description: Every field is optional. Leave a field out to keep it.
+      properties:
+        name:
+          type: string
+          description: Display name (the address does not change)
+        description:
+          type: string
+          description: Send "" to clear it
+        tier_id:
+          type: integer
+          description: New size (see `GET /api/v1/apps/tiers`). Apps on a subscription change size through support for now.
+        start_command:
+          type: string
+        http_port:
+          type: integer
+          description: Web and private apps only
+        health_check_path:
+          type: string
+          description: Must start with `/`
+        cron_schedule:
+          type: string
+          description: Cron apps only
+        cron_timezone:
+          type: string
+        cron_concurrency:
+          type: string
+          enum: [forbid, allow, replace]
+        repo_branch:
+          type: string
+          description: GitHub apps only
+        repo_root_dir:
+          type: string
+        dockerfile_path:
+          type: string
+        previews_enabled:
+          type: boolean
+          description: Pull request previews (web apps from GitHub)
+        redeploy:
+          type: boolean
+          description: Deploy now even when the change alone would not
+
+    AppEnvVarInput:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+          description: Letters, digits and underscores, not starting with a digit
+        value:
+          type: string
+        is_secret:
+          type: boolean
+        scope:
+          type: string
+          enum: [runtime, build, both]
+          default: runtime
+          description: '`build` is refused for apps from an image (they are never built)'
+
+    AppBinding:
+      type: object
+      description: A managed database linked to an app.
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          format: uuid
+        binding_type:
+          type: string
+          enum: [database]
+        resource_id:
+          type: string
+          format: uuid
+          description: The database's ID
+        resource_name:
+          type: string
+        env_prefix:
+          type: string
+          description: Prefix of the variables this link sets (`DATABASE` by default)
+        injected_keys:
+          type: array
+          nullable: true
+          items:
+            type: string
+        status:
+          type: string
+          enum: [provisioning, active, rotating, error, deleting]
+        status_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateAppBindingRequest:
+      type: object
+      required: [binding_type, resource_id]
+      properties:
+        binding_type:
+          type: string
+          enum: [database]
+        resource_id:
+          type: string
+          format: uuid
+          description: A running managed database of this account
+        env_prefix:
+          type: string
+          description: |
+            Prefix for the variables, uppercase letters, digits and underscores
+            (default `DATABASE`). Give a second database its own prefix.
+
+    AppTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        service_type:
+          type: string
+        image_ref:
+          type: string
+        builder:
+          type: string
+        default_tier_id:
+          type: integer
+        min_tier_id:
+          type: integer
+          description: Smallest size the template runs on (0 = any)
+        http_port:
+          type: integer
+        health_check_path:
+          type: string
+          description: The page that answers once the app is ready
+        companions:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: '`database:postgres` when the template uses Postgres'
+        database_optional:
+          type: boolean
+          description: With a Postgres companion, the template also runs without one (its data stays inside the app)
+        env:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Settings the template needs to start; `{url}` stands for the app's address
+        popular:
+          type: boolean
+
+    AppGitHubConnection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Use as `github_installation_id`
+        installation_id:
+          type: integer
+          description: GitHub's own installation number
+        github_login:
+          type: string
+        account_type:
+          type: string
+          description: The GitHub account type (a user or an organization)
+        status:
+          type: string
+        suspended:
+          type: boolean
+        settings_url:
+          type: string
+          description: Where to change which repositories Raff can see
+        created_at:
+          type: string
+          format: date-time
+
+    AppPreview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        service_id:
+          type: string
+          format: uuid
+        pr_number:
+          type: integer
+        pr_title:
+          type: string
+        branch:
+          type: string
+        head_sha:
+          type: string
+        status:
+          type: string
+          enum: [pending, building, deploying, live, error, paused, deleting, deleted]
+        status_message:
+          type: string
+        url:
+          type: string
+        current_deployment_id:
+          type: string
+        expires_at:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AppEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        service_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          description: For example `deploy.live`, `config.updated`, `database.linked`
+        message:
+          type: string
+        metadata:
+          type: string
+          description: Extra details as JSON text, or empty
+        created_at:
+          type: string
+          format: date-time
+
+    AppInstance:
+      type: object
+      properties:
+        name:
+          type: string
+        phase:
+          type: string
+          enum: [Running, Pending, Succeeded, Failed]
+        ready:
+          type: boolean
+        restarts:
+          type: integer
+        started_at:
+          type: string
+          description: Empty until the instance starts
 
     AppLogLine:
       type: object

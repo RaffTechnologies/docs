@@ -1,0 +1,143 @@
+---
+title: Deploy an app from GitHub
+sidebarTitle: Deploy from GitHub
+description: Connect GitHub, pick a repository and deploy it on Raff Apps. Raff builds it, gives it an https address and deploys again on every push.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Pick a repository and Raff builds it, runs it and gives it an https address. Raff uses the repository's Dockerfile when there is one; otherwise it detects the stack (Node, Python, Go, Ruby, PHP, Java and more) and builds it for you.
+
+Every push to the branch you pick deploys again, with no setup on your side.
+
+## Before you start
+
+- A Raff account and a project to create the app in.
+- A GitHub account that can reach the repository.
+- For a website, API or private service: an app that listens on the port in the `PORT` variable. It is 8080 unless you set another port.
+
+## Steps
+
+<Steps>
+  <Step title="Open the create page">
+    Go to **Apps** and click **New service**. The **Deploy an app** page asks where your code is. Choose **GitHub**.
+  </Step>
+  <Step title="Connect GitHub">
+    Click **Continue with GitHub**, sign in, and choose the repositories Raff may see. Raff sees only the repositories you share with it. You do this once per account.
+
+    <Frame>
+      ![TODO: GitHub tab of the Deploy an app page with Continue with GitHub](/images/products/build/raff-apps/github-connect.png)
+    </Frame>
+  </Step>
+  <Step title="Pick the repository">
+    Find the repository under **Your repositories** and click **Import**. Raff starts from the repository's default branch.
+
+    A repository is missing? Click **Share more on GitHub** to give Raff access to it, then **Don't see it? Refresh from GitHub**.
+  </Step>
+  <Step title="Name it and say what it is">
+    Under **App**, set the **Name**. Names are unique within a project. For a website, **Address** shows the https address the app gets, made from the name.
+
+    Under **What it is**, pick one:
+
+    | Choice | What it does |
+    |---|---|
+    | **Website or API** (default) | Gets a public https address. |
+    | **Background worker** | Runs all the time with no address: queues, bots, consumers. |
+    | **Private service** | Only your other apps can reach it. |
+    | **Scheduled task** | Runs on a schedule you set in **Schedule** (cron, in UTC: `0 2 * * *` is every day at 02:00), then stops. |
+    | **Runs once** | A one-off task you start yourself with **Run now**. |
+
+    See [App types](/products/build/raff-apps/concepts/app-types) for how each one runs.
+  </Step>
+  <Step title="Pick a size">
+    Under **Size**, pick the CPU and memory for each instance. You can change it any time; the app restarts on the new size.
+
+    | Size | Suits | Per month |
+    |---|---|---|
+    | 0.25 vCPU · 512 MB | Tests and hobby projects | $3 |
+    | 0.5 vCPU · 1 GB | Small sites and APIs | $6.99 |
+    | 1 vCPU · 2 GB | Most production apps | $16.99 |
+    | 2 vCPU · 4 GB | Busy apps | $27.99 |
+    | 4 vCPU · 8 GB | Heavy work | $61.99 |
+    | 8 vCPU · 16 GB | The largest apps | $119.99 |
+  </Step>
+  <Step title="Add a database (optional)">
+    Under **Database**, keep **No database**, or pick **Postgres, free** or **Postgres** to create one with the app. Raff links it before the first deploy, so `DATABASE_URL` is already set. See [Add a Postgres database to an app](/products/build/raff-apps/quickstart-guides/add-a-database).
+  </Step>
+  <Step title="Check the build (optional)">
+    The line above the app's name shows what Raff found in the repository: **Dockerfile found**, or the stack it detected.
+
+    Under **Optional**, open **Build and start** to change the **Branch**, the **Folder** (when the app lives in a subfolder of the repository), the **Dockerfile** path, the **Start command** or the **Port**. Open **Environment variables** to paste a `.env` file, one `KEY=value` per line. See [Set app environment variables](/products/build/raff-apps/quickstart-guides/set-environment-variables).
+
+    <Frame>
+      ![TODO: Optional section with Build and start open](/images/products/build/raff-apps/github-build-and-start.png)
+    </Frame>
+  </Step>
+  <Step title="Deploy">
+    Check the **Summary** on the right and click **Deploy**.
+
+    - **Pay-as-you-go account**: the app is created at once and billed by the second from your balance while it runs.
+    - **Monthly account**: you pay at checkout, then Raff builds the app and starts it.
+  </Step>
+</Steps>
+
+## Verify
+
+The app page shows the **First deploy** steps: **Got the code**, **Building**, **Starting** and **Live**. A first build takes a few minutes. You can leave the page; the deploy goes on.
+
+Raff marks the app **Live** only once it answers on its port, or on its health check path when it has one. Open the address to see it. If the deploy fails, the app page says why in plain words, for example a failed build with the last lines of its build log.
+
+## After the first deploy
+
+- **Every push deploys.** Push to the branch and Raff builds and deploys the new commit. The **Deploys** tab lists each deploy with its build log.
+- **Roll back.** On the **Deploys** tab, **Roll back** returns to an earlier deploy that went live. **Redeploy** at the top of the page runs the live deploy again; it does not fetch a new commit. See [Roll back a deploy](/products/build/raff-apps/quickstart-guides/roll-back-a-deploy).
+- **Change the branch or folder** in **Settings** > **Repository**.
+- **Previews.** Turn on **Preview environments** in **Settings** and every open pull request gets its own address, rebuilt on every push. The number of previews depends on the app's size, and previews never get the app's database link. See [Preview pull requests](/products/build/raff-apps/quickstart-guides/preview-pull-requests).
+- **Lost GitHub access.** If Raff loses access to the repository, the app page shows a banner and the app keeps running its last deploy. Give Raff access again on GitHub and click **Reconnect GitHub**. See [Reconnect GitHub to Raff Apps](/products/build/raff-apps/quickstart-guides/reconnect-github).
+
+## Use the API
+
+Connecting GitHub needs your own GitHub sign-in, so create the app in the dashboard. After that, follow its deploys with the API, for example the ones your pushes start:
+
+```bash
+curl https://api.rafftechnologies.com/api/v1/apps/services/SERVICE_ID/deployments \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+Each deploy has a `status` (`queued`, `building`, `deploying`, `live`, `superseded`, `failed` or `canceled`) and, when it failed, an `error` that says why. Read a deploy's build log:
+
+```bash
+curl https://api.rafftechnologies.com/api/v1/apps/deployments/DEPLOYMENT_ID/logs \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+`SERVICE_ID` is the app's ID from [List app services](/api-reference/apps/list-app-services). See [List deployments](/api-reference/apps/list-app-deployments) and [Get deployment build logs](/api-reference/apps/get-app-deployment-logs).
+
+## Use the CLI
+
+```bash
+# Deploy history
+raff apps deployments SERVICE_ID
+
+# Recent runtime logs, errors only
+raff apps logs SERVICE_ID --level error
+```
+
+`raff apps list` shows each app's ID.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Add a Postgres database" icon="database" href="/products/build/raff-apps/quickstart-guides/add-a-database">
+    Link Postgres and get `DATABASE_URL`.
+  </Card>
+  <Card title="Add a custom domain" icon="globe" href="/products/build/raff-apps/quickstart-guides/add-a-custom-domain">
+    Serve the app on your own domain.
+  </Card>
+  <Card title="Set environment variables" icon="key" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Add settings and secrets.
+  </Card>
+  <Card title="App types" icon="lightbulb" href="/products/build/raff-apps/concepts/app-types">
+    Websites, workers, private services and jobs.
+  </Card>
+</CardGroup>

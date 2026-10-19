@@ -1,0 +1,163 @@
+---
+title: Add a Postgres database to an app
+sidebarTitle: Add a Postgres database
+description: Create or link a Raff Postgres database for an app. Raff sets DATABASE_URL and the other DATABASE_* variables and connects them over the private network with TLS.
+---
+
+<sub>Updated October 19, 2026</sub>
+
+Link a Raff Postgres database to an app and Raff gives the app its own database user and sets `DATABASE_URL` and the other `DATABASE_*` variables. There is no password to copy.
+
+The app connects over Raff's private network, always with TLS. You can add the database when you create the app, or link one you already have.
+
+## Before you start
+
+- To link an existing database: a running Postgres database in the same account. See [Create a database](/products/store/databases/quickstart-guides/create-a-database).
+- To create one with the app: your account's free database still unused, or the $7.99 a month plan.
+
+## Add a database when you create the app
+
+<Steps>
+  <Step title="Find the Database section">
+    On the **Deploy an app** page, after you pick the code, find **Database**. For a template it shows only when the template keeps data in Postgres.
+  </Step>
+  <Step title="Pick an option">
+    | Option | What you get |
+    |---|---|
+    | **No database** | Nothing now. You can add one later. |
+    | **Postgres, free** | The free plan. One free database per account. See [Free plan](/products/store/databases/concepts/free-plan). |
+    | **Postgres** | The smallest paid plan, $7.99 a month, with daily backups and point-in-time recovery. |
+
+    A template that needs Postgres starts with it picked.
+
+    <Frame>
+      ![TODO: Database section of the create page with the three options](/images/products/build/raff-apps/create-database.png)
+    </Frame>
+  </Step>
+  <Step title="Deploy">
+    Click **Deploy**.
+
+    - **Pay-as-you-go account**: Raff creates the database and the app at once.
+    - **Monthly account**: the app and its database are one order at checkout, with the database as a line under the app. A free database is created when you pay.
+  </Step>
+  <Step title="Wait for the first deploy">
+    The app page shows **Starting the database**. Once the database runs, Raff links it and starts the first deploy, so `DATABASE_URL` is set from the start.
+  </Step>
+</Steps>
+
+Raff names the database after the app, for example `n8n-db`, and creates it with public access on, like any new database. The app does not need public access: it uses the private network. To turn it off, see [Turn on public access](/products/store/databases/quickstart-guides/turn-on-public-access).
+
+## Link a database you already have
+
+**From the database's page:**
+
+1. Open the database and go to the **Apps** tab.
+2. Under **Linked apps and functions**, pick the app in **Choose an app…** and click **Link an app**.
+3. Raff creates a database user for that app, adds the variables and redeploys the app.
+
+The same tab has **Start a new app on this database**: pick a template that uses Postgres, or **Your own app** (from GitHub or an image). The create page opens with the database already chosen.
+
+**From the app's page:**
+
+1. Open the app and go to the **Bindings** tab.
+2. Click **Attach**, choose **Database**, and pick the database.
+3. Keep **Env var prefix** as `DATABASE_` and click **Attach**. The app redeploys with the connection.
+
+## The variables your app gets
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The full connection string |
+| `DATABASE_HOST` | `<database_id>.private.db.raffusercloud.com` |
+| `DATABASE_PORT` | The database port |
+| `DATABASE_USER` | The app's own database user |
+| `DATABASE_PASSWORD` | That user's password |
+| `DATABASE_NAME` | The database name |
+| `DATABASE_CA_CERT` | The CA certificate, to check the server |
+
+For a template, the link also fills in the app's own database settings, so the app uses the database without extra setup.
+
+The variables show on the app's **Environment** tab with the database as their source. Change them through the link, not there. `DATABASE_URL` and `DATABASE_PASSWORD` are masked.
+
+**A second database:** attach it from the **Bindings** tab with another prefix, for example `ANALYTICS_`. It gets `ANALYTICS_URL`, `ANALYTICS_HOST` and the rest; `DATABASE_URL` stays with the first database.
+
+## Connect with TLS
+
+New databases refuse connections without TLS. `DATABASE_HOST` is a name on the database's certificate, so your app can check the server with `DATABASE_CA_CERT`.
+
+**Node.js (`pg`):**
+
+```js
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { ca: process.env.DATABASE_CA_CERT },
+});
+```
+
+Without the `ssl` option, `pg` connects without TLS and the database refuses it with `pg_hba.conf rejects connection ... no encryption`.
+
+**psql and other libpq clients:** write the CA to a file and use `sslmode=verify-full` with `sslrootcert`:
+
+```bash
+printf '%s\n' "$DATABASE_CA_CERT" > /tmp/raff-db-ca.pem
+
+PGPASSWORD="$DATABASE_PASSWORD" psql "host=$DATABASE_HOST port=$DATABASE_PORT dbname=$DATABASE_NAME user=$DATABASE_USER sslmode=verify-full sslrootcert=/tmp/raff-db-ca.pem"
+```
+
+`DATABASE_HOST` is on Raff's private network, so run this inside the app, for example from the **Shell** tab.
+
+## Change or remove the link
+
+On the app's **Bindings** tab:
+
+- **Rotate credentials** issues a new password and redeploys the app with it. The old password stops working at once.
+- **Delete binding** removes the app's database user and its `DATABASE_*` variables, and redeploys the app without them. The database itself stays.
+
+## What happens on delete
+
+**When you delete the app**, the dialog lists its databases with **Keep** (the default) or **Delete**:
+
+- **Keep**: the database keeps running and billing, for example "Keeps running and billing $7.99/mo". Only the app's login to it is removed.
+- **Delete**: the database is deleted with the app. Its backups are kept for 14 days, and on monthly billing the unused part of the month goes back to your balance.
+- A database another app also uses is always kept.
+
+**When you delete the database**, its dialog lists the apps that use it with **Keep** (the default) or **Delete**. Kept apps keep running: Raff removes the link and the `DATABASE_*` variables, so their next deploy starts without them. **Delete** removes those apps too.
+
+## Use the API
+
+Create the app with `link_database_id`, the database's `id` (a UUID) from [List databases](/api-reference/databases/list-databases) or [Create database](/api-reference/databases/create-database):
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/apps/services \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "api",
+    "service_type": "web",
+    "source_type": "image",
+    "builder": "image",
+    "image_ref": "ghcr.io/you/api:latest",
+    "http_port": 8080,
+    "tier_id": 2,
+    "deploy_now": true,
+    "link_database_id": "DATABASE_UUID"
+  }'
+```
+
+The app waits until the database runs, links it, then deploys. The database must belong to your account.
+
+To see which apps use a database, call [List apps and functions using the database](/api-reference/databases/list-database-consumers).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect to a database" icon="plug" href="/products/store/databases/quickstart-guides/connect-to-a-database">
+    Connect from your laptop or other tools.
+  </Card>
+  <Card title="Set environment variables" icon="key" href="/products/build/raff-apps/quickstart-guides/set-environment-variables">
+    Add the rest of the app's settings.
+  </Card>
+</CardGroup>
