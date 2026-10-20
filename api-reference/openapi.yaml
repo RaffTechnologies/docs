@@ -3221,9 +3221,9 @@ paths:
         - SSH Keys
       summary: Create SSH key
       description: |
-        Add an SSH public key to your account. Pass the key on VM create via the `ssh_keys` array to enable key-based login.
+        Add an SSH public key to your account. Pass its `id` (or the key itself) in the `ssh_keys` array on VM create or reinstall to enable key-based login.
 
-        Supported key types: RSA, ECDSA, Ed25519. The `key_type` field on the response is parsed automatically from the public key.
+        One key per saved key: the whole line of a `.pub` file. Accepted types: `ssh-ed25519`, `ecdsa-sha2-nistp256`, `ecdsa-sha2-nistp384`, `ecdsa-sha2-nistp521`, `ssh-rsa` (1024 bits or more) and the security key types `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com`. DSA keys, `authorized_keys` options and anything that is not a public key are refused. Each key can be saved once per account: saving it again answers 409 with the name it already has.
       operationId: createSSHKey
       requestBody:
         required: true
@@ -3247,6 +3247,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /api/v1/ssh-keys/{id}:
     get:
@@ -3337,8 +3339,8 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  data:
-                    $ref: '#/components/schemas/SSHKey'
+                  message:
+                    type: string
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -9567,7 +9569,7 @@ components:
           type: array
           items:
             type: string
-          description: SSH public keys for VM access. Required for Linux VMs if no password is provided. Ignored for Windows VMs.
+          description: SSH keys for VM access, each the `id` of a saved SSH key or a public key itself. Every key is checked (see Create SSH key) and an invalid entry refuses the request. Required for Linux VMs if no password is provided. Ignored for Windows VMs.
         password:
           type: string
           minLength: 12
@@ -10344,7 +10346,7 @@ components:
           type: array
           items:
             type: string
-          description: SSH public keys for authentication
+          description: SSH keys for authentication, each the `id` of a saved SSH key or a public key itself. Every key is checked and an invalid entry refuses the request.
         auto_generate_password:
           type: boolean
           description: Auto-generate a password and email it to the account owner
@@ -11374,7 +11376,14 @@ components:
         key_type:
           type: string
           description: Parsed key algorithm
-          enum: [ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521]
+          enum: [ssh-ed25519, ecdsa-sha2-nistp256, ecdsa-sha2-nistp384, ecdsa-sha2-nistp521, ssh-rsa, sk-ssh-ed25519@openssh.com, sk-ecdsa-sha2-nistp256@openssh.com]
+        fingerprint:
+          type: string
+          description: The key's SHA256 fingerprint, as `ssh-keygen -l` shows it. Empty when the saved key is not one valid key.
+          example: "SHA256:1+VorffDlD3U7juTRFPvwlXH1Ae81o/2yTnpEN7t26w"
+        valid:
+          type: boolean
+          description: Whether a server accepts this key. A key saved before key checking began can be cut off or not a key; it is `false` and is refused on VM create and reinstall. Delete it and add the key again.
         created_at:
           type: string
           format: date-time
@@ -11396,7 +11405,8 @@ components:
           example: laptop
         public_key:
           type: string
-          description: Full SSH public key string
+          description: >-
+            One SSH public key, the whole line of a `.pub` file. Accepted types: `ssh-ed25519`, `ecdsa-sha2-nistp256`, `ecdsa-sha2-nistp384`, `ecdsa-sha2-nistp521`, `ssh-rsa` (1024 bits or more) and the security key types `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com`.
           example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@host"
 
     UpdateSSHKeyRequest:
