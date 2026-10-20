@@ -3,7 +3,7 @@ title: OS templates
 description: The Linux distros, BSD, and Windows Server images Raff provides at VM creation, plus the marketplace one-click apps that install software on top
 ---
 
-<sub>Updated September 5, 2026</sub>
+<sub>Updated October 20, 2026</sub>
 
 An **OS template** is the pre-built operating system image you select when creating a VM. The template determines what's on the VM's disk **before** any of your code or config runs — kernel, init system, package manager, base packages, default users.
 
@@ -25,7 +25,7 @@ Base images are rebuilt regularly from the upstream cloud image with all updates
 | Included | Detail |
 |---|---|
 | **Latest packages and kernel** at build time | The image name carries the rebuild date (for example "Ubuntu 26.04.1 LTS (BASE 2026-09)") |
-| **SSH password and root login enabled** | You choose an SSH key, a password, or both at create-time. Keys are recommended |
+| **Root login over SSH** | You choose an SSH key, a password, or both at create-time. With a password, SSH accepts it. With only an SSH key, SSH accepts the key only and root has no password until you set one with [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password). Keys are recommended |
 | **fail2ban** with the `sshd` jail active | 5 failed logins within 10 minutes ban the source IP for 10 minutes. Tune `/etc/fail2ban/jail.local` |
 | **sshd brute-force limits** | `MaxAuthTries 3`, `LoginGraceTime 20` |
 | **Automatic security updates** | `unattended-upgrades` enabled, security pocket only |

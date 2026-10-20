@@ -3,7 +3,7 @@ title: Authentication & access
 description: How credentials and transports combine to let you reach a VM, and what to use when
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 20, 2026</sub>
 
 Every way of getting into a Raff VM combines two layers:
 
@@ -117,6 +117,7 @@ A few non-obvious points:
 
 - **Browser SSH auto-logs in** as root using the VM's stored credentials, even if password auth is disabled at the SSH daemon level — it goes through a privileged path.
 - **VNC always requires the password**, even with SSH keys configured. For Linux, this means you should keep a password set as a recovery option, not just keys.
+- **A Linux server created with only an SSH key has no root password.** SSH accepts the key only, and password sign-in is turned off. [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) gives root a password for the VNC console.
 - **Windows in-app access is VNC only** — direct RDP is the production-quality path; VNC is for recovery.
 
 ## Recovery scenarios
