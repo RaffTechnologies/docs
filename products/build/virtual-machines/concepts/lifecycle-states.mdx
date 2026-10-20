@@ -3,7 +3,7 @@ title: Lifecycle states
 description: How a VM moves through provisioning, running, stopped, and terminal states
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 20, 2026</sub>
 
 Every VM has a `status` field that reflects where it is in its lifecycle. Most actions you take in the dashboard or via the API are state transitions.
 
@@ -37,7 +37,7 @@ A stopped VM still holds CPU, RAM, disk, and IP allocations on the hypervisor. T
 
 ## `provisioning` during snapshots and backups
 
-While a snapshot or scheduled/instant backup is running on a VM, the dashboard temporarily shows the VM in **`provisioning`** state — even though the VM was already up and serving traffic.
+While a snapshot or scheduled/instant backup is running on a VM, the dashboard temporarily shows the VM in **`provisioning`** state, even when the VM was up and serving traffic. A stopped VM shows `provisioning` while its snapshot is taken and then returns to `passive`.
 
 This is **normal and not a problem**:
 

@@ -3,7 +3,7 @@ title: Create a snapshot
 description: Capture a point-in-time copy of a VM's OS disk or a volume's contents
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 20, 2026</sub>
 
 A snapshot is a point-in-time copy of a VM's OS disk or a volume's contents. Use snapshots as restore points before risky changes — kernel upgrades, OS package changes, schema migrations — or as the starting point for a clone.
 
@@ -12,7 +12,7 @@ For automated, scheduled protection use [backups](/products/build/virtual-machin
 ## Before you start
 
 <Note>
-  **VM snapshots require the VM to be `active` (running).** A stopped VM (`passive`) cannot be snapshotted. Volume snapshots work regardless of VM state.
+  **A snapshot can be taken while the VM is `active` (running) or `passive` (stopped).** For a volume snapshot, the VM the volume is attached to must be running or stopped. A snapshot of a stopped VM is the most consistent: nothing writes to the disk while it is taken.
 </Note>
 
 Snapshots taken while the VM is running are **crash-consistent**, not application-consistent — quiesce databases or freeze writes first if you need a clean capture (e.g. `mysql FLUSH TABLES WITH READ LOCK`, `pg_start_backup()`).
