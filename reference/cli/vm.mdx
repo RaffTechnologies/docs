@@ -1,9 +1,9 @@
 ---
 title: "raff vm"
-description: "Manage Virtual Machines from the CLI — list, get, create, update, delete (incl. bulk-delete), power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP, firewall, VPC, tags, notes, and networks subcommands."
+description: "Manage Virtual Machines from the CLI: list, get, create, update, delete (incl. bulk-delete), power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP, firewall, VPC, tags, notes, SSH keys and networks subcommands."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 The `raff vm` command group covers every Virtual Machine operation in the public API. Each subcommand also supports `--output json` for scripting.
 
@@ -30,6 +30,7 @@ The `raff vm` command group covers every Virtual Machine operation in the public
 | [`vpc attach`](#vpc-attach) / [`vpc detach`](#vpc-detach) | Attach / detach a VPC |
 | [`tags add`](#tags-add) / [`tags remove`](#tags-remove) / [`tags set`](#tags-set) / [`tags list`](#tags-list) | Manage VM tags |
 | [`notes set`](#notes-set) / [`notes append`](#notes-append) / [`notes get`](#notes-get) | Manage VM notes |
+| [`ssh-keys list`](#ssh-keys-list) / [`ssh-keys add`](#ssh-keys-add) / [`ssh-keys remove`](#ssh-keys-remove) | See, add and remove root's SSH keys on a running Linux server |
 | [`networks`](#networks) | List the VM's network attachments |
 
 ---
@@ -148,7 +149,7 @@ raff vm rename <vm-id> --name <new-name>
 raff vm reset-password <vm-id>
 ```
 
-Resets the root (Linux) or Administrator (Windows) password to a new generated value. Output shows the new password — copy it immediately. The VM reboots if active to apply the change.
+Sets a new root (Linux) or Administrator (Windows) password and emails it to the account owner. A running server gets it at once, without a restart; a server Raff cannot reach that way gets it through its settings (a running Linux server restarts to apply it). See [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password).
 
 ## resize
 
@@ -269,6 +270,31 @@ Append to the existing note (newline-separated).
 ```bash
 raff vm notes get <vm-id>
 ```
+
+## ssh-keys list
+
+```bash
+raff vm ssh-keys list <vm-id>
+```
+
+The keys in root's `authorized_keys`, read from the running server itself. Output columns: `FINGERPRINT`, `TYPE`, `COMMENT`, `SAVED KEY`, `OPTIONS`. Linux servers only.
+
+## ssh-keys add
+
+```bash
+raff vm ssh-keys add <vm-id> --key <saved-key-id | public-key> [--save-as <name>]
+raff vm ssh-keys add <vm-id> --key-file ~/.ssh/id_ed25519.pub [--save-as <name>]
+```
+
+Add a key to root on a running Linux server, at once and without a restart. `--save-as` also saves a new key to your account. A key the server already has changes nothing. The account owner gets an email. See [Add or remove SSH keys](/products/build/virtual-machines/quickstart-guides/manage-ssh-keys).
+
+## ssh-keys remove
+
+```bash
+raff vm ssh-keys remove <vm-id> --fingerprint <SHA256:...> [--confirm-last] [--force]
+```
+
+Remove a key from root, and from the server's settings so it does not come back at the next restart. Root's last key goes only with `--confirm-last`. Asks before removing unless `--force`.
 
 ## networks
 

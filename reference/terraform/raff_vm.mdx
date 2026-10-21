@@ -3,7 +3,7 @@ title: "raff_vm"
 description: "Manage Raff Virtual Machines with Terraform — pick template, plan, region, SSH keys, optional VPC and backup schedule. Required: name, template_id, pricing_id, region. Resizing is in-place via pricing_id change."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 Manages a Raff **Virtual Machine** — Linux or Windows, with NVMe SSD disks, optional SSH keys / password, optional VPC attachment, and optional backup schedule. Pricing plans range from $3.99/mo (Premium 1 vCPU / 1 GiB) to $511.99/mo (Premium 32 vCPU / 128 GiB) — see the [Pricing page](/products/build/virtual-machines/details/pricing) for the full list.
 
@@ -72,7 +72,7 @@ resource "raff_vm" "api" {
 
 | Argument | Type | Description |
 |---|---|---|
-| `ssh_keys` | list(string) | SSH key IDs to install. Get key IDs from the dashboard's SSH Keys page |
+| `ssh_keys` | list(string) | SSH keys for root: saved key IDs (`raff_ssh_key.<name>.id`) or public keys. Changing the list adds and removes keys on the running Linux VM, without recreating it; the last key goes only when the list is empty. Keys added on the server itself are left alone and are not read back |
 | `password` | string | Root (Linux) or Administrator (Windows) password. Mutually exclusive with `ssh_keys` for some templates |
 
 ### Optional — storage

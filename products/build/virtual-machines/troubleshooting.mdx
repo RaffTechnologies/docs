@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common Virtual Machine issues and how to fix them
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 The most-seen failures with Raff VMs and the fix that works in each case. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
@@ -36,7 +36,7 @@ The most-seen failures with Raff VMs and the fix that works in each case. If you
     **Fixes:**
     1. **Wrong key** — `ssh -i ~/.ssh/specific_key root@…` to point at the right private key.
     2. **Key permissions too open** — `chmod 600 ~/.ssh/<key>` on macOS/Linux.
-    3. **Key not in `authorized_keys` on the VM** — open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback), log in, and append your public key to `~/.ssh/authorized_keys` (`chmod 600` and `chown user:user`).
+    3. **Key not in `authorized_keys` on the VM**: on a Linux server, check the server's **Security → SSH keys** and [add the key](/products/build/virtual-machines/quickstart-guides/manage-ssh-keys) there. For another user than root, open the [VNC console](/products/build/virtual-machines/quickstart-guides/connect-via-ssh#3-vnc-console-graphical-fallback), log in, and append your public key to that user's `~/.ssh/authorized_keys` (`chmod 600` and `chown user:user`).
     4. **Password auth disabled, no key set** — [Reset password](/products/build/virtual-machines/quickstart-guides/reset-password) and connect over the VNC console once first to add a key.
   </Accordion>
 

@@ -1,0 +1,116 @@
+---
+title: "Add or remove SSH keys on a server"
+sidebarTitle: "Add or remove SSH keys"
+description: "See, add and remove the SSH keys that can sign in to a running Linux server as root, without a restart"
+---
+
+<sub>Updated October 21, 2026</sub>
+
+Give a colleague access to a server, take a departed contractor's key off every server, or check which keys can sign in as root. Raff changes the keys in the running server at once, without a restart and without signing in to it.
+
+## Where to find it
+
+Open the server, then **Security → SSH keys · root**. The list is read from the server itself, so a key someone added on the server by hand shows too, as **Added on the server**. Keys you saved in your account show by their name.
+
+From **SSH Keys** in the left menu you can put one saved key on several servers at once, or take it off them.
+
+## Add a key to a server
+
+1. On the server's **Security** tab, click **Add key**.
+2. Pick a **Saved key**, or paste a **New key** (the whole line of your `.pub` file). For a new key, tick **Also save it to my SSH keys** to use it on other servers later.
+3. Click **Add key**, check the key and the server, and **Confirm and add**.
+
+The key works at once: `ssh root@<server-ip>` with its private key signs in. The key also goes into the server's settings, so a factory reset keeps it.
+
+## Remove a key from a server
+
+1. On the server's **Security** tab, click **Remove** next to the key.
+2. Confirm. root can no longer sign in with that key. It stays in your saved keys, and other servers keep it.
+
+Raff also takes the key out of the server's settings, so it does not come back when the server restarts.
+
+<Warning>
+Removing the last key needs an extra tick. A server created with only an SSH key has password sign-in turned off, so nobody could sign in over SSH afterwards. The [browser console](/products/build/virtual-machines/quickstart-guides/open-browser-console) still works once you [reset the password](/products/build/virtual-machines/quickstart-guides/reset-password).
+</Warning>
+
+## A key on many servers
+
+On the **SSH Keys** page, each saved key shows the servers where Raff last saw it. Raff does not scan your servers in the background: it records a server's keys when you create or reinstall it, when you change them through Raff, and whenever it reads them. **Check now** reads every running Linux server in the project.
+
+From a key's menu:
+
+- **Put on servers...** reads your Linux servers, then adds the key to the ones you pick.
+- **Remove from servers...** shows the servers that have the key and removes it from the ones you pick. A server where it is the only key is left out: remove it there from the server's Security tab.
+- **Delete** takes the key out of your saved keys. Servers that have it keep accepting it, so the dialog offers to remove it from them first.
+
+**Add SSH Key** still only saves the key unless you choose **Save it and put it on servers now**.
+
+## Who can do it, and how you know
+
+- **Seeing** a server's keys needs permission to view the server. **Adding and removing** keys needs the **Manage SSH keys on servers** permission (`vm.ssh_keys`), which the Project Admin and Operator roles have. Add it to a custom role in **Team & Access → Roles**.
+- Each add and remove in the dashboard asks for your **two-factor code**. One code counts for 10 minutes, so putting a key on several servers asks once. Without two-factor authentication on your account, the dashboard asks you to set it up first.
+- Every change emails the account owner (which key, which server, who changed it) and is written to your account's audit log.
+
+## Requirements
+
+- **A running Linux server.** SSH keys are not managed on Windows servers. A stopped server shows its keys again once it runs.
+- **The QEMU guest agent running in the server.** Raff's images run it. If you removed it, the Security tab shows the command to turn it on again:
+
+```bash
+sudo apt update && sudo apt install -y qemu-guest-agent && sudo systemctl enable --now qemu-guest-agent
+```
+
+On AlmaLinux and Rocky Linux use `sudo dnf install -y qemu-guest-agent` instead.
+
+- **On AlmaLinux, Rocky Linux and Fedora, SELinux must let the guest agent manage SSH keys.** Servers created from October 21, 2026 have it. On an older one, the Security tab shows this command; run it once:
+
+```bash
+sudo setsebool -P virt_qemu_ga_manage_ssh on
+```
+
+## From the API, CLI and Terraform
+
+```bash API
+# List the keys on a server
+curl https://api.rafftechnologies.com/api/v1/vms/<vm-id>/ssh-keys \
+  -H "X-API-Key: $RAFF_API_KEY"
+
+# Add a saved key (its ID) or a public key; save_as also saves a new key to your account
+curl -X POST https://api.rafftechnologies.com/api/v1/vms/<vm-id>/ssh-keys \
+  -H "X-API-Key: $RAFF_API_KEY" -H "Content-Type: application/json" \
+  -d '{"ssh_key": "ssh-ed25519 AAAA... you@laptop", "save_as": "laptop"}'
+
+# Remove a key by its fingerprint, slashes included
+curl -X DELETE "https://api.rafftechnologies.com/api/v1/vms/<vm-id>/ssh-keys/SHA256:KH7zm92O0/dbuPCSkvuS9zdDvBneuFaHt+qwZbp8OYU" \
+  -H "X-API-Key: $RAFF_API_KEY"
+```
+
+```bash CLI
+raff vm ssh-keys list <vm-id>
+raff vm ssh-keys add <vm-id> --key-file ~/.ssh/id_ed25519.pub --save-as laptop
+raff vm ssh-keys remove <vm-id> --fingerprint SHA256:KH7zm92O0/dbuPCSkvuS9zdDvBneuFaHt+qwZbp8OYU
+```
+
+In Terraform, change `ssh_keys` on a [`raff_vm`](/reference/terraform/raff_vm): the keys are added and removed on the running server without recreating it. API keys do not need a two-factor code; creating an API key does.
+
+## Troubleshooting
+
+| What you see | What to do |
+|---|---|
+| The guest agent is not running | Run the command above in the server (through SSH or the [browser console](/products/build/virtual-machines/quickstart-guides/open-browser-console)), then click **Check again** |
+| The guest agent does not allow it | The server's QEMU guest agent is too old (before version 5.2) or blocks its SSH commands. Update `qemu-guest-agent` |
+| SELinux keeps the guest agent away from root's keys | Run `sudo setsebool -P virt_qemu_ga_manage_ssh on` in the server (AlmaLinux, Rocky Linux, Fedora), then click **Check again** |
+| The server did not answer in time | Try again. After an add or remove, read the keys again to see whether the change was made |
+| The server refused the change | The server's own reason is shown, for example a read-only file system. Nothing was changed |
+| A removed key still signs in | Check that the key is not also in another user's `authorized_keys`: Raff manages root's keys only |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect via SSH" icon="terminal" href="/products/build/virtual-machines/quickstart-guides/connect-via-ssh">
+    Create a key and sign in with it.
+  </Card>
+  <Card title="Reset password" icon="key" href="/products/build/virtual-machines/quickstart-guides/reset-password">
+    Sign in without a key.
+  </Card>
+</CardGroup>

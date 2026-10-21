@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 19, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,30 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 21, 2026
+
+**Virtual Machines: SSH keys on a running server**
+
+- 🟢 **Added**: [List SSH keys on a VM](/api-reference/endpoint/list-vm-ssh-keys) `GET /api/v1/vms/{id}/ssh-keys`: the keys in root's `authorized_keys`, read from the running Linux server itself, each named after the saved key with the same fingerprint.
+- 🟢 **Added**: [Add an SSH key to a VM](/api-reference/endpoint/add-vm-ssh-key) `POST /api/v1/vms/{id}/ssh-keys` (a saved key's ID or a public key, `save_as` to also save it) and [Remove an SSH key from a VM](/api-reference/endpoint/remove-vm-ssh-key) `DELETE /api/v1/vms/{id}/ssh-keys/{fingerprint}` (`confirm_last=true` for root's last key). Changes apply at once without a restart, stay after a restart and a factory reset, and are emailed to the account owner. They need the new `vm.ssh_keys` permission (Project Admin and Operator have it). A refusal says why in `reason` (`not_running`, `no_guest_agent`, `last_key`, ...). See [Add or remove SSH keys](/products/build/virtual-machines/quickstart-guides/manage-ssh-keys).
+- 🔵 **Updated**: [List SSH keys](/api-reference/ssh-keys/list-ssh-keys) adds `servers` to each key: the servers in your projects where Raff last saw it.
+- 🔵 **Updated**: creating or regenerating an API key in the dashboard asks for a two-factor code.
+
+**Virtual Machines: CLI** (raff-cli v0.6.7)
+
+- 🟢 **Added**: [`raff vm ssh-keys`](/reference/cli/vm#ssh-keys-list) `list`, `add` (`--key`, `--key-file`, `--save-as`) and `remove` (`--fingerprint`, `--confirm-last`).
+- 🔵 **Updated**: `raff ssh-key list` shows each key's servers.
+
+**Virtual Machines: Terraform** (provider v0.4.6)
+
+- 🔵 **Updated**: [`raff_vm`](/reference/terraform/raff_vm) `ssh_keys` can change without recreating the VM: keys are added to and removed from the running Linux server.
+
+### October 20, 2026
+
+**Virtual Machines: SSH keys**
+
+- 🔵 **Updated**: **Create VM** and **Reinstall VM** take saved key IDs or public keys in `ssh_keys`; every key is checked, and an invalid one is refused before anything is charged. Saved keys add `fingerprint` and `valid`. Each key can be saved once per account.
 
 ### October 19, 2026
 

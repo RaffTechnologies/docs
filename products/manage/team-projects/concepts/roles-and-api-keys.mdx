@@ -3,7 +3,7 @@ title: Roles, scopes, and the Owner
 description: How Raff splits access into Account-level and Project-level roles, why account-level grants don't include project-level visibility, what the seven prebuilt System roles do, and how to build Custom roles
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 This is the model page for permissions on Raff. Read it once and the Roles tab on the Team & Projects page makes sense. The two big ideas:
 
@@ -110,7 +110,7 @@ Click the eye icon on the **Project Admin** role to see the project-domain permi
 The project-domain catalog has a different shape from the account one:
 
 - **Categories are resources** — Project Members, Virtual Machines, Networking, etc. — not account-level concepts like Billing
-- **Resource permissions** like `vm.view`, `vm.create`, `vm.delete`, `vm.power`, `vm.manage`, `vm.console` are individually toggleable
+- **Resource permissions** like `vm.view`, `vm.create`, `vm.delete`, `vm.power`, `vm.manage`, `vm.console`, `vm.ssh_keys` (add and remove SSH keys on servers; Project Admin and Operator have it) are individually toggleable
 - **Project Admin has 40 permissions** — the full project-domain set. Compare with Project Member (~11) and Viewer (~9) to see what each level peels back
 
 The same "system roles can't be edited" rule applies on the project side.

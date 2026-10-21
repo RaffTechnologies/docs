@@ -3,7 +3,7 @@ title: Generate an API key
 description: Create an API key with the same Account / Project role model used for members — pick an Account Role, pick projects and a Project Role (skipped when Owner is chosen), set expiration, and copy the key once
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 API keys are how scripts, CI pipelines, Terraform, and any non-interactive automation authenticates against Raff. They use the **same role-based permission model as members** — you give a key an Account Role and (unless you picked Owner) a Project Role applied to one or more projects. The same `account.*` and `project.*` permission catalog applies; the key carries a frozen snapshot of that role's permissions when it's used.
 
@@ -12,6 +12,8 @@ This page walks the dashboard create flow.
 ## Open the API Keys page
 
 API keys live under their own sidebar item, **API Keys** (not on the Team & Projects page). Open it from the left navigation, then click **+ Create API Key**.
+
+Creating a key asks for your **two-factor code** (one code counts for 10 minutes). An API key can add SSH keys to your servers without a code, so making one needs it. Without two-factor authentication on your account, set it up first in **Settings**.
 
 ## The Create API Key dialog
 

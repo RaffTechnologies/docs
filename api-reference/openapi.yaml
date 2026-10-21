@@ -975,6 +975,128 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/vms/{id}/ssh-keys:
+    get:
+      tags:
+        - Virtual Machines
+      summary: List SSH keys on a server
+      description: >-
+        The keys in root's `authorized_keys` on a running Linux server, read from the server itself through its QEMU
+        guest agent (a few seconds). Each key is named after your saved key with the same fingerprint; a key someone
+        added on the server itself has no saved key. SSH keys are managed on Linux servers only. Needs `vm.view`.
+      operationId: listServerSSHKeys
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+      responses:
+        '200':
+          description: The server's keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerSSHKeysResponse'
+        '400':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '503':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '504':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+    post:
+      tags:
+        - Virtual Machines
+      summary: Add an SSH key to a server
+      description: >-
+        Add a key to root's `authorized_keys` on a running Linux server, at once and without a restart. `ssh_key` is
+        the ID of a saved key or a public key (the same rule as saved keys); with `save_as`, a public key is also saved
+        to your account under that name. A key the server already has changes nothing (`changed: 0`). The key also
+        goes into the server's settings, so a factory reset keeps it. Every change is emailed to the account owner and
+        written to the audit log. Needs `vm.ssh_keys`; in the dashboard it also asks for a two-factor code.
+      operationId: addServerSSHKey
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddServerSSHKeyRequest'
+      responses:
+        '200':
+          description: The server's keys after the add
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerSSHKeysResponse'
+        '400':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Missing `vm.ssh_keys`, or (dashboard sessions) `mfa_required`
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '503':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '504':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+
+  /api/v1/vms/{id}/ssh-keys/{fingerprint}:
+    delete:
+      tags:
+        - Virtual Machines
+      summary: Remove an SSH key from a server
+      description: >-
+        Remove the key with this fingerprint from root's `authorized_keys` on a running Linux server, and from the
+        server's settings so it does not come back at the next restart. Put the fingerprint in the path as
+        `ssh-keygen -l` shows it, slashes included. Root's last key is removed only with `confirm_last=true`: a server
+        created with only an SSH key has password sign-in turned off. Every change is emailed to the account owner and
+        written to the audit log. Needs `vm.ssh_keys`; in the dashboard it also asks for a two-factor code.
+      operationId: removeServerSSHKey
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - name: fingerprint
+          in: path
+          required: true
+          description: The key's SHA256 fingerprint
+          schema:
+            type: string
+            example: "SHA256:KH7zm92O0/dbuPCSkvuS9zdDvBneuFaHt+qwZbp8OYU"
+        - name: confirm_last
+          in: query
+          required: false
+          description: Remove the key even when it is root's last key
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: The server's keys after the remove
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerSSHKeysResponse'
+        '400':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Missing `vm.ssh_keys`, or (dashboard sessions) `mfa_required`
+        '404':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '409':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '503':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+        '504':
+          $ref: '#/components/responses/ServerSSHKeysRefused'
+
   /api/v1/vms/{id}/reinstall:
     post:
       tags:
@@ -3198,7 +3320,9 @@ paths:
       tags:
         - SSH Keys
       summary: List SSH keys
-      description: List SSH keys for the authenticated account. SSH keys are account-level — no project scoping.
+      description: >-
+        List the SSH keys saved in your account. Each key's `servers` are the servers in your projects where Raff last
+        saw it in root's `authorized_keys`: created or reinstalled with it, changed through Raff, or read since.
       operationId: listSSHKeys
       responses:
         '200':
@@ -11390,6 +11514,97 @@ components:
         updated_at:
           type: string
           format: date-time
+        servers:
+          type: array
+          description: >-
+            The list only: the servers in your projects where Raff last saw this key, with when. Raff does not scan
+            servers: a server's keys are recorded when it is created or reinstalled, when they change through Raff and
+            whenever they are read. Absent when none.
+          items:
+            $ref: '#/components/schemas/SSHKeyServer'
+
+    SSHKeyServer:
+      type: object
+      properties:
+        vm_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: web-01
+        status:
+          type: string
+          description: The server's status now
+          example: active
+        seen_at:
+          type: string
+          format: date-time
+          description: When Raff last saw the key on the server
+
+    ServerSSHKey:
+      type: object
+      description: One key line of root's `authorized_keys` on a server
+      properties:
+        fingerprint:
+          type: string
+          example: "SHA256:KH7zm92O0/dbuPCSkvuS9zdDvBneuFaHt+qwZbp8OYU"
+        type:
+          type: string
+          example: ssh-ed25519
+        comment:
+          type: string
+          example: you@laptop
+        has_options:
+          type: boolean
+          description: The line starts with `authorized_keys` options (`command="..."`, `from="..."`)
+        saved_key_id:
+          type: string
+          description: Your saved key with this fingerprint; empty when it is not saved
+        saved_key_name:
+          type: string
+        public_key:
+          type: string
+          description: The key without its options, as a `.pub` file holds it
+
+    ServerSSHKeys:
+      type: object
+      description: A server's keys after a read, add or remove
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServerSSHKey'
+        read_at:
+          type: string
+          format: date-time
+        changed:
+          type: integer
+          description: Lines added or removed (0 when the key was already there, or not there)
+        saved_key_id:
+          type: string
+          description: The saved key `save_as` created
+
+    ServerSSHKeysResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/ServerSSHKeys'
+
+    AddServerSSHKeyRequest:
+      type: object
+      required:
+        - ssh_key
+      properties:
+        ssh_key:
+          type: string
+          description: A saved key's ID, or one public key (the whole line of a `.pub` file)
+          example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... you@laptop"
+        save_as:
+          type: string
+          maxLength: 128
+          description: Also save a public key to your account under this name (ignored for a key you already saved)
 
     CreateSSHKeyRequest:
       type: object
@@ -14676,6 +14891,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/BillingError'
+    ServerSSHKeysRefused:
+      description: >-
+        The server's keys could not be read or changed. `reason` says why: `not_linux`, `invalid_key` (400);
+        `not_on_server` (404); `not_running`, `no_guest_agent`, `agent_blocked`, `selinux_blocked`, `last_key`,
+        `refused` (409);
+        `host_unavailable`, `context_failed` (503); `no_answer` (504). `error` is the sentence to show.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: The QEMU guest agent is not running on web-01. Install and start qemu-guest-agent in the server, then try again.
+              reason:
+                type: string
+                enum: [not_linux, invalid_key, not_on_server, not_running, no_guest_agent, agent_blocked, selinux_blocked, last_key, refused, host_unavailable, context_failed, no_answer]
     MissingProjectID:
       description: X-Project-ID header is required for this endpoint
       content:

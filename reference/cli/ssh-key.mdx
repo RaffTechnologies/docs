@@ -3,7 +3,7 @@ title: "raff ssh-key"
 description: "Manage SSH keys from the CLI — register, rename, and delete public keys used when creating Linux VMs."
 ---
 
-<sub>Updated May 10, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 The `raff ssh-key` command group manages SSH public keys registered on your account. Linux VMs accept these keys at create time via `--ssh-keys`. Every subcommand supports `--output json` for scripting. Alias: `raff ssh-keys`.
 
@@ -25,7 +25,7 @@ The `raff ssh-key` command group manages SSH public keys registered on your acco
 raff ssh-key list [--output table|json]
 ```
 
-List SSH keys for the account. Output columns: `ID`, `NAME`, `TYPE`, `FINGERPRINT`.
+List SSH keys for the account. Output columns: `ID`, `NAME`, `TYPE`, `FINGERPRINT`, `SERVERS` (the servers where Raff last saw the key). To change the keys on a running server, see [`raff vm ssh-keys`](/reference/cli/vm#ssh-keys-list).
 
 ## get
 

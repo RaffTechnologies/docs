@@ -85,6 +85,7 @@
                       "products/build/virtual-machines/quickstart-guides/rename",
                       "products/build/virtual-machines/quickstart-guides/resize",
                       "products/build/virtual-machines/quickstart-guides/reset-password",
+                      "products/build/virtual-machines/quickstart-guides/manage-ssh-keys",
                       "products/build/virtual-machines/quickstart-guides/reinstall",
                       "products/build/virtual-machines/quickstart-guides/factory-reset",
                       "products/build/virtual-machines/quickstart-guides/create-snapshot",
@@ -686,6 +687,14 @@
                       "api-reference/endpoint/reset-vm-password",
                       "api-reference/endpoint/reinstall-vm",
                       "api-reference/endpoint/factory-reset-vm"
+                    ]
+                  },
+                  {
+                    "group": "SSH keys",
+                    "pages": [
+                      "api-reference/endpoint/list-vm-ssh-keys",
+                      "api-reference/endpoint/add-vm-ssh-key",
+                      "api-reference/endpoint/remove-vm-ssh-key"
                     ]
                   },
                   {

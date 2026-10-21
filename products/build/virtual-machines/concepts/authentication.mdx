@@ -3,7 +3,7 @@ title: Authentication & access
 description: How credentials and transports combine to let you reach a VM, and what to use when
 ---
 
-<sub>Updated October 20, 2026</sub>
+<sub>Updated October 21, 2026</sub>
 
 Every way of getting into a Raff VM combines two layers:
 
@@ -24,7 +24,7 @@ Public-key authentication. You upload the **public** key once at the account lev
 
 - The private key never leaves your machine.
 - Multiple keys per account (one per laptop, per CI runner, per teammate).
-- Adding a key after VM creation: log in via VNC and append to `~/.ssh/authorized_keys`.
+- Adding or removing a key on a running Linux server: [Add or remove SSH keys](/products/build/virtual-machines/quickstart-guides/manage-ssh-keys), from the server's Security tab, without a restart.
 - Keys are unaffected by [reset password](/products/build/virtual-machines/quickstart-guides/reset-password) — they keep working even after a password rotation.
 
 ### Password (root / Administrator)
