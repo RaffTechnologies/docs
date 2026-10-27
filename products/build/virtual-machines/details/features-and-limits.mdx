@@ -4,15 +4,16 @@ sidebarTitle: Features & limits
 description: Full feature list for Virtual Machines on the Raff Platform, plus account, VM, and platform limits
 ---
 
-<sub>Updated October 14, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 ## Features
 
 ### Compute
-- **Flexible sizing** — General Purpose and CPU-Optimized plan families across CPU, RAM, and base disk
+- **Flexible sizing** — General Purpose, CPU-Optimized, Windows Server and Cost-Optimized plan families across CPU, RAM, and base disk
+- **Cost-Optimized plans**: Linux servers on a local NVMe disk, from \$9.99/mo, with no uptime commitment; resize stays within the tier. See [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
 - **On-demand resize** — change CPU and RAM by switching plans (VM must be stopped); the difference settles to your account balance
 - **Disk resize (one-way)** — grow the OS disk without rebuilding (VM must be stopped)
-- **Burstable CPU on Standard plans**: use all vCPUs whenever you need them, with a sustained level of 40% of your vCPUs that is always available; heavy use above it is paced by CPU credit. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting). Premium and Windows plans work differently, see [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
+- **Burstable CPU on Standard and Cost-Optimized plans**: use all vCPUs whenever you need them, with a sustained level of 40% of your vCPUs that is always available; heavy use above it is paced by CPU credit. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting). Premium and Windows plans work differently, see [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
 - **Custom images** — save a VM's OS disk as a reusable image and create new VMs from it
 
 ### OS templates
@@ -31,7 +32,7 @@ description: Full feature list for Virtual Machines on the Raff Platform, plus a
 - **Unlimited bandwidth** — outbound traffic is unmetered and included on every plan; no per-GB egress charge
 
 ### Storage
-- **Base disk** — SSD, included with the plan
+- **Base disk** — SSD, included with the plan (local NVMe on Cost-Optimized plans)
 - **Block storage volumes** — attach additional storage that can outlive the VM
 - **Snapshots** — point-in-time copies of an OS disk or volume; per-GB-hour pricing
 - **Backups** — automated Daily or Weekly schedules with configurable retention; storage draws from the shared free pool (see Pricing)

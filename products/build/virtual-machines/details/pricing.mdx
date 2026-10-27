@@ -1,23 +1,24 @@
 ---
 title: Pricing
-description: How Virtual Machines are billed on the Raff Platform — full per-plan rate tables for Standard, Premium and Windows Server tiers, subscription vs PAYG, billing-date alignment, and what's billed alongside the plan
+description: "How Virtual Machines are billed on the Raff Platform: full per-plan rate tables for Standard, Premium, Windows Server and Cost-Optimized tiers, subscription vs PAYG, billing-date alignment, and what's billed alongside the plan"
 ---
 
-<sub>Updated September 7, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 Raff bills VMs against a prepaid **account balance**. The default model is subscription; pay-as-you-go is available on request.
 
 ## Plan tiers and rates (us-east)
 
-Three plan tiers, each with multiple sizes. Prices are USD, per VM, per region.
+Four plan tiers, each with multiple sizes. Prices are USD, per VM, per region.
 
 | Tier | CPU model | Use case |
 |---|---|---|
 | **Standard — General Purpose** | **Shared** vCPU | Web servers, dev/staging, batch jobs, anything that doesn't need consistent CPU performance every millisecond. Best price/CPU |
 | **Premium — CPU Optimized** | **Guaranteed** vCPU | Databases, real-time services, latency-sensitive APIs, anything where noisy-neighbor variability would hurt. Higher per-vCPU price, predictable performance |
 | **Windows Server** | **Guaranteed** vCPU | Windows workloads over RDP — Active Directory, file shares, .NET and IIS apps, SQL Server, trading terminals. Licence billed separately from compute |
+| **Cost-Optimized** | **Shared** vCPU, local NVMe disk | The lowest price, for Linux servers that can be offline while their node is repaired. No uptime commitment |
 
-Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread. Pick **Windows Server** to run Windows — you select it by choosing a Windows template at create time.
+Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread. Pick **Windows Server** to run Windows — you select it by choosing a Windows template at create time. Pick **Cost-Optimized** for the lowest price when the server can be offline while its node is repaired.
 
 ### Standard — General Purpose plans (shared CPU)
 
@@ -81,6 +82,18 @@ The rates below are for **compute only** — Windows licensing is billed separat
 | 8 | 32 GiB | 240 GiB | \$137.99 | \$1,379.90 | \$2,483.82 |
 | 16 | 16 GiB | 200 GiB | \$112.99 | \$1,129.90 | \$2,033.82 |
 | 16 | 32 GiB | 360 GiB | \$174.99 | \$1,749.90 | \$3,149.82 |
+
+### Cost-Optimized plans (local NVMe)
+
+Cost-Optimized servers keep their disk on a local NVMe drive of the node they run on, with shared burstable CPU like Standard. Linux only, with no uptime commitment: see [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing) for what else differs.
+
+| vCPU | RAM | SSD | Monthly | Yearly | 24-month |
+|---|---|---|---|---|---|
+| 2 | 4 GiB | 40 GiB | \$9.99 | \$99.90 | \$179.82 |
+| 4 | 8 GiB | 80 GiB | \$19.99 | \$199.90 | \$359.82 |
+| 8 | 16 GiB | 160 GiB | \$39.99 | \$399.90 | \$719.82 |
+| 12 | 24 GiB | 240 GiB | \$69.99 | \$699.90 | \$1,259.82 |
+| 16 | 32 GiB | 320 GiB | \$89.99 | \$899.90 | \$1,619.82 |
 
 ### Lock-in discount
 
@@ -190,7 +203,7 @@ Backups and snapshots share **one free-storage pool per account**:
 
 - **50 GB free** to start.
 - Every VM you run grows the pool: **+10%** of its disk for Standard
-  (general-purpose) plans, **+15%** for Premium (CPU-optimized) and Windows Server plans.
+  (general-purpose) and Cost-Optimized plans, **+15%** for Premium (CPU-optimized) and Windows Server plans.
 - Deleting a VM (or shrinking its disk) shrinks the pool by the same amount;
   it never drops below the 50 GB base.
 

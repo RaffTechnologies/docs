@@ -3,7 +3,7 @@ title: Storage model
 description: How base disks, volumes, snapshots, backups, and custom images relate — and what survives what
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 A Raff VM has up to **five storage objects** in its orbit, and the source of most "where did my data go?" support tickets is mixing them up. This page is the map.
 
@@ -27,6 +27,7 @@ The boot disk that comes with every VM. Sized by the plan you pick (e.g. 50 GB o
 
 - Size grows via [resize](/products/build/virtual-machines/quickstart-guides/resize) → Storage tab. **One-way** — disks can grow but cannot shrink.
 - The base disk and the VM are inseparable: deleting the VM destroys the base disk.
+- On Cost-Optimized plans the base disk is local NVMe on the node the server runs on: fast, but offline while that node is repaired. See [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing).
 
 ### Block volumes
 
@@ -35,6 +36,7 @@ Additional storage you attach on top of the base disk — see [Volumes](/product
 - Live in the same region as the VM; can be detached and reattached to a different VM in that region.
 - Survive the VM. Delete the VM → the volume detaches but is **not** deleted; it keeps billing until you delete it explicitly.
 - Format and mount inside the OS — see [Attach to a VM](/products/store/volumes/quickstart-guides/attach-to-vm).
+- A Cost-Optimized server takes only volumes created for it (extra storage at create, or a volume created to attach to it). They stay on its node and attach to no other kind of server.
 
 ## Protective copies
 

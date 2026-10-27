@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 21, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,22 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### October 27, 2026
+
+**Virtual Machines: Cost-Optimized plans**
+
+- 🔵 **Updated**: [List VM pricing](/api-reference/catalog/list-vm-pricing) `GET /api/v1/public/pricing/vm` lists the Cost-Optimized plans (`vm_type` `cost_optimized`, \$9.99 to \$89.99 a month) and takes `type=cost_optimized`. Cost-Optimized servers run on a local NVMe disk of one node, Linux only, with no uptime commitment. See [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing).
+- 🔵 **Updated**: [List templates](/api-reference/catalog/list-templates) `GET /api/v1/public/templates` takes `vm_type=cost_optimized`: the templates a Cost-Optimized server can run.
+- 🔵 **Updated**: **Create VM** with a Cost-Optimized `pricing_id` refuses a Windows template; **Resize VM** keeps a server in its tier; **Attach volume** attaches a Cost-Optimized server's volumes only to Cost-Optimized servers.
+
+**Virtual Machines: CLI** (raff-cli v0.6.8)
+
+- 🔵 **Updated**: [`raff pricing vm`](/reference/cli/pricing) and [`raff template list`](/reference/cli/template) `--vm-type` take `cost_optimized` (and `windows`).
+
+**Virtual Machines: Terraform** (provider v0.4.7)
+
+- 🔵 **Updated**: [`raff_vm_pricing` and `raff_templates`](/reference/terraform/data-sources) filter by `vm_type` `cost_optimized` (and `windows`).
 
 ### October 21, 2026
 

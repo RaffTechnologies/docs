@@ -3,7 +3,7 @@ title: Snapshots vs Backups
 description: Both capture a VM's disk state, but they answer different needs — manual restore points vs scheduled protection. Both are deleted with the VM.
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 Snapshots and backups both capture a VM's disk state, but they're built for different jobs. The short version: **snapshots are manual restore points** you take before risky changes, **backups are scheduled protection** that runs in the background. You can use both on the same VM.
 
@@ -52,6 +52,10 @@ Three things to know:
 - **You can start a fresh series whenever you want.** Use [Reset Backup Series](/api-reference/backups/reset-backup-chain) — it closes the current series and the next backup will create a new baseline. Existing restore points stay restorable until you delete them.
 
 Customers used to scheduled snapshots will recognize this model — `Backup` rows in the API now include an `increment_id` field so you can see the series structure programmatically. Legacy backups taken before this feature shipped have `increment_id: null` and behave exactly as they did before (standalone, no series).
+
+## On Cost-Optimized servers
+
+A Cost-Optimized server's disk is on its node's local NVMe. Its snapshots stay on that node with the disk. Its backups cover the OS disk and are stored off the node, so they are the copy that survives a node failure: keep backups on for anything you can't rebuild.
 
 ## RPO and RTO targets
 

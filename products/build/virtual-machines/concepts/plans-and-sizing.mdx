@@ -1,26 +1,37 @@
 ---
 title: Plans & sizing
-description: Three plan tiers (General Purpose / shared CPU, CPU Optimized / guaranteed CPU, and Windows Server), how to pick between them, and which size to start with for common workloads — web apps, databases, workers, dev/staging, Windows desktop, game servers
+description: "Four plan tiers (General Purpose with shared CPU, CPU Optimized with guaranteed CPU, Windows Server, and Cost-Optimized on local NVMe), how to pick between them, and which size to start with for common workloads: web apps, databases, workers, dev/staging, Windows desktop, game servers"
 ---
 
-<sub>Updated September 7, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single rate. Outbound bandwidth is **unlimited** on every plan. Picking the right plan is the main sizing decision when creating a VM. The full price list lives on [Pricing](/products/build/virtual-machines/details/pricing); this page is the **how-to-pick** guide.
 
-## The three tiers
+## The four tiers
 
 | Tier | CPU model | When it's the right pick |
 |---|---|---|
 | **Standard — General Purpose** | **Shared** vCPU | Most workloads. Cheapest per-vCPU rate. Short performance dips during host-level contention are acceptable |
 | **Premium — CPU Optimized** | **Guaranteed** vCPU | Workloads where consistent CPU performance matters every millisecond — databases, real-time services, latency-sensitive APIs |
 | **Windows Server** | **Guaranteed** vCPU | Anything running Windows. Its own plan family, chosen by picking a Windows template; the licence is a separate line |
+| **Cost-Optimized** | **Shared** vCPU, local NVMe disk | The lowest price, for servers that can be offline while their node is repaired: dev and staging, CI runners, workers you can rebuild, side projects. No uptime commitment |
 
 In simple terms:
 
 - **Standard** — the platform may share the underlying physical core with other VMs. Performance is great most of the time but can have brief jitter when neighbors get busy. Best price/CPU. Standard is **burstable**: all your vCPUs are available whenever you need them, on top of a sustained level you can hold indefinitely. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting).
 - **Premium** — half a physical thread is reserved for every vCPU, with burst to the full thread. Performance is predictable and steady. Higher price/CPU but no noisy-neighbor dips.
+- **Cost-Optimized**: the disk is local NVMe on the one node the server runs on, which makes it fast and cheap. A repair of that node takes the server offline until the node is back, so it has no uptime commitment. CPU is shared and burstable, like Standard. Linux only, in US East.
 
-If you can't tell which fits, **start with Standard**. Move workloads to Premium when you can point to a specific symptom (latency p99 spikes, database query timeouts under load, real-time-stream stutter) that guaranteed CPU would solve.
+If you can't tell which fits, **start with Standard**. Move workloads to Premium when you can point to a specific symptom (latency p99 spikes, database query timeouts under load, real-time-stream stutter) that guaranteed CPU would solve. Pick Cost-Optimized when price matters more than uptime and your important data also lives somewhere else.
+
+### What is different on Cost-Optimized
+
+- **Linux only.** Every Linux template runs on it; Windows does not.
+- **Resize stays in the tier.** A Cost-Optimized server resizes to another Cost-Optimized plan. To move to another tier, create a new server.
+- **Backups cover the OS disk** and are stored off the node, so they survive a node failure. Snapshots stay on the node with the disk.
+- **Volumes stay on the node.** Extra storage added at create, or a volume created to attach to the server, attaches only to Cost-Optimized servers.
+- **No custom images.** Save as image is not available, because the image would stay on one node.
+- **No uptime commitment.** See the [SLA](/products/build/virtual-machines/details/sla).
 
 ## Recommended starting plans by workload
 
@@ -33,6 +44,7 @@ Each row below names a **starting** plan — the place to begin, then resize up 
 | **Personal blog, hobby project, low-traffic landing page** | Standard 1 vCPU / 1 GiB / 25 GiB | \$4.99/mo |
 | **Static-site host with Caddy / nginx** | Standard 1 vCPU / 1 GiB or 1 vCPU / 2 GiB | \$4.99–\$8.99/mo |
 | **Small dev / staging server** | Standard 2 vCPU / 4 GiB / 80 GiB | \$17.99/mo |
+| **Dev / staging or side project on the lowest budget** | Cost-Optimized 2 vCPU / 4 GiB / 40 GiB | \$9.99/mo |
 | **Production web app, low–medium traffic** | Standard 4 vCPU / 8 GiB / 160 GiB | \$33.99/mo |
 | **Production API, medium traffic** | Standard 8 vCPU / 16 GiB / 240 GiB | \$71.99/mo |
 | **Latency-sensitive production API** | Premium 4 vCPU / 8 GiB / 120 GiB | \$72.99/mo |
@@ -68,6 +80,7 @@ For databases above ~80 GB, attach a [Volume](/products/store/volumes) for the d
 | **Small repo, sequential builds** | Standard 4 vCPU / 8 GiB | \$33.99/mo |
 | **Multiple parallel builds** | Standard 8 vCPU / 16 GiB | \$71.99/mo |
 | **Heavy build (Docker images, monorepo)** | Standard 12 vCPU / 24 GiB | \$109.99/mo |
+| **Runner you can rebuild, lowest price** | Cost-Optimized 4 vCPU / 8 GiB / 80 GiB | \$19.99/mo |
 
 ### Bastion / jump host
 

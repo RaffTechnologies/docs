@@ -22,7 +22,7 @@ The `raff pricing` command group browses Raff's public pricing catalog. Use it t
 ## vm
 
 ```bash
-raff pricing vm [--region <region>] [--vm-type standard|premium] [--output table|json]
+raff pricing vm [--region <region>] [--vm-type standard|premium|windows|cost_optimized] [--output table|json]
 ```
 
 List VM plans. Output columns: `ID`, `TYPE`, `REGION`, `vCPU`, `RAM`, `SSD`, `TRANSFER`, `$/HR`, `$/MO`. The `ID` is what you pass to `raff vm create --pricing-id`.
@@ -30,6 +30,9 @@ List VM plans. Output columns: `ID`, `TYPE`, `REGION`, `vCPU`, `RAM`, `SSD`, `TR
 ```bash
 # All standard plans
 raff pricing vm --vm-type standard
+
+# Cost-Optimized plans (local NVMe, from $9.99/mo)
+raff pricing vm --vm-type cost_optimized
 
 # Cheapest plan that meets your minimums
 raff pricing vm --output json | jq 'sort_by(.monthly_price) | .[0]'

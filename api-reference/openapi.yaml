@@ -128,7 +128,7 @@ paths:
       summary: List OS templates
       description: |
         Returns all public OS templates available for VM creation.
-        Windows templates are only available for premium VM types.
+        Windows templates are only available for Windows plans. Cost-Optimized plans run the Linux templates with a copy on their nodes' local disk: list them with `vm_type=cost_optimized`.
       operationId: listTemplates
       security: []
       parameters:
@@ -140,10 +140,10 @@ paths:
             enum: [os, marketplace]
         - name: vm_type
           in: query
-          description: Filter by VM type. Windows templates are only returned for `windows`; `standard` and `premium` exclude them.
+          description: Filter by VM type. Windows templates are only returned for `windows`; `standard`, `premium` and `cost_optimized` exclude them, and `cost_optimized` returns only the templates a Cost-Optimized server can run.
           schema:
             type: string
-            enum: [standard, premium, windows]
+            enum: [standard, premium, windows, cost_optimized]
         - name: region
           in: query
           description: Filter by region
@@ -183,10 +183,10 @@ paths:
       parameters:
         - name: type
           in: query
-          description: Filter by VM type
+          description: "Filter by VM type: `standard` (General Purpose), `premium` (CPU-Optimized), `windows` (Windows Server) or `cost_optimized` (Cost-Optimized)"
           schema:
             type: string
-            enum: [standard, premium, windows]
+            enum: [standard, premium, windows, cost_optimized]
         - name: region
           in: query
           description: Filter by region
@@ -647,6 +647,10 @@ paths:
         1. **Use existing** — set `vpc_id` to join an existing VPC.
         2. **Create new** — set `vpc_name` and `vpc_cidr` to create a custom VPC.
         3. **Auto-create** (default) — leave all VPC fields empty. A VPC named `vpc-{vm-name}` is created automatically.
+
+        ## Cost-Optimized plans
+
+        A `pricing_id` of a `cost_optimized` plan creates a Cost-Optimized server: its disk is on its node's local NVMe and it has no uptime commitment. It takes Linux templates only, those listed by [List templates](/api-reference/catalog/list-templates) with `vm_type=cost_optimized`; a Windows template is refused. Its backups cover the OS disk, and `extra_storage` creates a volume for Cost-Optimized servers.
 
         ## Billing Checks
 
@@ -1160,6 +1164,8 @@ paths:
       description: |
         Resize a virtual machine's CPU and RAM by selecting a new pricing plan.
         The VM must be stopped before resizing.
+
+        A Cost-Optimized server resizes only to another `cost_optimized` plan, and other servers cannot move to one: such a request is refused.
 
         ## Billing
 
@@ -2595,6 +2601,8 @@ paths:
       summary: Attach volume to VM
       description: |
         Attach a volume to a VM. The VM must be in the same region as the volume. A volume can only be attached to one VM at a time — detach it first if it's already attached elsewhere.
+
+        A Cost-Optimized server keeps its volumes on its node: it takes the volumes created to attach to a Cost-Optimized server, and they attach to no other server. A volume created on its own attaches to General Purpose, CPU-Optimized and Windows servers.
 
         Inside the guest, the volume appears as `/dev/vdb`, `/dev/vdc`, etc. (virtio-blk).
       operationId: attachVolume
@@ -10721,7 +10729,7 @@ components:
           example: 25
         is_windows:
           type: boolean
-          description: Whether this is a Windows template (only available for premium VMs)
+          description: Whether this is a Windows template (only available for Windows plans)
           example: false
         os_type:
           type: string
@@ -10795,8 +10803,8 @@ components:
           example: 400.00
         vm_type:
           type: string
-          enum: [standard, premium, windows]
-          description: VM type
+          enum: [standard, premium, windows, cost_optimized]
+          description: "VM type: `standard` (General Purpose, shared burstable CPU), `premium` (CPU-Optimized, guaranteed CPU), `windows` (Windows Server) or `cost_optimized` (Cost-Optimized: shared burstable CPU on a local NVMe disk of one node, Linux only, no uptime commitment)"
           example: standard
         region:
           type: string

@@ -45,7 +45,7 @@ resource "raff_vm" "web" {
 }
 ```
 
-Lists OS templates available for VM creation. Filters: `category` (`linux`, `windows`, `app`), `vm_type` (`standard`, `premium`), `region`.
+Lists OS templates available for VM creation. Filters: `category` (`linux`, `windows`, `app`), `vm_type` (`standard`, `premium`, `windows`, `cost_optimized`), `region`.
 
 Each entry has `id`, `name`, `version`, `os_type`, `category`, `region`, `is_windows`, `min_cpu`, `min_ram`, `min_storage`, `description`. The `min_*` fields are the smallest plan that can run the template — pick a `pricing_id` at or above these.
 
@@ -71,7 +71,7 @@ resource "raff_vm" "api" {
 }
 ```
 
-Lists VM pricing plans. Filters: `region`, `vm_type`. Each plan has `id`, `vm_type`, `region`, `vcpu`, `memory_gib`, `ssd_gib`, `transfer_gib`, `price_per_hour`, `monthly_price`, `yearly_price`, `twenty_four_month_price`.
+Lists VM pricing plans. Filters: `region`, `vm_type` (`standard`, `premium`, `windows`, `cost_optimized`). Each plan has `id`, `vm_type`, `region`, `vcpu`, `memory_gib`, `ssd_gib`, `transfer_gib`, `price_per_hour`, `monthly_price`, `yearly_price`, `twenty_four_month_price`.
 
 The `id` is the integer to pass as `pricing_id` on `raff_vm`.
 

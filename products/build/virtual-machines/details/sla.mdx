@@ -3,7 +3,7 @@ title: SLA
 description: Uptime commitment, service credit schedule, and how to claim for services on the Raff Platform
 ---
 
-<sub>Updated October 14, 2026</sub>
+<sub>Updated October 27, 2026</sub>
 
 This page summarizes the Raff Service Level Agreement across platform services. The full, legally binding SLA is published at:
 
@@ -19,11 +19,11 @@ Live availability for every covered service is recorded automatically at:
 
 ## Uptime commitment
 
-Raff Technologies guarantees **99.90% monthly uptime** for every Raff product.
+Raff Technologies guarantees **99.90% monthly uptime** for every Raff product, except Cost-Optimized virtual machines.
 
 | Service | Monthly uptime | What is measured |
 |---|---|---|
-| Virtual Machines | 99.90% | The VM is running and reachable |
+| Virtual Machines (General Purpose, CPU-Optimized, Windows) | 99.90% | The VM is running and reachable |
 | Volumes | 99.90% | The volume is attached and readable |
 | Snapshots and Backups | 99.90% | Taking and restoring them |
 | Object Storage | 99.90% | S3 API availability |
@@ -34,6 +34,8 @@ Raff Technologies guarantees **99.90% monthly uptime** for every Raff product.
 | Functions | 99.90% | Invocations are accepted and run |
 
 Uptime is calculated as `(total minutes in the month - unavailable minutes) / total minutes × 100%`.
+
+Cost-Optimized virtual machines have no uptime commitment: each runs on one node's local disk, so a node repair takes it offline until the node is back. Their backups are kept off the node.
 
 High availability (Kubernetes HA, database HA) does not change the commitment; it keeps your service running through a node failure, so it is the right choice for production. Free plans, such as the free database, are covered, but have no monthly charge to credit.
 

@@ -20,7 +20,7 @@ The `raff template` command group lists OS templates available for VM creation â
 ```bash
 raff template list \
   [--category linux|windows|app] \
-  [--vm-type standard|premium] \
+  [--vm-type standard|premium|windows|cost_optimized] \
   [--region <region>] \
   [--output table|json]
 ```
@@ -31,8 +31,11 @@ List OS templates, optionally filtered. Output columns: `ID`, `NAME`, `VERSION`,
 # Every Linux template
 raff template list --category linux
 
-# Windows templates compatible with premium plans
-raff template list --category windows --vm-type premium
+# Windows templates (they run on Windows plans only)
+raff template list --vm-type windows
+
+# Templates a Cost-Optimized server can run
+raff template list --vm-type cost_optimized
 
 # Filter to a specific region
 raff template list --region us-east --output json | jq '.[] | {id, name}'
