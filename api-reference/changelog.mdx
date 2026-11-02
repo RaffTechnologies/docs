@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated October 27, 2026</sub>
+<sub>Updated November 2, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,28 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 2, 2026
+
+**Virtual Machines: API**
+
+- 🟢 **Added**: **Create VM** `POST /api/v1/vms` takes `auto_generate_password`: Raff makes a strong root or Administrator password and emails it to the account once the server is created. It is never in an API response; send it instead of `password`.
+- 🟣 **Fixed**: **Create VM** `pricing_id` no longer shows a maximum of 13 (current plans have higher ids; list them with [List VM pricing](/api-reference/catalog/list-vm-pricing)).
+- 🟣 **Fixed**: **Delete VM** and **Delete VMs in bulk** list the real defaults: `volume_action` `detach` and `delete_vpc` `false`.
+- 🔵 **Updated**: **Resize VM** `POST /api/v1/vms/{id}/resize` always needs `pricing_id`, from every caller.
+- 🟢 **Added**: [List templates](/api-reference/catalog/list-templates) `GET /api/v1/public/templates` gives Windows templates `licence_price_per_month`, the monthly price of Raff's Windows Server licence.
+
+**Virtual Machines: CLI** (raff-cli v0.6.9)
+
+- 🔵 **Updated**: [`raff vm create`](/reference/cli/vm#create) takes `--auto-generate-password`; [`raff template list`](/reference/cli/template) shows the Windows licence price.
+
+**Virtual Machines: Terraform** (provider v0.4.8)
+
+- 🔵 **Updated**: [`raff_vm`](/reference/terraform/raff_vm) takes `auto_generate_password`, which keeps the password out of the state; the templates data source gives `licence_price_per_month`.
+
+**Kubernetes: API**
+
+- 🟣 **Fixed**: **Create cluster** `POST /api/v1/k8s/clusters` without `firewall_enabled` now gets the firewall, as documented (before, leaving it out created the cluster without one).
 
 ### October 27, 2026
 

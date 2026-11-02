@@ -47,7 +47,7 @@ resource "raff_vm" "web" {
 
 Lists OS templates available for VM creation. Filters: `category` (`linux`, `windows`, `app`), `vm_type` (`standard`, `premium`, `windows`, `cost_optimized`), `region`.
 
-Each entry has `id`, `name`, `version`, `os_type`, `category`, `region`, `is_windows`, `min_cpu`, `min_ram`, `min_storage`, `description`. The `min_*` fields are the smallest plan that can run the template — pick a `pricing_id` at or above these.
+Each entry has `id`, `name`, `version`, `os_type`, `category`, `region`, `is_windows`, `licence_price_per_month` (Windows: Raff's monthly licence price), `min_cpu`, `min_ram`, `min_storage`, `description`. The `min_*` fields are the smallest plan that can run the template — pick a `pricing_id` at or above these.
 
 ## raff_vm_pricing
 

@@ -70,7 +70,7 @@ raff vm create \
   --template-id <template-uuid> \
   --pricing-id <plan-id> \
   --region <region> \
-  [--password <password>] \
+  [--password <password> | --auto-generate-password] \
   [--ssh-keys <key1,key2>] \
   [--extra-storage <gb>] \
   [--backup-type none|daily|weekly] \
@@ -78,7 +78,7 @@ raff vm create \
   [--vpc-id <vpc-uuid> | --vpc-name <name> --vpc-cidr <cidr>]
 ```
 
-Create a new VM. Required: `--name`, `--template-id`, `--pricing-id`, `--region`. Get template IDs via [List Templates](/api-reference/catalog/list-templates) and pricing IDs via [List VM Pricing](/api-reference/catalog/list-vm-pricing) or the [Pricing](/products/build/virtual-machines/details/pricing) page.
+Create a new VM. Required: `--name`, `--template-id`, `--pricing-id`, `--region`. Get template IDs via [List Templates](/api-reference/catalog/list-templates) and pricing IDs via [List VM Pricing](/api-reference/catalog/list-vm-pricing) or the [Pricing](/products/build/virtual-machines/details/pricing) page. With `--auto-generate-password`, Raff makes the root or Administrator password and emails it to the account once the server is created; it is never shown or stored by the CLI.
 
 ## update
 

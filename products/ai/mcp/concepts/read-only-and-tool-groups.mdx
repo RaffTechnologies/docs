@@ -18,7 +18,7 @@ Add `?read_only=true` to the URL:
 https://mcp.rafftechnologies.com/mcp?read_only=true
 ```
 
-The app gets only the tools that read: list and inspect databases, plans, connection strings, tables, metrics, slow queries, logs, backups, extensions, users, read-only queries, apps, app templates and sizes, app logs, deploys, environment variables and domains, and documentation search. Every tool that creates, changes or deletes anything is left out, including `run_sql`, `set_app_env` and `deploy_app`.
+The app gets only the tools that read: list and inspect databases, plans, connection strings, tables, metrics, slow queries, logs, backups, extensions, users, read-only queries, apps, app templates and sizes, app logs, deploys, environment variables and domains, servers, images, plans, SSH keys, snapshots, backups and firewalls, Kubernetes clusters, nodes, events, metrics, upgrades and kubeconfigs, and documentation search. Every tool that creates, changes or deletes anything is left out, including `run_sql`, `set_app_env` and `deploy_app`.
 
 `run_query` stays, and refuses any statement that writes. `get_app_env` stays too: with `reveal` it can read an app's secret values if your role may manage apps.
 
@@ -34,9 +34,11 @@ https://mcp.rafftechnologies.com/mcp?features=databases
 |---|---|
 | `databases` | Managed databases (23 tools) |
 | `apps` | Raff Apps (18 tools) |
+| `servers` | Linux and Windows servers (21 tools) |
+| `kubernetes` | Managed Kubernetes (17 tools) |
 | `docs` | `search_docs`, answers from the Raff documentation |
 
-Without `features`, every group is loaded. An unknown group name is refused, so a typo does not silently load nothing. New groups (functions, servers) are added as they ship; a URL that names its groups keeps exactly those.
+Without `features`, every group is loaded. An unknown group name is refused, so a typo does not silently load nothing. New groups (functions) are added as they ship; a URL that names its groups keeps exactly those.
 
 ### Both together
 

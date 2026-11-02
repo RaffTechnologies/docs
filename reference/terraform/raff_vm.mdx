@@ -73,7 +73,8 @@ resource "raff_vm" "api" {
 | Argument | Type | Description |
 |---|---|---|
 | `ssh_keys` | list(string) | SSH keys for root: saved key IDs (`raff_ssh_key.<name>.id`) or public keys. Changing the list adds and removes keys on the running Linux VM, without recreating it; the last key goes only when the list is empty. Keys added on the server itself are left alone and are not read back |
-| `password` | string | Root (Linux) or Administrator (Windows) password. Mutually exclusive with `ssh_keys` for some templates |
+| `password` | string | Root (Linux) or Administrator (Windows) password. Mutually exclusive with `ssh_keys` for some templates. Kept in the Terraform state; `auto_generate_password` keeps it out |
+| `auto_generate_password` | bool | Raff makes the root or Administrator password and emails it to the account once the server is created. The password never reaches Terraform or its state. Not with `password` |
 
 ### Optional — storage
 

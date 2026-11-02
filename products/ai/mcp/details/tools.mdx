@@ -4,7 +4,7 @@ sidebarTitle: Tools
 description: Every tool the Raff MCP server gives an AI assistant, its arguments, and which tools change things.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 2, 2026</sub>
 
 The tools an AI assistant can call after you connect the Raff MCP server. You do not call them yourself: you ask in plain words and the assistant picks the tool. This page tells you what it can and cannot do.
 
@@ -70,6 +70,71 @@ Every tool is labelled for the app: **read** tools only look, and every tool tha
 | `resume_app` | Starts a paused app again with the instances it had | `app_id` | |
 | `link_database_to_app` | Links a running database: sets `DATABASE_URL` and the other `DATABASE_*` variables and redeploys the app | `app_id`, `database_id`, `env_prefix` | A second database needs its own `env_prefix` |
 | `delete_app` | Deletes an app | `app_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the app's name. Linked databases are kept and keep their price; delete them with `delete_database` |
+
+## Servers: read
+
+Linux and Windows servers (virtual machines).
+
+| Tool | What it does | Arguments |
+|---|---|---|
+| `list_servers` | Lists the account's servers with status, OS, size and addresses | none |
+| `get_server` | Status, OS, size, plan, addresses, how to sign in (SSH or Remote Desktop), and whether Windows is still setting up | `server_id` |
+| `list_server_images` | Operating systems a server can run, with the smallest size each needs | `os` (optional: `linux` or `windows`) |
+| `list_server_plans` | Plans (vCPU, memory, disk, traffic) with their monthly price | `type` (optional) |
+| `list_ssh_keys` | SSH keys saved in the account | none |
+| `list_server_snapshots` | A server's snapshots | `server_id` |
+| `list_server_backups` | A server's backups and when each expires | `server_id` |
+| `list_firewalls` | Firewalls (security groups) with their rules | none |
+
+## Servers: write
+
+No password is ever asked for or shown: a Linux server takes saved SSH keys, and otherwise Raff makes the password and emails it to the account.
+
+| Tool | What it does | Arguments | Notes |
+|---|---|---|---|
+| `create_server` | Creates a Linux or Windows server and waits until it runs | `name`, `image_id`, `plan_id`, `ssh_key_ids`, `project_id`, `confirm_monthly_price_usd` | No arguments: the newest Ubuntu on the smallest General Purpose plan. Always needs a [confirmed quote](/products/ai/mcp/concepts/paid-changes). A Windows server includes Raff's Windows licence and is paid before it is made |
+| `start_server`, `stop_server` | Starts or shuts down a server | `server_id` | A stopped server is still billed |
+| `reboot_server` | Restarts a server | `server_id`, `hard` | `hard` power-cycles it at once |
+| `resize_server` | Moves a stopped server to another plan of the same kind | `server_id`, `plan_id`, `confirm_monthly_price_usd` | A bigger plan needs a confirmed quote |
+| `reset_server_password` | Gives root or Administrator a new password, emailed to the account | `server_id` | The server must be running |
+| `rename_server` | Renames a server | `server_id`, `name` | |
+| `create_server_snapshot` | Saves the state of a server's disk | `server_id`, `name` | Space beyond the included snapshot space is billed by the hour |
+| `restore_server_snapshot` | Puts a stopped server's disk back to a snapshot | `server_id`, `snapshot_id` | **Destructive** |
+| `restore_server_backup` | Puts a stopped server back to a backup, in place | `server_id`, `backup_id` | **Destructive** |
+| `set_server_firewall` | Puts a firewall on the server's public address, or takes it off | `server_id`, `firewall_id` | |
+| `reinstall_server` | Erases the disk and installs an operating system again | `server_id`, `image_id`, `ssh_key_ids`, `confirm_name` | **Destructive**. `confirm_name` must equal the server's name |
+| `delete_server` | Deletes a server with its backups and snapshots | `server_id`, `confirm_name` | **Destructive**. Attached volumes are kept |
+
+## Kubernetes: read
+
+| Tool | What it does | Arguments |
+|---|---|---|
+| `list_clusters` | Lists the account's clusters with status, version and node pools | none |
+| `get_cluster` | Status (and why it failed), whether it is ready, version, API address and node pools | `cluster_id` |
+| `list_kubernetes_versions` | Versions a new cluster can run | none |
+| `list_kubernetes_plans` | Worker node plans with their monthly price, and the high availability fee | none |
+| `list_cluster_nodes` | Nodes with their role, status, size and address | `cluster_id` |
+| `get_cluster_events` | Newest events: creation progress, scaling, upgrades, errors | `cluster_id`, `limit` |
+| `get_cluster_metrics` | CPU, memory and pod use, ready nodes, control-plane health | `cluster_id` |
+| `get_cluster_upgrades` | The version, whether an upgrade runs, and the versions it can move to | `cluster_id` |
+| `get_kubeconfig` | A kubeconfig with cluster-admin access, valid for 24 hours | `cluster_id` |
+
+## Kubernetes: write
+
+| Tool | What it does | Arguments | Notes |
+|---|---|---|---|
+| `create_cluster` | Creates a cluster with one pool of workers, behind a firewall | `name`, `version_id`, `plan_id`, `nodes`, `high_availability`, `project_id`, `confirm_monthly_price_usd` | No arguments: 2 nodes of the cheapest plan. Always needs a confirmed quote. Ready in 8 to 12 minutes |
+| `add_node_pool` | Adds a pool of workers | `cluster_id`, `name`, `nodes`, `plan_id`, `confirm_monthly_price_usd` | Needs a confirmed quote |
+| `scale_node_pool` | Changes how many nodes a pool runs | `cluster_id`, `pool_id`, `nodes`, `confirm_monthly_price_usd` | Growing needs a confirmed quote |
+| `delete_node_pool` | Drains and removes a pool | `cluster_id`, `pool_id` | **Destructive**. A cluster keeps at least 2 workers |
+| `enable_cluster_ha` | Turns on three control-plane nodes | `cluster_id`, `confirm_monthly_price_usd` | **Destructive**: cannot be turned off. Needs a confirmed quote |
+| `upgrade_cluster` | Upgrades to a newer version, node by node | `cluster_id`, `version_id` | **Destructive**: cannot be undone |
+| `rotate_kubeconfig` | Cancels every kubeconfig handed out | `cluster_id` | |
+| `delete_cluster` | Deletes a cluster with every volume its workloads created | `cluster_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the cluster's name |
+
+## In the ChatGPT app
+
+The Raff app listed in ChatGPT manages what your account already has. It leaves out everything that buys or shows a price (`create_server`, `resize_server`, `create_server_snapshot`, `list_server_plans`, `create_cluster`, `add_node_pool`, `scale_node_pool`, `enable_cluster_ha`, `list_kubernetes_plans`, `list_database_plans`, `resize_database`, `restore_backup`, `create_app`, `scale_app`, `list_app_sizes`) and everything that shows a password or a kubeconfig (`get_kubeconfig`, `create_database_user`, `get_connection_string` and `get_app_env` without `reveal`). `create_database` there creates only the account's free database, without its password. Buy new things in the Raff dashboard.
 
 ## Documentation
 

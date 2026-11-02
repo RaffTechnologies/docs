@@ -769,12 +769,12 @@ paths:
 
         Control what happens to volumes attached to the VMs with `volume_action`:
 
-        - **`delete`** (default) — volumes are permanently deleted along with the VM.
-        - **`detach`** — volumes are detached and kept. They remain billable and can be re-attached to another VM.
+        - **`detach`** (default) — volumes are detached and kept. They remain billable and can be re-attached to another VM.
+        - **`delete`** — volumes are permanently deleted along with the VM.
 
         ## VPC Cleanup
 
-        Set `delete_vpc` to `true` (default) to also delete each VM's associated VPC. A VPC is only deleted if no other VMs are using it.
+        Set `delete_vpc` to `true` to also delete each VM's associated VPC (default `false`). A VPC is only deleted if no other VMs are using it.
 
         ## Billing
 
@@ -9402,11 +9402,11 @@ components:
           enum:
             - detach
             - delete
-          default: delete
+          default: detach
           description: What to do with attached volumes. `detach` keeps them (still billable), `delete` removes them permanently.
         delete_vpc:
           type: boolean
-          default: true
+          default: false
           description: Whether to delete the associated VPC. Only succeeds if no other VMs are using it.
 
     DeleteVMsBulkRequest:
@@ -9427,11 +9427,11 @@ components:
           enum:
             - detach
             - delete
-          default: delete
+          default: detach
           description: What to do with attached volumes. `detach` keeps them (still billable), `delete` removes them permanently.
         delete_vpc:
           type: boolean
-          default: true
+          default: false
           description: Whether to delete associated VPCs. Only succeeds if no other VMs are using them.
 
     BulkDeleteVMsResult:
@@ -9689,9 +9689,8 @@ components:
         pricing_id:
           type: integer
           minimum: 1
-          maximum: 13
           description: "Pricing plan ID that determines vCPU, RAM, storage, and bandwidth. Use `GET /api/v1/public/pricing/vm` to list available plans."
-          example: 3
+          example: 78
         region:
           type: string
           enum: [us-east]
@@ -9706,10 +9705,16 @@ components:
           type: string
           minLength: 12
           description: >-
-            Root password for the VM. Required for Windows VMs. For Linux VMs, required if no SSH keys are provided. Both SSH keys and password can be set on Linux.
+            Root password for the VM. Required for Windows VMs unless `auto_generate_password` is true. For Linux VMs, required if no SSH keys are provided and `auto_generate_password` is not set. Both SSH keys and password can be set on Linux.
             Must be at least 12 characters with:
             2+ uppercase letters, 2+ digits, 1+ special character (@+-_.,!).
             Only alphanumeric characters and @+-_.,! are allowed.
+        auto_generate_password:
+          type: boolean
+          default: false
+          description: >-
+            Raff makes a strong root (Linux) or Administrator (Windows) password and emails it to the account's email once the server is created.
+            The password is never in an API response. Use it instead of `password`; sending both is refused.
         extra_storage:
           type: integer
           minimum: 0
@@ -10731,6 +10736,10 @@ components:
           type: boolean
           description: Whether this is a Windows template (only available for Windows plans)
           example: false
+        licence_price_per_month:
+          type: number
+          description: Windows templates only. The monthly price of Raff's Windows Server licence, paid on top of the plan when the server is bought with the licence (the dashboard checkout). Absent when the licence is not on sale.
+          example: 15
         os_type:
           type: string
           description: Operating system type
