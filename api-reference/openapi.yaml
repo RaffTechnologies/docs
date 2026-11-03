@@ -13561,6 +13561,10 @@ components:
           type: string
           description: Engine major version
           example: "16"
+        server_version:
+          type: string
+          description: Full version the running server reports, refreshed every few minutes. Empty until the first reading after creation.
+          example: "16.10"
         status:
           type: string
           enum: [pending, deploying, running, warning, resizing, restoring, moving, suspended, failed, deleting, deleted]
