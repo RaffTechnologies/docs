@@ -21,6 +21,14 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 - 🟢 **Added**: [Get database](/api-reference/databases/get-database) `GET /api/v1/databases/{database_id}` and the database list give `server_version`, the full version the running server reports (for example `18.6`), next to `engine_version`, the major version.
 
+**Managed Databases: CLI** (raff-cli v0.6.10)
+
+- 🔵 **Updated**: [`raff db list`](/reference/cli/database#list) and [`raff db get`](/reference/cli/database#get) show the full version the server runs, e.g. `postgres 18.6`.
+
+**Managed Databases: Terraform** (provider v0.4.9)
+
+- 🔵 **Updated**: [`raff_database`](/reference/terraform/raff_database) and the `raff_database` data source give `server_version`.
+
 ### November 2, 2026
 
 **Virtual Machines: API**

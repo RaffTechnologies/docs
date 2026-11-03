@@ -162,7 +162,7 @@ data "raff_database_plans" "postgres" {
 
 ## raff_database
 
-Read an existing database by its short `database_id` or by `name`: status, endpoints, and admin credentials (password and URI are sensitive).
+Read an existing database by its short `database_id` or by `name`: status, `server_version` (the full version, e.g. `18.6`), endpoints, and admin credentials (password and URI are sensitive).
 
 ```hcl
 data "raff_database" "orders" {
