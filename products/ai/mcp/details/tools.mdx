@@ -38,7 +38,7 @@ Every tool is labelled for the app: **read** tools only look, and every tool tha
 | `set_public_access` | Turns the public address on or off, optionally only for some IP addresses | `database_id`, `enabled`, `allowlist` | Connections always need TLS and the password |
 | `resize_database` | Changes the plan, storage, high availability or read replicas | `database_id`, `plan_id`, `storage_gb`, `high_availability`, `replicas`, `confirm_monthly_price_usd` | A change that costs more needs a confirmed quote. Storage can only grow |
 | `create_backup` | Takes a backup now (databases are also backed up every night) | `database_id` | |
-| `restore_backup` | Restores a backup or a point in time into a new database; the original keeps running | `database_id`, `backup_id` or `point_in_time`, `new_name`, `in_place` | **Destructive** with `in_place`: overwrites the database |
+| `restore_backup` | Restores a backup or a point in time into a new database; the original keeps running. The new database is billed by the hour, so the first call returns its price and restores nothing until you confirm | `database_id`, `backup_id` or `point_in_time`, `new_name`, `in_place`, `confirm_monthly_price_usd` | **Destructive** with `in_place`: overwrites the database (no new cost, no quote) |
 | `rotate_password` | Gives the main user a new password; apps using the old one stop at their next connection | `database_id` | |
 | `create_database_user` | Adds a user with read-write or read-only access and returns its password once | `database_id`, `name`, `role` | |
 | `delete_database` | Deletes a database, its data and its backups | `database_id`, `confirm_name` | **Destructive**. `confirm_name` must equal the database's name. Cannot be undone |
