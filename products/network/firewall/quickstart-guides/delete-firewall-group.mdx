@@ -1,9 +1,9 @@
 ---
 title: Delete a Firewall Group
-description: Permanently remove a custom Firewall Group from the row menu — the action is blocked while VMs are attached, and any attached VMs need to be rebooted afterward
+description: Permanently remove a custom Firewall Group from the row menu. The action is blocked while VMs are attached
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 Deleting a Firewall Group permanently removes the rule set from your account. The action is in the row's `⋮` menu and asks for a one-click confirmation — there's no soft-delete or recovery window. Use this when a group's no longer needed (decommissioned service, retired environment, replaced by a different group).
 
@@ -13,7 +13,6 @@ Deleting a Firewall Group permanently removes the rule set from your account. Th
 |---|---|
 | **Detach the group from every VM first** | The Delete action is blocked while any VM has the group attached. The dashboard surfaces this as a disabled menu item or a blocked confirmation. Detach via the VM detail page → Network tab → IP card → **Detach** firewall, on every attached VM, before retrying the delete |
 | **The system Default Firewall cannot be deleted** | The `Raff Default Firewall` card has no `⋮` menu and no Delete option. It's immutable. This page only covers Custom Firewall Groups |
-| **Plan for a reboot** | Once the group is deleted, every VM it was previously attached to needs a reboot for the change to fully take effect inside the guest. (Detach + delete = two changes; one reboot covers both) |
 
 ## 1. Open the row menu
 
@@ -36,15 +35,7 @@ Click the red **Delete** to proceed, or **Cancel** to back out.
 | Effect | Notes |
 |---|---|
 | **The group disappears from the Firewall Groups list** | Immediate — no soft-delete, no recovery |
-| **Any VM it was attached to has its `Firewall: <group>` field flip back to `None`** | Detach happens as part of the delete, but only if you didn't detach first |
 | **Audit-log entry recorded** | `securitygroup.delete` — captures who deleted, when, the group ID and name. Visible to members with `account.audit.view` |
-| **VMs need a reboot** | The platform record updates immediately, but each affected VM keeps using its previous firewall state until reboot |
-
-## Reboot the VMs
-
-If the group was attached to any VMs at delete time, reboot each of them so the guest networking actually drops the old rules. From the VM detail page → **Restart** action button (or `sudo reboot` / `shutdown /r /t 0` from inside the guest).
-
-If you detached the group from all VMs in advance (the recommended path), the reboots can happen on each VM's own schedule — the group is already gone, the VMs just don't yet know it.
 
 ## When delete is blocked
 
@@ -58,16 +49,11 @@ If the menu item shows the Delete action greyed or the confirmation refuses to p
 
 ## Replacing a Firewall Group instead of deleting
 
-If you want to replace one group with another (e.g. swap `web-prod-v1` for `web-prod-v2` on a fleet of VMs) without a window where the VMs are unprotected:
+To replace one group with another (e.g. swap `web-prod-v1` for `web-prod-v2` on a fleet of VMs):
 
 1. **Create the replacement group** with the new rule set
-2. **Attach the replacement** to every VM that has the old group — each VM now has both
-3. **Reboot every VM** so the new rules take effect alongside the old (the union of rules applies briefly)
-4. **Detach the old group** from every VM
-5. **Delete the old group** (now unattached, the Delete action is unblocked)
-6. **Reboot every VM again** so the old group's rules are dropped
-
-This adds two reboots per VM but means there's no moment when a VM has zero rules. For most workloads, the simpler swap (detach old → attach new → reboot once) is enough — there's a brief moment between detach and attach where only the system Default Firewall applies, which is usually fine.
+2. **Attach the replacement** to every VM that has the old group. It replaces the old group on that IP in about 20 seconds, with no restart. The new group goes on before the old one comes off, so no VM is left without a firewall
+3. **Delete the old group** (now unattached, the Delete action is unblocked)
 
 ## What you cannot do today
 

@@ -3,7 +3,7 @@ title: "raff vm"
 description: "Manage Virtual Machines from the CLI: list, get, create, update, delete (incl. bulk-delete), power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP, firewall, VPC, tags, notes, SSH keys and networks subcommands."
 ---
 
-<sub>Updated October 21, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 The `raff vm` command group covers every Virtual Machine operation in the public API. Each subcommand also supports `--output json` for scripting.
 
@@ -197,7 +197,7 @@ Detach a public IP. Reserved IPs return to your account; auto-assigned IPs retur
 raff vm sg add <vm-id> --sg-id <firewall-uuid>
 ```
 
-Attach a Firewall Group to the VM's public IP. **A reboot is required** for the new rules to take effect inside the guest — see [Update rules](/products/network/firewall/quickstart-guides/update-rules).
+Attach a Firewall Group to the VM's public IP. It replaces the group the IP had and applies in about 20 seconds, with no reboot. See [Attach a Firewall Group to a VM](/products/network/firewall/quickstart-guides/attach-to-vm).
 
 ## sg remove
 
@@ -205,7 +205,7 @@ Attach a Firewall Group to the VM's public IP. **A reboot is required** for the 
 raff vm sg remove <vm-id> --sg-id <firewall-uuid>
 ```
 
-Detach a Firewall Group. Reboot required.
+Detach a Firewall Group. The IP goes back to the Raff Default Firewall in about 20 seconds, with no reboot.
 
 ## vpc attach
 

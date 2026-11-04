@@ -1,15 +1,15 @@
 ---
 title: Attach a Firewall Group to a VM
-description: Two ways to attach a Firewall Group to a VM's public IP — from the group's row menu, or from the VM's Network tab — plus the mandatory reboot to make the rules take effect inside the guest
+description: Two ways to attach a Firewall Group to a VM's public IP, from the group's row menu or from the VM's Network tab. The rules apply in about 20 seconds, with no restart
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 A Firewall Group only filters traffic once it's **attached to a VM's public IP**. The group itself sits idle on the Firewall tab until you wire it up. There are two equivalent entry points; both produce the same result.
 
-<Warning>
-**A VM reboot is required after attaching.** The platform writes the rule set immediately, but the guest VM picks up the new firewall only at boot. Reboot the VM (Restart from the VM detail page, or `reboot` from inside the guest) to apply.
-</Warning>
+<Note>
+**The rules apply when the attach finishes, in about 20 seconds, with no restart.** Connections that are already open stay open; every new connection follows the group's rules.
+</Note>
 
 ## Path A — From the Firewall Groups list
 
@@ -60,19 +60,15 @@ Click **Attach**. A picker shows every Firewall Group in the account; pick one a
 
 The card refreshes — the **Firewall** field now shows the group's name (with a Detach action where Attach used to be), and the group's row in **Networking → Firewall** updates its VMs count.
 
-## Reboot the VM
+## When it takes effect
 
-Either path writes the rule set to the platform's record immediately. **The guest VM does not pick up the new firewall until it reboots.**
+Either path applies the group when the attach finishes, in about 20 seconds. There is no restart.
 
-Reboot from one of:
+Connections that are already open stay open; every new connection follows the group's rules. A VM that is off gets the group when it starts.
 
-| From | How |
-|---|---|
-| **VM detail page** | **Restart** action button at the top |
-| **Inside the guest (Linux)** | `sudo reboot` |
-| **Inside the guest (Windows)** | `shutdown /r /t 0` |
+Test from outside the VM with a new connection: `nmap -p <port> <ip>` from your laptop, or `curl` against the new ports.
 
-After the reboot, the new firewall is live. Test from outside the VM with the new rules — `nmap -p <port> <ip>` from your laptop, or `curl` against the new ports.
+If the dashboard says the server has not applied its rules yet, power the server off and on from its detail page.
 
 ## Detach later
 
@@ -83,15 +79,15 @@ Two equivalent paths, mirroring the attach options:
 | **VM detail → Network tab** | Click **Detach** next to the Firewall field on the IP card |
 | **Firewall Groups list** | Group row's `⋮` → **Assign to VM** picker → uncheck the VM (when this is supported), or open the VM and detach there |
 
-After detach, the platform clears the rule set from the VM's IP — but the **same reboot rule applies**: the guest keeps using the previous rules until it reboots. Reboot to actually drop them.
+Detaching takes effect in about 20 seconds, with no restart: the IP goes back to the Raff Default Firewall.
 
-If you're switching one group for another (`web-prod-v1` → `web-prod-v2`), do them in order: detach the old, attach the new, **reboot once** at the end. One reboot covers both changes.
+To switch one group for another (`web-prod-v1` → `web-prod-v2`), attach the new group. It replaces the old one on that IP, and the new group goes on before the old one comes off, so the IP is never left without a firewall.
 
-## Multiple Firewall Groups on one IP
+## One Firewall Group per IP
 
-The dashboard allows attaching more than one Firewall Group to a single public IP. When multiple groups are attached, **their allow lists union** — a packet is allowed if **any** attached group has a rule allowing it. Each Firewall Group still has its 40-inbound + 40-outbound limit, so stacking groups is the workaround when one group isn't enough.
+Each public IP takes one Firewall Group. Attaching a group replaces the one the IP had. If 40 inbound and 40 outbound rules are not enough, combine ports into comma lists (`80,443`) and ranges (`3000:4000`).
 
-Common pattern: a base group (`infra-essentials` — SSH from office, DNS, NTP) plus a per-service group (`web-prod`, `api-prod`) — combine the two on every web/api VM, edit one without touching the other.
+Common pattern: one group per role (`web-prod`, `api-prod`), each with the essentials it needs (SSH from your office, DNS, NTP) plus the service's own ports. Edit a group and every VM using it gets the change.
 
 ## IP-version mismatch — what if the group's rules are IPv4-only and the VM is IPv6-only (or vice versa)?
 

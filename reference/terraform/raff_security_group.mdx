@@ -1,11 +1,11 @@
 ---
 title: "raff_security_group"
-description: "Manage Raff security groups (firewalls) with Terraform — named inbound/outbound rule sets you attach to VM NICs. Updates replace the entire rule set; reboot required for VMs to pick up new rules."
+description: "Manage Raff security groups (firewalls) with Terraform: named inbound/outbound rule sets you attach to VM NICs. Updates replace the entire rule set and reach attached VMs within seconds, with no reboot."
 ---
 
-<sub>Updated May 10, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
-Manages a Raff **security group** — a named set of inbound/outbound rules that attach to VM NICs. A reboot is required for VMs to pick up rule changes inside the guest. Rules are nested blocks; updating the rule list replaces the entire set on the API side.
+Manages a Raff **security group**: a named set of inbound/outbound rules that attach to VM NICs. Rule changes reach every attached VM within a few seconds, with no reboot. Rules are nested blocks; updating the rule list replaces the entire set on the API side.
 
 ## Example — built from scratch
 
@@ -94,7 +94,7 @@ Templates copy a curated rule set at create time; you can then add explicit `rul
 | Operation | Behavior |
 |---|---|
 | `terraform apply` (create) | Creates the security group |
-| Change `name`, `description`, `rule` | In-place update. Attached VMs need a reboot to apply rule changes inside the guest |
+| Change `name`, `description`, `rule` | In-place update. Attached VMs get the new rules within a few seconds, with no reboot |
 | Change `template_id` | **Replacement** — destroy + recreate |
 | `terraform destroy` | Deletes the security group. Detach from VMs first |
 

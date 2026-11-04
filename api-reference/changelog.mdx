@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 3, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 4, 2026
+
+**Firewall: API**
+
+- 🔵 **Updated**: [Update firewall](/api-reference/endpoint/update-firewall) `PUT /api/v1/security-groups/{id}` answers once every VM using the firewall has the new rules, usually within a few seconds, with no restart. If a VM did not apply them, the rules stay saved and the error names the VM.
+- 🔵 **Updated**: [Attach firewall to VM NIC](/api-reference/endpoint/attach-vm-firewall) `POST /api/v1/vms/{id}/security-groups` and [Detach firewall from VM NIC](/api-reference/endpoint/detach-vm-firewall) `DELETE /api/v1/vms/{id}/security-groups/{sg_id}/{nic_id}` apply to a running VM in about 20 seconds, with no restart. Attaching replaces the firewall the IP had. A VM that did not apply the change answers an error asking you to power it off and on.
 
 ### November 3, 2026
 

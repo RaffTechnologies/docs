@@ -3,19 +3,19 @@ title: Update rules in a Firewall Group
 description: Open Edit Firewall Group from the row menu to change a group's name, description, inbound rules, or outbound rules — same dialog as Create, just prefilled with the existing rule set
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 Edit Firewall Group is how you change anything about an existing custom Firewall Group — its name, description, inbound rules, or outbound rules. The dialog is the **same one used to create the group**, just prefilled with the current rule set; there's no separate read-only view. Use this page to modify a group that's already attached to one or more VMs without detaching it.
 
-<Warning>
-**A VM reboot is required for rule changes to take effect inside the guest.** The platform's record updates immediately, but the guest network stack only picks up the new rules at boot. Reboot every VM the group is attached to after saving — see [VM reboot is required](#a-vm-reboot-is-required-after-saving) below.
-</Warning>
+<Note>
+**Saved rules apply to every server using the group within a few seconds, with no restart.** Connections that are already open stay open; every new connection follows the new rules. See [When the new rules apply](#when-the-new-rules-apply) below.
+</Note>
 
 ## Open the Edit dialog
 
 In **Networking → Firewall**, find the Firewall Group's row and click the `⋮` menu → **Edit Rules**.
 
-You can also reach Edit Rules from the [API Keys list](/products/manage/team-projects/quickstart-guides/generate-api-key) — wait, scratch that. Edit Rules opens only from the **Firewall Groups list row** — not from the VM detail page (which only shows attach/detach), and not from the system Default Firewall (which is read-only and shows **View Rules** instead).
+Edit Rules opens only from the **Firewall Groups list row**: not from the VM detail page (which only shows attach and detach), and not from the system Default Firewall (which is read-only and shows **View Rules** instead).
 
 ## The Edit Firewall Group dialog
 
@@ -52,33 +52,25 @@ The rule-row controls are identical — Protocol dropdown (TCP/UDP/ICMP/ALL), Po
 
 Save persists the new rule set to the platform record. The button is greyed out and the dialog stays open if any row fails validation (bad port format, invalid CIDR, system-blocked port, name conflict) — the row with the error highlights inline, fix and retry.
 
-The dialog's subtitle says *"Changes apply immediately to all attached VMs"* — that's accurate **at the platform record level**: the rules on Raff's side update in seconds and any new connections evaluate against them. Existing connections aren't dropped. **But the guest VM still needs to reboot** before its in-guest networking sees the new rules — see below.
+The dialog's subtitle says *"Changes apply immediately to all attached VMs"*, and they do: **Save Changes** waits until every server using the group has the new rules, usually a few seconds.
 
-## A VM reboot is required after saving
+## When the new rules apply
 
-This is the rule that catches every team the first time:
+Every server using the group has the new rules when **Save Changes** finishes. There is no restart and no downtime.
 
-<Warning>
-**Save Changes alone is not enough — every attached VM must be rebooted for the new rules to take effect inside the guest.**
+- **Connections already open stay open.** An SSH or RDP session you opened before the change keeps working, even if the new rules would not let it in.
+- **Every new connection follows the new rules.** To make an open session follow them, reconnect, or restart that service on the server.
+- **A server that is off** gets the current rules when it starts.
 
-The platform writes the new rule set immediately, but the guest's network stack picks up the firewall only at boot. Until you reboot, the VM keeps running with its previous firewall state — you'll see the new rules on the dashboard but not feel them in `iptables -L` / `Test-NetConnection`.
-</Warning>
+To check a change, open a new connection from outside the server: `nmap -p <port> <ip>` or a fresh `ssh` from your laptop. A session that was already open won't show the change.
 
-To roll a fleet of VMs through the reboot:
-
-| VMs attached | Approach |
-|---|---|
-| **One VM** | Restart from the VM detail page → **Restart** action button. Total downtime: typically a minute |
-| **Two or three VMs** | Restart in series — wait for each to come back before rebooting the next, so any service the group covers stays available on at least one VM |
-| **Many VMs (a fleet)** | Plan a maintenance window, or use a rolling-restart pattern: drain a VM from your load balancer, reboot, re-add. Repeat per VM |
-
-If you're behind a load balancer or DNS-round-robin, rolling-restart works without user-visible downtime. If you're not, schedule the reboot during a low-traffic window.
+If a server did not take the new rules, the dialog says so and names it, for example *"The rules are saved, but 1 server (web-1) using this firewall did not apply them."* Save the rules again, or power that server off and on from its detail page.
 
 ## Editing rules on a group with no VMs attached
 
-If the group has zero VMs in its **VMs** column, save is instant and there's nothing to reboot — the group's rule set updates and the next VM you attach will get the new rules at attach-then-reboot time.
+If the group has zero VMs in its **VMs** column, save is instant, and the next VM you attach gets the new rules.
 
-This is the right pattern for **staging rule changes before production**: edit the rules while the group is detached, attach to a single test VM, reboot, validate, then attach to the rest of the fleet (each one rebooted in turn).
+This is the right pattern for **staging rule changes before production**: edit the rules while the group is detached, attach it to a single test VM, check it from outside, then attach it to the rest of the fleet.
 
 ## Audit logging
 

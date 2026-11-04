@@ -3,7 +3,7 @@ title: Inbound vs outbound, layers, and rule format
 description: How the Raff Firewall actually evaluates traffic — the two layers (system Default + your Groups), what a single rule looks like (protocol, direction, port, source IP), the formats Raff accepts, and the ports you cannot open
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 This is the one page to read before you build a Firewall Group. It's the model — what the layers are, how a rule is shaped, what protocols and port formats the system accepts, and which ports are off-limits no matter what you write.
 
@@ -113,7 +113,7 @@ Within **one Firewall Group**, rules are **additive (OR-of-allows)**:
 - The same applies to outbound.
 - There are no explicit deny rules in user groups; **deny is the default**, and you write allow rules to open holes. Anything not matched by an allow rule is dropped.
 
-When **multiple Firewall Groups** are attached to the same IP (rare; typically one per IP), their allow lists union.
+Each public IP takes **one Firewall Group**: attaching a group replaces the one the IP had.
 
 The Default Firewall's blocks **always win** — even if your group says "Allow TCP 135", the system Default still drops packets to TCP 135. Raff also pre-emptively rewrites your rule before saving to remove blocked ports from a range — a rule of `Range = 130:200` becomes `130:134,136:138,140:200` (135 and 139 carved out), so the saved rule is honest about what's actually allowed.
 

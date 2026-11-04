@@ -3,7 +3,7 @@ title: Create a Firewall Group
 description: Walk the Create Firewall Group dialog — name, description, optional template, then build the inbound and outbound rule lists, save, and attach to a VM
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 A **Firewall Group** is a named bundle of inbound and outbound rules that you attach to a VM's public IP. This page walks the dashboard create flow. Read [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound) first if you haven't — it explains protocol/port/IP formats, the system Default Firewall layer, and which ports you can never open.
 
@@ -109,11 +109,7 @@ See [Attach a Firewall Group to a VM](/products/network/firewall/quickstart-guid
 
 ## Editing rules later
 
-You can add, remove, or modify rules **without detaching the group from VMs**. The rule set on the platform side updates immediately. See [Update rules](/products/network/firewall/quickstart-guides/update-rules) for the in-place edit flow.
-
-<Warning>
-**A VM reboot is required for firewall changes to take effect inside the guest.** Whenever you attach, detach, or edit a Firewall Group on a VM, reboot that VM — the guest's network stack picks up the new rules at boot. Skipping the reboot leaves the VM running with its previous rules.
-</Warning>
+You can add, remove, or modify rules **without detaching the group from VMs**. Saved rules reach every attached VM within a few seconds, with no restart. See [Update rules](/products/network/firewall/quickstart-guides/update-rules) for the in-place edit flow.
 
 ## Related
 

@@ -3,7 +3,7 @@ title: Add rules — port and IP formats by example
 description: The exact formats Raff accepts for the Ports and Source IP fields, with copy-pasteable examples for the most common rules
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 This page is the format reference for the **Ports** and **Source IP** fields you fill on every rule row. The model itself — what inbound vs outbound means, how rules combine, what the system Default blocks — is on [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound). This page is the cheat sheet.
 
@@ -131,17 +131,13 @@ Each row below is *one rule row* in the create dialog. Add multiple rows for com
 | **Source IPs per rule** | One CIDR — to allow multiple distinct IPs, use multiple rule rows |
 | **Comma-separated ports per rule** | No fixed limit; reasonable practice is ~10 |
 
-If 40 isn't enough, split into multiple groups and attach them all to the IP — the union of allow lists applies.
+If 40 isn't enough, combine ports into comma lists and ranges: each public IP takes one Firewall Group.
 
 ## How saving / editing works
 
 - **Save creates the group as a unit** — all rule rows submit together. Validation runs on the whole set; if one row is invalid (bad port format, invalid CIDR), the dialog shows the error inline and nothing saves.
-- **Edits update the platform record immediately** — but the guest VM does **not** pick up the new rules until you reboot it (see the warning below).
+- **Saved rules apply to every attached VM within a few seconds**, with no restart. Connections already open stay open; new connections follow the new rules.
 - **Default-block sanitization** runs at save time — if you write `135`, that exact rule is dropped from the saved set with no error. If you write `130:140`, the saved rule excludes 135 and 139.
-
-<Warning>
-**A VM reboot is required after any firewall change.** Attaching a group, detaching a group, or editing rules in an attached group all need a reboot of every affected VM to take effect inside the guest. Until you reboot, the VM keeps running with its previous firewall state.
-</Warning>
 
 ## Related
 

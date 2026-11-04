@@ -3,7 +3,7 @@ title: "raff security-group"
 description: "Manage Firewall Groups (security groups in the API) from the CLI — list, list templates, get, create, delete. Customer-facing label is Firewall; the API path is still security-groups."
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 The `raff security-group` command group manages Firewall Groups. The dashboard product is called **Firewall**; the underlying API path is `security-groups`, which is what the CLI command name reflects. Functionality is the same — see [Firewall overview](/products/network/firewall) for the model.
 
@@ -73,9 +73,9 @@ raff security-group delete <sg-id>
 
 Delete a Firewall Group. Fails if it's still attached to any VM — detach with `raff vm sg remove` on each VM first.
 
-## Reboot reminder
+## When changes apply
 
-Any rule change (create, attach, detach, delete) requires a **VM reboot** for the new rules to take effect inside the guest. The platform record updates immediately; the guest network stack picks it up only at boot. See [Update rules](/products/network/firewall/quickstart-guides/update-rules#a-vm-reboot-is-required-after-saving) for the full reboot rule.
+Changes apply to running VMs with no reboot: saved rules within a few seconds, an attach or detach in about 20 seconds. Connections already open stay open; new connections follow the new rules. See [Update rules](/products/network/firewall/quickstart-guides/update-rules#when-the-new-rules-apply).
 
 ## Related
 

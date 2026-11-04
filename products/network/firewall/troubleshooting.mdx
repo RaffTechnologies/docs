@@ -1,31 +1,25 @@
 ---
 title: Firewall troubleshooting
 sidebarTitle: Troubleshooting
-description: Common Firewall problems — rules saved but not applied (the reboot trap), Default-blocked ports rejected silently, port forwarding stops working after a group attach, locked-out-by-firewall recovery, save errors and rule-format gotchas
+description: Common Firewall problems, including rules that don't seem to apply, Default-blocked ports rejected silently, port forwarding stops working after a group attach, locked-out-by-firewall recovery, save errors and rule-format gotchas
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
-The most-seen issues with Raff Firewall and the fix that resolves each. The single most common mistake — by a wide margin — is **forgetting to reboot the VM after a firewall change**, so that one is on top. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
+The most-seen issues with Raff Firewall and the fix that resolves each. If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
-## The reboot rule
+## Changes don't seem to apply
 
 <AccordionGroup>
   <Accordion title="I edited / attached / detached a Firewall Group and the rules don't seem to apply">
-    **What's happening:** the platform record updated, but the VM's guest network stack hasn't picked up the change.
+    **Check with a new connection.** Changes apply without a restart: saved rules within a few seconds, an attach or detach in about 20 seconds. Connections that were already open stay open, so an SSH session or a download that started before the change keeps working.
 
-    **Why:** Firewall rules apply to a VM at boot. The dashboard immediately reflects the new state, but every attached VM keeps running with its previous firewall rules until you reboot it.
+    Test from outside the VM with a new connection: `nmap -p <port> <ip>`, `curl https://<ip>:<port>`, or a fresh `ssh`.
 
-    **Fix:** reboot every affected VM:
-    - **VM detail page → Restart** action button — the simplest path
-    - **Inside the guest** — `sudo reboot` (Linux) or `shutdown /r /t 0` (Windows)
-
-    Test from outside the VM after the reboot — `nmap -p <port> <ip>`, `curl https://<ip>:<port>`, etc. You should see the new rule's effect now.
-
-    For fleets behind a load balancer, roll the reboots through the fleet so service stays available.
+    **If the dashboard showed an error** naming the server, that server has not applied the change. Save the rules again, or power the server off and on from its detail page.
   </Accordion>
 
-  <Accordion title="I rebooted but the rules still don't apply">
+  <Accordion title="A new connection still doesn't follow the rules">
     **Possible causes:**
 
     1. **The Firewall Group isn't actually attached to that VM.** Open the VM's detail page → Network tab → check the IP card's `Firewall:` field. If it says `None`, the group isn't attached. Click **Attach** to fix.
@@ -92,7 +86,6 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
 
     **Fix:**
     - **Combine rules where you can** — `80,443` in one row instead of two; `3000:4000` instead of forty single-port rules
-    - **Split into multiple Firewall Groups** if you genuinely need more — attach all of them to the same VM IP. The allow lists union, so two groups of 40 = 80 effective rules
     - **Use a Firewall Appliance** (OPNsense) inside a VPC for unlimited rule complexity; the public Default + your group apply to the public interface; OPNsense applies to anything routed through the VPC
   </Accordion>
 
@@ -105,19 +98,19 @@ The most-seen issues with Raff Firewall and the fix that resolves each. The sing
 
 <AccordionGroup>
   <Accordion title="I attached a Deny All / SSH-restricted group and now I can't SSH in">
-    **What's happening:** you tightened the inbound rules, rebooted, and your SSH client is now blocked along with everything else.
+    **What's happening:** you tightened the inbound rules, and new SSH connections are now blocked along with everything else. An SSH session you opened before the change keeps working, so if one is still open, use it while you fix the rules.
 
     **Recovery — three paths:**
 
     1. **VNC console** — every VM has a built-in browser console that bypasses the network entirely. From the VM detail page → **Console** action. Log in with the VM's password (or reset the password first if you don't know it). From the console, fix the firewall: detach the restrictive group with `raff-cli firewall detach …`, or if you don't have the CLI in the VM, use the dashboard from another browser tab.
-    2. **Detach the restrictive group from the dashboard** — VM detail page → Network tab → IP card → **Detach** firewall. **Then reboot the VM.** The system Default Firewall is still applied (which allows SSH); you should regain access on the next boot.
-    3. **Attach an SSH-only group** — create / pick a Firewall Group with at least `TCP 22 from 0.0.0.0/0` (or your office IP), attach it to the VM, reboot. Now SSH works again, then iterate on the rules from a stable baseline.
+    2. **Detach the restrictive group from the dashboard**: VM detail page → Network tab → IP card → **Detach** firewall. The system Default Firewall applies again (it allows SSH), and you can connect in about 20 seconds.
+    3. **Attach an SSH-only group**: create or pick a Firewall Group with at least `TCP 22 from 0.0.0.0/0` (or your office IP) and attach it to the VM. SSH works again in about 20 seconds; then iterate on the rules from a stable baseline.
 
-    **Going forward:** test restrictive firewall changes on a single VM first; keep the dashboard-and-VNC tabs open during the test reboot in case you lock yourself out.
+    **Going forward:** test restrictive firewall changes on a single VM first, and keep an SSH session and the VNC console open while you test, in case you lock yourself out.
   </Accordion>
 
   <Accordion title="My RDP / SSH stops working after a firewall edit">
-    **Same root cause as above** — your edit removed (or restricted) the rule that was allowing your management traffic. Add back an inbound rule for the management protocol (TCP 22 SSH, TCP 3389 RDP) from your client IP, save, reboot.
+    **Same root cause as above**: your edit removed (or restricted) the rule that was allowing your management traffic. Add back an inbound rule for the management protocol (TCP 22 SSH, TCP 3389 RDP) from your client IP and save.
 
     Common gotchas:
 
@@ -170,7 +163,7 @@ Email [support@rafftechnologies.com](mailto:support@rafftechnologies.com) with:
 - **The Firewall Group ID and name**
 - **The VM ID** that's affected
 - **What you expect to work and what's actually happening** — exact ports, source IPs, protocols
-- **Whether you've rebooted the VM** since the firewall change (this resolves ~80% of tickets — try it first)
+- **When you made the change**, and any error the dashboard showed
 
 Same-day response in business hours; faster for production-impacting issues.
 

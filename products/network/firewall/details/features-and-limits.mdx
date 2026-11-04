@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Raff Firewall features, the system Default Firewall blocked-port list, custom Firewall Group rule formats, per-group limits, the 5 templates, and pricing
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 5, 2026</sub>
 
 ## Features
 
@@ -44,9 +44,10 @@ Five pre-built rule sets in the create dialog's **Start from template** dropdown
 Pick a template and tweak before saving, or start from **Custom Rules** for a blank slate.
 
 ### Apply, edit, attach, detach
-- Edits propagate to the platform's record **immediately** — but the guest VM picks them up only on reboot (see the warning under Limits)
+- Changes apply to running VMs with no restart: saved rules within a few seconds, an attach or detach in about 20 seconds
+- Connections already open stay open; every new connection follows the current rules
 - A group can be attached / detached at any time
-- Multiple Firewall Groups can be attached to the same public IP — their allow lists union
+- One Firewall Group per public IP: attaching a group replaces the one the IP had
 - Default-block sanitization runs at save: any rule covering TCP 135 / 139 / 445 / 5985–5986 or UDP 137–138 has those ports stripped before save
 
 ## Limits
@@ -56,7 +57,7 @@ Pick a template and tweak before saving, or start from **Custom Rules** for a bl
 | **Inbound rules per group** | **40** |
 | **Outbound rules per group** | **40** |
 | **Firewall Groups per account** | No hard cap published; subject to overall account capacity |
-| **Firewall Groups per public IP** | Unlimited in practice; one per IP is the common pattern |
+| **Firewall Groups per public IP** | **1**: attaching a group replaces the one the IP had |
 | **Source / destination per rule** | One CIDR — for multiple distinct ranges, use multiple rule rows |
 | **Comma-separated ports per rule** | No fixed limit; reasonable practice ~10 |
 | **Port range syntax** | Colon — `3000:4000` (not AWS-style hyphen) |
@@ -64,9 +65,9 @@ Pick a template and tweak before saving, or start from **Custom Rules** for a bl
 | **Description** | Optional, free-form |
 | **Group rename** | **Not supported today** — pick the name carefully |
 
-<Warning>
-**A VM reboot is required after any firewall change.** Attaching a group, detaching a group, or editing rules in an attached group all need a reboot of every affected VM for the new rules to take effect inside the guest. The platform record updates immediately; the guest network stack picks up the change only at boot.
-</Warning>
+<Note>
+**Firewall changes apply without a restart.** Attaching a group, detaching a group, or editing rules in an attached group reaches every affected VM within seconds. Connections already open stay open; new connections follow the new rules.
+</Note>
 
 ## Default Firewall — always-blocked ports
 
@@ -89,7 +90,6 @@ There's no charge for using the firewall. The only related billable resources ar
 ## What's not available today
 
 - **Group rename** — names are immutable; create a new group + re-attach to rename in practice
-- **Hot-apply without reboot** — a guest reboot is required for any rule change
 - **Explicit deny rules** — only allow rules; deny is the default for anything not matched
 - **Rule comments / tags per rule** — group-level Description only
 - **Rule audit log per group** — system-wide audit log captures changes, but not surfaced per group in the dashboard
