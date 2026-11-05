@@ -22,6 +22,7 @@ info:
     - `GET /api/v1/public/pricing/snapshot` — snapshot storage pricing
     - `GET /api/v1/public/pricing/backup` — backup storage pricing
     - `GET /api/v1/public/pricing/ip` — IP address pricing
+    - `GET /api/v1/public/pricing/vpn` — VPN gateway and site-to-site tunnel pricing
     - `GET /api/v1/public/pricing/database` — managed database pricing (plans, high availability, read replicas, extra storage)
     - `GET /api/v1/public/pricing/kubernetes` — managed Kubernetes pricing (worker node plans, HA control plane, storage nodes)
 
@@ -325,6 +326,30 @@ paths:
                     example: true
                   pricing:
                     $ref: '#/components/schemas/IPPricing'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/public/pricing/vpn:
+    get:
+      tags:
+        - Catalog
+      summary: Get VPN pricing
+      description: Returns the price of a VPN gateway (one per VPC) and of each site-to-site tunnel on it.
+      operationId: listVPNPricing
+      security: []
+      responses:
+        '200':
+          description: VPN pricing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pricing:
+                    $ref: '#/components/schemas/VPNPricing'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -10884,6 +10909,43 @@ components:
           type: number
           description: 24-month commitment price in USD
           example: 70.00
+
+    VPNPricing:
+      type: object
+      description: VPN pricing. A VPC needs one gateway; each site-to-site tunnel on it is priced separately. Traffic through the tunnels is not metered.
+      properties:
+        gateway:
+          allOf:
+            - $ref: '#/components/schemas/VPNPricingTier'
+            - type: object
+              properties:
+                peer_count:
+                  type: integer
+                  description: WireGuard client configs (remote-access peers) included with the gateway
+                  example: 10
+        site:
+          $ref: '#/components/schemas/VPNPricingTier'
+
+    VPNPricingTier:
+      type: object
+      description: Pricing for one VPN gateway or one site-to-site tunnel.
+      properties:
+        price_per_hour:
+          type: number
+          description: Hourly price in USD
+          example: 0.0205
+        monthly_price:
+          type: number
+          description: Monthly price in USD
+          example: 15.00
+        yearly_price:
+          type: number
+          description: Yearly commitment price in USD
+          example: 180.00
+        twenty_four_month_price:
+          type: number
+          description: 24-month commitment price in USD
+          example: 360.00
 
     DatabasePricingPlan:
       type: object

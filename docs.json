@@ -648,6 +648,7 @@
                   "api-reference/catalog/list-snapshot-pricing",
                   "api-reference/catalog/list-backup-pricing",
                   "api-reference/catalog/list-ip-pricing",
+                  "api-reference/catalog/list-vpn-pricing",
                   "api-reference/catalog/list-database-pricing",
                   "api-reference/catalog/list-kubernetes-pricing"
                 ]
