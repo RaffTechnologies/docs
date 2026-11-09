@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: VPC features, supported CIDR sizes, MTU, internet gateway options, and platform limits
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 ## Features
 
@@ -49,6 +49,18 @@ VPCs without a gateway have no outbound internet — VMs reach the internet only
 - TCP and UDP supported
 - Rules apply within seconds of save
 
+### VPC peering
+- Connects two VPCs of the same account, so their servers reach each other on private IPs
+- Both VPCs need an active **Platform Router**, and their ranges must not overlap
+- Doesn't chain: peering A with B and B with C doesn't connect A to C
+- See [Manage a VPC](/products/network/vpc/quickstart-guides/manage-vpc#peering-tab-connect-two-vpcs)
+
+### VPN gateway
+- **Device connections:** WireGuard for laptops and phones, 10 included
+- **Site-to-site tunnels:** WireGuard or IPsec (IKEv2) for an office, a datacenter or another cloud
+- Available in US East
+- See [Connect over VPN](/products/network/vpc/quickstart-guides/connect-with-vpn)
+
 ### VM membership
 - A single VM can belong to **multiple VPCs simultaneously** — each VPC gives it a separate NIC
 - A VM can also have one or more public IPs alongside its VPC interfaces
@@ -65,10 +77,14 @@ VPCs without a gateway have no outbound internet — VMs reach the internet only
 | **Platform Router gateway** | **Free** — Raff runs the gateway VM and its public IP at no charge |
 | **Firewall Appliance — Small** (2 vCPU / 4 GB / 50 GB) | **\$4.99 / month** |
 | **Firewall Appliance — Large** (4 vCPU / 8 GB / 120 GB) | **\$9.99 / month** |
+| **VPC peering** | **Free** |
+| **VPN gateway** (10 device connections) | **\$15 / month** |
+| **Site-to-site tunnel** | **\$20 / month** per tunnel, plus the gateway |
+| **Traffic through VPN tunnels** | Not metered |
 | **Public IPs attached to VMs in the VPC** | See [Public IPs pricing](/products/network/public-ips/details/features-and-limits) |
 | **Internet egress** through any gateway / public IP | Subject to standard public-internet egress, never to private VM-to-VM |
 
-There is **no per-VPC fee, no per-CIDR fee, no per-VNI fee, and no per-DHCP-lease fee.** You can hold dozens of VPCs at zero cost — pricing only kicks in when a VPC has a Firewall Appliance gateway or when its members generate public-internet egress.
+There is **no per-VPC fee, no per-CIDR fee, no per-VNI fee, and no per-DHCP-lease fee.** You can hold dozens of VPCs at zero cost. Pricing only kicks in when a VPC has a Firewall Appliance or a VPN gateway, or when its members generate public-internet egress.
 
 ## Limits
 
@@ -81,23 +97,24 @@ There is **no per-VPC fee, no per-CIDR fee, no per-VNI fee, and no per-DHCP-leas
 | **NICs per VM** | Same as the VM-level NIC limit — see [Virtual Machines features & limits](/products/build/virtual-machines/details/features-and-limits) |
 | **Port-forward rules** | **10 per VPC** (Platform Router only) |
 | **Internet gateways per VPC** | **0 or 1** — Platform Router and Firewall Appliance are mutually exclusive |
+| **VPN gateways per VPC** | **0 or 1** |
+| **Device connections** | **10 per VPN gateway** |
+| **Site-to-site tunnels** | **10 per VPN gateway** |
 | **MTU** | **8950** (fixed, not configurable) |
 | **VPC name length** | Free-form, must be unique per account |
 | **CIDR alignment** | Must match the prefix — `192.168.1.50/20` is rejected, `192.168.0.0/20` is accepted |
-| **Region scope** | Each VPC lives in **one region** — `us-east` is the only region today |
+| **Region scope** | Each VPC lives in **one region**: `us-east` or `eu-central` |
 
 ## Region
 
 | Region | Status |
 |---|---|
-| **`us-east`** | Available today |
-| Other regions | Coming — VPC will be region-scoped, same as VMs and volumes |
+| **`us-east`** | All VPC features |
+| **`eu-central`** | VPCs without a gateway. Platform Router, Firewall Appliance, VPN gateway and peering aren't available yet, and servers there use their own public IP for internet access |
 
 ## What's not available today
 
-- **VPC peering** — placeholder under the **Peering** tab; ships in a future release
-- **Load Balancer as a service** — placeholder under the **Services** tab
-- **VPN Gateway as a service** — placeholder under the **Services** tab; the Firewall Appliance covers this case in the meantime via OPNsense's built-in WireGuard / IPsec / OpenVPN
+- **Load Balancer as a service**: shown as coming soon under the **Services** tab
 - **Cross-region VPCs** — VPCs are regional only
 - **Custom route tables / transit gateway / VPC endpoints** — not on the near-term roadmap
 

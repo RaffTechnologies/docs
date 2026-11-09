@@ -395,6 +395,7 @@
                       "products/network/vpc/quickstart-guides/create-vpc",
                       "products/network/vpc/quickstart-guides/manage-vpc",
                       "products/network/vpc/quickstart-guides/attach-vm",
+                      "products/network/vpc/quickstart-guides/connect-with-vpn",
                       "products/network/vpc/quickstart-guides/delete-vpc"
                     ]
                   },

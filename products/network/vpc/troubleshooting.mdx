@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common VPC problems — CIDR rejection, IPs that don't talk to each other, DNS not propagating, port forwarding not working, gateway and delete blocks — and the fix for each
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 The most-seen issues with Raff VPCs and the fix that resolves each. Most come from one of three categories: **the dashboard rejecting input** (CIDR validation, specific-IP conflicts), **the network not behaving as expected after a change** (DNS lag, MTU surprises, default-route confusion), or **delete/detach blocks** (the safety rules in [Delete a VPC](/products/network/vpc/quickstart-guides/delete-vpc)). If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
@@ -67,7 +67,7 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
 
     **Why:** Raff allows CIDR overlap across VPCs because each VPC is a separate VXLAN segment with its own VNI. Two VMs holding `10.0.0.5` in different VPCs are isolated by design — that's the feature, not a bug.
 
-    **Fix:** put both VMs in the **same VPC**, or set up routing through a shared gateway VM that has one NIC in each VPC. There's no way to "peer" the two VPCs today (Peering tab is coming soon).
+    **Fix:** put both VMs in the **same VPC**. Peering won't help here, because VPCs with overlapping ranges can't be peered. To keep two VPCs, recreate one with a different range, then [peer them](/products/network/vpc/quickstart-guides/manage-vpc#peering-tab-connect-two-vpcs).
   </Accordion>
 
   <Accordion title="Large packets break, small packets work — MTU issue">
@@ -122,7 +122,7 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
     **Most likely causes:**
 
     1. **The VM has its own Public IP** — and its default route goes through the public NIC, not the VPC NIC. The VM is using its public IP for outbound, not the router. This is usually fine; check `ping 8.8.8.8` works (it does, just not via the router).
-    2. **The VM's default route doesn't point at the VPC gateway** — `ip route` should show `default via 10.x.0.1` for the VPC the router sits on. If not, set it: `ip route add default via 10.x.0.1 dev <iface>`.
+    2. **A VM without a public IP has no default route via the VPC gateway.** `ip route` should show `default via 10.x.0.1`. If it doesn't, restart the VM so it picks up its network settings again. Do not add this route on a VM that has a public IP: it already has one default route, and a second one breaks outbound traffic.
     3. **The router is still provisioning** — first deploy takes a minute or two. The detail page's gateway badge flips to active when ready.
     4. **DNS isn't set or isn't reachable** — see the DNS accordions above.
   </Accordion>
@@ -134,10 +134,11 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
 
     1. **Platform Router enabled?** — port forwarding is only available with the Platform Router gateway. The Port Fwd tab is hidden / blank otherwise.
     2. **Private IP is in the VPC's range and currently in use** — typo'd IPs silently fail. Confirm the VM's IP via the VMs tab on the VPC detail page.
-    3. **The destination VM is listening on `private_port`** — `ss -lnt | grep :<port>` (Linux) or `netstat -an | findstr :<port>` (Windows).
-    4. **The destination VM's firewall allows inbound on `private_port`** — both Raff Firewall rules and the guest's OS firewall must allow it from the router's private IP.
-    5. **You're testing from outside the VPC** — `curl <router_public_ip>:<public_port>` from your laptop. Testing from inside the VPC takes a different path and may not exercise the rule.
-    6. **At the 10-rule limit?** — Platform Router supports up to **10 forwarding rules per VPC**. Beyond that, deploy a Firewall Appliance (OPNsense) for unlimited rules.
+    3. **The destination VM has no public IP of its own.** A VM with its own public IP sends its replies out through that IP, not back through the router, so a forward to it cannot work. Creating such a rule is refused; open the port on that VM's firewall and use its own public IP instead.
+    4. **The destination VM is listening on `private_port`** — `ss -lnt | grep :<port>` (Linux) or `netstat -an | findstr :<port>` (Windows).
+    5. **The destination VM's firewall allows inbound on `private_port`** — both Raff Firewall rules and the guest's OS firewall must allow it from the router's private IP.
+    6. **You're testing from outside the VPC** — `curl <router_public_ip>:<public_port>` from your laptop. Testing from inside the VPC takes a different path and may not exercise the rule.
+    7. **At the 10-rule limit?** — Platform Router supports up to **10 forwarding rules per VPC**. Beyond that, deploy a Firewall Appliance (OPNsense) for unlimited rules.
   </Accordion>
 
   <Accordion title="Firewall Appliance stuck on Deploy">
@@ -154,6 +155,18 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
     **Recovery:** the dashboard stores the password — open the deployed appliance VM in **Compute** to view it, or check the VPC's Internet Gateway card on the detail page (the password is exposed there too). If somehow neither shows it, **Disable** the gateway and **Deploy** again — you'll get a fresh password to copy. Existing OPNsense rules are lost on redeploy, so this is only a clean option before you've configured anything.
 
     **Going forward:** the dialog hints "(copy before deploying)" next to Credentials for a reason. Paste the password into your secrets manager *before* clicking Deploy.
+  </Accordion>
+</AccordionGroup>
+
+## Site-to-site VPN
+
+<AccordionGroup>
+  <Accordion title="IPsec tunnel doesn't connect">
+    **Check your device, in order:**
+
+    1. **Local ID is your device's public IP**, the same IP you entered as **Remote gateway IP** on the tunnel. Any other ID, such as a private IP or a hostname, is refused. Some devices call this field **My identifier**.
+    2. **Settings match:** IKEv2, AES-256, SHA-256, DH group 14, and the tunnel's preshared key.
+    3. **Your site's firewall allows UDP 500 and 4500** to and from the gateway's public IP.
   </Accordion>
 </AccordionGroup>
 
@@ -211,31 +224,43 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
     1. **A pending Internet Gateway provision** — if you clicked Enable on Platform Router or Deploy on Firewall Appliance and the gateway VM is still creating, the VPC is locked. Wait for it to finish or fail, then retry.
     2. **A locked operation** — rename or DNS update in flight. Refresh the page and retry.
     3. **Stale dashboard cache** — the API is the source of truth. Refresh, or call the API directly with `gh`-style tooling to confirm.
+    4. **A VPN gateway on the VPC:** it isn't deleted with the VPC, and the error can count it as an attached VM. Delete it from the **Services** tab first.
 
     If it persists for more than a few minutes, contact support with the VPC ID.
   </Accordion>
 </AccordionGroup>
 
-## "Coming soon" features
+## VPC peering
 
 <AccordionGroup>
-  <Accordion title="VPC Peering tab is empty / unclickable">
-    **Status:** the Peering tab is a UI placeholder for an upcoming feature. **VPC peering is not available today.**
-
-    **Workarounds for cross-VPC traffic:**
-    - Route through a **shared gateway VM** with one NIC in each VPC, manually configured to forward traffic
-    - Have both source and destination VMs hold **public IPs**, route over the public internet
-    - Re-architect to put the workloads in the **same VPC**
-
-    Subscribe to the [changelog](/api-reference/changelog) for the launch announcement.
+  <Accordion title="Peering tab says to enable the internet gateway">
+    **Fix:** enable the **Platform Router** on this VPC and on the VPC you want to peer with. Peering needs an active Platform Router on both.
   </Accordion>
 
-  <Accordion title="Services tab shows `Load Balancer & VPN Gateway — coming soon`">
-    **Status:** managed Load Balancer and VPN Gateway services are not yet available.
+  <Accordion title="VPC isn't in the list, or peering is refused">
+    **Check these, in order:**
 
-    **Workarounds:**
-    - **Load balancer** — run HAProxy / Nginx / Traefik on a small VM in the VPC; or use Raff Kubernetes (which provides ingress controllers).
-    - **VPN gateway** — deploy the **Firewall Appliance** (OPNsense) on the VPC; it ships with WireGuard, IPsec, and OpenVPN built in.
+    1. **VPC isn't in the Peer with list:** it has no active gateway, or the two VPCs are already peered.
+    2. **`both VPCs must have a platform router before peering`:** a VPC with a Firewall Appliance can't be peered. Switch it to the Platform Router.
+    3. **`cannot peer VPCs with overlapping CIDR ranges`:** a VPC's range can't change. Create a new VPC with a different range and move the servers to it.
+  </Accordion>
+
+  <Accordion title="Peered VPCs can't reach each other">
+    **Check these, in order:**
+
+    1. **Give it a few minutes.** Servers get the route to the other VPC within a few minutes, with no restart.
+    2. **Server firewalls:** Raff's Firewall and the guest's own firewall must allow traffic from the other VPC's range.
+    3. **Peering doesn't chain:** peering A with B and B with C doesn't connect A to C. Peer A and C directly.
+  </Accordion>
+</AccordionGroup>
+
+## Load balancer
+
+<AccordionGroup>
+  <Accordion title="Services tab shows Load Balancer as coming soon">
+    **Status:** a managed load balancer is not available yet.
+
+    **Instead:** run HAProxy, Nginx or Traefik on a small VM in the VPC, or use Raff Kubernetes, which provides ingress controllers.
   </Accordion>
 </AccordionGroup>
 

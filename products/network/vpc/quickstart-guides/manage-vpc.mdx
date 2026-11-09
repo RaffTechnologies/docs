@@ -3,7 +3,7 @@ title: Manage a VPC
 description: Open the VPC detail page to rename, change DNS, enable an internet gateway (Platform Router or Firewall Appliance), attach VMs, and configure port forwarding
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 Every VPC has a **detail page** that puts everything you can do to it in one screen — rename, change DNS, choose an internet gateway, attach or detach VMs, configure port forwarding. This page is the one you open from the row menu's **Manage VPC** action or by clicking the VPC name in the list.
 
@@ -28,7 +28,7 @@ The page has four logical zones, top to bottom:
 1. **Header** — VPC name (with inline rename pencil), `Delete VPC` action on the right (disabled while VMs are attached)
 2. **Stats row** — CIDR, gateway IP, IPs in use vs available, DNS, **Update DNS** button, and an Internet Gateway badge (`No Internet Gateway` until you enable one)
 3. **Internet Gateway** picker — two cards, **Platform Router** and **Firewall Appliance**
-4. **Tabs** — **VMs** (live), **Port Fwd** (live), **Peering** (coming soon), **Services** (coming soon)
+4. **Tabs**: **VMs**, **Port Fwd**, **Peering**, and **Services** (VPN gateway)
 
 ## Rename a VPC
 
@@ -186,13 +186,28 @@ Up to **10 rules per VPC** — the counter reads `0 / 10 rules` when empty. Add 
 
 If you need more than 10 rules, complex NAT, or rule-level inspection, deploy the **Firewall Appliance** instead — OPNsense supports unlimited rules with full match-on-anything semantics.
 
-## Peering tab — coming soon
+## Peering tab: connect two VPCs
 
-The dashboard shows a Peering tab on every VPC, but it's a placeholder today. When VPC peering ships, you'll be able to connect two VPCs so VMs on one can reach VMs on the other over their private subnets. Until then, route cross-VPC traffic through public IPs or a shared gateway VM.
+Peering lets servers in two of your VPCs reach each other on their private IPs. It has no charge of its own.
 
-## Services tab — coming soon
+**Both VPCs need:**
 
-Reserved for **Load Balancer** and **VPN Gateway** as managed services attached to a VPC. Also placeholder today. The Firewall Appliance handles the VPN case in the meantime.
+- An active **Platform Router**. A VPC with a Firewall Appliance can't be peered, and EU Central doesn't have the Platform Router yet.
+- Ranges that don't overlap.
+
+**To peer them:** in the **Peering** tab, click **Add Peering**, pick the other VPC under **Peer with**, and click **Create Peering**.
+
+Servers in both VPCs get a route to the other VPC within a few minutes, with no restart. Their firewalls must allow the traffic.
+
+- **Peering doesn't chain.** Peering A with B and B with C doesn't connect A to C.
+- **Each peering uses one private IP** in each VPC.
+- **To remove a peering,** click the trash icon on its row. Traffic between the two VPCs stops. Each VPC keeps that one private IP in use until the other VPC's Platform Router is removed, and until then it can't be deleted. To delete both VPCs, remove one Platform Router first. Peering the same two VPCs again reuses the same IPs.
+
+## Services tab: VPN gateway
+
+Reach the VPC from laptops and phones, or connect an office or another network. The gateway costs **\$15 / month** with 10 device connections, and each site-to-site tunnel costs **\$20 / month**. See [Connect over VPN](/products/network/vpc/quickstart-guides/connect-with-vpn).
+
+The tab also shows **Load Balancer** as coming soon. It isn't available yet.
 
 ## Delete the VPC
 

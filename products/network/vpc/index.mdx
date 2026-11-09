@@ -5,7 +5,7 @@ description: Virtual Private Cloud networking on Raff — VXLAN-isolated private
 icon: network-wired
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 A **Virtual Private Cloud (VPC)** on Raff is an isolated private network for VMs in the same region. VPCs are **opt-in** — create one when you want two or more VMs to talk to each other privately at near-line-rate without going over the public internet, or to put a fleet behind a single internet gateway. A VM that doesn't join a VPC is still fully usable; it just reaches the internet through its public IP and has no private peer network. Under the hood, every VPC is a **VXLAN segment** with its own 24-bit VNI — that's what makes them isolated, and why two VPCs can use the same CIDR and still never see each other.
 
@@ -24,6 +24,8 @@ The dashboard's **Networking** page opens to this live diagram of every VPC, eve
 | Reserve a public IPv4 / IPv6 | **Public IPs** tab |
 | Build firewall rules and attach them to VMs | **Firewall** tab — see [Firewall](/products/network/firewall) |
 | Add a VM to a shared VPC | Diagram → VPC `⋮` menu → **Add VM** |
+| Connect two VPCs | VPC detail page → **Peering** tab. See [Manage a VPC](/products/network/vpc/quickstart-guides/manage-vpc#peering-tab-connect-two-vpcs) |
+| Reach a VPC from your devices or office | VPC detail page → **Services** tab. See [Connect over VPN](/products/network/vpc/quickstart-guides/connect-with-vpn) |
 | Detach a public IP from a VM | Diagram → click the blue IP chip → **Detach from VM** |
 
 ---

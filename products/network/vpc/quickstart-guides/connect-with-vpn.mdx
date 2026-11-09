@@ -1,0 +1,135 @@
+---
+title: Connect devices or an office to a VPC over VPN
+sidebarTitle: Connect over VPN
+description: Add a VPN gateway to a VPC, connect laptops and phones with WireGuard, and join an office or another network with a site-to-site tunnel
+---
+
+<sub>Updated November 9, 2026</sub>
+
+A VPN gateway lets you reach a VPC's private IPs from outside Raff. Your servers don't need public IPs.
+
+| What you want to connect | Use | Price |
+|---|---|---|
+| Laptops and phones | **Device connections** over WireGuard, 10 included | **\$15 / month** per gateway |
+| A whole network, such as an office or another cloud | **Site-to-site tunnel** over WireGuard or IPsec | **\$20 / month** per tunnel, plus the gateway |
+
+Traffic through the tunnels is not metered.
+
+## Before you start
+
+- A VPC in **US East**. EU Central doesn't have VPN gateways yet.
+- For a site-to-site tunnel, a remote network whose range doesn't overlap the VPC's range.
+
+## Add the gateway
+
+<Steps>
+  <Step title="Open the Services tab">
+    In **Networking → VPCs**, open the VPC and go to the **Services** tab.
+  </Step>
+  <Step title="Enable the gateway">
+    Click **Enable VPN Gateway**, name it or keep the suggested name, and click **Enable**. If your account pays by subscription, you pay at checkout first.
+  </Step>
+  <Step title="Wait for it to start">
+    Setup usually takes 1-2 minutes. The tab then shows the gateway's endpoint and its list of devices.
+  </Step>
+</Steps>
+
+## Connect a laptop or phone
+
+<Steps>
+  <Step title="Install WireGuard">
+    Get it from [wireguard.com/install](https://www.wireguard.com/install/) or your phone's app store.
+  </Step>
+  <Step title="Get a config">
+    Under **Devices**, click **Get config** on a free device. You can give it a name there.
+  </Step>
+  <Step title="Import it">
+    On a phone, scan the QR code from the WireGuard app. On a computer, click **Download .conf** and import the file.
+  </Step>
+  <Step title="Activate the tunnel">
+    Turn the tunnel on in WireGuard. You can now reach the VPC's private IPs.
+  </Step>
+</Steps>
+
+Use one config per device. Each config holds a private key, so treat it like a password.
+
+## Connect an office or another network
+
+<Steps>
+  <Step title="Add the tunnel">
+    Under **Site-to-Site Tunnels**, click **Add tunnel**, pick **WireGuard** or **IPsec (IKEv2)**, and fill in the form.
+
+    | Field | Tunnel type | What goes here |
+    |---|---|---|
+    | **Name** | Both | A label, such as `Head office` |
+    | **Remote public key** | WireGuard | Your firewall's WireGuard public key |
+    | **Remote endpoint** | WireGuard | Your site's public IP and WireGuard port, such as `203.0.113.10:51821` |
+    | **Remote gateway IP** | IPsec | Your site's public IP, such as `203.0.113.10` |
+    | **Remote subnet(s)** | Both | The networks behind your firewall, separated by commas |
+  </Step>
+  <Step title="Create it and copy the preshared key">
+    Click **Create tunnel**. Raff generates a preshared key and shows it on the tunnel's row.
+  </Step>
+  <Step title="Set up your firewall">
+    Use the values under **Your Raff side** and the preshared key.
+
+    **WireGuard:** enter the public key, the endpoint and the VPC's local subnet in your firewall's site-to-site settings. The dashboard lists UniFi Network 8.1+, pfSense, OPNsense and MikroTik.
+
+    **IPsec:** use these settings.
+
+    | Setting | Value |
+    |---|---|
+    | **Remote gateway** | The **Endpoint** IP, without the port |
+    | **Protocol** | IKEv2 |
+    | **Encryption** | AES-256 |
+    | **Hash** | SHA-256 |
+    | **DH group** | 14 |
+    | **Local ID** | Your device's public IP, the same IP as **Remote gateway IP** on the tunnel. Any other ID is refused |
+    | **Firewall** | Allow UDP 500 and 4500 to and from the gateway's public IP |
+  </Step>
+</Steps>
+
+The VPC's servers get a route to your remote subnets within a few minutes, with no restart. Your firewall must send traffic for the VPC's range through the tunnel.
+
+## Check that it works
+
+A tunnel's row shows its state:
+
+| State | Meaning |
+|---|---|
+| **Connected** | The tunnel is up |
+| **Waiting for your device** | It has never connected. Finish setting up your firewall |
+| **Down** | It was connected and has dropped. If it stays down for 10 minutes, we email you, and again when it returns |
+| **Configured** | The settings are on the gateway, but this gateway doesn't report its state because it was created before November 9, 2026 |
+
+Then ping a server's private IP from your device or from a machine on the remote network. If nothing answers, check that the server's firewall allows the traffic. For a tunnel that doesn't connect, see [Troubleshooting](/products/network/vpc/troubleshooting#site-to-site-vpn).
+
+## Limits
+
+| Item | Limit |
+|---|---|
+| **VPN gateways** | 1 per VPC |
+| **Device connections** | 10 per gateway |
+| **Site-to-site tunnels** | 10 per gateway |
+| **Remote subnets** | Must not overlap the VPC, each other, or a route the VPC already has |
+
+## Remove a tunnel or the gateway
+
+- **Tunnel:** click **Delete** on its row. Traffic to that network stops.
+- **Gateway:** click **Delete** at the top of the gateway card. Device configs stop working at once and billing stops. This can't be undone.
+
+Delete the gateway before you delete the VPC.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Manage a VPC" icon="sliders" href="/products/network/vpc/quickstart-guides/manage-vpc">
+    Detail page tour, including peering.
+  </Card>
+  <Card title="Features & limits" icon="circle-info" href="/products/network/vpc/details/features-and-limits">
+    VPC features, prices and limits.
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/products/network/vpc/troubleshooting">
+    Common VPC issues and fixes.
+  </Card>
+</CardGroup>

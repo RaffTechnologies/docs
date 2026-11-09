@@ -3,7 +3,7 @@ title: Create a VPC
 description: Open the VPCs tab, click Create VPC, pick a network size (Recommended / Small / Large / Custom), and confirm
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 A VPC is a private network you can attach multiple VMs to so they can talk to each other directly. Every VM created without a VPC selection gets its own private VPC; you create a **shared VPC** here when you want two or more VMs on the same private subnet.
 
@@ -15,7 +15,7 @@ This page walks the dashboard create flow. The full concept of why CIDRs can ove
 - A clear idea of how many VMs this VPC will hold (the size you pick today is fixed — no resize)
 
 <Note>
-  **Region.** Every VPC is created in the region your dashboard is currently set to, and today that's **`us-east`** (the only region available). The VPC and every VM you attach to it must share that region — see [Regions](/products/build/virtual-machines/concepts/regions). There is no region picker inside the Create VPC dialog because there's nothing to pick yet.
+  **Region.** Every VPC is created in the region your dashboard is currently set to: **`us-east`** or **`eu-central`**. The Create VPC dialog has no region picker, so switch the dashboard's region first if you need the other one. The VPC and every VM you attach to it must share that region. See [Regions](/products/build/virtual-machines/concepts/regions).
 </Note>
 
 
@@ -57,6 +57,8 @@ A few rules the validator enforces if you pick **Custom CIDR**:
 - Must be **CIDR-aligned** — `192.168.1.50/20` is rejected; the correct form is `192.168.0.0/20`
 
 You **don't** need to avoid CIDRs already used by your other VPCs. Two VPCs in the same account can use the same range — they're isolated by their VXLAN VNI, not by IP. See [VXLAN, CIDR, and isolation](/products/network/vpc/concepts/cidr-and-isolation#why-this-matters-cidr-overlap-is-a-non-issue).
+
+Pick a different range if you plan to peer this VPC with another one, or to connect a network that already uses that range. Overlapping ranges are refused there.
 
 ## 4. Click Create VPC
 

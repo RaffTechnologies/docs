@@ -3,7 +3,7 @@ title: VXLAN, CIDR, and isolation
 description: How Raff VPCs are isolated — every VPC is its own VXLAN segment with a unique VNI, which is why two VPCs can use the same CIDR and still never see each other
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 7, 2026</sub>
 
 A Raff VPC is a **VXLAN segment**. That's the one fact that explains everything else on this page — the CIDR rules, the overlap behavior, the MTU, the per-region scope. Read this once and the rest of the product makes sense.
 
@@ -17,7 +17,7 @@ That 24-bit VNI gives you ~16 million distinct private networks per region. No t
 
 ## Why this matters: CIDR overlap is a non-issue
 
-Most cloud users come in expecting the AWS rule: "VPC CIDRs must not overlap if you ever want to peer them." On Raff, that rule doesn't apply.
+Two VPCs can use the same range. The one exception is peering: VPCs with overlapping ranges can't be peered, so pick different ranges if you plan to connect them.
 
 | You can have | And it works |
 |---|---|
@@ -35,7 +35,7 @@ Every VPC reserves three addresses in its range:
 | Address | Use |
 |---|---|
 | `.0` | Network address (the CIDR itself) |
-| `.1` | Gateway — every VM gets this as its default gateway for the VPC subnet |
+| `.1` | Gateway. Servers without a public IP use it as their default route; the Platform Router answers on it |
 | `.255` | Broadcast (for `/24` and larger; smaller subnets follow standard IPv4 broadcast rules) |
 
 So a `/24` VPC has **253 usable IPs** (256 − 3). The dashboard shows this directly: `1/253 IPs us-east` on each VPC card means one IP is in use out of 253 available.
@@ -71,7 +71,12 @@ Public IP ranges are rejected at create time. The validator also enforces that t
 
 A VPC lives in **exactly one region**. VMs from another region cannot join it; the VXLAN layer is bounded by the regional underlay.
 
-Every VPC has an internal **gateway** (the `.1` address) that every member VM uses as its default route for the VPC subnet. Inter-VM traffic inside the VPC is **L2** — frames go directly between hypervisors over the VXLAN multicast group, no routing hop. Traffic leaving the VPC (to the public internet, to another VPC, etc.) goes through the gateway and out via the host's NAT or a public IP if the VM has one attached.
+Every VPC has a **gateway** address, `.1`. Each server gets exactly one default route:
+
+- **Server with a public IP:** its default route goes out through its own public IP. Its VPC card carries no gateway.
+- **Server without a public IP:** its default route points at `.1`. It reaches the internet once the VPC has a gateway (the Platform Router answers on `.1`); without one it stays private.
+
+Inter-VM traffic inside the VPC is **L2**: frames go directly between hypervisors over the VXLAN multicast group, with no routing hop and no gateway involved.
 
 This is why **same-region VM-to-VM traffic inside a VPC is free and high-throughput** — it never leaves the underlay.
 
@@ -93,14 +98,15 @@ To set expectations against AWS-style features:
 
 | Feature | On Raff? |
 |---|---|
-| **VPC peering** between two VPCs | **Coming soon** — the Peering tab is in the dashboard but disabled. Today, route cross-VPC traffic through public IPs or a shared gateway VM |
-| **Load balancer / VPN gateway as a service** | **Coming soon** — placeholder under the **Services** tab |
+| **Load balancer as a service** | **Coming soon**: shown under the **Services** tab |
 | **Cross-region VPC** | No — each VPC is regional |
 | **Transit gateway** | Not available; build a hub VM if you need a star topology |
 | **Custom route tables** | Not exposed; the gateway handles default routing |
 | **VPC endpoints / PrivateLink** | Not today; same-region traffic to Object Storage and Kubernetes is already on the private network |
 
 For outbound internet access without exposing a public IP, see the **Internet Gateway** options on each VPC — the Platform Router gives you managed NAT for free, and the Firewall Appliance (OPNsense) gives you full firewall control as a paid VM.
+
+To connect VPCs or outside networks, see [peering](/products/network/vpc/quickstart-guides/manage-vpc#peering-tab-connect-two-vpcs) and [Connect over VPN](/products/network/vpc/quickstart-guides/connect-with-vpn).
 
 ## VPC membership is opt-in
 
