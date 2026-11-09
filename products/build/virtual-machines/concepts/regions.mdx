@@ -1,19 +1,33 @@
 ---
 title: Regions
-description: Where Raff VMs run today (us-east only) and how regional scope affects networking, IP allocation, and migration
+description: Where Raff servers run, what each region offers, and how regional scope affects networking, IP allocation, and moving a server
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 A **region** is a geographic location where Raff operates compute, storage, and networking. The region you pick at VM creation determines where the VM physically lives, which IP ranges it can be assigned, and which VPCs it can join.
 
 ## Available regions
 
-| Region | Status | Notes |
+| Region | Code | Location |
 |---|---|---|
-| **`us-east`** | Available | The single region today |
+| **US East** | `us-east` | Vint Hill, Virginia |
+| **EU Central** | `eu-central` | Frankfurt, Germany |
 
-Pass `region: "us-east"` (or pick "US East" in the dashboard) on every create call. The [List Regions](/api-reference/catalog/list-regions) endpoint returns the current set programmatically.
+Pick the region in the dashboard, or pass its code as `region` on every create call. The [List Regions](/api-reference/catalog/list-regions) endpoint returns the current regions and what each one sells in `products`, so your code never has to hard-code this list.
+
+## What each region offers
+
+| Product | US East | EU Central |
+|---|---|---|
+| Cost-Optimized servers (Linux) | Yes | Yes |
+| General Purpose and CPU-Optimized servers | Yes | Not yet |
+| Windows servers, Standard plans | Yes | Yes |
+| Windows servers, Business plans | Yes | Not yet |
+| Volumes, snapshots, and backups | Yes | Yes |
+| VPC | Yes | Yes, without a router or VPN gateway |
+| Site-to-Site VPN | Yes | Not yet |
+| Kubernetes, Managed Databases, Apps, Functions, Object Storage | Yes | Not yet |
 
 ## What region scope means
 
@@ -26,25 +40,24 @@ A region is a hard boundary — resources from different regions cannot share ne
 | **Public IPs** | IPv4 / IPv6 addresses come from region-specific pools. A reserved IP can only attach to VMs in the same region it was reserved in |
 | **Volumes** | A volume can only attach to VMs in its own region |
 | **Object Storage** | Buckets are region-scoped; same-region traffic between VMs and Object Storage is free |
-| **Snapshots and backups** | Stored in the same region as the source VM |
+| **Snapshots** | Stored in the same region as the source VM |
+| **Backups** | Stored separately from your server |
 
 ## Picking a region
 
-With one region today, the choice is straightforward — `us-east`. When this matters more in the future:
+- **Latency** — pick the region closest to your users: US East for North America, EU Central for Europe. Round-trip time to a region is the floor of how fast your service can respond
+- **What you need** — check the table above: a region must sell everything your service uses
+- **Data residency** — the region determines where your server disks and volumes are stored
+- **Cross-region traffic** — same-region traffic between Raff resources is free; traffic between regions goes over the public internet and counts against egress
 
-- **Latency** — pick the region closest to your users. Round-trip time to a region is the floor of how fast your service can respond
-- **Data residency** — if you have customer-data-locality requirements, the region determines where the data is stored
-- **Cross-region traffic** — same-region traffic between Raff resources is free; cross-region (when other regions exist) goes over the public internet and counts against egress
+## Moving a server to a different region
 
-## Migrating a VM to a different region
+You can't change a server's region, and a snapshot, backup, or custom image can't create a server in another region. The path:
 
-You can't change a running VM's region. The migration path:
-
-1. **Snapshot** the source VM (or save its OS disk as a Custom Image)
-2. **Create a new VM** in the target region from that image
-3. **Restore data** from any volume snapshots or backups, or copy data via SCP/SFTP/rsync
-4. **Update DNS / load balancer / clients** to point at the new VM
-5. **Delete the source VM** when the cutover is done — unused subscription time credits back to your balance
+1. **Create a new server** in the target region
+2. **Copy your data** via SCP/SFTP/rsync
+3. **Update DNS / load balancer / clients** to point at the new server
+4. **Delete the source server** when the cutover is done — unused subscription time credits back to your balance
 
 Keep the old VM running until the new one is verified — there's no auto-failover between regions.
 

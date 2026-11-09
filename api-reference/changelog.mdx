@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 9, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,18 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 9, 2026
+
+**Catalog: API**
+
+- 🔵 **Updated**: [List regions](/api-reference/catalog/list-regions) `GET /api/v1/public/regions` returns `products` on each region: what it sells, read from its live prices, such as `cost_optimized`, `windows` or `vpc`. An empty list means it could not be read.
+
+### November 8, 2026
+
+**Virtual Machines: Cost-Optimized plans**
+
+- 🔵 **Updated**: [List VM pricing](/api-reference/catalog/list-vm-pricing) `GET /api/v1/public/pricing/vm` lists 12 Cost-Optimized sizes in each region, \$4.99 to \$89.99 a month, with disks of 25 to 160 GB. The 5 earlier plans have new ids and smaller disks at the same prices. A server created on an earlier plan keeps its plan, disk and price.
 
 ### November 5, 2026
 

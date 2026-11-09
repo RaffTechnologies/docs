@@ -103,7 +103,7 @@ paths:
       tags:
         - Catalog
       summary: List regions
-      description: Returns all active data center regions.
+      description: Returns all active data center regions and what each one sells.
       operationId: listRegions
       security: []
       responses:
@@ -10717,6 +10717,13 @@ components:
           type: boolean
           description: Whether this is the default region
           example: true
+        products:
+          type: array
+          description: What the region sells, read from its live prices. Empty if it could not be read.
+          items:
+            type: string
+            enum: [apps, backups, cost_optimized, databases, functions, kubernetes, object_storage, premium, snapshots, standard, volumes, vpc, vpn, windows]
+          example: [backups, cost_optimized, snapshots, volumes, vpc]
 
     Template:
       type: object

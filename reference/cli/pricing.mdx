@@ -3,7 +3,7 @@ title: "raff pricing"
 description: "Browse the public pricing catalog from the CLI — VM plans, volume / backup / snapshot per-GB rates, floating IP family rates."
 ---
 
-<sub>Updated May 10, 2026</sub>
+<sub>Updated November 8, 2026</sub>
 
 The `raff pricing` command group browses Raff's public pricing catalog. Use it to discover plan IDs (for `raff vm create --pricing-id`), per-GB storage rates (for cost forecasting), and floating IP rates. Output supports `--output json` for scripting.
 
@@ -31,7 +31,7 @@ List VM plans. Output columns: `ID`, `TYPE`, `REGION`, `vCPU`, `RAM`, `SSD`, `TR
 # All standard plans
 raff pricing vm --vm-type standard
 
-# Cost-Optimized plans (local NVMe, from $9.99/mo)
+# Cost-Optimized plans (local NVMe, from $4.99/mo)
 raff pricing vm --vm-type cost_optimized
 
 # Cheapest plan that meets your minimums
