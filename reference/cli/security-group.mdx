@@ -1,9 +1,9 @@
 ---
 title: "raff security-group"
-description: "Manage Firewall Groups (security groups in the API) from the CLI — list, list templates, get, create, delete. Customer-facing label is Firewall; the API path is still security-groups."
+description: "Manage Firewall Groups (security groups in the API) from the CLI — list, list templates, get, create, delete, and the tags that put a group on servers. Customer-facing label is Firewall; the API path is still security-groups."
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 The `raff security-group` command group manages Firewall Groups. The dashboard product is called **Firewall**; the underlying API path is `security-groups`, which is what the CLI command name reflects. Functionality is the same — see [Firewall overview](/products/network/firewall) for the model.
 
@@ -18,6 +18,8 @@ To attach a group to a VM, use `raff vm sg add` (see [VM commands → sg add](/r
 | [`get`](#get) | Show one group's full rule set |
 | [`create`](#create) | Create a new Firewall Group |
 | [`delete`](#delete) | Delete a Firewall Group |
+| [`tags get`](#tags-get) | Show the tags a group is linked to and its progress on their servers |
+| [`tags set`](#tags-set) | Link a group to tags: it goes on their servers in its project |
 
 ---
 
@@ -73,6 +75,24 @@ raff security-group delete <sg-id>
 
 Delete a Firewall Group. Fails if it's still attached to any VM — detach with `raff vm sg remove` on each VM first.
 
+## tags get
+
+```bash
+raff security-group tags get <sg-id> [--output table|json]
+```
+
+Show the tags the Firewall Group is linked to in its project, and how many servers of the last day are pending, running, done, failed, in conflict or skipped.
+
+## tags set
+
+```bash
+raff security-group tags set <sg-id> --tag-ids <tag-id1,tag-id2>
+```
+
+Make these the group's tags in its own project. Raff then puts the group on the public IPs of every server of that project with one of the tags, in the background (about 20 seconds per server). Tags left out are unlinked, and their servers keep the group. Pass `--tag-ids ""` to unlink every tag.
+
+In a project a tag carries at most one Firewall Group. A server whose tags carry different groups in its project is left as it is (conflict). Get tag IDs with [`raff tag list`](/reference/cli/tag#list). Needs the `account.tags.manage` permission (account Owner and Admin by default).
+
 ## When changes apply
 
 Changes apply to running VMs with no reboot: saved rules within a few seconds, an attach or detach in about 20 seconds. Connections already open stay open; new connections follow the new rules. See [Update rules](/products/network/firewall/quickstart-guides/update-rules#when-the-new-rules-apply).
@@ -80,6 +100,9 @@ Changes apply to running VMs with no reboot: saved rules within a few seconds, a
 ## Related
 
 <CardGroup cols={3}>
+  <Card title="Tag commands" icon="tags" href="/reference/cli/tag">
+    `raff tag` to create the tags a group goes on.
+  </Card>
   <Card title="VM commands" icon="server" href="/reference/cli/vm">
     `raff vm sg add` to attach to a VM.
   </Card>

@@ -3,7 +3,7 @@ title: Tags & organization
 description: How VM tags, priorities, and Group by Tag let you organize many VMs without losing your mind
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 A tag is a free-form label you attach to a VM. Once you have more than a handful of VMs, tags become the primary tool for finding, filtering, and grouping them in the dashboard.
 
@@ -12,8 +12,10 @@ A tag is a free-form label you attach to a VM. Once you have more than a handful
 | Field | Description |
 |---|---|
 | **Name** | Free-form text — `prod`, `customer-acme`, `db`, `web-tier` |
+| **Colour** | `gray` (default), `red`, `orange`, `amber`, `green`, `blue`, `violet` or `pink` |
 | **Priority** | Integer 1-9 (or none) — controls display order in the Tags column and in **Group by Tag** view |
 | **Scope** | Account-wide — the same tag name on multiple VMs is the **same tag**, not a copy |
+| **Firewall** | Optional, one per project: see [Tags That Carry a Firewall](#tags-that-carry-a-firewall) |
 
 ## Add a tag
 
@@ -61,6 +63,19 @@ When you rename a tag, the change applies to **every** VM that carries it — th
 
 This makes mass-renaming safe (one rename = consistent everywhere), but typos propagate. Pick names with care, or fix them globally as soon as you spot one.
 
+## Tags That Carry a Firewall
+
+A tag can carry a cloud firewall in a project. Every server of that project with the tag gets the firewall on its public IPs: when the tag is linked, when the tag is added to a server, and from the first boot of a server created with the tag.
+
+| Rule | What it means |
+|---|---|
+| **One firewall per tag per project** | In a project a tag carries at most one firewall. The same tag can carry a different firewall in another project. |
+| **Conflicts change nothing** | When a server's tags carry different firewalls in its project, Raff leaves the server as it is. Creating a server with such tags is refused before any charge. |
+| **A hand change wins** | Attaching or detaching a firewall by hand stays until the server's tags change. |
+| **Nothing reopens by itself** | Removing a tag from a server, unlinking it or deleting it leaves the firewall on. Remove the tag with `reset_firewall=true` (CLI: `--reset-firewall`) to go back to the Raff Default Firewall. |
+
+Link a tag to a firewall with [Set firewall tags](/api-reference/endpoint/set-firewall-tags) or [`raff security-group tags set`](/reference/cli/security-group#tags-set). Creating, changing and deleting tags and links needs the `account.tags.manage` permission (account Owner and Admin by default).
+
 ## Hostnames vs tags
 
 Hostnames and tags answer different questions:
@@ -92,8 +107,8 @@ Keep tags orthogonal to hostnames: hostname says *what this server is*, tags say
 | Item | Limit |
 |---|---|
 | **Tags per VM** | **20** — covers any reasonable env / team / stack / project mix. If you're hitting it, you're probably encoding things in tags that should be separate metadata |
-| **Tag name characters** | Free-form text. Keep names short (5–20 chars) and consistent for fast filtering |
-| **Bulk tag operations** | Per-VM via the Add Tag dialog and `tags:set` action; the dashboard's bulk-select doesn't yet support a multi-VM tag-edit. Use [`raff vm tags set`](/reference/cli/vm#tags-set) on each VM in a script for fleet-wide changes |
+| **Tag name characters** | 1-40 characters, unique in the account ignoring case. Keep names short (5–20 chars) and consistent for fast filtering |
+| **Bulk tag operations** | Per-VM via the Add Tag dialog and `tags:set` action; the dashboard's bulk-select doesn't yet support a multi-VM tag-edit. Use [`raff vm tags add`](/reference/cli/vm#tags-add) on each VM in a script for fleet-wide changes |
 
 ## Related
 

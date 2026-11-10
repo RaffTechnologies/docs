@@ -3,7 +3,7 @@ title: Create Your First VM
 description: Step-by-step guide to deploying a virtual machine on Raff
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 This guide walks you through creating a virtual machine, connecting via SSH, and managing its lifecycle.
 
@@ -217,3 +217,27 @@ curl -X POST https://api.rafftechnologies.com/api/v1/vms \
     "skip_vpc": true
   }'
 ```
+
+## Firewall From the First Boot
+
+Pass `security_group_id` to start the VM with one of your firewalls on its public address instead of the Raff Default Firewall. The VM is held until the firewall is in place, so a port the firewall closes is never open, not even during the first boot.
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/vms \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "X-Project-ID: $RAFF_PROJECT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "web-01",
+    "template_id": "<template-uuid>",
+    "pricing_id": 1,
+    "region": "us-east",
+    "security_group_id": "<firewall-uuid>"
+  }'
+```
+
+- The firewall must belong to the same project as the VM. List firewalls with `GET /api/v1/security-groups`.
+- The VM needs a public address: `skip_public_ip: true` is refused unless `enable_ipv6: true`.
+- Leave it out for the Raff Default Firewall.
+
+After creation it is the VM's normal firewall: `GET /api/v1/vms/{id}/networks` shows it as `security_group_id` on the public interface, and you change it as in [Attach a Firewall Group to a VM](/products/network/firewall/quickstart-guides/attach-to-vm).

@@ -3,7 +3,7 @@ title: "raff_security_group"
 description: "Manage Raff security groups (firewalls) with Terraform: named inbound/outbound rule sets you attach to VM NICs. Updates replace the entire rule set and reach attached VMs within seconds, with no reboot."
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 Manages a Raff **security group**: a named set of inbound/outbound rules that attach to VM NICs. Rule changes reach every attached VM within a few seconds, with no reboot. Rules are nested blocks; updating the rule list replaces the entire set on the API side.
 
@@ -53,6 +53,22 @@ resource "raff_security_group" "web" {
 
 Templates copy a curated rule set at create time; you can then add explicit `rule` blocks to merge in extras. Get template IDs via [`raff security-group templates`](/reference/cli/security-group#templates).
 
+## Example: Put It on Servers by Tag
+
+```hcl
+resource "raff_tag" "web" {
+  name = "web"
+}
+
+resource "raff_security_group" "web" {
+  name        = "web-public"
+  template_id = "<web-server-template-uuid>"
+  tag_ids     = [raff_tag.web.id]
+}
+```
+
+Raff puts the security group on the public IPs of every server in its project with the `web` tag, in the background (about 20 seconds per server), and on servers that get the tag later. See [`raff_tag`](/reference/terraform/raff_tag).
+
 ## Argument reference
 
 ### Required
@@ -68,6 +84,7 @@ Templates copy a curated rule set at create time; you can then add explicit `rul
 | `description` | string | Free-form description |
 | `template_id` | string (UUID) | Seed from a template at create time. Template rules are copied, then merged with any explicit `rule` blocks. ForceNew |
 | `rule` | list of blocks | Inbound/outbound rules. Updates replace the entire set |
+| `tag_ids` | set of strings (UUID) | [`raff_tag`](/reference/terraform/raff_tag) IDs linked to this security group in its project. In a project a tag carries at most one security group. Changes apply in place; a removed tag is unlinked and its servers keep the security group. Terraform reads the links back only while this is set. Needs `account.tags.manage` |
 
 ### `rule` block
 
@@ -95,6 +112,7 @@ Templates copy a curated rule set at create time; you can then add explicit `rul
 |---|---|
 | `terraform apply` (create) | Creates the security group |
 | Change `name`, `description`, `rule` | In-place update. Attached VMs get the new rules within a few seconds, with no reboot |
+| Change `tag_ids` | In-place update. Servers with a newly linked tag get the security group in the background |
 | Change `template_id` | **Replacement** — destroy + recreate |
 | `terraform destroy` | Deletes the security group. Detach from VMs first |
 

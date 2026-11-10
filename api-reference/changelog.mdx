@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 9, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,52 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 10, 2026
+
+**Virtual Machines: API**
+
+- 🔵 **Updated**: [Create VM](/api-reference/endpoint/create-vm) `POST /api/v1/vms` takes `security_group_id`: the firewall the server's public addresses carry from the first boot, in place of the Raff Default Firewall, so no port it closes is ever open. The firewall must be in the same project as the server, and the server needs a public address (`skip_public_ip: true` is refused unless `enable_ipv6: true`). Leave it out for the Raff Default Firewall, as before.
+
+- 🔵 **Updated**: [Create VM](/api-reference/endpoint/create-vm) `POST /api/v1/vms`: when `security_group_id` is not sent and the new server's `tags` carry exactly one firewall in its project, the server gets that firewall from its first boot. Tags that carry different firewalls are refused (400) before any charge.
+
+- 🔵 **Updated**: [Add tag to VM](/api-reference/endpoint/add-vm-tag) `POST /api/v1/vms/{id}/tags` creates the account tag when it is missing and answers `firewall` and `firewall_queued`. [Remove VM tag](/api-reference/endpoint/remove-vm-tag) `DELETE /api/v1/vms/{id}/tags/{tagId}` takes `reset_firewall=true` to also put the server back on the Raff Default Firewall. VM `tags` entries include `color`.
+
+- 🟢 **Added**: [Get VM tag firewall](/api-reference/endpoint/get-vm-tag-firewall) `GET /api/v1/vms/{id}/tag-firewall`: the firewalls a server's tags carry in its project, `conflict`, and the latest job.
+
+- 🔵 **Updated**: [List VM network interfaces](/api-reference/endpoint/list-vm-networks) `GET /api/v1/vms/{id}/networks`: each interface has `security_group_source` (`manual`, `create` or `tag`), `security_group_tag_id` and `security_group_tag_name`.
+
+**Tags: API**
+
+- 🟢 **Added**: [List tags](/api-reference/endpoint/list-tags) `GET /api/v1/tags` answers `data`: every account tag with `color`, `priority` (1-9 or `null`), `server_count` and `firewalls`. `tags` and `counts` stay for older clients.
+
+- 🟢 **Added**: [Create tag](/api-reference/endpoint/create-tag) `POST /api/v1/tags`, [Update tag](/api-reference/endpoint/update-tag) `PATCH /api/v1/tags/{id}` and [Delete tag](/api-reference/endpoint/delete-tag) `DELETE /api/v1/tags/{id}`. A change shows on every server with the tag; deleting a tag leaves the firewalls it set on the servers. They need the new `account.tags.manage` permission (account Owner and Admin by default; it can be added to custom roles).
+
+**Firewall: API**
+
+- 🟢 **Added**: [Set firewall tags](/api-reference/endpoint/set-firewall-tags) `PUT /api/v1/security-groups/{id}/tags` and [Get firewall tags](/api-reference/endpoint/get-firewall-tags) `GET /api/v1/security-groups/{id}/tags`. The firewall goes on the public network interfaces of every server of its project with one of the tags, in the background (about 20 seconds per server). In a project a tag carries at most one firewall.
+
+- 🟢 **Added**: [Create VM](/api-reference/endpoint/create-vm) `POST /api/v1/vms` documents `enable_ipv6`: the server also gets a public IPv6 address from its node. With `skip_public_ip: true` it is the server's only public address. The API already accepted it; it is now in the API reference, raff-go and the CLI.
+
+**Virtual Machines: CLI** (raff-cli v0.6.11)
+
+- 🔵 **Updated**: [`raff vm create`](/reference/cli/vm#create) takes `--security-group-id`, `--skip-public-ip` (no public IPv4) and `--ipv6` (a public IPv6 address). The help mentioned `--skip-public-ip` before, but the flag did not exist.
+
+- 🟢 **Added**: [`raff tag list|create|update|delete`](/reference/cli/tag) and [`raff security-group tags get|set`](/reference/cli/security-group#tags-set).
+
+- 🔵 **Updated**: [`raff vm tags remove`](/reference/cli/vm#tags-remove) takes `--reset-firewall`.
+
+**Virtual Machines: Go SDK** (raff-go v0.8.8)
+
+- 🔵 **Updated**: `CreateVMRequest` has `SecurityGroupID` and `EnableIpv6`. raff-go now matches the whole API reference: region `products` and VPN pricing types are in. The template type constants are now `ListTemplatesParamsVMTypeCostOptimized`, `...Premium`, `...Standard` and `...Windows`; the old names `CostOptimized`, `Premium`, `Standard` and `Windows` still work and are deprecated.
+
+- 🟢 **Added**: `client.Tags` (`List`, `Create`, `Update`, `Delete`), `SecurityGroups.GetTags` and `SetTags`, and `VMs.TagFirewall`. `VMs.RemoveTag` takes an optional `&raff.RemoveVMTagOptions{ResetFirewall: true}`. The cluster maintenance upgrade mode constants are now `AutoMinor`, `AutoPatch` and `Manual`; the old `UpdateK8SClusterMaintenanceJSONBodyUpgradeMode...` names still work and are deprecated.
+
+**Virtual Machines: Terraform** (provider v0.4.10)
+
+- 🔵 **Updated**: [`raff_vm`](/reference/terraform/raff_vm) takes `security_group_id`. Set at create, the server starts with that firewall; changing it later attaches the new firewall in place, and removing it detaches the firewall.
+
+- 🟢 **Added**: [`raff_tag`](/reference/terraform/raff_tag) (name, color, priority; import by ID) and `tag_ids` on [`raff_security_group`](/reference/terraform/raff_security_group), changed in place.
 
 ### November 9, 2026
 

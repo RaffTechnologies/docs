@@ -3,7 +3,7 @@ title: "raff vm"
 description: "Manage Virtual Machines from the CLI: list, get, create, update, delete (incl. bulk-delete), power, reboot, hard-reboot, reinstall, factory-reset, rename, reset-password, resize, resize-disk, save-image, plus IP, firewall, VPC, tags, notes, SSH keys and networks subcommands."
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 The `raff vm` command group covers every Virtual Machine operation in the public API. Each subcommand also supports `--output json` for scripting.
 
@@ -28,7 +28,7 @@ The `raff vm` command group covers every Virtual Machine operation in the public
 | [`ip attach`](#ip-attach) / [`ip detach`](#ip-detach) | Attach / detach a public IP |
 | [`sg add`](#sg-add) / [`sg remove`](#sg-remove) | Attach / detach a Firewall Group |
 | [`vpc attach`](#vpc-attach) / [`vpc detach`](#vpc-detach) | Attach / detach a VPC |
-| [`tags add`](#tags-add) / [`tags remove`](#tags-remove) / [`tags set`](#tags-set) / [`tags list`](#tags-list) | Manage VM tags |
+| [`tags add`](#tags-add) / [`tags update`](#tags-update) / [`tags remove`](#tags-remove) / [`tags list`](#tags-list) | Manage VM tags |
 | [`notes set`](#notes-set) / [`notes append`](#notes-append) / [`notes get`](#notes-get) | Manage VM notes |
 | [`ssh-keys list`](#ssh-keys-list) / [`ssh-keys add`](#ssh-keys-add) / [`ssh-keys remove`](#ssh-keys-remove) | See, add and remove root's SSH keys on a running Linux server |
 | [`networks`](#networks) | List the VM's network attachments |
@@ -75,10 +75,18 @@ raff vm create \
   [--extra-storage <gb>] \
   [--backup-type none|daily|weekly] \
   [--tags <tag1,tag2>] \
-  [--vpc-id <vpc-uuid> | --vpc-name <name> --vpc-cidr <cidr>]
+  [--vpc-id <vpc-uuid> | --vpc-name <name> --vpc-cidr <cidr> | --no-vpc] \
+  [--skip-public-ip] [--ipv6] \
+  [--security-group-id <firewall-uuid>]
 ```
 
 Create a new VM. Required: `--name`, `--template-id`, `--pricing-id`, `--region`. Get template IDs via [List Templates](/api-reference/catalog/list-templates) and pricing IDs via [List VM Pricing](/api-reference/catalog/list-vm-pricing) or the [Pricing](/products/build/virtual-machines/details/pricing) page. With `--auto-generate-password`, Raff makes the root or Administrator password and emails it to the account once the server is created; it is never shown or stored by the CLI.
+
+With `--skip-public-ip`, the VM gets no public IPv4 and is reached on its VPC private IP, so it cannot be combined with `--no-vpc`. With `--ipv6`, the VM also gets a public IPv6 address from its node; with both flags, IPv6 is its only public address.
+
+With `--security-group-id`, the VM's public IP carries that firewall from the first boot instead of the Raff Default Firewall, so no port it closes is ever open. The firewall must be in the same project as the VM; list firewalls with [`raff security-group list`](/reference/cli/security-group). Change it later with [`raff vm sg add`](#sg-add) and [`raff vm sg remove`](#sg-remove).
+
+With `--tags` and no `--security-group-id`, when the tags carry exactly one firewall in the VM's project (see [`raff security-group tags set`](/reference/cli/security-group#tags-set)), the VM gets that firewall from its first boot. Tags that carry different firewalls are refused before any charge.
 
 ## update
 
@@ -226,22 +234,26 @@ Remove the VPC interface. Blocked if it would leave the VM with zero interfaces 
 ## tags add
 
 ```bash
-raff vm tags add <vm-id> --tag <tag-name>
+raff vm tags add <vm-id> --name <tag-name> [--priority <1-9>]
 ```
+
+Add an account tag to the VM. When the account has no tag of this name, it is created with `--priority`. When the tag carries a firewall in the VM's project, Raff puts that firewall on the VM's public IPs about 20 seconds later. Manage the tags themselves with [`raff tag`](/reference/cli/tag).
+
+## tags update
+
+```bash
+raff vm tags update <vm-id> --tag-id <tag-id> --name <new-name>
+```
+
+Move the VM from this tag to the tag named `--name`. Priority belongs to the tag: change it for every server with [`raff tag update`](/reference/cli/tag#update).
 
 ## tags remove
 
 ```bash
-raff vm tags remove <vm-id> --tag <tag-name>
+raff vm tags remove <vm-id> --tag-id <tag-id> [--reset-firewall]
 ```
 
-## tags set
-
-```bash
-raff vm tags set <vm-id> --tags <tag1,tag2,tag3>
-```
-
-Replace the VM's tag set with the given list (clears any existing tags first).
+Remove a tag from the VM. A firewall the tag put on the VM stays on it. With `--reset-firewall`, the VM's public IPs also go back on the Raff Default Firewall.
 
 ## tags list
 

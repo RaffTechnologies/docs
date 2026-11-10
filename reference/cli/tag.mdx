@@ -1,0 +1,71 @@
+---
+title: "raff tag"
+description: "Manage account tags from the CLI: list, create, update and delete the tags shared by your servers, with their colour, priority and the firewalls they carry."
+---
+
+<sub>Updated November 10, 2026</sub>
+
+The `raff tag` command group manages the account's tags. A tag is shared by every server that has it, so a rename, colour or priority change shows on all of them. Put a tag on a server with [`raff vm tags add`](/reference/cli/vm#tags-add), and link a tag to a firewall with [`raff security-group tags set`](/reference/cli/security-group#tags-set).
+
+`create`, `update` and `delete` need the `account.tags.manage` permission (account Owner and Admin by default; it can be added to custom roles).
+
+## Subcommand index
+
+| Subcommand | What it does |
+|---|---|
+| [`list`](#list) | List the account's tags |
+| [`create`](#create) | Create a tag |
+| [`update`](#update) | Rename, recolour or reprioritise a tag on every server |
+| [`delete`](#delete) | Delete a tag from the account and every server |
+
+---
+
+## list
+
+```bash
+raff tag list [--output table|json]
+```
+
+Lists every tag of the account with its colour, priority, server count and the firewalls it carries (one at most per project). Servers are counted in the projects you can see; set `--project-id` or `RAFF_PROJECT_ID` to count one project.
+
+## create
+
+```bash
+raff tag create --name <name> [--color <color>] [--priority <1-9>]
+```
+
+| Flag | Description |
+|---|---|
+| `--name` | Required. 1-40 characters, unique in the account ignoring case. |
+| `--color` | `gray` (default), `red`, `orange`, `amber`, `green`, `blue`, `violet` or `pink`. |
+| `--priority` | 1-9, 1 highest. Leave it out for none. |
+
+## update
+
+```bash
+raff tag update <tag-id> [--name <name>] [--color <color>] [--priority <0-9>]
+```
+
+Change a tag on every server that has it. `--priority 0` removes the priority.
+
+## delete
+
+```bash
+raff tag delete <tag-id> [--force]
+```
+
+Delete a tag. It is removed from every server and every firewall link. Firewalls the tag put on servers stay on those servers. Asks for confirmation unless `--force` is set.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Security group commands" icon="shield-halved" href="/reference/cli/security-group">
+    `raff security-group tags set` to link a tag to a firewall.
+  </Card>
+  <Card title="VM commands" icon="server" href="/reference/cli/vm">
+    `raff vm tags` to tag a server.
+  </Card>
+  <Card title="Tags and organization" icon="tags" href="/products/build/virtual-machines/concepts/tags-and-organization">
+    How tags, colours and priorities work.
+  </Card>
+</CardGroup>

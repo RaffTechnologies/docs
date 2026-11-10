@@ -3,7 +3,7 @@ title: "raff_vm"
 description: "Manage Raff Virtual Machines with Terraform — pick template, plan, region, SSH keys, optional VPC and backup schedule. Required: name, template_id, pricing_id, region. Resizing is in-place via pricing_id change."
 ---
 
-<sub>Updated October 21, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 Manages a Raff **Virtual Machine** — Linux or Windows, with NVMe SSD disks, optional SSH keys / password, optional VPC attachment, and optional backup schedule. Pricing plans range from $3.99/mo (Premium 1 vCPU / 1 GiB) to $511.99/mo (Premium 32 vCPU / 128 GiB) — see the [Pricing page](/products/build/virtual-machines/details/pricing) for the full list.
 
@@ -47,6 +47,9 @@ resource "raff_vm" "api" {
   # Or create a VPC inline at the same time
   # vpc_name = "prod-services"
   # vpc_cidr = "10.7.0.0/24"
+
+  # Firewall on the public IP from the first boot (same project as the VM)
+  security_group_id = raff_security_group.web.id
 
   # Tags
   tags = ["api", "prod", "team-platform"]
@@ -98,6 +101,7 @@ resource "raff_vm" "api" {
 | `vpc_id` | string (UUID) | Attach the VM to an existing VPC |
 | `vpc_name` | string | Create a new VPC inline at the same time as the VM (requires `vpc_cidr`) |
 | `vpc_cidr` | string | CIDR for the inline-created VPC. Allowed prefixes `/16`–`/28`, RFC 1918 + RFC 6598 ranges |
+| `security_group_id` | string (UUID) | Firewall (`raff_security_group.<name>.id`) for the VM's public IPv4. Set at create, the VM carries it from the first boot instead of the Raff Default Firewall, so no port it closes is ever open. Must be in the same project as the VM. Terraform reads the IP's firewall back only while this is set |
 
 ### Optional — tags and lifecycle
 
@@ -131,6 +135,7 @@ resource "raff_vm" "api" {
 | Change `template_id` | **Reinstall** — wipes the OS disk, preserves attached volumes / IP / VPC / tags. See [Reinstall](/products/build/virtual-machines/quickstart-guides/reinstall) |
 | Change `region` | **Replacement** — Terraform destroys and recreates (regions are immutable on a VM) |
 | Change `tags`, `backup_*` | In-place updates |
+| Change `security_group_id` | In-place: the new firewall is attached to the primary public IPv4 and replaces the old one. Removing it detaches the firewall, which leaves the Raff Default Firewall |
 | `terraform destroy` | Deletes the VM. Volumes preserved by default (`volume_action = "detach"`); set to `"delete"` to also remove. VPCs preserved unless `delete_vpc = true` |
 
 ## Importing existing VMs

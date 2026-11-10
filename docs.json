@@ -710,9 +710,14 @@
                   {
                     "group": "Tags",
                     "pages": [
+                      "api-reference/endpoint/list-tags",
+                      "api-reference/endpoint/create-tag",
+                      "api-reference/endpoint/update-tag",
+                      "api-reference/endpoint/delete-tag",
                       "api-reference/endpoint/add-vm-tag",
                       "api-reference/endpoint/update-vm-tag",
-                      "api-reference/endpoint/remove-vm-tag"
+                      "api-reference/endpoint/remove-vm-tag",
+                      "api-reference/endpoint/get-vm-tag-firewall"
                     ]
                   },
                   {
@@ -922,7 +927,9 @@
                       "api-reference/endpoint/list-firewall-templates",
                       "api-reference/endpoint/get-firewall",
                       "api-reference/endpoint/update-firewall",
-                      "api-reference/endpoint/delete-firewall"
+                      "api-reference/endpoint/delete-firewall",
+                      "api-reference/endpoint/get-firewall-tags",
+                      "api-reference/endpoint/set-firewall-tags"
                     ]
                   },
                   {
@@ -1130,6 +1137,7 @@
               "reference/cli/vpc",
               "reference/cli/ip",
               "reference/cli/security-group",
+              "reference/cli/tag",
               "reference/cli/ssh-key",
               "reference/cli/api-key",
               "reference/cli/project",
@@ -1156,6 +1164,7 @@
               "reference/terraform/raff_vpc",
               "reference/terraform/raff_ip",
               "reference/terraform/raff_security_group",
+              "reference/terraform/raff_tag",
               "reference/terraform/raff_ssh_key",
               "reference/terraform/raff_api_key",
               "reference/terraform/raff_role",

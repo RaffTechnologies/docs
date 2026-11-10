@@ -3,7 +3,7 @@ title: Attach a Firewall Group to a VM
 description: Two ways to attach a Firewall Group to a VM's public IP, from the group's row menu or from the VM's Network tab. The rules apply in about 20 seconds, with no restart
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 10, 2026</sub>
 
 A Firewall Group only filters traffic once it's **attached to a VM's public IP**. The group itself sits idle on the Firewall tab until you wire it up. There are two equivalent entry points; both produce the same result.
 
@@ -59,6 +59,18 @@ Open the VM in **Compute** → click the **Network** tab. The IPv4 card has a **
 Click **Attach**. A picker shows every Firewall Group in the account; pick one and confirm.
 
 The card refreshes — the **Firewall** field now shows the group's name (with a Detach action where Attach used to be), and the group's row in **Networking → Firewall** updates its VMs count.
+
+## Path C: Attach by Tag
+
+This is the right path when a group of servers should share one firewall, now and when you add more. Link the Firewall Group to one or more [tags](/products/build/virtual-machines/concepts/tags-and-organization#tags-that-carry-a-firewall), and Raff puts it on the public IPs of every server in the group's project that has one of the tags.
+
+```bash
+raff tag create --name web --color blue
+raff security-group tags set <sg-id> --tag-ids <tag-id>
+raff vm tags add <vm-id> --name web
+```
+
+Linking runs in the background, about 20 seconds per server; `raff security-group tags get <sg-id>` shows the progress. A server tagged later gets the firewall the same way, and a server created with the tag starts with it. With the API, use [Set firewall tags](/api-reference/endpoint/set-firewall-tags); with Terraform, set `tag_ids` on [`raff_security_group`](/reference/terraform/raff_security_group).
 
 ## When it takes effect
 

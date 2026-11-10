@@ -1,0 +1,86 @@
+---
+title: "raff_tag"
+description: "Manage Raff account tags with Terraform: name, colour and priority shared by every server with the tag. Link a tag to a firewall with tag_ids on raff_security_group."
+---
+
+<sub>Updated November 10, 2026</sub>
+
+Manages an account **tag**. A tag is shared by every server that has it, so a rename, colour or priority change shows on all of them. Link tags to a firewall with `tag_ids` on [`raff_security_group`](/reference/terraform/raff_security_group): Raff then puts the firewall on every server of its project with one of the tags.
+
+## Example
+
+```hcl
+resource "raff_tag" "web" {
+  name     = "web"
+  color    = "blue"
+  priority = 1
+}
+
+resource "raff_security_group" "web" {
+  name    = "web-public"
+  tag_ids = [raff_tag.web.id]
+
+  rule {
+    rule_type = "inbound"
+    protocol  = "TCP"
+    range     = "443"
+  }
+}
+
+resource "raff_vm" "web" {
+  # ...
+  tags = [raff_tag.web.name]
+}
+```
+
+A server created with the tag starts with the firewall from its first boot, unless `security_group_id` is set on the `raff_vm`.
+
+## Argument Reference
+
+| Argument | Type | Description |
+|---|---|---|
+| `name` | string (required) | Tag name, 1-40 characters, unique in the account ignoring case. Updates rename in place on every server |
+| `color` | string | `gray` (default), `red`, `orange`, `amber`, `green`, `blue`, `violet` or `pink` |
+| `priority` | int | 1-9, 1 highest. Leave it out for none; removing it clears the priority |
+
+## Attribute Reference
+
+| Attribute | Description |
+|---|---|
+| `id` | Tag UUID |
+| `server_count` | Servers with this tag, in the projects the API key can see |
+| `created_at` / `updated_at` | RFC3339 timestamps |
+
+## Lifecycle
+
+| Operation | Behavior |
+|---|---|
+| `terraform apply` (create) | Creates the tag |
+| Change `name`, `color`, `priority` | In-place update on every server with the tag |
+| `terraform destroy` | Deletes the tag from the account, every server and every firewall link. Firewalls the tag put on servers stay on them |
+
+## Importing Existing Tags
+
+```bash
+terraform import raff_tag.web <tag-uuid>
+```
+
+Get tag IDs with [`raff tag list`](/reference/cli/tag#list).
+
+## Permissions
+
+Creating, changing and deleting tags needs `account.tags.manage` (account Owner and Admin by default; it can be added to custom roles). Reading needs `vm.view`.
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="raff_security_group" icon="shield-halved" href="/reference/terraform/raff_security_group">
+    `tag_ids` links tags to a firewall.
+  </Card>
+  <Card title="raff_vm" icon="server" href="/reference/terraform/raff_vm">
+    `tags` puts tags on a server.
+  </Card>
+  <Card title="CLI: raff tag" icon="terminal" href="/reference/cli/tag">
+    Imperative equivalent.
+  </Card>
+</CardGroup>

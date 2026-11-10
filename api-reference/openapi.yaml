@@ -1897,6 +1897,80 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/security-groups/{id}/tags:
+    get:
+      tags:
+        - Networking
+      summary: Get firewall tags
+      description: |
+        The tags this firewall is linked to in its own project, and how far Raff is with putting the firewall on their servers (jobs of the last day, by status).
+      operationId: getFirewallTags
+      parameters:
+        - $ref: '#/components/parameters/SecurityGroupResourceIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: The firewall's tags and job progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FirewallTags'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Networking
+      summary: Set firewall tags
+      description: |
+        Make these the firewall's tags in the firewall's own project. Raff then puts the firewall on the public network interfaces of every server of that project that has one of the tags. This runs in the background, about 20 seconds per server; follow it with `job_counts` here or with `GET /api/v1/vms/{id}/tag-firewall`.
+
+        Send the full list: tags left out are unlinked. Unlinking a tag leaves its firewall on the servers. Send `tag_ids: []` to unlink every tag.
+
+        In a project a tag carries at most one firewall. A tag that already carries another firewall in this project is refused with "this tag cannot carry a second firewall in this project: it already carries one".
+
+        Needs the `account.tags.manage` permission (account Owner and Admin by default).
+
+        <Note>
+        Before linking tags, you need:
+        - A **firewall ID**: get it from [List firewalls](/api-reference/endpoint/list-firewalls)
+        - **Tag IDs**: get them from [List tags](/api-reference/endpoint/list-tags), or create one with [Create tag](/api-reference/endpoint/create-tag)
+        </Note>
+      operationId: setFirewallTags
+      parameters:
+        - $ref: '#/components/parameters/SecurityGroupResourceIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetFirewallTagsRequest'
+      responses:
+        '200':
+          description: The firewall's tags after the change and job progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/FirewallTags'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/vms/{id}/networks:
     get:
       tags:
@@ -2149,6 +2223,9 @@ paths:
       description: |
         Attach a custom tag to a virtual machine. Tags help organize and filter resources.
         Returns the updated full tag list for the VM.
+
+        Tags belong to the account: when the account has no tag of this name, it is created (with `priority`, which is used only then).
+        When the tag carries a firewall in the server's project, `firewall` names it and `firewall_queued` is `true`: Raff puts that firewall on the server's public network interfaces in the background, about 20 seconds later.
       operationId: addVMTag
       parameters:
         - $ref: '#/components/parameters/VMIDPath'
@@ -2165,7 +2242,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VMTagsResponse'
+                $ref: '#/components/schemas/VMTagAddedResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2181,6 +2258,8 @@ paths:
       description: |
         Update a tag's name or priority on a specific VM.
         Returns the updated full tag list for the VM.
+
+        A new `name` moves the server from this tag to the account tag of that name (created when missing). Priority belongs to the account tag: a different `priority` for the same tag is refused; change it for every server with `PATCH /api/v1/tags/{id}`.
 
         ## Finding the tag ID
 
@@ -2217,6 +2296,8 @@ paths:
       description: |
         Remove a tag from a VM. Returns the updated full tag list for the VM.
 
+        A firewall the tag put on the server stays on it. Pass `reset_firewall=true` to also put the server's public network interfaces back on the Raff Default Firewall.
+
         ## Finding the tag ID
 
         Tags are returned in the `tags` array of `GET /api/v1/vms/{id}`. Each tag includes its `id`, `name`, `priority`, and `created_at`. Use the tag's `id` as `tagId` here.
@@ -2225,6 +2306,13 @@ paths:
         - $ref: '#/components/parameters/VMIDPath'
         - $ref: '#/components/parameters/TagIDPath'
         - $ref: '#/components/parameters/ProjectIDHeader'
+        - name: reset_firewall
+          in: query
+          required: false
+          description: When `true`, the server's public network interfaces also go back on the Raff Default Firewall. Without it, a firewall the tag set stays on the server.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Tag removed
@@ -2234,6 +2322,181 @@ paths:
                 $ref: '#/components/schemas/VMTagsResponse'
         '400':
           $ref: '#/components/responses/MissingProjectID'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/vms/{id}/tag-firewall:
+    get:
+      tags:
+        - Virtual Machines
+      summary: Get VM tag firewall
+      description: |
+        The firewalls this server's tags carry in its project, and the server's latest tag firewall job.
+
+        When `conflict` is `true`, the server's tags carry different firewalls in its project, so Raff changes nothing on the server. Remove a tag, unlink a firewall, or choose the firewall by hand with `POST /api/v1/vms/{id}/security-groups`.
+      operationId: getVMTagFirewall
+      parameters:
+        - $ref: '#/components/parameters/VMIDPath'
+        - $ref: '#/components/parameters/ProjectIDHeader'
+      responses:
+        '200':
+          description: The server's tag firewall
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ServerTagFirewall'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/tags:
+    get:
+      tags:
+        - Virtual Machines
+      summary: List tags
+      description: |
+        List the account's tags with their colour, priority, server count and the firewalls they carry. `data` holds every tag of the account.
+
+        `server_count` counts only servers in projects you can see: pass `X-Project-ID` to count one project.
+
+        `tags` and `counts` are kept for older clients: they list only the tags on servers you can see. Use `data`.
+      operationId: listTags
+      parameters:
+        - name: X-Project-ID
+          in: header
+          required: false
+          description: Count servers of this project only. Omit it to count servers of every project you can see.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The account's tags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountTag'
+                  tags:
+                    type: array
+                    deprecated: true
+                    description: Tags on the servers you can see. Kept for older clients; use `data`.
+                    items:
+                      $ref: '#/components/schemas/VMTag'
+                  counts:
+                    type: object
+                    deprecated: true
+                    description: Servers per tag name. Kept for older clients; use `server_count` in `data`.
+                    additionalProperties:
+                      type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Virtual Machines
+      summary: Create tag
+      description: |
+        Create an account tag. Tag names are unique per account, ignoring case. Add the tag to servers with `POST /api/v1/vms/{id}/tags`, and link it to a firewall with `PUT /api/v1/security-groups/{id}/tags`.
+
+        Needs the `account.tags.manage` permission (account Owner and Admin by default).
+      operationId: createTag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AccountTag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/tags/{id}:
+    patch:
+      tags:
+        - Virtual Machines
+      summary: Update tag
+      description: |
+        Rename, recolour or reprioritise a tag. The change shows on every server that has the tag. Send `priority: null` or `priority: 0` to remove the priority.
+
+        Needs the `account.tags.manage` permission (account Owner and Admin by default).
+      operationId: updateTag
+      parameters:
+        - $ref: '#/components/parameters/AccountTagIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagRequest'
+      responses:
+        '200':
+          description: Tag updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/AccountTag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      tags:
+        - Virtual Machines
+      summary: Delete tag
+      description: |
+        Delete a tag. It is removed from every server and every firewall link. Firewalls the tag put on servers stay on those servers.
+
+        Needs the `account.tags.manage` permission (account Owner and Admin by default).
+      operationId: deleteTag
+      parameters:
+        - $ref: '#/components/parameters/AccountTagIDPath'
+      responses:
+        '200':
+          description: Tag deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -9361,6 +9624,15 @@ components:
       schema:
         type: string
         format: uuid
+    AccountTagIDPath:
+      name: id
+      in: path
+      required: true
+      description: |
+        Tag ID (UUID). Get it from the `data` array of `GET /api/v1/tags`.
+      schema:
+        type: string
+        format: uuid
     SecurityGroupIDPath:
       name: sg_id
       in: path
@@ -9767,7 +10039,11 @@ components:
           type: array
           items:
             type: string
-          description: Custom tags for the VM
+          description: >-
+            Custom tags for the VM. Each name is an account tag; tags the account does not have yet are created.
+            When `security_group_id` is not sent and the tags carry exactly one firewall in the VM's project
+            (see `PUT /api/v1/security-groups/{id}/tags`), the VM gets that firewall from its first boot.
+            Tags that carry different firewalls in the project are refused (400) before any charge.
         vpc_id:
           type: string
           format: uuid
@@ -9793,6 +10069,23 @@ components:
           default: false
           description: |
             When `true`, no VPC is created or attached. The VM will only have its public IP — no private networking. Cannot be combined with `skip_public_ip=true`.
+        enable_ipv6:
+          type: boolean
+          default: false
+          description: |
+            When `true`, the VM also gets a public IPv6 address from the node it runs on, shown as `public_ipv6_address` on the VM. With `skip_public_ip=true` it is the VM's only public address. If the VM's node has no IPv6 network, the VM is created without one.
+        security_group_id:
+          type: string
+          format: uuid
+          description: >-
+            Cloud firewall (security group) the VM's public network interfaces carry from the first boot. The VM is created on hold,
+            its public interfaces get this firewall in place of the Raff Default Firewall, and only then does it start, so a port the firewall closes is never open.
+            The firewall must belong to your account and to the same project as the new VM. The VM needs a public address: the request is refused with
+            `skip_public_ip=true` unless `enable_ipv6=true`. Omit it or send an empty string for the Raff Default Firewall.
+            After creation it is the VM's normal firewall: `GET /api/v1/vms/{id}/networks` shows it as `security_group_id` on the public interface, and
+            `POST /api/v1/vms/{id}/security-groups` or `DELETE /api/v1/vms/{id}/security-groups/{sg_id}/{nic_id}` change it.
+            List firewalls with `GET /api/v1/security-groups`. When set, it wins over a firewall the VM's `tags` carry.
+          example: "3f1c2b7a-9d4e-4c61-8a2f-5b6e7d8c9a01"
 
     AddVMTagRequest:
       type: object
@@ -9802,12 +10095,14 @@ components:
         name:
           type: string
           minLength: 1
-          maxLength: 64
-          description: Tag name.
+          maxLength: 40
+          description: Tag name. The account tag of this name (ignoring case) is added; it is created when the account has none.
           example: production
         priority:
           type: integer
-          description: Display priority (lower sorts first). Defaults to 0.
+          minimum: 0
+          maximum: 9
+          description: Priority 1-9 (1 highest) for a tag created by this call. Ignored when the tag exists. 0 or omitted means no priority.
           example: 0
 
     UpdateVMTagRequest:
@@ -9837,6 +10132,210 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VMTag'
+
+    VMTagAddedResponse:
+      type: object
+      description: The VM's full tag list after the tag was added, and the firewall the tag carries in the VM's project.
+      required:
+        - success
+        - tags
+        - firewall_queued
+      properties:
+        success:
+          type: boolean
+          example: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/VMTag'
+        firewall:
+          $ref: '#/components/schemas/TagFirewallLink'
+        firewall_queued:
+          type: boolean
+          description: "`true` when Raff will put the tag's firewall on the VM's public network interfaces in the background."
+
+    AccountTag:
+      type: object
+      description: A tag of the account. The same tag is shared by every server that has it.
+      required:
+        - id
+        - name
+        - color
+        - priority
+        - server_count
+        - firewalls
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Tag ID.
+        name:
+          type: string
+          description: Tag name, unique per account ignoring case.
+          example: production
+        color:
+          $ref: '#/components/schemas/TagColor'
+        priority:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 9
+          description: Priority 1-9, 1 highest. `null` when the tag has none.
+          example: 1
+        server_count:
+          type: integer
+          description: Servers with this tag, in the projects you can see.
+          example: 4
+        firewalls:
+          type: array
+          description: The firewalls this tag carries, one at most per project.
+          items:
+            $ref: '#/components/schemas/TagFirewallLink'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TagColor:
+      type: string
+      enum: [gray, red, orange, amber, green, blue, violet, pink]
+      description: Tag colour.
+      example: blue
+
+    TagFirewallLink:
+      type: object
+      description: A tag that carries a firewall in one project. Servers of that project with the tag get the firewall on their public network interfaces.
+      required:
+        - tag_id
+        - tag_name
+        - project_id
+        - security_group_id
+        - security_group_name
+      properties:
+        tag_id:
+          type: string
+          format: uuid
+        tag_name:
+          type: string
+          example: web
+        project_id:
+          type: string
+          format: uuid
+          description: The project the link applies to (the firewall's project).
+        security_group_id:
+          type: string
+          format: uuid
+          description: Firewall (security group) ID.
+        security_group_name:
+          type: string
+          example: web-server
+
+    CreateTagRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Tag name, unique per account ignoring case.
+          example: production
+        color:
+          allOf:
+            - $ref: '#/components/schemas/TagColor'
+          description: Tag colour. Defaults to `gray`.
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: Priority 1-9, 1 highest. Omit for none.
+          example: 1
+
+    UpdateTagRequest:
+      type: object
+      description: Send only the fields to change.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: New tag name, unique per account ignoring case.
+        color:
+          $ref: '#/components/schemas/TagColor'
+        priority:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 9
+          description: New priority 1-9, 1 highest. `null` or `0` removes it.
+
+    SetFirewallTagsRequest:
+      type: object
+      required:
+        - tag_ids
+      properties:
+        tag_ids:
+          type: array
+          description: The firewall's tags after the call. Tags left out are unlinked; `[]` unlinks every tag.
+          items:
+            type: string
+            format: uuid
+
+    FirewallTags:
+      type: object
+      description: The tags a firewall is linked to in its project, and its jobs of the last day by status.
+      required:
+        - links
+        - job_counts
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagFirewallLink'
+        job_counts:
+          type: object
+          description: Server jobs of the last day that put this firewall on servers, by status. Statuses with no job are left out.
+          properties:
+            pending:
+              type: integer
+            running:
+              type: integer
+            done:
+              type: integer
+            failed:
+              type: integer
+            conflict:
+              type: integer
+              description: Servers whose tags carry different firewalls, so nothing was changed.
+            skipped:
+              type: integer
+
+    ServerTagFirewall:
+      type: object
+      description: The firewalls a server's tags carry in its project.
+      required:
+        - firewalls
+        - conflict
+      properties:
+        firewalls:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagFirewallLink'
+        conflict:
+          type: boolean
+          description: "`true` when the server's tags carry different firewalls in its project. Raff then changes nothing on the server."
+        job_status:
+          type: string
+          description: Status of the server's latest tag firewall job (`pending`, `running`, `done`, `failed`, `conflict` or `skipped`). Empty when there is none.
+          example: done
+        job_error:
+          type: string
+          description: Why the latest job failed. Empty otherwise.
 
     VMNote:
       type: object
@@ -9940,6 +10439,18 @@ components:
           type: string
           format: uuid
           description: ID of the security group attached to this NIC, if any.
+        security_group_source:
+          type: string
+          enum: [manual, create, tag]
+          description: |
+            How the security group got on this NIC: `manual` (attached by hand), `create` (`security_group_id` at create) or `tag` (carried by one of the VM's tags). Left out when unknown.
+        security_group_tag_id:
+          type: string
+          format: uuid
+          description: When `security_group_source` is `tag`, the tag that carries the security group.
+        security_group_tag_name:
+          type: string
+          description: When `security_group_source` is `tag`, that tag's name.
         is_primary:
           type: boolean
           description: True for the VM's primary public IPv4 interface. A VM has at most one primary IPv4; additional public IPv4s report `false`.
@@ -10467,6 +10978,8 @@ components:
         priority:
           type: integer
           description: Tag priority (ordering)
+        color:
+          $ref: '#/components/schemas/TagColor'
         created_at:
           type: string
           format: date-time
