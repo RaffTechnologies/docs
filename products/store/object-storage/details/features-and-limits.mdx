@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Object Storage features, S3 endpoint, pricing tiers, storage class, and platform limits
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 ## Features
 
@@ -32,7 +32,7 @@ description: Object Storage features, S3 endpoint, pricing tiers, storage class,
 ### Bandwidth
 - **Free** between Raff VMs / Kubernetes and Object Storage in the same region (private network)
 - **Inbound (uploads)** is free, never metered
-- **Public internet egress** — first **1 TB / month free**, then **\$0.01/GB** (measured by the Ceph RGW usage API and settled month-end)
+- **Public internet egress** is free, never metered or charged
 
 ## Pricing
 
@@ -102,14 +102,9 @@ For SDK access (boto3, aws-cli, etc.), the [standard S3 multipart limits](/produ
 | **Inbound (uploads)** | **Free** — never metered |
 | **VM ↔ Object Storage** (same region, private) | **Free** |
 | **Kubernetes ↔ Object Storage** (same region, private) | **Free** |
-| **Public internet egress** — first **1 TB / month** | **Free** (included tier) |
-| **Public internet egress** — above 1 TB | **\$0.01 / GB** |
+| **Public internet egress** | **Free** — never metered or charged |
 
-The first **1 TB of public-internet egress per month is included free**. Beyond 1 TB, egress is billed at **\$0.01/GB** and measured by the Ceph RGW usage API. Inbound and same-region private traffic (between Raff VMs / Kubernetes and Object Storage) are always free.
-
-For most workloads — application backups, ML artifacts, internal data lakes — same-region traffic dominates and the public-egress meter never moves. Public-bucket workloads (static sites, CDN origins, asset distribution) consume the 1 TB free tier first, then start paying \$0.01/GB. At Raff's rate, that's a fraction of major-cloud egress charges; budget for it on heavy public traffic.
-
-Egress accrues continuously and settles month-end on the 1st against your account balance, the same way storage does.
+Egress is free. Raff does not meter or charge data leaving your buckets, so public buckets (static sites, CDN origins, asset distribution) cost the same as private ones. You pay only for stored data.
 
 ## See also
 

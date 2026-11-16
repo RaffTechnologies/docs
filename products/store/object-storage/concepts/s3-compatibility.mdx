@@ -3,7 +3,7 @@ title: S3 compatibility
 description: What S3-compatibility means in practice — the API surface that works on Raff, the AWS-only features that don't, and the gotchas that catch every new integration
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 Raff Object Storage is **S3-compatible**: any AWS S3 SDK or tool can talk to it once you point the SDK at Raff's endpoint with valid Raff access keys. You don't need a Raff-specific client library — the same `boto3`, `aws-cli`, `aws-sdk-go-v2`, `aws-sdk-js`, `rclone`, `s3cmd`, `mc`, Cyberduck, etc. that work against AWS S3 work against Raff.
 
@@ -45,7 +45,7 @@ These are AWS-specific extensions; they're not part of the S3 API "spec" that co
 | **S3 Access Points** / **Multi-Region Access Points** | Named alternative endpoints with their own policies | Use bucket policies directly |
 | **S3 Object Lock** (full WORM compliance) | Write-once-read-many with regulatory retention modes | Use `Deny Delete` policies for similar effect; full compliance modes not available |
 | **S3 Replication** (CRR / SRR / RTC) | Cross-region or same-region async replication | App-level replication, or copy + cron |
-| **Requester Pays** | Charge the requester not the bucket owner for egress | Not available on Raff — egress is billed to the bucket owner (first 1 TB/month free, then \$0.01/GB) |
+| **Requester Pays** | Charge the requester not the bucket owner for egress | Not available on Raff — not needed, since egress is free |
 | **IAM principals in bucket policies** | `"Principal": "arn:aws:iam::..."` | Use access-key-based permissions; for fine-grained access, use [Limited access keys](/products/store/object-storage/quickstart-guides/generate-access-keys#limited) |
 | **SSE-KMS with customer-managed keys** | Server-side encryption tied to a specific KMS key | Encryption-at-rest is on by default; per-object KMS configuration not exposed |
 | **S3 Tables** / **S3 Tables Buckets** | New AWS Iceberg-table primitive | Use a database / data-lake layer above the bucket |

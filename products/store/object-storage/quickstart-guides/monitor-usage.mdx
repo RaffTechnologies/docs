@@ -3,7 +3,7 @@ title: Monitor bucket usage
 description: Read the live Metrics tab — storage size, object count, GET/PUT/DELETE counts, and ingress/egress data transfer for the current month
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 Every bucket has a **Metrics** tab that shows live usage and the numbers your bill is based on. It's the first place to look when you're verifying storage growth, watching request volume after a launch, or sanity-checking egress before the month-end settlement.
 
@@ -47,12 +47,10 @@ Inbound and outbound bytes for the current month, also resetting on the 1st.
 
 | Metric | What it is | Billed? |
 |---|---|---|
-| **Egress (Download)** | Bytes leaving the bucket to clients — `GetObject` responses, presigned URL downloads | First **1 TB / month free**, then **\$0.01/GB** |
+| **Egress (Download)** | Bytes leaving the bucket to clients — `GetObject` responses, presigned URL downloads | **Free, never billed** |
 | **Ingress (Upload)** | Bytes coming into the bucket — `PutObject`, multipart parts | **Free, never metered** |
 
-Egress is the only data-transfer line item that ever charges. Same-region traffic between Raff VMs / Kubernetes and Object Storage doesn't go over the public internet, so it doesn't show up in this counter and doesn't bill — see [Bandwidth](/products/store/object-storage/details/features-and-limits#bandwidth).
-
-When you're approaching 1 TB of public egress in a month, this is the page that shows it.
+Neither counter is billed: data transfer is free. The counters show how much your buckets serve. Same-region traffic between Raff VMs / Kubernetes and Object Storage doesn't go over the public internet, so it doesn't show up here — see [Bandwidth](/products/store/object-storage/details/features-and-limits#bandwidth).
 
 ## How fresh are the numbers?
 
@@ -77,7 +75,7 @@ A few common gotchas before you open a support ticket:
 
 <CardGroup cols={3}>
   <Card title="Features & limits" icon="circle-info" href="/products/store/object-storage/details/features-and-limits">
-    Storage pricing and the 1 TB free egress tier.
+    Storage pricing, limits and free egress.
   </Card>
   <Card title="Set public or private" icon="globe" href="/products/store/object-storage/quickstart-guides/set-public-private">
     Public-read buckets are usually what drives egress.
