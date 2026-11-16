@@ -3,7 +3,7 @@ title: Add rules — port and IP formats by example
 description: The exact formats Raff accepts for the Ports and Source IP fields, with copy-pasteable examples for the most common rules
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 This page is the format reference for the **Ports** and **Source IP** fields you fill on every rule row. The model itself — what inbound vs outbound means, how rules combine, what the system Default blocks — is on [Inbound vs outbound, layers, and rule format](/products/network/firewall/concepts/inbound-vs-outbound). This page is the cheat sheet.
 
@@ -67,9 +67,11 @@ The third box on each rule row is **CIDR**. For inbound it's "from where can tra
 
 The `/32` (single IPv4) and `/128` (single IPv6) are how you allowlist exactly one address. The dialog accepts CIDR with or without explicit prefix on `/32`, but type the `/32` for clarity.
 
+To allow several addresses on the same ports, list them in Source separated by commas, for example `203.0.113.7, 198.51.100.0/24`. Saving turns the list into one rule per address, with the same protocol and ports. The API takes one address per rule.
+
 ### IPv6 examples — same shape, different addresses
 
-If your VM has an IPv6 public IP attached (auto-assigned or reserved), the same rule rows apply — just use IPv6 CIDRs in the source field. **Add a separate rule row for the IPv6 CIDR; one row carries one CIDR.**
+If your VM has an IPv6 public IP attached (auto-assigned or reserved), the same rule rows apply — just use IPv6 CIDRs in the source field. **Add the IPv6 CIDR in its own row, or after a comma in the same Source field; each address is saved as its own rule.**
 
 | Goal | Source IP |
 |---|---|

@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Raff Firewall features, the system Default Firewall blocked-port list, custom Firewall Group rule formats, per-group limits, the 5 templates, and pricing
 ---
 
-<sub>Updated November 5, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 ## Features
 
@@ -58,7 +58,7 @@ Pick a template and tweak before saving, or start from **Custom Rules** for a bl
 | **Outbound rules per group** | **40** |
 | **Firewall Groups per account** | No hard cap published; subject to overall account capacity |
 | **Firewall Groups per public IP** | **1**: attaching a group replaces the one the IP had |
-| **Source / destination per rule** | One CIDR — for multiple distinct ranges, use multiple rule rows |
+| **Source / destination per rule** | One CIDR. A comma list typed in the dashboard's Source field is saved as one rule per entry; the API takes one per rule |
 | **Comma-separated ports per rule** | No fixed limit; reasonable practice ~10 |
 | **Port range syntax** | Colon — `3000:4000` (not AWS-style hyphen) |
 | **Group name** | Free-form, must be unique per account, immutable after create |

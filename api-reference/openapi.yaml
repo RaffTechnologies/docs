@@ -10822,11 +10822,11 @@ components:
           example: "80"
         ip:
           type: string
-          description: Source/destination IP for the rule. Empty means any.
+          description: Source/destination IP for the rule, one IPv4 or IPv6 address. Empty means any. For several addresses, send one rule per address; anything else is refused (400).
           example: "0.0.0.0"
         size:
           type: integer
-          description: CIDR block size (e.g. `24` for /24). Used with `ip` to allow a network range.
+          description: CIDR prefix length for `ip` (0-32 for IPv4, 0-128 for IPv6, e.g. `24` for /24). Used with `ip` to allow a network range; empty means the one address.
         icmp_type:
           type: integer
           description: ICMP message type (only for ICMP/ICMPV6 protocols).

@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 10, 2026</sub>
+<sub>Updated November 16, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 16, 2026
+
+**Firewall: API**
+
+- 🔵 **Updated**: [Create firewall](/api-reference/endpoint/create-firewall) `POST /api/v1/security-groups` and [Update firewall](/api-reference/endpoint/update-firewall) `PUT /api/v1/security-groups/{id}` refuse (400) a rule whose `ip` is not one IPv4 or IPv6 address or whose `size` does not fit it (0-32, 0-128). Before, a second address sent in the same rule was saved and silently left out of the firewall. Send one rule per address.
 
 ### November 10, 2026
 
