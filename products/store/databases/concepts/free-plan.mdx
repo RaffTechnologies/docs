@@ -4,7 +4,7 @@ sidebarTitle: Free plan
 description: The free managed database on Raff, what it includes, when it pauses, and how to upgrade it.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 17, 2026</sub>
 
 Every Raff account can run one free database, PostgreSQL, MySQL or Valkey, with no card and no time limit. It is a real managed database on the same platform as paid ones, sized for trying Raff, side projects and development.
 
@@ -18,7 +18,7 @@ Every Raff account can run one free database, PostgreSQL, MySQL or Valkey, with 
 | Compute | 1 vCPU, 1 GB RAM (Valkey 512 MB) |
 | Storage | 2 GB NVMe, fixed |
 | Connections | PostgreSQL 20 direct, 200 pooled; MySQL 30; Valkey 100 |
-| Backups | Every night, restore in place |
+| Backups | Every night, kept 3 days, restore in place |
 | Access | Public address with TLS, VPC, the dashboard tabs |
 | Region | US East |
 
@@ -26,7 +26,7 @@ Not included: high availability, read replicas, extra storage, point-in-time res
 
 ### Pausing after 7 idle days
 
-A free database that has had no connections for 7 days is paused. The data is kept; nothing is deleted.
+A free database that has had no connections for 7 days is paused. The data is kept; nothing is deleted. A connection from your app or tool counts, and so does a query you run or a table you open in the dashboard.
 
 - Raff emails you 2 days before it pauses, and when it pauses.
 - **Resume** it from the database's page or the list. It is back in about a minute, with the same address and password.

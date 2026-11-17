@@ -4,7 +4,7 @@ sidebarTitle: Backups and point-in-time restore
 description: When Raff backs up managed databases, how long backups are kept, and how restore and point-in-time restore work per engine.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 17, 2026</sub>
 
 Raff backs up every managed database every night and keeps the backups in Raff Object Storage, three copies each. PostgreSQL and MySQL also keep a continuous change log, so you can restore to any second, not only to last night.
 
@@ -12,7 +12,7 @@ Raff backs up every managed database every night and keeps the backups in Raff O
 
 ### Per engine
 
-| Engine | Nightly backup (02:00 UTC) | Kept | Restore to any second |
+| Engine | Nightly backup (02:00 to 05:00 UTC) | Kept | Restore to any second |
 |---|---|---|---|
 | **PostgreSQL** | Full backup plus continuous WAL | 30 days | Yes, paid plans |
 | **MySQL** | Full backup plus binary log | 30 days | Yes, paid plans |
@@ -20,7 +20,7 @@ Raff backs up every managed database every night and keeps the backups in Raff O
 | **ClickHouse** | Full backup, plus incremental every 6 hours | 30 backups | No: backup times |
 | **Kafka** | None | | Topics are copied across brokers instead |
 
-The first backup of a new database runs right after it starts. **Back up now** takes one at any time.
+Each database has its own fixed time inside the nightly window. The first backup of a new database runs right after it starts. **Back up now** takes one at any time. If a nightly backup fails, Raff starts another one by itself; a paused database is not backed up again until it is resumed, because nothing in it changes.
 
 ### Restore into a new database
 
@@ -32,7 +32,7 @@ Overwrites the live database with the older state. Raff first takes a safety sna
 
 ### Free databases
 
-Free databases are backed up every night and restore in place. Point-in-time restore and restoring into a new database come with paid plans.
+Free databases are backed up every night, their backups are kept 3 days, and they restore in place. Point-in-time restore and restoring into a new database come with paid plans.
 
 ## When to use it
 

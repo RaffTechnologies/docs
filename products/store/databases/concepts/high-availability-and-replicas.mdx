@@ -4,7 +4,7 @@ sidebarTitle: High availability and replicas
 description: How high availability keeps a managed database running when a server fails, per engine, and what PostgreSQL read replicas do.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 17, 2026</sub>
 
 High availability keeps extra copies of the database on separate servers and switches to one automatically when the primary fails. Your apps keep the same address; at most they reconnect. Without it, a database runs on one server and is down until that server is back.
 
@@ -14,7 +14,7 @@ High availability keeps extra copies of the database on separate servers and swi
 
 | Engine | High availability runs | Failover | Price |
 |---|---|---|---|
-| **PostgreSQL** | A primary and a standby | Automatic; the address follows the new primary | +70% |
+| **PostgreSQL** | A primary and a standby on another server, kept in step | Automatic, usually within half a minute; the address follows the new primary | +70% |
 | **MySQL** | A 3-node cluster; every node holds all data | Automatic; a proxy sends writes to a healthy node | +140% |
 | **Valkey** | A primary, a standby and Sentinel | Automatic, within seconds of the primary failing | +70% |
 | **ClickHouse** | Two replicas and ClickHouse Keeper | Automatic for tables using `Replicated*` engines | +70% |
@@ -28,7 +28,7 @@ A read replica is one more copy of a PostgreSQL database, kept in sync. Each cos
 
 ### Turning it on and off
 
-Turn high availability on or off at any time in **Settings**, or choose it at create. Turning it on adds the copies without losing data; turning it off removes them. See [Resize a database](/products/store/databases/quickstart-guides/resize-a-database).
+Turn high availability on or off at any time in **Settings**, or choose it at create. Turning it on adds the copies without losing data; turning it off removes them. The database keeps running through both. One exception: a PostgreSQL database created before November 17, 2026 may restart once when high availability is turned on, so its standby can be placed on another server. See [Resize a database](/products/store/databases/quickstart-guides/resize-a-database).
 
 MySQL is the exception: choose high availability when you create the database. A MySQL database without it runs as one server and cannot add it later: create a new MySQL database with high availability and copy the data into it, for example with `mysqldump`.
 
@@ -41,7 +41,8 @@ Development and staging usually run fine on a single node.
 
 ## Trade-offs
 
-- The PostgreSQL standby is updated asynchronously: if the primary fails, the last moments of writes may not have reached the standby. Point-in-time restore covers what backups hold.
+- **PostgreSQL writes wait for the standby.** The primary confirms a write to your app only after the standby has it on disk, so a failover loses no confirmed write. Each write takes a few milliseconds longer for that: in our test about 8 ms instead of 3 ms. For writes where speed matters more, your app can skip the wait per transaction with `SET LOCAL synchronous_commit = local`.
+- **While the standby itself is down or catching up**, the primary keeps accepting writes alone instead of stopping. Until the standby is back in step, those writes are protected by backups and point-in-time restore, not by the standby.
 - During a failover, open connections drop; apps that retry reconnect to the same address.
 - High availability protects against a server failing, not against deleting data by mistake. Backups cover that.
 
