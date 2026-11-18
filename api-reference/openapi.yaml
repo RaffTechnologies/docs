@@ -4615,6 +4615,11 @@ paths:
           description: Filter plans by engine
           schema:
             $ref: '#/components/schemas/DatabaseEngine'
+        - name: database_id
+          in: query
+          description: A database of yours that you want to move to another plan. `ha_available` is then worked out for that database, without counting the room its own copies use.
+          schema:
+            type: string
       responses:
         '200':
           description: Plans and add-on pricing
@@ -4709,11 +4714,12 @@ paths:
 
         ## Pricing
 
-        The plan sets the base price. High availability adds 70% of the plan price for PostgreSQL, Valkey and ClickHouse, 140% for MySQL and Kafka. Each PostgreSQL read replica costs the plan price. Storage above the plan's included storage is $0.15/GB/month. The same numbers are in `GET /api/v1/databases/plans` and, without authentication, `GET /api/v1/public/pricing/database`.
+        The plan sets the base price. High availability adds 70% of the plan price for PostgreSQL, Valkey and ClickHouse, 210% for MySQL and 140% for Kafka. Each PostgreSQL read replica costs the plan price. Storage above the plan's included storage is $0.15/GB/month. The same numbers are in `GET /api/v1/databases/plans` and, without authentication, `GET /api/v1/public/pricing/database`.
 
         ## Errors
 
         - `409`: the name is taken in this project, or the account already has a free database.
+        - `412`: `ha_enabled` on a plan that has no room for high availability right now (MySQL; see `ha_available` in `GET /api/v1/databases/plans`). Nothing is created or charged: pick a smaller plan, or create the database without high availability.
         - `402`: a paid plan on a monthly account without a card that can be charged automatically. The response links to the dashboard to add one.
         - `403`: the account's billing status or your role does not allow creating databases.
 
@@ -4851,7 +4857,7 @@ paths:
 
         - **Plan**: the new plan must be the same engine. Its included storage sets a floor: storage never shrinks below the new tier's allotment.
         - **Storage**: `storage_gb` can only grow. Omit (or `0`) to keep the current size.
-        - **High availability**: set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged. MySQL high availability is chosen at create: turning it on for a MySQL database without it returns `400`.
+        - **High availability**: set `set_ha: true` and put the desired state in `has_ha`. When `set_ha` is `false` or omitted, HA is unchanged. MySQL high availability is chosen at create: turning it on for a MySQL database without it returns `400`. A MySQL database with high availability can only move to a plan whose `ha_available` is `true` (ask `GET /api/v1/databases/plans?database_id=...`); otherwise the change returns `412` and nothing is changed.
         - **Read replicas**: `replica_count` is always applied: pass your current count when you are not changing it. PostgreSQL only, 0 to 5; other engines reject a count above 0.
 
         A free database can only move to a paid plan; its size is fixed. The database restarts briefly for plan, high availability and replica changes; growing storage needs no restart. Poll `GET /api/v1/databases/{database_id}` until `status` is back to `running`.
@@ -4901,6 +4907,7 @@ paths:
 
         - **Private** (`host`, `port`, `connection_uri`): reachable from inside the database's VPC. For PostgreSQL, `port` is the direct port 5432; the pooler is on 6432 of the same host. Use these only when the database has a `vpc_id`; without a VPC there is no private endpoint you can reach.
         - **Public** (`public_host`, `public_port`, `public_connection_uri`): filled while public access is on.
+        - **Read address** (PostgreSQL with at least one read replica): queries sent there are spread across the replicas, and a write is refused. Private: `read_host`, `read_port` (5433) and `read_connection_uri`, on the same hostname as `host`. Public: `public_read_host` (the hostname with `-ro`), `public_read_port` (5432) and `public_read_connection_uri`, filled while public access is on. All six are empty for a database without read replicas and for other engines.
 
         The `password` field is empty unless you pass `reveal=true`. TLS is always required: `ca_cert` is the database's certificate authority, for clients that verify the server certificate (the public hostname is in the certificate).
       operationId: getDatabaseConnection
@@ -11541,12 +11548,19 @@ components:
           type: integer
           description: PostgreSQL only. Client connections the pooler (port 6432 private, 6543 public) accepts. 0 for other engines.
           example: 200
+        ha_available:
+          type: boolean
+          description: |
+            Whether high availability can be ordered on this plan right now. `false` on the free plan, and on a MySQL plan
+            whose three copies do not all fit at the moment: MySQL high availability runs on plans up to 2 vCPU and has
+            limited room. Creating or resizing onto such a plan with high availability returns `412`.
+          example: true
 
     DatabaseHAPricing:
       type: object
       description: |
         High availability pricing for one engine. A plan with high availability costs `price_per_month * (1 + price_multiplier)`.
-        Today: 0.7 (+70%) for PostgreSQL, Valkey and ClickHouse, 1.4 (+140%) for MySQL and Kafka, whose high availability runs three nodes.
+        Today: 0.7 (+70%) for PostgreSQL, Valkey and ClickHouse, 2.1 (+210%) for MySQL and 1.4 (+140%) for Kafka, whose high availability runs three nodes.
       properties:
         engine:
           $ref: '#/components/schemas/DatabaseEngine'
@@ -14307,7 +14321,7 @@ components:
         ha_enabled:
           type: boolean
           default: false
-          description: Enable high availability (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +140% for MySQL and Kafka). Not available on the free plan.
+          description: Enable high availability (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +210% for MySQL, +140% for Kafka). Not available on the free plan.
         replica_count:
           type: integer
           default: 0
@@ -14438,7 +14452,7 @@ components:
         ha_enabled:
           type: boolean
           default: false
-          description: Enable high availability on the new database (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +140% for MySQL and Kafka). Never inherited from the source.
+          description: Enable high availability on the new database (+70% of the plan price for PostgreSQL, Valkey and ClickHouse, +210% for MySQL, +140% for Kafka). Never inherited from the source.
 
     DatabaseConnection:
       type: object
@@ -14482,6 +14496,28 @@ components:
         public_connection_uri:
           type: string
           description: Ready-to-use URI for the public endpoint (includes the password only when revealed). Empty while public access is off.
+        read_host:
+          type: string
+          description: Private hostname of the read address (the same hostname as `host`). PostgreSQL with read replicas, inside the VPC; empty otherwise.
+          example: a1b2c3d4.db.raffusercloud.com
+        read_port:
+          type: integer
+          description: Private port of the read address. 0 when there is none.
+          example: 5433
+        read_connection_uri:
+          type: string
+          description: Ready-to-use URI for the private read address (includes the password only when revealed). Queries go to the read replicas; writes are refused.
+        public_read_host:
+          type: string
+          description: Public hostname of the read address. PostgreSQL with read replicas and public access on; empty otherwise.
+          example: a1b2c3d4-ro.public.db.raffusercloud.com
+        public_read_port:
+          type: integer
+          description: Public port of the read address, the standard PostgreSQL port (routed by the hostname your client sends in TLS). 0 when there is none.
+          example: 5432
+        public_read_connection_uri:
+          type: string
+          description: Ready-to-use URI for the public read address (includes the password only when revealed).
 
     DatabaseMetrics:
       type: object

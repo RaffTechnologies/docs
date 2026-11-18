@@ -21,6 +21,15 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 - 🔵 **Updated**: Raff's Windows Server licence is priced per vCPU for servers created from today: \$6.00 a month per vCPU, 2 vCPU minimum (\$12 on 1 or 2 vCPU, \$24 on 4, \$48 on 8, \$96 on 16). [List templates](/api-reference/catalog/list-templates) `GET /api/v1/public/templates` now returns `licence_price_per_month` as the price at the minimum (12), and adds `licence_price_per_vcpu_month` (6) and `licence_min_vcpu` (2) on Windows templates. A server's licence costs `licence_price_per_vcpu_month` × its plan's vCPU, at least `licence_min_vcpu`. Licences bought before today keep their \$15.00 a month.
 
+**Databases: pricing**
+
+- 🔵 **Updated**: high availability for MySQL is +210% of the plan price (was +140%). It runs three nodes. `GET /api/v1/databases/plans` returns `price_multiplier` 2.1 for MySQL; PostgreSQL, Valkey and ClickHouse stay at +70% and Kafka at +140%. No existing database is affected.
+- 🟢 **Added**: `ha_available` on every plan in [List database plans](/api-reference/databases/list-database-plans) `GET /api/v1/databases/plans`. It is `false` when high availability cannot be ordered on that plan right now: on the free plan, and on a MySQL plan whose three copies do not all fit (MySQL high availability runs on plans up to 2 vCPU and has limited room). Creating or resizing onto such a plan with high availability returns `412` and changes nothing. Pass `database_id` to get the answer for moving one of your databases to another plan.
+
+**Databases: read address**
+
+- 🟢 **Added**: a PostgreSQL database with at least one read replica has a read address. Queries sent there are spread across the replicas, and a write is refused. [Get connection details](/api-reference/databases/get-database-connection) `GET /api/v1/databases/{database_id}/connection` returns it as `read_host`, `read_port` (5433) and `read_connection_uri` for the VPC, and `public_read_host` (the hostname with `-ro`), `public_read_port` (5432) and `public_read_connection_uri` while public access is on. The fields are empty for a database without read replicas.
+
 ### November 16, 2026
 
 **Firewall: API**

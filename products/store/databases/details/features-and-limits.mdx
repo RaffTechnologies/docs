@@ -13,7 +13,7 @@ The facts about Raff Managed Databases in one place.
 | Engine | Versions | High availability | Read replicas | Point-in-time restore | Public access | Free plan |
 |---|---|---|---|---|---|---|
 | PostgreSQL | 18, 17, 16, 15 | Primary + standby | Yes | Yes | Yes | Yes |
-| MySQL | 8.0 | 3-node cluster | No | Yes | Yes | Yes |
+| MySQL | 8.0 | 3-node cluster, on plans up to 2 vCPU | No | Yes | Yes | Yes |
 | Valkey | 8 | Primary + standby + Sentinel | No | No (nightly snapshots) | Yes | Yes |
 | ClickHouse | 25.8 | 2 replicas + Keeper | No | No | Yes | No |
 | Kafka | 4.3 | 3 brokers | No | No backups | No | No |
@@ -22,7 +22,7 @@ The facts about Raff Managed Databases in one place.
 
 | Engine | Private | Public |
 |---|---|---|
-| PostgreSQL | 6432 pooled, 5432 direct | 6543 pooled, 5432 direct (by hostname); or the database's own pair |
+| PostgreSQL | 6432 pooled, 5432 direct, 5433 read address | 6543 pooled, 5432 direct (by hostname); or the database's own pair. Read address: the `-ro` hostname on 5432 |
 | MySQL | 3306 | The database's own port |
 | Valkey | 6379 (TLS) | The database's own port |
 | ClickHouse | 8443 HTTPS, 9440 native | The database's own pair |
@@ -43,7 +43,7 @@ Hostnames: `<database_id>.db.raffusercloud.com` (private, in your VPC) and `<dat
 | TLS | Required | Databases created before October 13, 2026 also accept unencrypted PostgreSQL and MySQL connections on their own port and in the VPC |
 | Allowlist | 20 IPv4 entries | Empty allows any address |
 | Database users | 20 per database | PostgreSQL, MySQL, ClickHouse |
-| Read replicas | Up to 5 | PostgreSQL |
+| Read replicas | Up to 5 | PostgreSQL. One read address for all replicas of a database |
 | Backups | Nightly, between 02:00 and 05:00 UTC, kept 30 days (free plan: 3 days) | Plus on-demand |
 | Backups after delete | 14 days | Restore through support |
 | Free plan idle pause | After 7 days without connections | Data kept; resume in about a minute |

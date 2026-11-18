@@ -4,7 +4,7 @@ sidebarTitle: Billing model
 description: How managed databases are billed on Raff, monthly or by the hour, and what happens to the bill when you resize or delete.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 17, 2026</sub>
 
 A managed database has one flat price: the plan, plus high availability, read replicas and extra storage if you add them. Backups, monitoring, TLS and traffic are included; there are no egress charges or per-request fees.
 
@@ -23,7 +23,7 @@ The free plan costs nothing in either mode.
 
 ```
 monthly price = plan
-              + plan × high availability share   (70%, or 140% for MySQL and Kafka)
+              + plan × high availability share   (70%; 210% for MySQL, 140% for Kafka)
               + plan × read replicas             (PostgreSQL, each the same as the plan)
               + extra storage GB × $0.15
 ```

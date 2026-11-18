@@ -15,7 +15,7 @@ High availability keeps extra copies of the database on separate servers and swi
 | Engine | High availability runs | Failover | Price |
 |---|---|---|---|
 | **PostgreSQL** | A primary and a standby on another server, kept in step | Automatic, usually within half a minute; the address follows the new primary | +70% |
-| **MySQL** | A 3-node cluster; every node holds all data | Automatic; a proxy sends writes to a healthy node | +140% |
+| **MySQL** | A 3-node cluster; every node holds all data | Automatic; a proxy sends writes to a healthy node | +210% |
 | **Valkey** | A primary, a standby and Sentinel | Automatic, within seconds of the primary failing | +70% |
 | **ClickHouse** | Two replicas and ClickHouse Keeper | Automatic for tables using `Replicated*` engines | +70% |
 | **Kafka** | 3 brokers; every topic copied to all three | Automatic; a broker can fail without losing messages | +140% |
@@ -24,13 +24,29 @@ The percentage is added to the plan price. It is not available on the free plan.
 
 ### Read replicas (PostgreSQL)
 
-A read replica is one more copy of a PostgreSQL database, kept in sync. Each costs the same as the plan. Replicas add copies that can take over; a separate address for sending read queries to replicas is not available yet, so they do not add read capacity today.
+A read replica is one more copy of a PostgreSQL database, kept in sync. Each costs the same as the plan.
+
+A database with at least one replica gets a **read address**. Queries sent there are spread across the replicas, and a write is refused with PostgreSQL's own message (`cannot execute INSERT in a read-only transaction`). Send reports, dashboards and read-heavy pages there, and keep everything that writes on the normal address.
+
+| From | Read address |
+|---|---|
+| The internet | `<database_id>-ro.public.db.raffusercloud.com`, port 5432 |
+| Your VPC | The private hostname, port 5433 |
+
+- A replica can be a moment behind the primary: a row you just wrote may not be on the read address yet.
+- The read address is direct, not pooled. Each connection uses a connection on a replica.
+- High availability alone gives no read address: its standby is there to take over. With replicas, the standby answers read queries too.
+- Adding the first replica, or removing the last one, reconnects open connections once.
+
+The **Connect** tab shows the read address with your values and how far the replicas are behind.
 
 ### Turning it on and off
 
 Turn high availability on or off at any time in **Settings**, or choose it at create. Turning it on adds the copies without losing data; turning it off removes them. The database keeps running through both. One exception: a PostgreSQL database created before November 17, 2026 may restart once when high availability is turned on, so its standby can be placed on another server. See [Resize a database](/products/store/databases/quickstart-guides/resize-a-database).
 
 MySQL is the exception: choose high availability when you create the database. A MySQL database without it runs as one server and cannot add it later: create a new MySQL database with high availability and copy the data into it, for example with `mysqldump`.
+
+MySQL high availability is available on plans up to 2 vCPU and has limited room. When a plan has no room, the create page shows **High availability** disabled with a short note, and no payment is taken: pick a smaller plan, or create the database without it.
 
 ## When to use it
 
@@ -43,6 +59,7 @@ Development and staging usually run fine on a single node.
 
 - **PostgreSQL writes wait for the standby.** The primary confirms a write to your app only after the standby has it on disk, so a failover loses no confirmed write. Each write takes a few milliseconds longer for that: in our test about 8 ms instead of 3 ms. For writes where speed matters more, your app can skip the wait per transaction with `SET LOCAL synchronous_commit = local`.
 - **While the standby itself is down or catching up**, the primary keeps accepting writes alone instead of stopping. Until the standby is back in step, those writes are protected by backups and point-in-time restore, not by the standby.
+- **Valkey confirms a write just before the standby has it.** A write confirmed in the last instant before the primary fails can be lost in the failover.
 - During a failover, open connections drop; apps that retry reconnect to the same address.
 - High availability protects against a server failing, not against deleting data by mistake. Backups cover that.
 

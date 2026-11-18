@@ -51,6 +51,8 @@ Hostnames:
 - Public: `<database_id>.public.db.raffusercloud.com`
 - Private (inside the VPC): `<database_id>.db.raffusercloud.com`
 
+A PostgreSQL database with read replicas also has a **read address** for read-only queries: `<database_id>-ro.public.db.raffusercloud.com` on port 5432 from the internet, and the private hostname on port 5433 inside the VPC. See [High availability and read replicas](/products/store/databases/concepts/high-availability-and-replicas).
+
 Connections use TLS, and databases created from October 13, 2026 refuse any without it. PostgreSQL on the public ports 5432 and 6543 finds your database by the hostname your client sends over TLS; an old client that does not send it can use the database's own public port, shown in **Access**. See [Networking and security](/products/store/databases/concepts/networking-and-security) and [Connection pooling](/products/store/databases/concepts/connection-pooling).
 
 ## Examples

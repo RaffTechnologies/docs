@@ -46,7 +46,7 @@ Turning it off removes the standby and asks you to confirm: if the server fails,
 
 ## Add read replicas (PostgreSQL)
 
-In **Read replicas**, choose how many. Each replica is a copy kept in sync and costs the same as the plan. Replicas protect against losing a server; they do not have their own address for read traffic yet.
+In **Read replicas**, choose how many. Each replica is a copy kept in sync and costs the same as the plan. The database then gets a read address for read-only queries, shown in **Connect**: see [High availability and read replicas](/products/store/databases/concepts/high-availability-and-replicas). Adding the first replica, or removing the last one, reconnects open connections once.
 
 ## Do it from your tools
 
