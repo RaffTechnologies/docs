@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 16, 2026</sub>
+<sub>Updated November 18, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 18, 2026
+
+**Catalog: Windows licence price**
+
+- 🔵 **Updated**: Raff's Windows Server licence is priced per vCPU for servers created from today: \$6.00 a month per vCPU, 2 vCPU minimum (\$12 on 1 or 2 vCPU, \$24 on 4, \$48 on 8, \$96 on 16). [List templates](/api-reference/catalog/list-templates) `GET /api/v1/public/templates` now returns `licence_price_per_month` as the price at the minimum (12), and adds `licence_price_per_vcpu_month` (6) and `licence_min_vcpu` (2) on Windows templates. A server's licence costs `licence_price_per_vcpu_month` × its plan's vCPU, at least `licence_min_vcpu`. Licences bought before today keep their \$15.00 a month.
 
 ### November 16, 2026
 

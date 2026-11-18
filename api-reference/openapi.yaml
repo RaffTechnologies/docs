@@ -11283,8 +11283,16 @@ components:
           example: false
         licence_price_per_month:
           type: number
-          description: Windows templates only. The monthly price of Raff's Windows Server licence, paid on top of the plan when the server is bought with the licence (the dashboard checkout). Absent when the licence is not on sale.
-          example: 15
+          description: Windows templates only. The smallest monthly price of Raff's Windows Server licence (a server with `licence_min_vcpu` vCPU or fewer), paid on top of the plan when the server is bought with the licence (the dashboard checkout). Absent when the licence is not on sale.
+          example: 12
+        licence_price_per_vcpu_month:
+          type: number
+          description: Windows templates only. The licence's monthly price per vCPU of the server's plan. A server pays this times its plan's vCPU, at least `licence_min_vcpu`. Absent when the licence is not priced per vCPU or not on sale.
+          example: 6
+        licence_min_vcpu:
+          type: integer
+          description: Windows templates only. The fewest vCPU the licence is billed for. Absent when the licence is not priced per vCPU or not on sale.
+          example: 2
         os_type:
           type: string
           description: Operating system type
