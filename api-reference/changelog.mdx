@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 18, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,13 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 19, 2026
+
+**Databases: PostgreSQL versions and extensions**
+
+- 🟢 **Added**: `postgis` and `pg_cron` on PostgreSQL databases created on or after November 19, 2026. [List extensions](/api-reference/databases/list-database-extensions) returns them, [Set extension](/api-reference/databases/set-database-extension) turns them on, and `extensions` in [Create a database](/api-reference/databases/create-database) accepts them. Databases created earlier do not list them. New PostgreSQL databases run 18.7, 17.12 or 16.16.
+- 🔴 **Removed**: PostgreSQL 15 from the versions offered for new databases. `GET /api/v1/databases/engines` returns `18`, `17`, `16`; a create with `engine_version` `15` is refused with 400. Existing databases on 15 keep running, and a restore copy keeps its source's version.
 
 ### November 18, 2026
 

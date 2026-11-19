@@ -5218,7 +5218,7 @@ paths:
         - Managed Databases
       summary: List extensions
       description: |
-        Every PostgreSQL extension the database can turn on, with whether it is on. `curated` marks the most used ones (`vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`). Extensions that reach the server's files or run untrusted languages are left out. Other engines return an empty list. The database must be `running`.
+        Every PostgreSQL extension the database can turn on, with whether it is on. `curated` marks the most used ones (`vector`, `postgis`, `pg_cron`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`). `postgis` and `pg_cron` are listed for databases created on or after November 19, 2026. Extensions that reach the server's files or run untrusted languages are left out. Other engines return an empty list. The database must be `running`.
       operationId: listDatabaseExtensions
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -14352,7 +14352,7 @@ components:
           items:
             type: string
           description: |
-            PostgreSQL only. Extensions to turn on before the database is marked running, so it is ready for them the moment you connect. Allowed: `vector` (AI embeddings), `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Other engines or other names are refused with 400. Any other extension the image ships can be turned on later with the extensions endpoint.
+            PostgreSQL only. Extensions to turn on before the database is marked running, so it is ready for them the moment you connect. Allowed: `vector` (AI embeddings), `postgis`, `pg_cron`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Other engines or other names are refused with 400. Any other extension the image ships can be turned on later with the extensions endpoint.
           example: ["vector"]
 
     UpdateDatabaseRequest:

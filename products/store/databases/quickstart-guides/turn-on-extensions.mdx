@@ -1,12 +1,12 @@
 ---
 title: Turn on PostgreSQL extensions
 sidebarTitle: Turn on extensions
-description: Turn on pgvector, pg_trgm, pg_stat_statements and other PostgreSQL extensions on a Raff managed database.
+description: Turn on pgvector, PostGIS, pg_cron, pg_trgm and other PostgreSQL extensions on a Raff managed database.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
-PostgreSQL extensions add features to the database: `vector` for AI embeddings, `pg_trgm` for fuzzy search, `pg_stat_statements` for slow query statistics and many more. Turning one on takes a second and needs no restart.
+PostgreSQL extensions add features to the database: `vector` for AI embeddings, `postgis` for maps and location data, `pg_cron` for scheduled jobs, `pg_trgm` for fuzzy search and many more. Turning one on takes a second and needs no restart.
 
 ## Before you start
 
@@ -19,7 +19,7 @@ PostgreSQL extensions add features to the database: `vector` for AI embeddings, 
     Open the database, go to **Settings** and find **Extensions**. It shows how many are on.
   </Step>
   <Step title="Find the extension">
-    The most used ones are at the top: `vector`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Use **Search** or **Show all** for the rest.
+    The most used ones are at the top: `vector`, `postgis`, `pg_cron`, `pg_trgm`, `pg_stat_statements`, `hstore`, `uuid-ossp`, `citext`, `ltree`, `pgcrypto`, `unaccent`. Use **Search** or **Show all** for the rest.
   </Step>
   <Step title="Tick it">
     Tick the checkbox. The extension is installed in `defaultdb` with anything it depends on. Untick to remove it.
@@ -33,6 +33,8 @@ PostgreSQL extensions add features to the database: `vector` for AI embeddings, 
 | Extension | For |
 |---|---|
 | `vector` | Embeddings and similarity search for AI and RAG (pgvector) |
+| `postgis` | Maps and location data: points, shapes, distance and area queries (PostGIS) |
+| `pg_cron` | Scheduled jobs that run inside the database |
 | `pg_trgm` | Fuzzy text search and `LIKE '%...%'` indexes |
 | `pg_stat_statements` | Slow query statistics in **Monitoring** |
 | `uuid-ossp`, `pgcrypto` | UUIDs, hashing and encryption functions |
@@ -40,7 +42,24 @@ PostgreSQL extensions add features to the database: `vector` for AI embeddings, 
 | `hstore`, `ltree` | Key-value columns, tree paths |
 | `unaccent` | Search that ignores accents |
 
-Extensions that can reach the server's files or run untrusted languages are not offered. PostGIS is not available yet.
+Extensions that can reach the server's files or run untrusted languages are not offered.
+
+## PostGIS and pg_cron
+
+`postgis` and `pg_cron` are in every PostgreSQL database created on or after November 19, 2026. A database created before that date does not list them, and neither does a copy restored from its backups. To use them with older data, create a new database and copy the data over with `pg_dump` and `pg_restore`.
+
+With `pg_cron` on, schedule a job with the database's main user. Jobs run in `defaultdb`, and schedules use UTC:
+
+```sql
+SELECT cron.schedule('nightly-cleanup', '0 3 * * *',
+  $$DELETE FROM events WHERE created_at < now() - interval '30 days'$$);
+
+SELECT jobid, jobname, schedule FROM cron.job;        -- your jobs
+SELECT status, start_time FROM cron.job_run_details;  -- their runs
+SELECT cron.unschedule('nightly-cleanup');
+```
+
+Read-only and read-write users cannot schedule jobs.
 
 ## Do it from your tools
 
