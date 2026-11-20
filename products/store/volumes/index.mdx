@@ -5,7 +5,7 @@ description: NVMe SSD block storage you attach to a VM — survives VM destroy, 
 icon: hard-drive
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
 Volumes are **NVMe SSD** block storage you attach to a Raff VM as additional disk capacity. Use them when a VM needs more storage than its plan includes, or — more importantly — when you want **data to outlive the VM itself**. Volumes survive VM destroy, attach to a different VM, and bill independently.
 
@@ -24,7 +24,7 @@ Volumes are **NVMe SSD** block storage you attach to a Raff VM as additional dis
 | **Survives VM destroy** | Yes — detached, kept in the account, ready to reattach |
 | **Filesystems** | Linux: ext4 / xfs (auto-format option). Windows: NTFS (manual via Disk Management) |
 | **Device naming** | `/dev/vdb`, `/dev/vdc`, … (virtio-blk; never `sd*` or `nvme*`) |
-| **Billing** | Subscription default \$0.05/GiB/month (PAYG on request, same rate) |
+| **Billing** | Subscription default \$0.08/GiB/month (PAYG on request, same rate) |
 | **Bandwidth between VM and volume** | Free, never metered |
 
 ## When to use a volume

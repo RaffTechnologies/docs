@@ -36,7 +36,7 @@ Both store data; they're built for different access patterns.
 | **Concurrency** | Many clients read/write the same bucket simultaneously | One VM at a time (single-attach) |
 | **Latency profile** | Tens of ms typical (network round-trip + S3 op) | Sub-millisecond (local NVMe) |
 | **Throughput per object** | High; multipart upload scales horizontally | Highest — direct disk |
-| **Pricing** | \$0.07/GB/mo (\$7/mo first 100 GB included), no egress fees | \$0.05/GiB/mo flat |
+| **Pricing** | \$0.07/GB/mo (\$7/mo first 100 GB included), no egress fees | \$0.08/GiB/mo flat |
 | **Best for** | Unstructured data, lots of objects, many readers | Files an OS / database needs to read locally at low latency |
 
 ### When to use Object Storage

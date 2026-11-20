@@ -3,7 +3,7 @@ title: Create a volume
 description: Provision a new block volume — pick size, billing term, target VM, and how it should be formatted
 ---
 
-<sub>Updated May 8, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
 A **volume** is block storage you attach to a VM as additional disk capacity beyond its base disk. Volumes live in the same region as the VM they attach to, can be detached and reattached to a different VM in that region, and survive the VM if it's deleted.
 
@@ -37,13 +37,13 @@ You can [grow the volume later](/products/store/volumes/quickstart-guides/resize
 
 ## 3. Pick a billing period
 
-Volumes are **subscription-based by default**, paid in advance from your account balance. Pay-as-you-go is available for enterprise and SMB customers on request — same effective \$0.05/GiB/month rate, billed hourly at cycle close.
+Volumes are **subscription-based by default**, paid in advance from your account balance. Pay-as-you-go is available for enterprise and SMB customers on request — same effective \$0.08/GiB/month rate, billed hourly at cycle close.
 
 | Term | Rate |
 |---|---|
-| **Monthly** | \$0.05 / GiB / month |
-| **Yearly** | \$0.60 / GiB / year |
-| **2 Years** | \$1.20 / GiB / 2 years |
+| **Monthly** | \$0.08 / GiB / month |
+| **Yearly** | \$0.96 / GiB / year |
+| **2 Years** | \$1.92 / GiB / 2 years |
 
 The volume cost is reserved at creation. If you delete the volume mid-term, the unused days and hours are credited back to your account balance — same model as VMs. See [Billing model](/products/build/virtual-machines/concepts/billing-model).
 
@@ -120,7 +120,7 @@ The volume is created in seconds. If you picked a target VM, it appears as a new
 
 | Item | Rate |
 |---|---|
-| Per-GiB storage | \$0.05 / GiB / month (same per-GiB cost on all subscription terms) |
+| Per-GiB storage | \$0.08 / GiB / month (same per-GiB cost on all subscription terms) |
 | Charges accrue | Continuously while the volume exists |
 | Settlement | Month-end on the 1st against your account balance |
 
