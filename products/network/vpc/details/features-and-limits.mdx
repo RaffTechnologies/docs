@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: VPC features, supported CIDR sizes, MTU, internet gateway options, and platform limits
 ---
 
-<sub>Updated November 9, 2026</sub>
+<sub>Updated November 20, 2026</sub>
 
 ## Features
 
@@ -38,8 +38,8 @@ Two mutually exclusive options to give VMs in the VPC outbound internet access w
 | Gateway | What it is | Cost |
 |---|---|---|
 | **Platform Router** | Managed gateway VM run by Raff — NAT, internal DNS suffix `vpc.local`, DHCP, port forwarding | **Free** |
-| **Firewall Appliance — Small** | OPNsense 26.1 — 2 vCPU / 4 GB RAM / 50 GB disk, WAN + LAN NICs, full firewall control via web UI or VNC console | **\$4.99 / month** |
-| **Firewall Appliance — Large** | OPNsense 26.1 — 4 vCPU / 8 GB RAM / 120 GB disk, WAN + LAN NICs | **\$9.99 / month** |
+| **Firewall Appliance — Small** | OPNsense 26.1 — 2 vCPU / 4 GB RAM / 50 GB disk, WAN + LAN NICs, full firewall control via web UI or VNC console | **\$17.99 / month** |
+| **Firewall Appliance — Large** | OPNsense 26.1 — 4 vCPU / 8 GB RAM / 120 GB disk, WAN + LAN NICs | **\$33.99 / month** |
 
 VPCs without a gateway have no outbound internet — VMs reach the internet only via their own Public IP attachments. The gateway choice is mutually exclusive (one or none, not both) and switchable later, with a brief outbound-traffic outage during the switch.
 
@@ -75,8 +75,8 @@ VPCs without a gateway have no outbound internet — VMs reach the internet only
 | **Same-region traffic between VMs in the VPC** | **Free**, never metered |
 | **Same-region traffic to Object Storage / Kubernetes** | **Free**, never metered |
 | **Platform Router gateway** | **Free** — Raff runs the gateway VM and its public IP at no charge |
-| **Firewall Appliance — Small** (2 vCPU / 4 GB / 50 GB) | **\$4.99 / month** |
-| **Firewall Appliance — Large** (4 vCPU / 8 GB / 120 GB) | **\$9.99 / month** |
+| **Firewall Appliance — Small** (2 vCPU / 4 GB / 50 GB) | **\$17.99 / month** |
+| **Firewall Appliance — Large** (4 vCPU / 8 GB / 120 GB) | **\$33.99 / month** |
 | **VPC peering** | **Free** |
 | **VPN gateway** (10 device connections) | **\$15 / month** |
 | **Site-to-site tunnel** | **\$20 / month** per tunnel, plus the gateway |

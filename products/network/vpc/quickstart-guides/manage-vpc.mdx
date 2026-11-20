@@ -3,7 +3,7 @@ title: Manage a VPC
 description: Open the VPC detail page to rename, change DNS, enable an internet gateway (Platform Router or Firewall Appliance), attach VMs, and configure port forwarding
 ---
 
-<sub>Updated November 9, 2026</sub>
+<sub>Updated November 20, 2026</sub>
 
 Every VPC has a **detail page** that puts everything you can do to it in one screen — rename, change DNS, choose an internet gateway, attach or detach VMs, configure port forwarding. This page is the one you open from the row menu's **Manage VPC** action or by clicking the VPC name in the list.
 
@@ -67,7 +67,7 @@ By default a VPC has **no internet gateway** — the badge in the stats row says
 | Gateway | Cost | What it is | When to pick it |
 |---|---|---|---|
 | **Platform Router** | **Free** | Managed gateway VM run by Raff — NAT, DNS, DHCP, port forwarding | Default choice for most VPCs |
-| **Firewall Appliance** | **\$4.99/mo or \$9.99/mo** | OPNsense VM you manage yourself, with WAN + LAN NICs | When you need full firewall control, IDS/IPS, custom routing, or built-in VPN |
+| **Firewall Appliance** | **\$17.99/mo or \$33.99/mo** | OPNsense VM you manage yourself, with WAN + LAN NICs | When you need full firewall control, IDS/IPS, custom routing, or built-in VPN |
 
 ### Platform Router (free)
 
@@ -89,20 +89,20 @@ Once active, the gateway card shows:
 
 There is nothing to SSH into and nothing to maintain — Raff handles patching, HA, and lifecycle. The router's public IP is reserved while the gateway is enabled and returns to your account when you disable it.
 
-### Firewall Appliance (\$4.99 or \$9.99 / month)
+### Firewall Appliance (\$17.99 or \$33.99 / month)
 
 Click **Deploy** on the Firewall Appliance card. The Deploy dialog opens with everything you need to bootstrap OPNsense in one form.
 
 <Frame>
-  ![Deploy Firewall Appliance dialog showing OPNsense 26.1 as the appliance, two Size options — 2 vCPU / 4 GB / 50 GB at $4.99/mo and 4 vCPU / 8 GB / 120 GB at $9.99/mo — a Configuration block with Hostname, Timezone, and four toggles (Enable SSH, SSH Password Auth, SSH Root Login, Web Admin on WAN), and a Credentials section with an auto-generated Admin Password and copy/regenerate buttons](/images/products/network/vpc/firewall-appliance-deploy.png)
+  ![Deploy Firewall Appliance dialog showing OPNsense 26.1 as the appliance, two Size options, 2 vCPU / 4 GB and 4 vCPU / 8 GB, with their monthly prices — a Configuration block with Hostname, Timezone, and four toggles (Enable SSH, SSH Password Auth, SSH Root Login, Web Admin on WAN), and a Credentials section with an auto-generated Admin Password and copy/regenerate buttons](/images/products/network/vpc/firewall-appliance-deploy.png)
 </Frame>
 
 **Pick a size:**
 
 | Size | Specs | Price |
 |---|---|---|
-| **Small** | 2 vCPU / 4 GB RAM / 50 GB disk | **\$4.99 / month** |
-| **Large** | 4 vCPU / 8 GB RAM / 120 GB disk | **\$9.99 / month** |
+| **Small** | 2 vCPU / 4 GB RAM / 50 GB disk | **\$17.99 / month** |
+| **Large** | 4 vCPU / 8 GB RAM / 120 GB disk | **\$33.99 / month** |
 
 The small plan handles a few hundred concurrent connections and a couple of VPN tunnels comfortably. Step up to large for IDS/IPS rules, larger fleets, or many VPN clients. The plan bills like any other VM — accrues continuously, settled month-end on the 1st against your account balance — and unused days are credited back if you delete the gateway mid-cycle.
 

@@ -4,7 +4,7 @@ sidebarTitle: Billing model
 description: What bills, when — pay-as-you-go vs subscription, autoscaling overage, HA and storage fees
 ---
 
-<sub>Updated September 7, 2026</sub>
+<sub>Updated November 20, 2026</sub>
 
 **The single-master control plane is free.** You pay for worker nodes, \$30/month if you enable the HA control plane, and per-GB for the persistent volumes your PVCs create.
 
@@ -55,7 +55,7 @@ Storage and overage lines are totals per category, not per volume or per node �
 | Item | Price |
 |---|---|
 | HA control plane | \$30/month flat |
-| Persistent volumes (PVCs) | \$0.10/GB/month, billed hourly for exactly the GB claimed — on both billing modes, never part of the subscription |
+| Persistent volumes (PVCs) | \$0.08/GB/month (the Volumes rate), billed hourly for exactly the GB claimed — on both billing modes, never part of the subscription |
 | Reserved public IP (the cluster's) | included |
 
 Full rates: [Pricing](/products/build/kubernetes/details/pricing).
