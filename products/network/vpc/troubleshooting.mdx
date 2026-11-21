@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common VPC problems — CIDR rejection, IPs that don't talk to each other, DNS not propagating, port forwarding not working, gateway and delete blocks — and the fix for each
 ---
 
-<sub>Updated November 9, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
 The most-seen issues with Raff VPCs and the fix that resolves each. Most come from one of three categories: **the dashboard rejecting input** (CIDR validation, specific-IP conflicts), **the network not behaving as expected after a change** (DNS lag, MTU surprises, default-route confusion), or **delete/detach blocks** (the safety rules in [Delete a VPC](/products/network/vpc/quickstart-guides/delete-vpc)). If your issue isn't here, contact [support@rafftechnologies.com](mailto:support@rafftechnologies.com).
 
@@ -141,6 +141,14 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
     7. **At the 10-rule limit?** — Platform Router supports up to **10 forwarding rules per VPC**. Beyond that, deploy a Firewall Appliance (OPNsense) for unlimited rules.
   </Accordion>
 
+  <Accordion title="Firewall Appliance can't be deployed in EU Central">
+    **What's happening:** Deploy on an EU Central VPC answers `this plan is sold in another region than the private network (VPC)`.
+
+    **Why:** the Firewall Appliance is in US East only for now. The Platform Router and the VPN gateway work in both regions.
+
+    **Fix:** use the **Platform Router** on the EU Central VPC, or run the Firewall Appliance on a US East VPC.
+  </Accordion>
+
   <Accordion title="Firewall Appliance stuck on Deploy">
     **What's happening:** you clicked Deploy on the Firewall Appliance card, the gateway badge stays as "deploying" or reverts after a few minutes.
 
@@ -243,6 +251,7 @@ The most-seen issues with Raff VPCs and the fix that resolves each. Most come fr
     1. **VPC isn't in the Peer with list:** it has no active gateway, or the two VPCs are already peered.
     2. **`both VPCs must have a platform router before peering`:** a VPC with a Firewall Appliance can't be peered. Switch it to the Platform Router.
     3. **`cannot peer VPCs with overlapping CIDR ranges`:** a VPC's range can't change. Create a new VPC with a different range and move the servers to it.
+    4. **`these private networks (VPCs) are in different regions`:** only VPCs of one region can be peered. To link servers in two regions, use the [VPN gateway](/products/network/vpc/quickstart-guides/connect-with-vpn) with a site-to-site tunnel, or their public IPs.
   </Accordion>
 
   <Accordion title="Peered VPCs can't reach each other">

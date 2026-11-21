@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: VPC features, supported CIDR sizes, MTU, internet gateway options, and platform limits
 ---
 
-<sub>Updated November 20, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
 ## Features
 
@@ -52,13 +52,14 @@ VPCs without a gateway have no outbound internet — VMs reach the internet only
 ### VPC peering
 - Connects two VPCs of the same account, so their servers reach each other on private IPs
 - Both VPCs need an active **Platform Router**, and their ranges must not overlap
+- Both VPCs must be in the same region
 - Doesn't chain: peering A with B and B with C doesn't connect A to C
 - See [Manage a VPC](/products/network/vpc/quickstart-guides/manage-vpc#peering-tab-connect-two-vpcs)
 
 ### VPN gateway
 - **Device connections:** WireGuard for laptops and phones, 10 included
 - **Site-to-site tunnels:** WireGuard or IPsec (IKEv2) for an office, a datacenter or another cloud
-- Available in US East
+- Available in every region
 - See [Connect over VPN](/products/network/vpc/quickstart-guides/connect-with-vpn)
 
 ### VM membership
@@ -110,7 +111,7 @@ There is **no per-VPC fee, no per-CIDR fee, no per-VNI fee, and no per-DHCP-leas
 | Region | Status |
 |---|---|
 | **`us-east`** | All VPC features |
-| **`eu-central`** | All VPC features |
+| **`eu-central`** | All VPC features except the Firewall Appliance, which is in `us-east` only for now |
 
 ## What's not available today
 
