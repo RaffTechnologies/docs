@@ -1,0 +1,24 @@
+{/*
+  Shared facts block for the server pages. One copy of the numbers AI tools and readers quote most; edit here,
+  never on the page. `node scripts/check-at-a-glance.mjs` compares every price below with the live public
+  pricing API and fails when one has drifted. Raff copy rules apply (shared-reference §11): Linux families and
+  Windows plans in separate sentences; nothing about the SLA next to Cost-Optimized.
+*/}
+
+## At a glance
+
+| | |
+|---|---|
+| **Deploy time** | About 55 seconds for a Linux server. A Windows server finishes its first-start setup a few minutes after it starts |
+| **Linux servers** | From \$4.99/month: General Purpose 1 vCPU / 1 GB, or Cost-Optimized 1 vCPU / 2 GB |
+| **Windows Server** | From \$19.99/month with the licence: Standard plan 1 vCPU / 2 GB, which is \$7.99 for the server and \$12 for the licence. The licence is \$6 per vCPU a month, 2 vCPU minimum |
+| **Port speed** | Linux: 3 Gbps on General Purpose and CPU-Optimized, 1 Gbps on Cost-Optimized. Windows: 3 Gbps on the Business plan, 1 Gbps on the Standard plan |
+| **Bandwidth** | Unmetered, with no egress fees |
+| **Regions** | US East (Vint Hill, Virginia) runs every product. EU Central (Frankfurt, Germany) runs Cost-Optimized Linux servers, the Windows Standard plan, volumes, backups, snapshots, VPC and Site-to-Site VPN |
+| **Billing** | Monthly, yearly (the price of 10 months) or 24 months (the price of 18 months), from your account balance. Hourly pay-as-you-go on request |
+| **Storage** | Volumes \$0.08/GB a month. Backups and snapshots \$0.06/GB a month after a free pool of 50 GB per account plus 10 to 15% of each disk |
+| **Uptime** | Every Raff server is designed and run for 99.9% monthly uptime. On General Purpose, CPU-Optimized and Windows Business plan servers it is also in writing in the [SLA](/products/build/virtual-machines/details/sla), with service credits |
+| **Refunds** | 14-day money-back guarantee on your first purchase |
+| **Live prices** | [List VM Pricing](/api-reference/catalog/list-vm-pricing), or without a key: `https://api.rafftechnologies.com/api/v1/public/pricing/vm` |
+
+<sub>Prices checked against the live pricing API on November 23, 2026.</sub>

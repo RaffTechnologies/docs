@@ -3,9 +3,13 @@ title: Pricing
 description: "How Virtual Machines are billed on the Raff Platform: full per-plan rate tables for Standard, Premium, Windows Server and Cost-Optimized tiers, subscription vs PAYG, billing-date alignment, and what's billed alongside the plan"
 ---
 
-<sub>Updated November 18, 2026</sub>
+import VmAtAGlance from '/snippets/vm-at-a-glance.mdx';
+
+<sub>Updated November 23, 2026</sub>
 
 Raff bills VMs against a prepaid **account balance**. The default model is subscription; pay-as-you-go is available on request.
+
+<VmAtAGlance />
 
 ## Plan tiers and rates (us-east)
 
@@ -15,10 +19,10 @@ Four plan tiers, each with multiple sizes. Prices are USD, per VM, per region.
 |---|---|---|
 | **Standard — General Purpose** | **Shared** vCPU | Web servers, dev/staging, batch jobs, anything that doesn't need consistent CPU performance every millisecond. Best price/CPU |
 | **Premium — CPU Optimized** | **Guaranteed** vCPU | Databases, real-time services, latency-sensitive APIs, anything where noisy-neighbor variability would hurt. Higher per-vCPU price, predictable performance |
-| **Windows Server** | **Guaranteed** vCPU | Windows workloads over RDP — Active Directory, file shares, .NET and IIS apps, SQL Server, trading terminals. Licence billed separately from compute |
-| **Cost-Optimized** | **Shared** vCPU, local NVMe disk | The lowest price, for Linux servers that can be offline while their node is repaired. No uptime commitment |
+| **Windows Server** | Standard plan: **shared** vCPU, local NVMe. Business plan: **guaranteed** vCPU | Windows workloads over RDP — Active Directory, file shares, .NET and IIS apps, SQL Server, trading terminals. Licence billed separately from compute |
+| **Cost-Optimized** | **Shared** vCPU, local NVMe disk | The lowest price, on previous-generation hardware with a 1 Gbps port. Linux and FreeBSD |
 
-Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread. Pick **Windows Server** to run Windows — you select it by choosing a Windows template at create time. Pick **Cost-Optimized** for the lowest price when the server can be offline while its node is repaired.
+Pick **Standard** for cost-efficient general-purpose workloads where short performance dips don't matter. Pick **Premium** when consistent, guaranteed CPU is the goal — half a physical thread is reserved for every vCPU, with burst to the full thread. Pick **Windows Server** to run Windows — you select it by choosing a Windows template at create time. Pick **Cost-Optimized** for the lowest price on budget workloads: dev and staging, CI runners, side projects.
 
 ### Standard — General Purpose plans (shared CPU)
 
@@ -59,7 +63,10 @@ Standard is burstable: all vCPUs available on demand, on top of a sustained leve
 
 ### Windows Server plans
 
-Windows Server plans run on guaranteed vCPU, the same allocation as Premium. You get one by picking a Windows template when you create the VM. Every plan includes RDP access from first boot.
+Windows Server comes in two plans. You get one by picking a Windows template when you create the VM, and every plan includes RDP access from first boot.
+
+- **Standard plan**: shared vCPU on previous-generation hardware with local NVMe and a 1 Gbps port, at a lower price. In US East and EU Central.
+- **Business plan**: guaranteed vCPU, the same allocation as Premium, a 3 Gbps port and 3x data replication with high availability. In US East.
 
 The rates below are for **compute only** — Windows licensing is billed separately:
 
@@ -70,13 +77,30 @@ The rates below are for **compute only** — Windows licensing is billed separat
 | Remote Desktop user SAL | \$8.00/month per user, for multi-user RDP beyond the 2 admin sessions |
 | Your own licence (BYOL) | Bring a licence you already own — Raff charges no licence fee for it |
 
+#### Standard plan
+
+| vCPU | RAM | SSD | Monthly | Yearly | 24-month |
+|---|---|---|---|---|---|
+| 1 | 2 GiB | 50 GiB | \$7.99 | \$79.90 | \$143.82 |
+| 2 | 4 GiB | 50 GiB | \$14.99 | \$149.90 | \$269.82 |
+| 2 | 6 GiB | 60 GiB | \$19.99 | \$199.90 | \$359.82 |
+| 4 | 8 GiB | 60 GiB | \$24.99 | \$249.90 | \$449.82 |
+| 4 | 12 GiB | 80 GiB | \$34.99 | \$349.90 | \$629.82 |
+| 8 | 16 GiB | 100 GiB | \$49.99 | \$499.90 | \$899.82 |
+| 8 | 32 GiB | 120 GiB | \$79.99 | \$799.90 | \$1,439.82 |
+| 16 | 32 GiB | 160 GiB | \$99.99 | \$999.90 | \$1,799.82 |
+
+#### Business plan
+
 | vCPU | RAM | SSD | Monthly | Yearly | 24-month |
 |---|---|---|---|---|---|
 | 1 | 2 GiB | 50 GiB | \$13.99 | \$139.90 | \$251.82 |
 | 2 | 2 GiB | 50 GiB | \$17.99 | \$179.90 | \$323.82 |
 | 2 | 4 GiB | 80 GiB | \$22.99 | \$229.90 | \$413.82 |
+| 2 | 6 GiB | 100 GiB | \$27.99 | \$279.90 | \$503.82 |
 | 4 | 4 GiB | 80 GiB | \$29.99 | \$299.90 | \$539.82 |
 | 4 | 8 GiB | 120 GiB | \$40.99 | \$409.90 | \$737.82 |
+| 4 | 12 GiB | 150 GiB | \$49.99 | \$499.90 | \$899.82 |
 | 8 | 8 GiB | 120 GiB | \$54.99 | \$549.90 | \$989.82 |
 | 8 | 16 GiB | 180 GiB | \$76.99 | \$769.90 | \$1,385.82 |
 | 8 | 32 GiB | 240 GiB | \$137.99 | \$1,379.90 | \$2,483.82 |
@@ -85,7 +109,7 @@ The rates below are for **compute only** — Windows licensing is billed separat
 
 ### Cost-Optimized plans (local NVMe)
 
-Cost-Optimized servers keep their disk on a local NVMe drive of the node they run on, with shared burstable CPU like Standard. Linux only, with no uptime commitment: see [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing) for what else differs.
+Cost-Optimized servers keep their disk on a local NVMe drive of the node they run on, with shared burstable CPU like Standard. Linux and FreeBSD: see [Plans & sizing](/products/build/virtual-machines/concepts/plans-and-sizing) for what else differs.
 
 | vCPU | RAM | SSD | Monthly | Yearly | 24-month |
 |---|---|---|---|---|---|

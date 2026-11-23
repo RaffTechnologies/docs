@@ -4,13 +4,17 @@ sidebarTitle: Features & limits
 description: Full feature list for Virtual Machines on the Raff Platform, plus account, VM, and platform limits
 ---
 
-<sub>Updated November 8, 2026</sub>
+import VmAtAGlance from '/snippets/vm-at-a-glance.mdx';
+
+<sub>Updated November 23, 2026</sub>
+
+<VmAtAGlance />
 
 ## Features
 
 ### Compute
 - **Flexible sizing** — General Purpose, CPU-Optimized, Windows Server and Cost-Optimized plan families across CPU, RAM, and base disk
-- **Cost-Optimized plans**: Linux servers on a local NVMe disk, from \$4.99/mo, with no uptime commitment; resize stays within the tier. See [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
+- **Cost-Optimized plans**: Linux servers on a local NVMe disk, from \$4.99/mo; resize stays within the tier. See [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
 - **On-demand resize** — change CPU and RAM by switching plans (VM must be stopped); the difference settles to your account balance
 - **Disk resize (one-way)** — grow the OS disk without rebuilding (VM must be stopped)
 - **Burstable CPU on Standard and Cost-Optimized plans**: use all vCPUs whenever you need them, with a sustained level of 40% of your vCPUs that is always available; heavy use above it is paced by CPU credit. See [CPU and bursting](/products/build/virtual-machines/concepts/cpu-and-bursting). Premium and Windows plans work differently, see [Plans and sizing](/products/build/virtual-machines/concepts/plans-and-sizing)
@@ -91,7 +95,7 @@ See [Account limits](/products/build/virtual-machines/concepts/account-limits) f
 | Resource | Limit |
 |---|---|
 | Max CPU | Determined by the plan picked (up to 16 vCPU on standard plans) |
-| Max RAM | Determined by the plan (up to 64 GB on standard plans) |
+| Max RAM | Determined by the plan (up to 32 GB on General Purpose plans) |
 | OS disk size | Determined by the plan; can grow via disk resize, cannot shrink |
 | Additional storage at creation | Up to 1000 GiB |
 | Snapshots per VM | No hard limit |
