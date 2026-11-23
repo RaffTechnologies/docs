@@ -552,12 +552,22 @@
                     ]
                   },
                   {
+                    "group": "Licences",
+                    "pages": [
+                      "products/manage/raff-guardian/quickstart-guides/remote-desktop-users",
+                      "products/manage/raff-guardian/quickstart-guides/microsoft-office",
+                      "products/manage/raff-guardian/quickstart-guides/sql-server"
+                    ]
+                  },
+                  {
                     "group": "Concepts",
                     "pages": [
                       "products/manage/raff-guardian/concepts/how-it-works",
                       "products/manage/raff-guardian/concepts/modes-and-permissions",
                       "products/manage/raff-guardian/concepts/automatic-blocking",
                       "products/manage/raff-guardian/concepts/windows-updates",
+                      "products/manage/raff-guardian/concepts/backups",
+                      "products/manage/raff-guardian/concepts/domain-controllers",
                       "products/manage/raff-guardian/concepts/findings",
                       "products/manage/raff-guardian/concepts/activity",
                       "products/manage/raff-guardian/concepts/privacy-and-data"

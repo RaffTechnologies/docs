@@ -1,0 +1,84 @@
+---
+title: Add SQL Server Express, Standard, Enterprise or Web
+sidebarTitle: SQL Server
+description: Install the free SQL Server Express, or buy SQL Server Standard, Enterprise or Web for a Windows server by its cores, have Raff Guardian install it or upgrade your SQL Server Express in place, and see what happens to your databases when it ends, from the Licences tab of Raff Guardian.
+---
+
+<sub>Updated November 23, 2026</sub>
+
+Raff Guardian can install Microsoft's free **SQL Server Express** (version 2025 or 2022) at no charge. You can buy **SQL Server Standard**, **SQL Server Enterprise** or **SQL Server Web** (SQL Server 2022) for a Windows server. Raff Guardian installs it from Microsoft's own download, or upgrades a SQL Server Express or Developer already on the server in place, with Raff's licence. Your databases stay where they are.
+
+## How it is counted
+
+SQL Server is licensed by the server's cores, in packs of 2, with 4 cores at least. A server with 2 or 4 vCPU pays 4 cores; 6 vCPU pays 6 cores. When you resize the server, the number of cores follows the new size from your next charge; the resize page shows each size's price with SQL Server included.
+
+## Before you start
+
+- A Windows Server 2022 or 2025 server with Raff Guardian, billed monthly, yearly or pay-as-you-go.
+- 4 GB of memory and 10 GB free on drive C:.
+- The paid editions are sold as SQL Server 2022. SQL Server 2025 is not sold yet, so a SQL Server Express 2025 cannot be upgraded to a paid edition yet: choose Express 2022 if you plan to upgrade later.
+- To buy or remove: `vm.manage` and `account.billing.manage`, signed in to the dashboard. Members without the billing right see every button greyed with the reason.
+- A SQL Server Standard, Enterprise or Web you installed with your own licence is never touched: the Licences tab shows it as **your own licence**.
+
+## Install SQL Server Express (free)
+
+SQL Server Express is Microsoft's free edition for small apps and tools. Microsoft limits it to 4 cores and 1.4 GB of memory for its data, and each database to 50 GB (SQL Server 2025) or 10 GB (SQL Server 2022).
+
+1. Open the server under **Virtual Machines**, click **Guardian**, then **Licences**.
+2. On the **SQL Server** row, click **Add** and choose **Express**, then the version.
+3. Click **Install**, then confirm.
+
+There is no licence to buy, no checkout and no charge, and no licence key is used. Raff Guardian downloads Microsoft's own Express media, checks it is signed by Microsoft, and installs it the same way as a paid edition: a new SQL Server named MSSQLSERVER (RAFFSQL when that name is taken), with the server's administrators as its administrators. The row shows each step, then **SQL Server Express 2025** (or 2022), **Free**, with **Upgrade** and **Remove**. To install it you need `vm.manage`, signed in to the dashboard; the billing right is not needed. **Express** shows only where the server's Raff Guardian can install it.
+
+Upgrade it to Standard or Enterprise later as below; your databases stay. **Remove** follows the same rules as for a paid SQL Server: never while a database of yours is on it.
+
+## Add a new SQL Server
+
+1. Open the server under **Virtual Machines**, click **Guardian**, then **Licences**.
+2. Click **Add a licence** and choose the edition. An edition the server cannot take now is greyed with the reason.
+3. Choose the version. The dialog shows the cores, what you pay today for the days until the 1st, and the price a month from then.
+4. Click **Continue to checkout** and pay. Your balance is used first, then your card.
+
+Raff Guardian then downloads Microsoft's media, checks it is signed by Microsoft, and installs a new SQL Server named MSSQLSERVER (RAFFSQL when that name is taken). The server's administrators are its administrators (Windows sign-in); no SQL password is made. The row shows each step.
+
+## Upgrade SQL Server Express
+
+A SQL Server Express or Developer on the server shows on the Licences tab as **installed by you. Free.**, with **Upgrade**.
+
+1. Click **Upgrade** (or choose another edition in the row's menu).
+2. The dialog shows the price for the server's cores. **SQL Server restarts once, so open connections drop for about a minute.** Your databases stay.
+3. Click **Continue to checkout** and pay.
+
+The same works to move a SQL Server Standard bought on the Licences tab up to Enterprise. Standard then ends at the end of its paid month; until then both are billed. An edition can only go up in place: Microsoft needs a full new install for a lower edition.
+
+## How you are billed
+
+- **First purchase:** you pay now for the days until the 1st of next month. From the 1st it renews every month on the 1st.
+- **A resize:** the cores follow the new size from your next charge.
+- **Remove:** the licence ends at the end of the month you paid for. Nothing is refunded for the current month.
+- **Raff cannot set it up:** if Raff Guardian never set it up and Raff's key never reached the server, removing it gives what you paid back to your Raff balance. If Raff Guardian had begun installing it, it then removes the SQL Server it installed, by the same rule as below: never while a database of yours is on it. The row stays until it is removed, and says why if a database keeps it there.
+- **A missed payment:** if the subscription ends because a payment failed, Raff Guardian removes nothing. SQL Server and your databases stay as they are, and our team contacts you about its licence.
+- **Pay-as-you-go accounts:** the same as above. Licences are billed by the calendar month, never by the hour, because Microsoft licenses them by the month. The charge on the 1st goes on the same bill as your month of usage: your balance first, then your card.
+- Prices: see [Pricing](/products/manage/raff-guardian/details/pricing).
+
+## Remove SQL Server
+
+1. On the row, open the menu (**...**) and click **Remove SQL Server**.
+2. Type the server's name to confirm.
+
+Raff Guardian removes SQL Server only when no database of yours is on it. It never deletes, detaches or moves a database or a backup. If a database is on the server, or a database or backup file sits in SQL Server's own folders, SQL Server stays and the row says why: back up and move your databases yourself, then press **Remove again**. Before removing, Raff Guardian keeps a copy of SQL Server's own system databases (logins and jobs) in `C:\ProgramData\Raff SQL Server kept`. Microsoft's uninstall leaves SQL Server's drivers and command line tools (ODBC, OLE DB, sqlcmd) on the server, as other programs may use them; they are free and need no SQL Server licence.
+
+The licence ends at the end of the month you paid for either way. After that, a SQL Server that stays on the server is no longer licensed by Raff, and our team contacts you.
+
+## If something goes wrong
+
+- **Could not set up SQL Server:** the row says why (for example too little memory). Fix it, then press **Try again**; it costs nothing. If it fails again, use **Ask us** on the row.
+
+## Raff's licence keys stay protected
+
+Raff's keys are kept encrypted in Raff's systems and reach the server only sealed for that one server and that one action. They never appear on the dashboard, in Activity, in an email, on a receipt or on a command line. SQL Server's setup needs the key in its settings file: Raff Guardian writes that file so only the server's system and its administrators can open it, and deletes it the moment setup ends, also when setup fails; a file left by an interrupted run is deleted when Raff Guardian starts again. Microsoft's setup masks the key in its own logs, and Raff Guardian checks those logs and setup's registry key for Raff's key afterwards and removes any copy it finds. While setup runs, the key is briefly in the server's memory and in that protected file, where an administrator of the server who tries hard could catch it; no product of this kind can prevent that.
+
+## Related
+
+- [Microsoft Office and Visio](/products/manage/raff-guardian/quickstart-guides/microsoft-office)
+- [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions)

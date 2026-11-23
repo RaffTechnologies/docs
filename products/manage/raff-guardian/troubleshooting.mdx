@@ -14,7 +14,7 @@ Issues you may run into with Raff Guardian, and how to resolve them. If your pro
   <Accordion title="&quot;This Raff Guardian install command was already used or has expired&quot;">
     **What's happening:** each install command works once, for 15 minutes.
 
-    **Fix:** on the server's **Guardian** tab, click **Install Raff Guardian** again and run the new command within 15 minutes. Keep the dialog open until the install has finished.
+    **Fix:** on the server's **Guardian** tab, go through the set-up again and click **Start** for a new command, then run it within 15 minutes. Keep the page open until the install has finished.
   </Accordion>
   <Accordion title="The install command stops with an error">
     **What's happening:** the installer stops before it changes anything when a step fails. The message says which:
@@ -25,7 +25,7 @@ Issues you may run into with Raff Guardian, and how to resolve them. If your pro
     | "The Raff Guardian installer did not match. Nothing was installed." or "The Raff Guardian agent did not match. Nothing was installed." | The download was changed on the way, often by a proxy that rewrites files. Run the command again from a network without one. |
     | "Could not lock Raff's data folder; the install stopped." or "Could not lock Raff Guardian's key file; the install stopped." | Open PowerShell with **Run as administrator** and get a new command. |
     | "enrolment failed" | The code was used or expired while the install ran. Get a new command. |
-    | "Raff Guardian cannot be installed right now. Try again in a few minutes." (in the dashboard) | Wait a few minutes and click **Install Raff Guardian** again. |
+    | "Raff Guardian cannot be installed right now. Try again in a few minutes." (in the dashboard) | Wait a few minutes and click **Start** again. |
   </Accordion>
   <Accordion title="I ran the command, but the Guardian tab still offers Install">
     **What's happening:** Raff has not received the first report yet.
@@ -81,14 +81,14 @@ Issues you may run into with Raff Guardian, and how to resolve them. If your pro
 
     **Fix:**
     1. Connect through the browser console if Remote Desktop is blocked for you. See [Open the browser console](/products/build/virtual-machines/quickstart-guides/open-browser-console).
-    2. On **Security**, **Blocked addresses**, click **Unblock** on your address.
-    3. To stop it happening again, add your address in **Who can reach Remote Desktop** with **A list of addresses**. Allowed addresses are never blocked.
+    2. On **Security**, in **Newest blocks**, click **Unblock** on your address. Not listed there: click **Show all** and search your address.
+    3. To stop it happening again, open **Remote Desktop only from your address** under **Secure this server** and add your address with **A list of addresses**. Allowed addresses are never blocked.
     4. Update the saved password that keeps failing, or raise **Block an attacker after** in **Settings**.
   </Accordion>
   <Accordion title="I cannot reach Remote Desktop after changing who can reach it">
     **What's happening:** your current address is not on the allow list, for example because it changed.
 
-    **Fix:** on **Security**, **Who can reach Remote Desktop**, choose **Only my address** or add your address to the list. The browser console always works, whatever you choose.
+    **Fix:** on **Security**, open **Remote Desktop only from your address** under **Secure this server**, then choose **Only my address** or add your address to the list. The browser console always works, whatever you choose.
   </Accordion>
   <Accordion title="&quot;Raff Guardian cannot block attackers on the server&quot;">
     **What's happening:** blocking is on, but the agent cannot watch the failed sign-ins on the server. The notice shows Windows' reason when there is one.

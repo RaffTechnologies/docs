@@ -4,7 +4,7 @@ sidebarTitle: Limit who can reach Remote Desktop
 description: Let only your own IP addresses connect to the server with Remote Desktop, so bots cannot even try passwords.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
 Raff Guardian can close Remote Desktop to everyone except the addresses you choose. It changes the Windows Firewall rules for Remote Desktop on the server, and the browser console in Raff always keeps working.
 
@@ -20,7 +20,7 @@ Bots try passwords on open Remote Desktop all day. Allowing only your addresses 
 
 <Steps>
   <Step title="Pick who may connect">
-    In **Security**, on **Who can reach Remote Desktop**, choose:
+    In **Security**, under **Secure this server**, click the row **Remote Desktop only from your address** to open it, then choose:
 
     - **Any address**: Remote Desktop is open to every address.
     - **Only my address**: only the IPv4 address your browser uses now.
@@ -33,9 +33,11 @@ Bots try passwords on open Remote Desktop all day. Allowing only your addresses 
 
 The browser console in Raff always works, whatever you choose. This change needs **Raff manages everything** or **Ask me before changes**; it is refused on **Watch only**. If your address changes, set it again here or use the browser console.
 
+**Secure this server** can make the same change for your address with a safety net: after it runs, the Remote Desktop row on the **Security** tab shows **Keep it**. Press it within 10 minutes; if you do not, Raff Guardian puts the earlier list back by itself. See [Secure this server](/products/manage/raff-guardian/details/features-and-limits#secure-this-server).
+
 ## Verify
 
-**Allowed now** on the **Who can reach Remote Desktop** card shows the new setting, and **Activity**, category **Security**, records the change. Try a Remote Desktop connection from an allowed address.
+**Allowed now**, in the opened Remote Desktop row, shows the new setting, and **Activity**, category **Security**, records the change. Try a Remote Desktop connection from an allowed address.
 
 ## Next steps
 

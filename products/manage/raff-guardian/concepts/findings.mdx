@@ -4,7 +4,7 @@ sidebarTitle: Findings
 description: What each Raff Guardian finding means, its severity, what Raff Guardian does about it and how it closes.
 ---
 
-<sub>Updated October 16, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
 A finding is a problem Raff Guardian sees on the server, such as low disk space, a stopped service or Windows Firewall turned off. Open findings are listed in **Needs attention** on the Guardian tab's **Overview**. Each closes by itself once the problem is gone.
 
@@ -23,7 +23,7 @@ Each finding shows when it started ("since"). Windows protection findings have *
 ### What Raff Guardian does about a finding
 
 - Some findings have a button that fixes them, such as **Install now**, **Restart now**, **Free space**, **Restart service**, **Update now**, **Scan now** or **Block now**. On **Auto**, Raff Guardian presses it for you; on **Ask me**, it proposes it in the **Queue**. See [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions).
-- Some findings can be marked as known. **This is expected** on a new administrator or an open port, and **This is mine** on a remote access app, close the finding and stop the warning for that item.
+- Some findings can be marked as known. **This is expected** on a new administrator or an open port, and **This is mine** on a remote access app or a new port, close the finding and stop the warning for that item.
 - The rest tell you what to fix yourself.
 
 ### Updates
@@ -40,9 +40,11 @@ Each finding shows when it started ("since"). Windows protection findings have *
 |---|---|---|---|
 | Low disk space on (drive) | Needs attention | A drive has less than 15% free | **Free space** |
 | Very low disk space on (drive) | Critical | A drive has less than 5% free | **Free space** |
-| (service) service not running | Needs attention | A watched service that starts automatically is not running | **Restart service** |
+| (service) service not running | Needs attention | A watched service that starts automatically is not running. Not while Raff Guardian installs, changes or removes SQL Server, Microsoft Office or Remote Desktop: their services stop and start during that work, so Raff Guardian waits for the first report after it ends | **Restart service** |
 | Windows not activated | Needs attention | Windows is not activated | |
-| Windows evaluation edition | Needs attention | Windows runs an evaluation edition | |
+| Windows evaluation edition | Needs attention | Windows runs an evaluation edition, on a server that is not a domain controller | |
+| Domain controller on a trial edition | Critical | A domain controller (Active Directory) runs an evaluation edition, which Windows cannot change to a full licence there; the finding names the day the trial ends. See [Domain controllers](/products/manage/raff-guardian/concepts/domain-controllers) | |
+| Server not using its domain controller for DNS | Needs attention | A member of a domain asks other DNS servers only, so it can lose its place in the domain | |
 | Contact with your server | Needs attention | Raff has not heard from Raff Guardian for 5 minutes | |
 
 ### Security
@@ -51,7 +53,8 @@ Each finding shows when it started ("since"). Windows protection findings have *
 |---|---|---|---|
 | No antivirus protecting Windows | Critical | Microsoft Defender is not the active antivirus and no other known antivirus runs | |
 | Threat Microsoft Defender has not removed | Critical | Microsoft Defender detected a threat it has not removed | |
-| Windows Firewall off | Critical | Windows Firewall is off, or lets every inbound connection in, for the network the server uses | |
+| Windows Firewall off | Critical | Windows Firewall is off, or lets every inbound connection in, for a network the server uses (every network the server is on) | |
+| Domain controller to confirm | Needs attention; Critical, with an email, when the server became a domain controller while Raff Guardian was on it | A server is a domain controller (Active Directory), which keeps the accounts and passwords of everyone in your company, and you have not confirmed it | **Yes, this is our domain controller** |
 | Microsoft Defender definitions out of date | Needs attention | Definitions are more than 3 days old | **Update now** |
 | No recent Microsoft Defender scan | Needs attention | No finished scan in 7 days | **Scan now** |
 | Remote Desktop without Network Level Authentication | Needs attention | Remote Desktop is on without Network Level Authentication | |
@@ -60,9 +63,10 @@ Each finding shows when it started ("since"). Windows protection findings have *
 | No account lockout | Needs attention | Windows never locks accounts, on a server not in a domain, and Raff Guardian has not taken the lockout over | |
 | New administrator account | Needs attention | An account joined Administrators that was not there in Raff Guardian's first 6 hours on the server | **This is expected** |
 | Port (port) open to every address | Needs attention | A risky port is open to any address: FTP, SSH, Telnet, Windows RPC, file sharing, SQL Server, MySQL, PostgreSQL, VNC, Windows Remote Management, Redis, Elasticsearch or MongoDB. Remote Desktop is never one | **This is expected** |
+| New port (port) open to everyone | Needs attention | After Raff Guardian's first 6 hours on the server, a program starts listening on a port everyone on the internet can reach, and it is a program started by hand, one run from a temporary folder or a user's folder, or one Raff Guardian does not recognise. A port of a Windows service, an IIS site, a container, a Raff Keep app or an app in the server's apps list is never warned of: **Activity** gets one line instead, such as "Your IIS site shop now listens on port 8081, open to everyone." The risky ports above, and a domain controller's directory ports, are never new ports | **This is mine**; to close the port, use **Close it under Ports** in the row's menu |
 | Remote access app (name) | Needs attention (Info if it was there when Raff Guardian first listed the apps) | A remote access app is installed or running that you have not confirmed | **This is mine** |
 | Certificate expiring | Needs attention | A machine certificate expires within 30 days | |
-| Remote Desktop attack from (address) | Critical | Many failed Remote Desktop sign-ins from one address in 15 minutes | **Block now** |
+| Remote Desktop attack from (address) | Critical | Many failed Remote Desktop sign-ins from one address in 15 minutes; on a domain controller every kind of sign-in counts. An address inside your private network is named as one of your own servers with an old saved password | **Block now** |
 | SSH password guesses | Needs attention | 10 or more SSH password guesses in 15 minutes | |
 
 ### Apps

@@ -17,7 +17,7 @@ Every site on a Raff Keep ASP.NET server has its own publishing login, which can
 
 <Steps>
   <Step title="Check where Web Deploy answers from">
-    Open the server's page under **Keep** and click the **Apps** tab. The **Publishing** card shows **Web Deploy (port 8172)**:
+    Open the server's page under **Keep** and click the **Apps** tab. Under **Installed by Raff Keep**, the **Publishing** card shows **Web Deploy (port 8172)**:
 
     - **From your addresses: ...**: the addresses you listed at setup.
     - **From anywhere**: any address, each site still protected by its own login.
@@ -30,7 +30,7 @@ Every site on a Raff Keep ASP.NET server has its own publishing login, which can
     </Frame>
   </Step>
   <Step title="Download the publish profile">
-    On the **Overview** tab, **Your sites** lists each site with its state, its domains and its **Publishing login**, such as `publish-site1`. Click **Publish profile** on the site.
+    On the **Apps** tab, **Your sites** lists each site with its state, its domains and its **Publishing login**, such as `publish-site1`. Click **Publish profile** on the site.
 
     Raff Guardian makes a new password for the site's publishing login, and your browser saves a `.publishsettings` file. The row then says "Saved. Import it in Visual Studio (Publish, Import Profile). An older profile of this site no longer works." Raff emails your project's members that a new publish profile was made.
 

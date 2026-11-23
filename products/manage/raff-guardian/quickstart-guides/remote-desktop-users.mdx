@@ -1,0 +1,81 @@
+---
+title: Buy and change Remote Desktop users
+sidebarTitle: Remote Desktop users
+description: Buy Remote Desktop user licences for a Windows server, raise or lower the number, and end them, from the Licences tab of Raff Guardian.
+---
+
+<sub>Updated November 19, 2026</sub>
+
+Windows Server lets 2 administrators connect by Remote Desktop to manage the server. Every other person who works on the server by Remote Desktop needs a **Remote Desktop user licence** (Microsoft's RDS user licence). You buy them as a number for one server on the **Licences** tab of Raff Guardian, and Raff Guardian sets up Remote Desktop licensing on the server for you.
+
+The people stay yours: you make their Windows logins on the **Users** tab, as before. Raff Guardian counts who can sign in by Remote Desktop and warns you when more people can sign in than you pay for. It never signs anyone out or removes anyone's access unless you pick that person.
+
+## Before you start
+
+- A Windows Server 2022 or 2025 server with Raff Guardian, billed monthly, yearly or pay-as-you-go. Servers in an Active Directory domain use **Ask us** on the Licences tab instead. Remote Desktop users our team already set up for you are covered below.
+- To see the tab: `vm.view`. To buy, change or end licences: `vm.manage` and `account.billing.manage`, signed in to the dashboard. Members without the billing right see every button greyed with the reason.
+- Where Raff does not sell Remote Desktop users for running servers yet, the row shows **Ask us**, and our team replies with the options.
+
+## Buy Remote Desktop users
+
+1. Open the server under **Virtual Machines**, click **Guardian**, then **Licences**. The **Users** tab shows one line with how many people may use Remote Desktop against how many are paid for, with a link to this tab.
+2. On the **Remote Desktop users** row, click **Add Remote Desktop users** and choose how many people (1 to 200).
+3. The dialog shows what you pay today and the price a month from the 1st of next month. If the server does not run Remote Desktop for more than 2 people yet, it says so: Windows restarts once while Raff Guardian turns it on.
+4. Click **Continue to checkout** and pay. Your balance is used first, then your card.
+
+After payment the row reads "Paid. Raff Guardian is setting it up." Raff Guardian installs the Remote Desktop roles when they are missing, sets per user licensing with the licence server on the server itself, and puts Raff's licence pack for your number on the server. If the server is not reporting, it starts as soon as it reports again.
+
+## How you are billed
+
+- **First purchase:** you pay now for the days until the 1st of next month. From the 1st, the licences renew every month on the 1st.
+- **Raise:** paid in the checkout, for the added people until the next 1st. The higher number applies on the server after payment, and the new monthly total from the 1st.
+- **Lower:** takes effect now, with the new monthly total from your next charge. Nothing is refunded for the current month.
+- **End:** the licences stay until the end of the period you paid for, then end. Nothing is refunded for the current month.
+- **Raff cannot set them up:** if Raff Guardian never managed to set them up and Raff's licence pack never reached the server, ending them gives what you paid back to your Raff balance.
+- **A missed payment:** you get reminders on days 3 and 7; if it is still unpaid on day 10, the subscription ends and Raff Guardian removes Raff's licence pack. People keep their Windows logins.
+- **Pay-as-you-go accounts:** the same as above. Licences are billed by the calendar month, never by the hour, because Microsoft licenses them by the month. The charge on the 1st goes on the same bill as your month of usage: your balance first, then your card.
+- Prices come from the price list; see [Pricing](/products/manage/raff-guardian/details/pricing). Discounts apply as for other products.
+
+## Raise or lower the number
+
+1. On the **Remote Desktop users** row, click **Change number** and enter the new number.
+2. **A higher number** shows what you pay today and the new price a month; click **Continue to checkout** and pay.
+3. **A lower number** shows the new price a month from your next charge. When more people can sign in by Remote Desktop than the new number, the dialog lists them. Pick who loses Remote Desktop access, or pick nobody. A picked person is removed from Remote Desktop Users and signed out of Remote Desktop; their Windows login and files stay. If you pick nobody, the row warns that more people can sign in than you pay for.
+
+Raff Guardian then sets the licence pack on the server to the new number.
+
+## When more people can sign in than you pay for
+
+Every hour Raff Guardian counts the people who can sign in by Remote Desktop: the turned-on accounts in Remote Desktop Users, plus administrators beyond the first 2. When the count stays above your number for a day, the row and the findings say so, with **Raise to {count}** and the option to remove someone's access. If Remote Desktop Users holds a group such as Everyone, Raff cannot count the people in it, and the row says so.
+
+## End Remote Desktop users
+
+1. On the row, open the menu (**...**) and click **Remove**.
+2. The licences end on the last day you paid for. Until then nothing changes. Then Raff Guardian removes Raff's licence pack. People keep their Windows logins, and Windows allows 2 administrator connections without a licence.
+
+## Remote Desktop users our team set up for you
+
+If our team added Remote Desktop users to your server by hand, before Raff Guardian, they keep working as they are. On a server without Raff Guardian nothing changes: the row reads "Managed by Raff" and you use **Ask us** to change them.
+
+Once the server has Raff Guardian, the same licence shows as a normal row on the **Licences** tab, with nothing to do first:
+
+- **Nothing is charged for this, and nothing changes on the server.** You keep the same licence, the same price per person (a price agreed with our team too) and the same billing day. Nobody is signed out and nothing is installed again.
+- **Raise:** paid in the checkout at your price per person, for the added people until your next charge on your usual billing day. The new monthly total applies from that charge.
+- **Lower:** takes effect now, with the new monthly total from your next charge. Nothing is refunded for the current month.
+- **End:** the licences stay until the end of the period you paid for. Then our team removes the licence pack it installed on the server. The same applies if a payment is still missing on day 10, or if our team ends the licence. You get an email and a notice when it is set to end and when it has ended, saying how it ended. Once the pack is removed, Windows allows only its 2 administrator connections by Remote Desktop; your people's Windows logins and your files stay.
+- **Microsoft Office** can be added on the same tab; it follows the number of Remote Desktop users.
+- **Set it up** checks the setup our team made and repairs what Raff Guardian may repair, at no charge: it turns on Remote Desktop for more people (Remote Desktop Session Host) when it is off, sets per user licensing, and sets this server as the licence server Remote Desktop uses. It never installs, removes or changes the licence pack our team installed and never activates the licence server. Afterwards the row says what it found and what it repaired, part by part.
+- If turning on Remote Desktop for more people needs a restart, Raff Guardian does not restart the server by itself: the row asks you to restart it and press **Set it up** again.
+- If the licence pack or the licence server's activation is missing, the row says so (for example "The licence pack is not on this server; our team installs it."), our team is told at once and finishes it at no charge. **Ask us** stays on the row for questions.
+- A server in an Active Directory domain (a member server, or the domain controller) keeps **Ask us**: our team sets up its Remote Desktop users with you.
+- Raff Guardian counts who can sign in and warns you the same way as for licences bought on the tab.
+- Our team can still change the licence for you on request. You see the new number and price the next time you open the tab.
+
+## Raff's licence details stay protected
+
+Raff's licence agreement details are kept encrypted in Raff's systems and reach the server only sealed for that one server and that one action. They never appear on the dashboard, in Activity, in an email or on a receipt. Windows keeps what its licence server needs once the pack is installed.
+
+## Related
+
+- [Reset passwords and manage users](/products/manage/raff-guardian/quickstart-guides/reset-passwords-and-manage-windows-users)
+- [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions)

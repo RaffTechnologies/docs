@@ -33,7 +33,7 @@ Some bots spread their guesses over many addresses. When one account gets 6 or m
 
 ### How long blocks last
 
-- **Automatic blocks** end after 7 days. If the address attacks again, Raff Guardian blocks it again at once. A block is not lifted while the address is still attacking.
+- **Automatic blocks** last 1 day the first time. If the address attacks again after its block ended, Raff Guardian blocks it again at once, for 7 days, and from its third block for 30 days. An address that stops is off the list after a day; one that keeps coming back stays longer each time. Raff Guardian forgets an address 90 days after its last block ended. A block is not lifted while the address is still attacking.
 - **Blocks you add** with **Block now** stay until you unblock them.
 - An address you later allow to reach Remote Desktop is unblocked automatically (except on **Watch only**).
 

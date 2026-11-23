@@ -1,0 +1,64 @@
+---
+title: "Backups in Raff Guardian: is my data safe?"
+sidebarTitle: Backups
+description: How Raff Guardian answers "Is my data safe?" from Raff Backups, snapshots and the backups that run inside your server, the warnings it gives, and what it never reads.
+---
+
+<sub>Updated November 23, 2026</sub>
+
+Raff Guardian answers "Is my data safe?" in the **Backups** part of the server's **Updates and backups** tab, with the Raff Backups facts under **Details**. It reads Raff Backups and snapshots from Raff, and the backups that run inside the server from the server itself. It never changes your backups: it shows, warns and offers.
+
+## How it works
+
+### Raff Backups and snapshots
+
+Raff Guardian reads the server's Raff Backups every 15 minutes: whether they are on, the newest restore point and when it was taken, how many are kept, the next backup and the last one that failed. "Backed up" means a restore point exists. A snapshot is kept with the server's disk, so Raff Guardian never calls it a backup.
+
+### Backups inside the server
+
+Raff Guardian also looks for backups that run inside the server and reports them as far as their own program does.
+
+| On | What Raff Guardian recognises | What it shows |
+|---|---|---|
+| Windows | Windows Server Backup | Last good backup, last result, next backup, how many it keeps, whether it includes the system state, and where it writes as a kind: this server's own disk, another disk on this server, or a network folder |
+| Windows | The SQL Server nightly backup of the Raff Keep SQL Server template | The newest backup file's time, how many there are, and that they are kept on the server's own disk |
+| Linux | restic, Borg, Duplicity, rclone, rsnapshot, Timeshift, Kopia, Duplicati, UrBackup and Bacula, run by a systemd timer or cron; a database dump (pg_dump, mysqldump, mariadb-dump, mongodump) run by cron | For a timer: the last run, whether it worked and the next run. For a cron job: only that it is set, because cron keeps no result |
+
+A program Raff Guardian does not recognise is not shown. Choose **I back up another way** (in the **…** beside the answer) and Raff Guardian stops warning that the server has no backup.
+
+### "This folder is my backup"
+
+If a script or a database dump writes your backups to a folder on the server, name that folder under **Your own backup**, **I back up myself**. Raff Guardian then reads how old its newest file is, how many files it holds, their size, and whether the folder is on the server's own disk. It never opens the files and never reads their names. You can name up to 5 folders on a server. Home folders and the whole disk cannot be named.
+
+### Warnings
+
+| Warning | When | Email by default |
+|---|---|---|
+| Your last backup failed | The newest run failed and nothing good came after it | Yes for a backup inside the server. A failed Raff Backups run is already emailed by Raff Backups |
+| Your newest backup is old | Older than its schedule allows: 36 hours for a daily backup, 9 days for a weekly one, 8 days when Raff Guardian does not know the schedule (a folder you named) | Yes |
+| Your backups are kept on this server's own disk | The only backups Raff Guardian knows of are on the server's own disk, so a lost disk loses them too | No, in the bell only. **This is fine** closes it for good |
+| This server has no backup | No Raff Backups, no snapshot of the last 30 days and nothing recognised inside the server | No, in the bell only |
+| Your domain controller has no recent backup | A domain controller (Active Directory) has no system state backup of the last 7 days | Yes |
+
+Each warning has its own email switch in **Settings**, under **Backups**. A warning closes by itself once a good backup comes. If you turn a backup off yourself, Raff Guardian notes it once in Activity and does not warn about it or turn it back on.
+
+### The weekly summary
+
+Each server's line in the weekly summary says how its backups went, for example "Backups: 7 of 7 saved; newest Sunday 08:04."
+
+## What Raff Guardian never reads
+
+- Your files, their names, or what is inside a backup.
+- A backup program's settings, its password, or where its copy is kept. A network folder is shown only as "a network folder".
+- The path of a folder you named is shown only to your team members who can see backups, and is never put in a warning, an email or Activity.
+
+## Trade-offs / limits
+
+- A backup inside the server is described only as far as its program reports it: "Windows Server Backup says it worked", never "your data is safe".
+- A backup that writes to the server's own disk is lost with that disk.
+- Raff Guardian has not tested a restore. A backup is proven only when it is restored.
+
+## Related
+
+- [Privacy and data](/products/manage/raff-guardian/concepts/privacy-and-data)
+- [Findings](/products/manage/raff-guardian/concepts/findings)

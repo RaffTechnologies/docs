@@ -5,7 +5,7 @@ description: Raff Guardian looks after your servers from the inside. It blocks a
 icon: shield-check
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 23, 2026</sub>
 
 Raff Guardian is a small program Raff installs on your server to look after it. It watches the server every minute and does the work a server needs every day: it blocks attackers, installs updates, restarts what stops and frees disk space. You decide how much it may do on its own, and every change it makes is recorded in **Activity** with what it was before and after.
 
@@ -36,6 +36,7 @@ Raff Guardian is named for that job. It stays on the server, watches over it day
 - **Blocks attackers in seconds.** An address that fails to sign in 8 times in 15 minutes is blocked at the server's own firewall. You choose the number, from 5 to 200. It counts Remote Desktop, and SSH when OpenSSH Server is installed.
 - **Keeps you from being locked out.** Raff Guardian takes over Windows' account lockout, so bots guessing passwords block their own address instead of locking your accounts.
 - **Limits who can reach Remote Desktop**, if you ask, to the addresses you list. The browser console always works.
+- **Secures the server in one approval.** **Secure this server** turns on Network Level Authentication and Windows Firewall, turns off SMB 1 and name broadcasting, and limits Remote Desktop to your address, each step with its own **Undo**. If you do not confirm the Remote Desktop change within 10 minutes, it goes back by itself.
 - **Warns about what you did not add**: a new administrator, or a remote access app you did not install.
 - **Checks Windows' defences** every hour: the firewall, Microsoft Defender and Remote Desktop settings. It keeps Defender's definitions current and runs quick scans.
 
@@ -51,15 +52,15 @@ Raff Guardian is named for that job. It stays on the server, watches over it day
 ### Knowing your server
 - **Lists the apps installed** and warns before one reaches its end of support.
 - **Answers questions** from the dashboard: what uses the CPU, which services run, which ports are open, which folders fill the disk.
-- **Shows Windows users** and who is signed in. You can set a new password, unlock an account or sign a user out from the dashboard. These run only when you press the button.
+- **Shows Windows users** and who is signed in. You can add a user, switch an account off or on, set a new password, unlock an account or sign a user out from the dashboard. These run only when you press the button. A new account's password is shown once, only to you, and every member of the project gets an email when an account is added or switched back on.
 - **Activates Windows with Raff's licence** on servers that have one.
 
 ## What it does not do
 
-- Run on Linux servers yet. Raff Guardian supports Windows Server today.
+- Run on every Linux release yet. Raff Guardian supports Windows Server, and Linux on Ubuntu 26.04 and Debian 13.
 - Run your own scripts or commands. It runs only the actions built into it, signed by Raff.
 - Open a port on your server. It only connects out to Raff.
-- Sign anyone out, unlock an account or change a password on its own. These run only when you press the button.
+- Add or switch off an account, sign anyone out, unlock an account or change a password on its own. These run only when you press the button.
 - Replace backups. The snapshot it takes before updates is deleted once the server is healthy.
 - Install driver updates.
 

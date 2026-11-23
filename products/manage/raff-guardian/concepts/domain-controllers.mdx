@@ -1,0 +1,87 @@
+---
+title: "Raff Guardian on domain controllers and domain members"
+sidebarTitle: Domain controllers
+description: What Raff Guardian does on a Windows domain controller (Active Directory) and on a server that is a member of the domain, what it never does there, and the order it keeps between your servers.
+---
+
+<sub>Updated November 19, 2026</sub>
+
+Many offices run Active Directory on Raff. One Windows server, the **domain controller**, keeps the accounts and passwords of everyone in the company. The other servers are **members** of the **domain**, so each person has one name and password on every server. If the domain controller stops, nobody can sign in to the other servers.
+
+Raff Guardian recognises this by itself, from what each server reports. You never mark a server. On these servers Raff Guardian keeps everything it does to the one server it runs on, and never changes a setting of the whole domain on its own.
+
+## How it works
+
+### What Raff Guardian recognises
+
+| Name on the page | What it means |
+|---|---|
+| Domain controller (Active Directory) | Keeps the accounts and passwords of everyone in your company |
+| Member server | Uses the accounts of a domain controller |
+| Remote Desktop Session Host (RDS) | A member server your team works on over Remote Desktop |
+| RD Gateway | A member server that lets people in from outside on port 443 |
+| Not in a domain | A server with its own accounts only (a workgroup) |
+
+The server's **Raff Guardian** tab shows it on the Overview, for example "Domain controller (Active Directory) of accounts.example", with one plain line below that says what it means and how many servers use it. Under **Show details** you see the domain's name, the other roles of the server, and the servers of the domain in the order Raff Guardian updates them, with a link to each.
+
+Raff Guardian treats servers as one domain only when both sides say so. They are in the same Raff account and project, the domain controller lists the other server, and that server names the same domain. A name alone is never enough, so two customers who both call their domain CORP never meet.
+
+### "Is this your domain controller?"
+
+When a server becomes a domain controller, Raff Guardian asks under **Needs attention**: "This server is a domain controller (Active Directory) of accounts.example ... Is that right?" If it became one while Raff Guardian was already on it, your team also gets an email: a domain controller nobody at your company set up is a warning sign. Press **Yes, this is our domain controller** to confirm it. If you remove the confirmation, or the server moves to another domain, Raff Guardian asks again.
+
+### What changes on a domain controller
+
+| Raff Guardian on its own | On a domain controller |
+|---|---|
+| Account lockout after wrong passwords | Left to the domain. Raff Guardian never switches the domain's lockout off |
+| Blocking an address that guesses passwords | Still blocks addresses of the internet. Never an address inside your private network, never the server's own address |
+| Restarting a stopped service | Never restarts a service of Active Directory (NTDS, Kdc, Netlogon, DNS, DFSR, IsmServ, ADWS). It tells you instead, with what a restart of that service does: NTDS, Kdc and Netlogon sign your people and servers out, while DFSR is not running the domain controllers stop copying policies and scripts between them |
+| Use a Raff licence | Refused on a trial (evaluation) Windows: Windows cannot change a trial to a full licence on a domain controller |
+| Restoring the snapshot taken before updates | Offered only when this is the only domain controller of the domain, with what it takes back. Never when there is a second domain controller |
+| Add a user, Switch a user off or on | Not on a domain controller: its accounts belong to the whole domain. Add people with Active Directory Users and Computers on the domain controller itself |
+
+Whatever you change inside Windows stands. Raff Guardian reads it again and shows it; it never undoes or blocks a change made in Windows.
+
+### Checks on a domain
+
+| Check | When it warns |
+|---|---|
+| Domain controller open to the internet | DNS (53), Kerberos (88, 464), LDAP (389, 636), the global catalog (3268, 3269) or Active Directory Web Services (9389) can be reached from any address. Critical. A port you closed with **Close** (closed to the internet, your private network still reaches it) does not count |
+| New administrator | Someone is added to Domain Admins, Enterprise Admins, Schema Admins or Administrators |
+| Domain controller on a trial edition | The trial ends on a date, and on a domain controller it cannot become a full licence. Critical |
+| Server not using its domain controller for DNS | A member server asks other DNS servers only, so it can lose its place in the domain. Set your private network's DNS server under **Networking**, not inside Windows: Raff's setup puts a server's network settings back at the next change |
+| An Active Directory service stopped | NTDS, Kdc, Netlogon, DFSR or the domain controller's DNS server is not running. Raff Guardian does not start it by itself: start it in Windows (Services), and if it stops again, look in Event Viewer for why |
+| Windows Firewall off | Judged for every network the server is on, so a member with a private card in the domain and a public card is judged on both |
+| Failed sign-ins | On a domain controller they count every kind of sign-in. An address inside your private network is most likely one of your own servers with an old saved password, so Raff Guardian names it and never blocks it by itself |
+
+### Updates and restarts in order
+
+Raff Guardian updates and restarts the servers of one domain one at a time:
+
+1. The domain controllers first, then the member servers and Remote Desktop Session Hosts, then the RD Gateway.
+2. A server waits while another server of the domain is updating, restarting or being checked after it.
+3. When a domain controller is not healthy after its update or restart, the other servers wait until that is solved.
+4. Two domain controllers are never updated or restarted on the same day.
+
+After an update or restart, Raff Guardian also checks that Active Directory runs and that the domain controller shares its group policies (SYSVOL and NETLOGON). On a member server it checks that its Netlogon service runs. A press of your own (**Restart now**, **Install now**) never waits.
+
+A known bad Windows update that only hits domain controllers is held back on domain controllers only.
+
+### Reset password, Reinstall and Delete on a domain controller
+
+The server page warns before these on a domain controller, and you decide. Nothing extra is asked.
+
+- **Reset password**: the built-in Administrator is the administrator of your whole domain. Reset it only when you are locked out, and keep the new password safe.
+- **Reinstall**: the server stops being a domain controller, and every person and server that signs in through it loses access until the domain is rebuilt.
+- **Delete**: the domain is gone for good unless another domain controller exists.
+
+With a second domain controller, first remove this one from the domain in Windows. With only one, first add a second domain controller and let it take over, or keep a system state backup made inside Windows.
+
+## Trade-offs / limits
+
+- Raff Guardian looks after the servers it runs on. A domain controller in your office (connected over a site-to-site tunnel) is not watched; only the Raff server that is its member is.
+- Servers are shown together only when the domain controller runs Raff Guardian in the same project.
+- A person inside a group that is itself added to Domain Admins is not seen yet.
+- Behind an RD Gateway, a Session Host sees the gateway's address, not the attacker's. Blocking at the RD Gateway is not available yet.
+- Snapshots are not a backup of a domain controller. Microsoft's supported backup is a system state backup made inside Windows; see [Backups](/products/manage/raff-guardian/concepts/backups).

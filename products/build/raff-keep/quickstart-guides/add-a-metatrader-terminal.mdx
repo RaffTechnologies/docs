@@ -9,9 +9,9 @@ Add a terminal from the server's page instead of buying a new server. [Raff Guar
 
 ## Before you start
 
-- A Raff Keep MetaTrader server that is **Installed**, with Raff Guardian on. On an **Install only** server the card says "Raff Guardian adds terminals, and this server runs without it. Install Raff Guardian from the server's Guardian tab first."
+- A Raff Keep MetaTrader server that is **Installed**, with Raff Guardian on. On an **Install only** server the tab says "Raff Guardian adds terminals, and this server runs without it. Install Raff Guardian from the server's Guardian tab first."
 - Permission to manage the server (`vm.manage`).
-- Room on the server's size. The **Your terminals** card says how many it runs, for example "2 of 4 this server's size runs".
+- Room on the server's size. The **MetaTrader 5** tab says how many it runs, for example "2 of 4 this server's size runs".
 
 | Server size | Terminals it runs |
 |---|---|
@@ -22,37 +22,37 @@ Add a terminal from the server's page instead of buying a new server. [Raff Guar
 ## Steps
 
 <Steps>
-  <Step title="Open Your terminals">
-    Open the server's page under **Keep**. The **Overview** tab shows **Your terminals**: each terminal, whether it runs, its broker connection, algo trading and what it uses. Click **Check now** for a fresh reading.
+  <Step title="Open the MetaTrader 5 tab">
+    Open the server's page under **Keep** and click the **MetaTrader 5** tab: each terminal, whether it runs, its broker connection, algo trading and what it uses. Click **Check terminals** for a fresh reading.
 
     <Frame>
       ![TODO: Your terminals card with two running terminals and Add terminal](/images/products/build/raff-keep/terminals-01-card.png)
     </Frame>
   </Step>
   <Step title="Add a terminal">
-    Click **Add terminal**. The dialog **Add a MetaTrader terminal?** names the terminal it adds, such as "MetaTrader 5 terminal 3", and the most this server runs. On a server with both platforms, choose **MetaTrader 5** or **MetaTrader 4**.
+    Click **Add a terminal**. The dialog **Add a MetaTrader terminal?** names the terminal it adds, such as "MetaTrader 5 terminal 3", and the most this server runs. On a server with both platforms, choose **MetaTrader 5** or **MetaTrader 4**.
 
     Click **Add terminal**.
   </Step>
   <Step title="Sign in to your broker in the new terminal">
-    When the card lists the new terminal as running, sign in over Remote Desktop as the trader login, open the terminal and sign in to your trading account.
+    When the tab lists the new terminal as running, sign in over Remote Desktop as the trader login, open the terminal and sign in to your trading account.
   </Step>
 </Steps>
 
 ## Verify
 
-The new terminal shows in **Your terminals** with its folder, such as `C:\MT5\3`, and **Running**. The line under the card gives Raff Guardian's result, or why it could not add the terminal.
+The new terminal shows on the **MetaTrader 5** tab with its folder, such as `C:\MT5\3`, and **Running**. The tab gives Raff Guardian's result, or why it could not add the terminal.
 
 ## When the size is full
 
-The **Add terminal** button is off and the card says, for example, "This server's size runs at most 4 MetaTrader terminals. Resize it to 4 vCPU and 8 GB to run up to 8." Click **Resize the server**, pick the bigger size, then add the terminal. A server runs at most 16 terminals.
+The **Add a terminal** button is off and the tab says, for example, "This server's size runs at most 4 MetaTrader terminals. Resize it to 4 vCPU and 8 GB to run up to 8." Click **Resize the server**, pick the bigger size, then add the terminal. A server runs at most 16 terminals.
 
 ## Look after a terminal you installed yourself
 
-When Raff Guardian finds a MetaTrader terminal installed by hand outside Raff Keep, the card lists it under **Found on the server**. Raff Guardian does not start or watch it until you choose:
+When Raff Guardian finds a MetaTrader terminal installed by hand outside Raff Keep, the tab lists it under **Found on the server**. Raff Guardian does not start or watch it until you choose:
 
 - **Look after it**: the terminal becomes one of your Raff Keep terminals. It starts whenever the trader login signs in, and Raff Guardian tells you when it stops. Its charts, profiles and experts are copied into its folder from the login that used it. Nothing is reinstalled, and nothing is charged. If it asks for your broker password, sign in to your broker once in it as the trader login.
-- **Not this one**: the card stops offering it. The **Apps** tab still lists it.
+- **Not this one**: the tab stops offering it. The **Apps** tab still lists it.
 
 A terminal you look after counts toward the size like any other.
 

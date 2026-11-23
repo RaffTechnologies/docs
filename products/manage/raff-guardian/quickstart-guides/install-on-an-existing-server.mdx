@@ -1,56 +1,50 @@
 ---
 title: Install Raff Guardian on an existing server
 sidebarTitle: Install on an existing server
-description: Install Raff Guardian on a Windows server you already run on Raff, with a short PowerShell command from the server's Guardian tab.
+description: Set up Raff Guardian on a Windows or Linux server you already run on Raff, then run a short install command from the server's Guardian tab.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
-Install Raff Guardian on a Windows server that is already running. You copy a short command from the dashboard and run it once in PowerShell on the server. On a server that never had Raff Guardian, it starts on **Watch only**, so it changes nothing until you choose another mode. A reinstall keeps the mode and settings the server had before.
+Install Raff Guardian on a server that is already running. A short set-up on the server's Guardian tab asks how Raff Guardian should work there, then gives you a one-line command to run once on the server. Your choices are applied as soon as Raff Guardian sends its first report.
 
-To add it while you create a new Windows server instead, see [Add while creating a server](/products/manage/raff-guardian/quickstart-guides/add-while-creating-a-server).
+To add it while you create a new server instead, see [Add while creating a server](/products/manage/raff-guardian/quickstart-guides/add-while-creating-a-server).
 
 ## Before you start
 
-- A running Windows server on Raff. Raff Guardian does not run on Linux yet.
-- Permission to manage the server (`vm.manage`, part of the **Project Admin** and **Operator** roles). Members without it see "Only members who can manage this server can install it."
-- A Remote Desktop connection to the server as an administrator. See [Connect via RDP](/products/build/virtual-machines/quickstart-guides/connect-via-rdp).
+- A running server on Raff: Windows Server, or Linux on Ubuntu 26.04 or Debian 13.
+- Permission to manage the server (`vm.manage`, part of the **Project Admin** and **Operator** roles). For other members the **Start** button is disabled with "Needs manage permission".
+- On Windows, a Remote Desktop connection to the server as an administrator (see [Connect via RDP](/products/build/virtual-machines/quickstart-guides/connect-via-rdp)). On Linux, a terminal on the server as root or with sudo.
 - Outbound HTTPS from the server to `api.rafftechnologies.com` and `raff-releases.s3.raffusercloud.com`. Raff Guardian never needs an inbound port.
 
 ## Steps
 
 <Steps>
   <Step title="Open the Guardian tab">
-    Go to **Virtual Machines**, open the server and click the **Guardian** tab. A server without Raff Guardian shows the **Raff Guardian** card with what it does and the price: "Free for 6 months, then \$10/mo. Uninstall any time."
+    Go to **Virtual Machines**, open the server and click the **Guardian** tab. A server without Raff Guardian shows what it does on this server and the price: "Free for 6 months, then \$10 a month · remove any time". Click **Set it up**.
+  </Step>
+  <Step title="Choose how it works">
+    Each step is filled in already, so **Continue** goes on with the defaults:
 
-    <Frame>
-      ![TODO: Guardian tab of a Windows server with the Install Raff Guardian button](/images/products/manage/raff-guardian/install-01-card.png)
-    </Frame>
+    - **How much**: **Raff manages everything** (acts by itself and asks before anything that can lock you out, lose data, restart the server suddenly or cost money), **Ask me first** (every fix waits for your press) or **Watch only** (changes nothing). **See every action** lists what each action does in the chosen mode.
+    - **Updates**: the days and the time, in your own time zone, when it may install updates and restart if an update needs it, or **Not by itself**.
+    - **Access**: who can reach Remote Desktop (Windows) or SSH (Linux): any address, only your address or a list; and after how many failed sign-ins in 15 minutes an address is blocked.
+    - **Licences** (Windows): Remote Desktop users, Microsoft Office or SQL Server to add after the set-up. Nothing is bought here.
+    - **Notices**: your notices go to the email you sign in with; the weekly report is on unless you turn it off.
   </Step>
   <Step title="Get the install command">
-    Click **Install Raff Guardian**. The **Install Raff Guardian on this server** dialog shows a one-line command, for example:
-
-    ```powershell
-    irm https://api.rafftechnologies.com/g/<your-code> | iex
-    ```
-
-    The command works once and expires in 15 minutes; the dialog shows the exact time. Click the copy button next to it.
-
-    <Warning>
-    Keep the dialog open until the install has finished. The code is shown only in this dialog: if you close it, click **Install Raff Guardian** again for a new command.
-    </Warning>
+    The **Start** step shows a summary of your choices and the price. Click **Start** and the install command appears. The command works once and expires in 15 minutes; the page shows the exact time. Click the copy button next to it, and keep the page open until the install has finished.
   </Step>
-  <Step title="Open PowerShell as administrator on the server">
-    Connect to the server with Remote Desktop as an administrator. Click **Start**, right-click **Windows PowerShell** and choose **Run as administrator**.
-  </Step>
-  <Step title="Run the command">
-    Paste the command and press **Enter**. The installer downloads Raff Guardian, checks that the files are the ones Raff published, installs the **RaffGuardian** Windows service and connects it to your Raff account. If a check fails, it stops with a message that ends in "Nothing was installed."
+  <Step title="Run the command on the server">
+    On Windows, connect with Remote Desktop as an administrator, click **Start**, right-click **Windows PowerShell**, choose **Run as administrator**, paste the command and press **Enter**. On Linux, paste it in a terminal as root or with sudo. The installer checks that the files are the ones Raff published; if a check fails, nothing is installed.
   </Step>
 </Steps>
 
 ## Verify
 
-You do not need to refresh: the Guardian tab updates on its own once Raff Guardian sends its first report, usually within a minute. The tab then shows the **Overview**, **Security**, **Users**, **Apps**, **Updates**, **Activity** and **Settings** sections, and the **Raff Guardian** card on the right names the mode: **Watch only** for a first install.
+You do not need to refresh. Beside the command a checklist comes to life with the first results: connected, blocking attackers, accounts, updates, backups and apps, each with what Raff Guardian found, and your choices as they are applied. When the first report is in, the tab shows "Raff Guardian is on" and then the **Overview**. If you chose to limit Remote Desktop, to limit SSH or to add licences, the checklist keeps those as next steps: on Windows, limiting Remote Desktop asks you to confirm within 10 minutes that you can still connect, or the earlier setting comes back by itself.
+
+Your choices wait in the browser you made them in. If you close it before Raff Guardian reports, open the Guardian tab again in the same browser and they are applied then; in another browser, the Overview offers **Finish set-up** with the same steps.
 
 If nothing changes after a few minutes, see [Troubleshooting](/products/manage/raff-guardian/troubleshooting).
 
@@ -58,7 +52,7 @@ If nothing changes after a few minutes, see [Troubleshooting](/products/manage/r
 
 <CardGroup cols={2}>
   <Card title="Set permissions: what it may do" icon="sliders" href="/products/manage/raff-guardian/quickstart-guides/set-permissions">
-    Leave Watch only to let it block attackers, install updates and restart services.
+    Change what it may do, action by action, any time.
   </Card>
   <Card title="How it works" icon="lightbulb" href="/products/manage/raff-guardian/concepts/how-it-works">
     What runs on your server and how it stays safe.

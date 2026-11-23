@@ -1,0 +1,67 @@
+---
+title: Add Microsoft Office and Visio
+sidebarTitle: Microsoft Office and Visio
+description: Buy Microsoft Office LTSC 2024 or Visio LTSC 2024 for the people who work on a Windows server, have Raff Guardian install it from Microsoft, and remove it again, from the Licences tab of Raff Guardian.
+---
+
+<sub>Updated November 19, 2026</sub>
+
+You can buy **Microsoft Office LTSC Standard 2024**, **Office LTSC Professional Plus 2024**, **Visio LTSC Standard 2024** or **Visio LTSC Professional 2024** for the people who work on a Windows server by Remote Desktop. Raff Guardian installs it straight from Microsoft's own download, activates it with Raff's licence, and removes it again when you ask.
+
+Microsoft's hosting rules need an Office (or Visio) licence for each person who may use it, and a [Remote Desktop user](/products/manage/raff-guardian/quickstart-guides/remote-desktop-users) licence for each of them as well.
+
+## How the numbers work
+
+- **Office covers everyone who can use Remote Desktop.** Office is installed for the whole server, so anyone who signs in can start it. Its number is therefore always your number of Remote Desktop users: buy, raise and lower them together. Each dialog shows both prices before you pay.
+- **Visio has its own number**, from 1 up to your number of Remote Desktop users.
+- One edition of Office and one edition of Visio per server. To change edition, remove the one you have and add the other.
+
+## Before you start
+
+- A Windows Server 2022 or 2025 server with Raff Guardian, billed monthly, yearly or pay-as-you-go.
+- About 10 GB free on drive C: for Office (6 GB for Visio). Office installs on the system drive only.
+- To buy, change or remove: `vm.manage` and `account.billing.manage`, signed in to the dashboard. Members without the billing right see every button greyed with the reason.
+- An Office you installed yourself (Microsoft 365 Apps, or an Office with your own licence) is never touched: Raff Guardian shows it as **your own licence** and does not install another Office over it.
+
+## Add Office or Visio
+
+1. Open the server under **Virtual Machines**, click **Guardian**, then **Licences**.
+2. Click **Add a licence** and choose the product. A product the server cannot take now is greyed with the reason.
+3. Office: when the server has Remote Desktop users, Office is for the same number of people. When it has none yet, choose the number: the same checkout adds that many Remote Desktop users. Visio: choose how many people.
+4. Choose the language. **Same as Windows on the server** is the default.
+5. The dialog shows what you pay today for each item and the price a month from the 1st. Click **Continue to checkout** and pay. Your balance is used first, then your card.
+
+After payment Raff Guardian downloads Microsoft's installer, checks it is signed by Microsoft, installs the product (this can take 10 minutes or more) and activates it with Raff's licence. The row shows each step. If the server is not reporting, it starts as soon as it reports again.
+
+## How you are billed
+
+- **First purchase:** you pay now for the days until the 1st of next month. From the 1st it renews every month on the 1st.
+- **Raise:** paid in the checkout for the added people until the next 1st. Raising your Remote Desktop users raises Office in the same checkout.
+- **Lower:** takes effect now; the new monthly total starts from your next charge. Nothing is refunded for the current month. Lowering your Remote Desktop users lowers Office, and Visio when it is above the new number.
+- **Remove:** see below. Nothing is refunded for the current month.
+- **Raff cannot set it up:** if Office was never activated with Raff's licence and Raff's key is not on the server, removing it gives what you paid back to your Raff balance. Raff Guardian still removes the programs it installed.
+- **A missed payment:** if the subscription ends because a payment failed, Raff Guardian takes Raff's licence key out. The programs stay on the server and say they are not activated.
+- **Pay-as-you-go accounts:** the same as above. Licences are billed by the calendar month, never by the hour, because Microsoft licenses them by the month. The charge on the 1st goes on the same bill as your month of usage: your balance first, then your card.
+- Prices: see [Pricing](/products/manage/raff-guardian/details/pricing).
+
+## Remove Office or Visio
+
+1. On the row, open the menu (**...**) and click **Remove**.
+2. Raff Guardian takes Raff's licence key out and removes the programs now. Open Office windows on the server close while it is removed, so save open documents first. Documents and files stay.
+3. The licence ends on the last day you paid for; you are not charged after that.
+
+You cannot end Remote Desktop users while Office or Visio is on the server: remove those first.
+
+## If something goes wrong
+
+- **Could not set up Office:** the row says why (for example too little free space, or that Office could not be activated). Free the space, then press **Try again**; it costs nothing. If it fails again, use **Ask us** on the row.
+- **Office is installed but not activated:** press **Activate again**; it costs nothing.
+
+## Raff's licence keys stay protected
+
+Raff's keys are kept encrypted in Raff's systems and reach the server only sealed for that one server and that one action. They never appear on the dashboard, in Activity, in an email or on a receipt, and Raff Guardian never writes them into a file, a command line or the installer's settings. After every install Raff Guardian checks the places Microsoft's installer writes to and removes any copy of the key it finds. Like Windows itself, Office keeps the last 5 characters of the key, which anyone on the server can see. While Windows takes the key it is briefly in the server's memory, where an administrator of the server who tries hard could catch it; no product of this kind can prevent that.
+
+## Related
+
+- [Buy and change Remote Desktop users](/products/manage/raff-guardian/quickstart-guides/remote-desktop-users)
+- [Modes and permissions](/products/manage/raff-guardian/concepts/modes-and-permissions)

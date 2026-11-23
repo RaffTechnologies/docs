@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Supported systems, network needs, timings and every limit of Raff Guardian in one place.
 ---
 
-<sub>Updated October 16, 2026</sub>
+<sub>Updated November 23, 2026</sub>
 
 The facts about Raff Guardian in one place.
 
@@ -13,8 +13,8 @@ The facts about Raff Guardian in one place.
 | Item | Value | Notes |
 |---|---|---|
 | Operating system | Windows Server | Offered on every Windows server on Raff. Raff tests each release on Windows Server 2025 |
-| Linux | Not supported yet | The Guardian tab of a Linux server says so and offers no install |
-| Install | From the server's Guardian tab, or on the Windows create page | |
+| Linux | Ubuntu 26.04 and Debian 13 | On another Linux release the Guardian tab says so and offers no install |
+| Install | From the server's Guardian tab, or on the create page | |
 | Runs as | The **RaffGuardian** Windows service | `C:\Program Files\Raff\Guardian`, data in `C:\ProgramData\Raff\Guardian` |
 
 ## Network
@@ -66,11 +66,31 @@ The facts about Raff Guardian in one place.
 |---|---|---|
 | Block after | 5 to 200 failed sign-ins from one address in 15 minutes | Default 8 |
 | Counts | Remote Desktop, and SSH when OpenSSH Server is installed | |
-| Automatic blocks | Lifted after 7 days | Blocked again at once on a new attack |
+| Automatic blocks | Lifted after 1 day the first time, 7 days when the address comes back, 30 days from its third block | Blocked again at once on a new attack. An address is forgotten 90 days after its last block ended |
 | Blocks you add | Stay until you unblock them | |
-| Automatic blocks on a server | Up to 500 | IPv4 only |
+| Automatic blocks on a server | Up to 1,000 | IPv4 only |
 | Remote Desktop allow list | Up to 500 IPv4 addresses or ranges | The browser console always works |
 | Never blocked | Allowed addresses, Raff's browser console, private and reserved ranges | |
+| New port warnings | From Raff Guardian's 7th hour on the server | Only for a program started by hand, run from a temporary or a user's folder, or not recognised. A Windows service, an IIS site, a container, a Raff Keep app or an app in the apps list gets one Activity line per port instead |
+
+## Secure this server
+
+**Secure this server** on the **Security** tab proposes, in one approval, each of these steps that is not in place yet. Each step is also its own row under **Hardening** in **Settings**, and each has its own **Undo** under **Show details**, which puts back the exact values the server had before.
+
+| Step | What changes | Could it break something | Undo |
+|---|---|---|---|
+| Remote Desktop only from your address | Only the address your browser uses, and the browser console, reach Remote Desktop | Yes, if your address changes. Press **Keep it** within 10 minutes; if you do not, the earlier list comes back by itself | Yes |
+| Network Level Authentication on | Remote Desktop checks the password before it shows the sign-in screen | Only very old Remote Desktop programs | No: Raff Guardian never turns it off. You can turn it off in Windows (System Properties, Remote) |
+| SMB 1 off | The old Windows file sharing goes off, after the next restart | Devices older than 2007 | Yes |
+| Windows Firewall on | Every network type blocks what no rule opens. Each app that listens at that moment gets its own rule first | An app that starts later needs its port opened under **Apps** | Yes |
+| Name broadcasting off | LLMNR, and NetBIOS on the public network card, stop answering name lookups | Windows servers of one private network that find each other by name without DNS | Yes |
+| Old encryption off | TLS 1.0, TLS 1.1 and SSL 3.0 go off for the programs that serve connections, after the next restart | Old SQL Server clients, accounting programs and payment terminals | Yes |
+
+- The one approval leaves out **Old encryption off** (press it on its own if you want it) and, on a server with a private network, **Name broadcasting off**. Remote Desktop comes last.
+- A value your company sets by Group Policy is never written: the step reads "set by your company policy".
+- On a domain controller (Active Directory), name broadcasting off leaves NetBIOS on, Windows Firewall opens the directory ports to the private network only, and **Remote Desktop only from your address** also lets your private network in.
+- If a step is changed back in Windows, Raff Guardian tells you under **Security** and never applies it again on its own.
+- Uninstalling Raff Guardian leaves these settings as they are.
 
 ## Maintenance and power
 
@@ -94,6 +114,9 @@ The facts about Raff Guardian in one place.
 | New password | At least 20 characters |
 | Show a new password again | For 10 minutes after you first see it |
 | New password nobody opened | Deleted after 24 hours |
+| New account name (Add a user) | At most 20 characters |
+| Add a user, Switch off, Switch on | Accounts of this server only; not on a domain controller (Active Directory) |
+| Never switched off | The built-in Administrator, the last administrator that is switched on, and accounts that run services or scheduled tasks |
 
 ## Questions and Activity
 
@@ -111,10 +134,11 @@ On **Watch only**, Raff Guardian changes nothing. These need **Raff manages ever
 - Installing Windows updates, also with **Install now**.
 - Blocking addresses, and **Block now**.
 - Changing who can reach Remote Desktop.
+- Applying a step of **Secure this server** (undoing one, and **Keep it**, work in every mode).
 - Restarting a service, freeing disk space, updating Microsoft Defender's definitions, quick scans.
 - **Restart** and **Shut down** through Raff Guardian (on Watch only they use the standard way).
 
-These work in every mode: unblocking an address, signing out, unlocking or setting a new password for a Windows user, questions about the server, and Raff Guardian's own updates.
+These work in every mode: unblocking an address, adding a Windows user, switching one off or on, signing out, unlocking or setting a new password for a Windows user, questions about the server, and Raff Guardian's own updates.
 
 ## Who can do what
 

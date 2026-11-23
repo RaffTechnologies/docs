@@ -4,14 +4,14 @@ sidebarTitle: Add while creating a server
 description: Choose Raff Guardian and its mode on the Windows create page, so the new server installs it by itself at first boot.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 23, 2026</sub>
 
 Add Raff Guardian while you create a Windows server and you never run an install command. The server installs Raff Guardian by itself the first time it starts, in the mode you pick on the create page.
 
 ## Before you start
 
 - Permission to create servers in the project (`vm.create`).
-- Raff Guardian is offered on the Windows create page only. It does not run on Linux yet.
+- Raff Guardian is offered on the Windows create page, and on the Linux create page for Ubuntu 26.04 and Debian 13.
 
 ## Steps
 
@@ -48,7 +48,7 @@ Add Raff Guardian while you create a Windows server and you never run an install
 
 A few minutes after the server first starts, open it under **Virtual Machines** and click the **Guardian** tab. The tab shows the **Overview**, **Security**, **Users**, **Apps**, **Updates**, **Activity** and **Settings** sections, and the **Raff Guardian** card names the mode you picked.
 
-The first-boot install keeps trying for up to 10 minutes while the network comes up. If the tab still offers **Install Raff Guardian** after that, install it by hand: see [Install on an existing server](/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server). It still starts in the mode you picked on the create page.
+The first-boot install keeps trying for up to 10 minutes while the network comes up. If the tab still offers **Set it up** after that, install it by hand: see [Install on an existing server](/products/manage/raff-guardian/quickstart-guides/install-on-an-existing-server). The set-up there asks for the mode again.
 
 ## Next steps
 

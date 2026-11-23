@@ -4,7 +4,7 @@ sidebarTitle: Block or unblock an IP address
 description: See which IP addresses Raff Guardian blocked, unblock one, block one yourself, and change how many wrong passwords trigger a block.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
 Raff Guardian blocks addresses that keep guessing passwords, at the server's own Windows Firewall. The **Security** section of the Guardian tab shows what is blocked and lets you unblock an address or block one yourself. To let only your own addresses reach Remote Desktop, see [Limit who can reach Remote Desktop](/products/manage/raff-guardian/quickstart-guides/limit-remote-desktop-access).
 
@@ -17,17 +17,18 @@ Raff Guardian blocks addresses that keep guessing passwords, at the server's own
 
 Open the server under **Virtual Machines**, click **Guardian**, then **Security**.
 
-- The band at the top says whether blocking works, for example **Protected: blocking is working**, with **Blocked now**, **Failed sign-ins, last 15 min** and **Last report**.
-- **Blocked addresses** lists each block and why, for example "Blocked on the server on 26 Sept, 14:43 after 8 failed sign-ins. Raff Guardian lifts it on 3 Oct."
-- **Wrong passwords, last 24 hours** charts the failed Remote Desktop sign-ins hour by hour, and names the busiest address.
+- The first line says whether blocking works, for example **Blocking works, 3 steps still off**, over the tiles **Blocked now**, **Blocked this week**, **Last 15 minutes** and **Secure this server**.
+- In **Attacks and blocks**, **Attacks, last 7 days** shows the attacking addresses blocked each day. On Windows, **24 hours** switches to the failed Remote Desktop sign-ins hour by hour.
+- **Newest blocks** lists the 3 newest blocks: the address, why in a few words and when the block ends. Click a block for the full line, for example "Blocked on the server on 26 Sept, 14:43 after 8 failed sign-ins, for 7 days: this address came back after an earlier block. Raff Guardian lifts it on 3 Oct."
+- **Show all**, under the newest blocks, or the **Blocked now** tile opens **Blocked addresses**: every block, with a box to search an address.
 
 <Frame>
-  ![TODO: Security section with the status band, Who can reach Remote Desktop and Blocked addresses](/images/products/manage/raff-guardian/security-01-overview.png)
+  ![TODO: Security tab with the tiles, Secure this server and Attacks and blocks](/images/products/manage/raff-guardian/security-01-overview.png)
 </Frame>
 
 ## Unblock an address
 
-1. In **Blocked addresses**, click **Unblock** on the address.
+1. In **Newest blocks**, or in **Blocked addresses** after **Show all**, click **Unblock** on the address.
 2. In **Unblock** followed by the address, click **Unblock**, or **Keep blocked**.
 
 Raff Guardian removes its firewall rule and the address can reach the server again. If it keeps failing to sign in, Raff Guardian blocks it again. Unblock works in every mode, **Watch only** included; on Watch only, Raff Guardian does not block the address again.
@@ -49,7 +50,7 @@ The count is per address within 15 minutes, and the block happens on the server 
 
 ## Verify
 
-The address leaves **Blocked addresses** (or appears there) within a minute or two, and **Activity**, category **Security**, records the change.
+The address leaves the blocks (or appears there) within a minute or two, and **Activity**, category **Security**, records the change.
 
 ## Next steps
 

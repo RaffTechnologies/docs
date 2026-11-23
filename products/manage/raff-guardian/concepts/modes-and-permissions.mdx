@@ -4,7 +4,7 @@ sidebarTitle: Modes and permissions
 description: What Raff manages everything, Ask me before changes and Watch only do, and the Auto, Ask me and Off setting of every Raff Guardian action.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 21, 2026</sub>
 
 Every server with Raff Guardian has one mode, and every action Raff Guardian can take has its own setting: **Auto**, **Ask me** or **Off**. The mode sets the defaults for all actions at once; you change single actions only when you want to.
 
@@ -14,7 +14,7 @@ Every server with Raff Guardian has one mode, and every action Raff Guardian can
 
 | Mode | In short |
 |---|---|
-| **Raff manages everything** | Raff Guardian fixes problems, installs updates in your update window and blocks attacks on its own. Every change is recorded in Activity. |
+| **Raff manages everything** | Raff Guardian acts by itself. It asks only before something that can lock you out or lose data, a sudden restart, or anything you pay for. Every change is recorded in Activity. |
 | **Ask me before changes** | Raff Guardian asks before it changes anything. It still blocks attacks at once, answers your questions about the server and keeps itself up to date. |
 | **Watch only** | Raff Guardian reports what it sees and changes nothing. It still keeps itself up to date, and you can still remove its blocks and sign out, unlock or set new passwords for Windows users. |
 
@@ -25,6 +25,7 @@ A server you install Raff Guardian on from its Guardian tab starts on **Watch on
 - **Auto**: Raff Guardian does it on its own and records it in Activity.
 - **Ask me**: Raff Guardian prepares the change and waits in the **Queue** for **Approve** or **Decline**. See [Approve or decline a change](/products/manage/raff-guardian/quickstart-guides/approve-or-decline-a-change).
 - **Off**: never, not even when you press its button.
+- **When you press**: the actions Raff Guardian never takes by itself (adding users, new passwords, the licences, the buttons on services, packages and sites) show **When you press** in place of **Ask me**. They run only when you press their button; **Off** stops them.
 
 When you start an action yourself, for example **Install now** or **Unblock**, that counts as your yes. Only **Off** stops it.
 
@@ -36,21 +37,29 @@ When you start an action yourself, for example **Install now** or **Unblock**, t
 | Updates | Restore the pre-update snapshot | Always asks | Always asks | Fixed |
 | Security | Block attacking addresses | Auto | Auto | Auto, Ask me, Off |
 | Security | Change who can reach Remote Desktop | Ask me | Ask me | Auto, Ask me, Off |
-| Security | Update Microsoft Defender's definitions | Ask me | Ask me | Ask me, Off |
-| Security | Start Microsoft Defender quick scans | Ask me | Ask me | Ask me, Off |
-| Users | Sign out Windows users | Ask me | Ask me | Ask me, Off |
-| Users | Unlock Windows users | Ask me | Ask me | Ask me, Off |
-| Users | New passwords for Windows users | Ask me | Ask me | Ask me, Off |
-| Licences | Activate Windows with Raff's licence | Ask me | Ask me | Ask me, Off |
+| Security | Update Microsoft Defender's definitions | Auto | Ask me | Auto, Ask me, Off |
+| Security | Start Microsoft Defender quick scans | Auto | Ask me | Auto, Ask me, Off |
+| Users | Sign out Windows users | When you press | When you press | When you press, Off |
+| Users | Unlock Windows users | When you press | When you press | When you press, Off |
+| Users | New passwords for Windows users | When you press | When you press | When you press, Off |
+| Users | Add Windows users | When you press | When you press | When you press, Off |
+| Users | Switch Windows users off | When you press | When you press | When you press, Off |
+| Users | Switch Windows users back on | When you press | When you press | When you press, Off |
+| Licences | Activate Windows with Raff's licence | When you press | When you press | When you press, Off |
 | Power | Restart the server | Auto | Ask me | Auto, Ask me, Off |
 | Power | Force off when Windows does not shut down | Ask me | Ask me | Ask me, Off |
 | Power | Hard restart when Windows does not restart | Ask me | Ask me | Ask me, Off |
 | Maintenance | Restart a stopped service | Auto | Ask me | Auto, Ask me, Off |
 | Maintenance | Free disk space | Auto | Ask me | Auto, Ask me, Off |
+| Hardening | Network Level Authentication on | Auto | Ask me | Auto, Ask me, Off |
+| Hardening | SMB 1 off | Auto | Ask me | Auto, Ask me, Off |
+| Hardening | Windows Firewall on for every network type | Ask me | Ask me | Ask me, Off |
+| Hardening | Name broadcasting off | Ask me | Ask me | Ask me, Off |
+| Hardening | Old encryption off | Ask me | Ask me | Ask me, Off |
 | Commands | Answer questions about this server | Auto | Auto | Auto, Off |
 | Raff Guardian | Keep Raff Guardian up to date | Always on | Always on | Fixed |
 
-The actions with **Ask me** and **Off** only are ones Raff Guardian never takes on its own: signing users out, unlocking them, new passwords and Windows activation run only when you press the button, and the Microsoft Defender and force actions only ever ask.
+Under **Raff manages everything**, what still asks is short: who can reach Remote Desktop, restoring the pre-update snapshot, forcing the server off or hard restarting it, and the Windows Firewall, name broadcasting and old encryption steps of **Secure this server**. The **When you press** actions run only when you press the button.
 
 ### What each action does on Auto
 
@@ -59,18 +68,28 @@ The actions with **Ask me** and **Off** only are ones Raff Guardian never takes 
 - **Restart a stopped service**: starts a watched service again when it stops, up to 3 times a day per service, then asks you. Services Windows needs are reported but never restarted.
 - **Free disk space**: when a drive runs low, removes Windows temp files, the recycle bin and the Delivery Optimization cache, at most once a day per drive. It never touches files Windows Update still needs.
 - **Block attacking addresses**: see [Automatic blocking and lockout](/products/manage/raff-guardian/concepts/automatic-blocking).
+- **Update Microsoft Defender's definitions** and **Start Microsoft Defender quick scans**: when the definitions are more than 3 days old, or Defender has not scanned for 7 days. A quick scan takes a few minutes and uses some CPU.
+- **Network Level Authentication on** and **SMB 1 off**: Raff Guardian turns each on once, when it is not on yet. If you or another tool change it back later, Raff Guardian tells you and never changes it again on its own. See [Secure this server](/products/manage/raff-guardian/details/features-and-limits#secure-this-server).
 
 ### What Watch only still does
 
 On **Watch only**, Raff Guardian changes nothing on its own and refuses changes, with a few exceptions:
 
 - It keeps itself up to date.
-- You can still unblock an address, sign out, unlock or set a new password for a Windows user, and press the Windows licence buttons.
+- You can still unblock an address, add a Windows user, switch one off or on, sign out, unlock or set a new password for a Windows user, and press the Windows licence buttons.
+- You can still undo a step of **Secure this server**, and press **Keep it** for a new Remote Desktop list.
+- When a licence ends (not paid by day 10, or ended by you), Raff Guardian still takes Raff's licence back: Raff's Remote Desktop licence pack, and Office or Visio with Raff's key. Activity says so. Nothing of SQL Server is removed.
 - It answers your questions about the server.
 
 Choosing **Watch only** cancels everything queued and stops what is running as soon as it safely can. It also gives Windows its own account lockout back. Your per-action choices are kept for when you leave Watch only.
 
 On **Watch only**, **Restart** and **Shut down** in the server's power menu use the standard way instead of Raff Guardian. See [Restart or shut down the server](/products/manage/raff-guardian/quickstart-guides/restart-or-shut-down-the-server).
+
+### The Licences rows and Off
+
+- With a Licences row (Remote Desktop users, Microsoft Office and Visio, SQL Server) on **Off**, nothing of that licence can be bought, raised, installed or changed through Raff Guardian on the server. The **Licences** tab says so in one line, with a link to the row in **Settings**.
+- A Licences row cannot be set to **Off** while a Raff licence it looks after runs on the server: the save says **End the licence first** and names it. End it on the **Licences** tab, then set the row to **Off**.
+- **Off** never keeps a licence: when a licence ends, Raff Guardian takes Raff's licence back whatever the row says, as on **Watch only**.
 
 ## When to use it
 

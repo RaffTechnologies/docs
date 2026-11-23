@@ -4,7 +4,7 @@ sidebarTitle: How it works
 description: What runs on your Windows server, how Raff Guardian reports to Raff, how changes reach it, and how signed releases keep it safe.
 ---
 
-<sub>Updated October 16, 2026</sub>
+<sub>Updated November 23, 2026</sub>
 
 Raff Guardian has two parts: a small agent that runs as a Windows service on your server, and Raff's side, which reads its reports, decides what needs doing and shows everything in the dashboard. The agent only connects out to Raff. It never opens a port on your server.
 
@@ -55,7 +55,7 @@ If Raff hears nothing for 5 minutes, the Guardian tab shows "Raff Guardian is no
 
 ## Trade-offs / limits
 
-- Windows Server only. Raff Guardian does not run on Linux yet.
+- Windows Server, and Linux on Ubuntu 26.04 and Debian 13. Other Linux releases are not supported yet.
 - The agent needs outbound HTTPS to Raff. With no connection it keeps watching and blocking, but Raff cannot act on its reports until they arrive.
 - Raff Guardian runs only the actions built into it. It does not run your own scripts or commands.
 

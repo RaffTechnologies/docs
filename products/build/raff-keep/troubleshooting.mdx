@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common Raff Keep issues and how to fix them. Failed or slow installs, Remote Desktop sign-in, MetaTrader terminals, ASP.NET publishing and refunds.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 20, 2026</sub>
 
 Issues you may run into with Raff Keep, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
 
@@ -35,12 +35,12 @@ Issues you may run into with Raff Keep, and how to resolve them. If your problem
 
     **Fix:** click **Start again from the stack page**. To clean up the list, use **Remove from list** in the **...** menu.
   </Accordion>
-  <Accordion title="I cannot click Start">
-    **What's happening:** the line under **Start** says why:
+  <Accordion title="I cannot click Continue to payment">
+    **What's happening:** the line under **Continue to payment** says why:
 
     - "Raff Keep stacks are paid through checkout. Pay as you go is not available for them yet.": your account is on pay-as-you-go. Contact support.
     - "You need the vm.create permission to start a stack.": ask a project admin for a role that can create servers.
-    - "Choose a built-in Administrator password that meets the rules.": the password rules show under **Access**.
+    - "Choose a built-in Administrator password that meets the rules.": the password rules show under **Access** (or click **Password rules**).
     - "Give the server a name (3 to 63 letters, digits or hyphens)."
     - "Fix the answers above to get a price.": an answer is not accepted; the **Summary** shows the reason, such as more terminals than one server takes.
   </Accordion>
@@ -58,8 +58,8 @@ Issues you may run into with Raff Keep, and how to resolve them. If your problem
     **Fix:** check each of these.
 
     1. **The login.** Sign in as your admin login (`admin-...`) or, on a MetaTrader server, the trader login (`trader-...`). The built-in Administrator cannot sign in over Remote Desktop. In the browser the console says "This server does not let the built-in Administrator sign in over Remote Desktop." and offers **Use VNC console instead**.
-    2. **Your address.** The **Connect with Remote Desktop** card says "Reachable only from ..." when Remote Desktop is limited. If your address changed, open the **Security** tab and change **Who can reach Remote Desktop**, or use **Open Remote Desktop in the browser**.
-    3. **A blocked address.** After 8 wrong passwords from one address in 15 minutes, [Raff Guardian](/products/manage/raff-guardian/index) blocks it for 7 days. The **Security** tab lists it under **Blocked addresses**: click **Unblock**.
+    2. **Your address.** The **Settings** tab, under **Raff Keep**, shows who can reach Remote Desktop. If your address changed, open the **Security** tab and, under **Secure this server**, open **Remote Desktop only from your address** to change who can reach it, or use **Open Remote Desktop in the browser**.
+    3. **A blocked address.** After 8 wrong passwords from one address in 15 minutes, [Raff Guardian](/products/manage/raff-guardian/index) blocks it for 7 days. The **Security** tab lists it under **Newest blocks**, or in **Show all**: click **Unblock**.
     4. **A locked account.** 10 wrong passwords lock an account for 15 minutes when Raff Guardian does not block attackers. Wait, or use **Unlock** on the **Users** tab.
     5. **The password.** If you lost it, set a new one: see [Get your logins and passwords](/products/build/raff-keep/quickstart-guides/get-your-logins).
     6. **The server.** If the server is off, click **Power on** on its page.
@@ -85,24 +85,25 @@ Issues you may run into with Raff Keep, and how to resolve them. If your problem
 
 <AccordionGroup>
   <Accordion title="A terminal does not run">
-    **What's happening:** **Your terminals** shows it as **Stopped**, and Raff Guardian emails "... stopped on your server ..." after about 15 minutes. The terminals run as the trader login: **Sign out** of the trader login closes them.
+    **What's happening:** the **MetaTrader 5** tab shows it as **Stopped**, and Raff Guardian emails "... stopped on your server ..." about 3 minutes after it stops. The terminals run as the trader login: **Sign out** of the trader login closes them.
 
     **Fix:**
     1. Sign in over Remote Desktop as the trader login. Every terminal starts when it signs in. To leave, close the Remote Desktop window instead of signing out.
     2. With auto start on, a restart also starts them: the trader login signs in by itself.
     3. If Raff Guardian warns that the trader login will not sign in by itself, follow the warning's fix. A **New password** for the trader login on the **Users** tab sets auto sign-in up again.
-    4. Click **Check now** on **Your terminals** for a fresh reading.
+    4. Click **Check terminals** on the **MetaTrader 5** tab for a fresh reading.
+    5. If MetaTrader is waiting to install an update, it asks for a Windows administrator and does not start. Sign in as an administrator, start MetaTrader once from its folder and close it when it has updated, then sign in as the trader login.
   </Accordion>
   <Accordion title="A terminal lost its broker">
-    **What's happening:** **Your terminals** says "A terminal lost its broker", or a terminal shows "connection lost".
+    **What's happening:** the **MetaTrader 5** tab says "A terminal lost its broker", or a terminal shows "connection lost".
 
     **Fix:** sign in as the trader login, open the terminal and sign in to your trading account again. Check with your broker that the account and server name are right.
   </Accordion>
   <Accordion title="I cannot add a terminal">
-    **What's happening:** the card says why under **Add terminal**:
+    **What's happening:** the **MetaTrader 5** tab says why beside **Add a terminal**:
 
     - "This server's size runs at most ... Resize it to ...": click **Resize the server**, then add the terminal.
-    - "Raff Guardian adds terminals, and this server runs without it.": install Raff Guardian from the server's **Guardian** tab in **Compute** first.
+    - "Raff Guardian adds terminals, and this server runs without it.": install Raff Guardian first: the server's **Overview** under **Keep** offers it.
     - "This server runs 16 MetaTrader terminals, the most Raff Keep sets up on one server.": use a second server.
   </Accordion>
 </AccordionGroup>
@@ -112,10 +113,10 @@ Issues you may run into with Raff Keep, and how to resolve them. If your problem
 <AccordionGroup>
   <Accordion title="Publishing fails, or Visual Studio cannot connect">
     **Fix:**
-    1. **Where Web Deploy answers from.** On the **Apps** tab, **Publishing** shows **Web Deploy (port 8172)**. **Closed** means nobody can publish; your address must be in the list, or choose **From anywhere** with **Change**. GitHub Actions needs **From anywhere**.
+    1. **Where Web Deploy answers from.** On the **Apps** tab, under **Installed by Raff Keep**, **Publishing** shows **Web Deploy (port 8172)**. **Closed** means nobody can publish; your address must be in the list, or choose **From anywhere** with **Change**. GitHub Actions needs **From anywhere**.
     2. **An old profile.** Each **Publish profile** makes a new password, and older profiles of the site stop working. Download a new one and update `WEBDEPLOY_PASSWORD` in GitHub.
     3. **The certificate.** Visual Studio asks once to trust the server's Web Deploy certificate; accept it. Once a site's domain has its certificate, Web Deploy uses it.
-    4. **A blocked address.** Raff Guardian blocks an address that keeps failing to sign in to Web Deploy. Check **Blocked addresses** on the **Security** tab.
+    4. **A blocked address.** Raff Guardian blocks an address that keeps failing to sign in to Web Deploy. Check the blocks under **Attacks and blocks** on the **Security** tab (**Show all** lists every one).
   </Accordion>
   <Accordion title="The publish profile does not download">
     **What's happening:** the site's row explains it:

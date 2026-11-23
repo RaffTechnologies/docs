@@ -4,7 +4,7 @@ sidebarTitle: Privacy and data
 description: The data Raff Guardian reads on a Windows server, what it sends to Raff, what it never reads, and who at Raff can see it.
 ---
 
-<sub>Updated October 15, 2026</sub>
+<sub>Updated November 19, 2026</sub>
 
 Raff Guardian reads the state of Windows, not your data. It sends Raff what it needs to look after the server: health, updates, security settings, sign-ins and the apps installed. This page lists what that is, what it never reads, and who can see it.
 
@@ -24,7 +24,7 @@ Every minute the agent sends a signed report over HTTPS to `api.rafftechnologies
 | SSH sign-ins | Counts of failed SSH sign-ins only, no addresses |
 | Blocks | The addresses Raff Guardian blocked, the failed sign-ins behind each, and the account name when bots were guessing one account's password |
 | Certificates | Subject and expiry date of the server's machine certificates |
-| Windows Server Backup | Whether it is installed and when it last ran |
+| Backups inside the server (when they change, and hourly) | Whether Windows Server Backup is installed; its last good backup, last result and code, next backup, how many it keeps, whether it includes the system state, and where it writes as a kind only (this disk, another disk, a network folder); for the Raff Keep SQL Server template, the newest backup file's time, how many there are and their size; for each folder you named as your backup, its newest file's time, how many files it holds, their size and whether it is on the system disk. See [Backups](/products/manage/raff-guardian/concepts/backups) |
 | Activation | Licence status and edition, and only the last 5 characters of the product key |
 | Windows protection (hourly) | Microsoft Defender state and detected threat names, Windows Firewall, Remote Desktop and sign-in settings, the members of the Administrators group, listening ports and the program behind each |
 | Apps (daily or when they change) | Installed programs with publisher, version and install folder, Windows features, runtimes, services installed outside Windows, remote access tools that are running |
@@ -40,6 +40,7 @@ The agent also reports the start and result of every action, with what it was be
 - **Account details** beyond those listed above: never an account's comment, full name or bad-password count.
 - **Your product key**, beyond its last 5 characters.
 - **Microsoft Defender exclusions.** It counts them and never lists them.
+- **Your backups.** Never a backup's file names, contents, its target's share or folder name, or its password. A folder you name as your backup is read for its newest file's time, count and size only.
 - **Per-user programs.** The app list covers programs installed for the whole server. Paths inside user profiles are masked, for example `C:\Users\*\...`.
 - **The Security event log**, through a question. The **Recent errors** question reads only the System and Application logs.
 
