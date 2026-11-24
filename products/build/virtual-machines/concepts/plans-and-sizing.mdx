@@ -3,7 +3,7 @@ title: Plans & sizing
 description: "Four plan tiers (General Purpose with shared CPU, CPU Optimized with guaranteed CPU, Windows Server, and Cost-Optimized on local NVMe), how to pick between them, and which size to start with for common workloads: web apps, databases, workers, dev/staging, Windows desktop, game servers"
 ---
 
-<sub>Updated November 23, 2026</sub>
+<sub>Updated November 24, 2026</sub>
 
 A **plan** is a fixed bundle of CPU, RAM, and base disk, billed at a single rate. Outbound bandwidth is **unlimited** on every plan. Picking the right plan is the main sizing decision when creating a VM. The full price list lives on [Pricing](/products/build/virtual-machines/details/pricing); this page is the **how-to-pick** guide.
 
@@ -29,7 +29,7 @@ If you can't tell which fits, **start with Standard**. Move workloads to Premium
 - **Linux and FreeBSD.** Every Linux template and FreeBSD run on it; Windows runs on its own plans.
 - **Resize stays in the tier.** A Cost-Optimized server resizes to another Cost-Optimized plan. To move to another tier, create a new server.
 - **Backups cover the OS disk** and are stored off the node, so they survive a node failure. Snapshots stay on the node with the disk.
-- **Volumes stay on the node.** Extra storage added at create, or a volume created to attach to the server, attaches only to Cost-Optimized servers.
+- **Volumes depend on the region.** In EU Central a volume attaches to any server there, and its data moves to that server's machine. In US East, extra storage added at create, or a volume created to attach to the server, attaches only to Cost-Optimized servers.
 - **No custom images.** Save as image is not available, because the image would stay on one node.
 
 ## Recommended starting plans by workload

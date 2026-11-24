@@ -3,7 +3,7 @@ title: Volume types
 description: What a Raff volume is, how it persists, how it attaches, and what currently varies between volumes
 ---
 
-<sub>Updated November 19, 2026</sub>
+<sub>Updated November 24, 2026</sub>
 
 A Raff volume is a single block device that you attach to a VM. Every volume on the platform today shares the same characteristics — Raff offers **one volume class** at the moment, so the choice you actually make at create time is *size* and *billing term*, not a performance tier.
 
@@ -62,7 +62,7 @@ A volume's region and project come from the VM it's attached to. Three rules fol
 
 1. **A volume can only be reattached within its original region.** You can't take a `us-east` volume and attach it to a VM in another region.
 2. **Volumes follow their VM's project.** Attach to a VM in project `prod` and the volume sits in `prod`.
-3. **Standalone (unattached) volumes** sit in the dashboard's currently-selected region until you attach them. Pick the region carefully when creating an unattached volume — same one-way constraint applies.
+3. **Standalone (unattached) volumes** are created in the region you pick in the create dialog (the dashboard's selected region to start with). Pick it carefully: the same one-way constraint applies.
 
 To "move" a volume across regions: snapshot it, restore the snapshot in the new region, then delete the original. (Cross-region snapshot restore depends on platform support — see [Create a snapshot](/products/build/virtual-machines/quickstart-guides/create-snapshot).)
 

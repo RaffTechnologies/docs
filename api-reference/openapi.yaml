@@ -675,7 +675,13 @@ paths:
 
         ## Cost-Optimized plans
 
-        A `pricing_id` of a `cost_optimized` plan creates a Cost-Optimized server: its disk is on its node's local NVMe and it has no uptime commitment. It takes Linux templates only, those listed by [List templates](/api-reference/catalog/list-templates) with `vm_type=cost_optimized`; a Windows template is refused. Its backups cover the OS disk, and `extra_storage` creates a volume for Cost-Optimized servers.
+        A `pricing_id` of a `cost_optimized` plan creates a Cost-Optimized server: its disk is on its node's local NVMe and it has no uptime commitment. It takes Linux templates only, those listed by [List templates](/api-reference/catalog/list-templates) with `vm_type=cost_optimized`; a Windows template is refused. Its backups cover the OS disk. In US East, `extra_storage` creates a volume that attaches to Cost-Optimized servers only; in EU Central it creates a volume that attaches to any EU Central server.
+
+        ## Permissions
+
+        The key's role needs `vm.create` in the project, and each add-on needs its own permission: `extra_storage` needs `volume.create`, `backup_type` needs `backup.create`, `vpc_id` or `security_group_id` needs `vpc.view`, and a new VPC needs `vpc.create`. The VPC made when you leave the VPC fields empty counts as a new VPC.
+
+        Without one, the request is refused with 403 naming the permission. Set `skip_vpc` to `true` to create the server without a private network.
 
         ## Billing Checks
 
@@ -2703,7 +2709,7 @@ paths:
           description: Filter by region
           schema:
             type: string
-            enum: [us-east]
+            enum: [us-east, eu-central]
         - name: limit
           in: query
           schema:
@@ -2890,7 +2896,7 @@ paths:
       description: |
         Attach a volume to a VM. The VM must be in the same region as the volume. A volume can only be attached to one VM at a time — detach it first if it's already attached elsewhere.
 
-        A Cost-Optimized server keeps its volumes on its node: it takes the volumes created to attach to a Cost-Optimized server, and they attach to no other server. A volume created on its own attaches to General Purpose, CPU-Optimized and Windows servers.
+        In US East, a Cost-Optimized server takes the volumes created to attach to a Cost-Optimized server, and they attach to no other server; a volume created on its own attaches to General Purpose, CPU-Optimized and Windows servers. In EU Central, every volume attaches to any EU Central server, whether it was created with a server, for a server or on its own.
 
         Inside the guest, the volume appears as `/dev/vdb`, `/dev/vdc`, etc. (virtio-blk).
       operationId: attachVolume
@@ -3121,7 +3127,7 @@ paths:
       description: |
         Revert the source VM (or volume) to the state captured in this snapshot.
 
-        For VM snapshots, the VM must be in `passive` state (powered off) before calling this endpoint.
+        For VM snapshots, the VM must be in `passive` state (powered off) before calling this endpoint. For volume snapshots, the server the volume is attached to must be powered off too.
 
         After a successful restore, this snapshot's `status` flips to `active` and the previously-active snapshot (if any) is cleared. An `active` snapshot cannot be deleted — restore the source to a different snapshot first, or take a fresh one.
       operationId: restoreSnapshot
@@ -11105,7 +11111,7 @@ components:
           description: Hourly billing rate in USD
         region:
           type: string
-          enum: [us-east]
+          enum: [us-east, eu-central]
         created_at:
           type: string
           format: date-time
@@ -11146,7 +11152,7 @@ components:
           description: Optional. Attach the volume to this VM at create time. VM must be in the same region.
         region:
           type: string
-          enum: [us-east]
+          enum: [us-east, eu-central]
           description: Region. Defaults to the project's default region.
 
     AttachVolumeRequest:

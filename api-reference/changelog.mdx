@@ -3,7 +3,7 @@ title: "API Changelog"
 description: "Track all changes to the Raff API"
 ---
 
-<sub>Updated November 19, 2026</sub>
+<sub>Updated November 24, 2026</sub>
 
 # API Changelog
 
@@ -14,6 +14,12 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 ---
 
 ## v1.0.0 (Beta)
+
+### November 24, 2026
+
+**Volumes: EU Central**
+
+- 🔵 **Updated**: EU Central volumes attach to any EU Central server, and a volume's data moves to the machine of the server that uses it. [Create a volume](/api-reference/volumes/create-volume) `POST /api/v1/volumes` accepts `region` `eu-central` with or without `vm_id`, and `extra_storage` on an EU Central server creates such a volume. Volume snapshots work there too; restoring one needs the server powered off, as everywhere. US East is unchanged.
 
 ### November 19, 2026
 
