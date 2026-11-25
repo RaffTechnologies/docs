@@ -755,6 +755,7 @@
                       "api-reference/databases/update-database",
                       "api-reference/databases/delete-database",
                       "api-reference/databases/scale-database",
+                      "api-reference/databases/upgrade-database",
                       "api-reference/databases/resume-database"
                     ]
                   },

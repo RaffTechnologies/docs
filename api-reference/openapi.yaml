@@ -4903,6 +4903,85 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/databases/{database_id}/upgrade:
+    post:
+      tags:
+        - Managed Databases
+      summary: Upgrade to a newer major version
+      description: |
+        Upgrade a PostgreSQL database to a newer major version, in place. Other engines are refused.
+
+        <Note>
+        Before upgrading, get the versions this database can take from `upgrade_versions` in [Get database](/api-reference/databases/get-database). When it is empty, `upgrade_note` says why.
+        </Note>
+
+        The upgrade is asynchronous: the call answers at once with the database in status `upgrading`. Poll `GET /api/v1/databases/{database_id}` until `status` is `running`, then read `last_version_upgrade.state`.
+
+        - **Backup first**: a backup is taken before anything changes. It is listed with `backup_type` `before_upgrade`.
+        - **Offline while it upgrades**: about a minute for a small database, longer with many tables.
+        - **If it cannot complete**: the database returns to its version by itself, unchanged. `last_version_upgrade.state` is `failed` and `message` gives the reason.
+        - **Afterwards**: extensions are updated, statistics are refreshed and a new backup is taken (`after_upgrade`). A standby and read replicas are rebuilt after the upgrade.
+
+        Nothing is ever upgraded automatically. To go back afterwards, restore a backup whose `before_upgrade` is `true` with `POST /api/v1/databases/{database_id}/restore`: over the database (it returns to the older version) or as a new database.
+
+        ## Errors
+
+        - `400`: `version` is missing, or not one of this database's `upgrade_versions`.
+        - `412`: the database cannot be upgraded right now, with the reason in plain words. For example: it is not running; it is already being upgraded; a column uses a type PostgreSQL cannot carry to a new major version (the message names the columns).
+      operationId: upgradeDatabase
+      parameters:
+        - $ref: '#/components/parameters/DatabaseIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeDatabaseRequest'
+            example:
+              version: "19"
+      responses:
+        '200':
+          description: Upgrade started (status `upgrading`)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  database:
+                    $ref: '#/components/schemas/Database'
+              example:
+                success: true
+                database:
+                  database_id: a1b2c3d4
+                  name: orders-db
+                  engine: postgres
+                  engine_version: "18"
+                  status: upgrading
+                  status_message: "Upgrading to PostgreSQL 19: taking a backup first"
+                  upgrade_versions: ["19"]
+                  upgrade_note: ""
+                  last_version_upgrade:
+                    from_version: "18"
+                    to_version: "19"
+                    state: backing_up
+                    message: ""
+                    started_at: "2026-11-25T10:00:00Z"
+                    finished_at: ""
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          description: The database cannot be upgraded right now. `message` says why.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/v1/databases/{database_id}/connection:
     get:
       tags:
@@ -5282,7 +5361,7 @@ paths:
         - Managed Databases
       summary: List backups
       description: |
-        All backups for the database: nightly automatic backups (`base`, at 02:00 UTC) and on-demand backups (`on_demand`), kept 30 days. `restore_window_start` is the earliest point a point-in-time restore can reach. Kafka has no backups; its topics are copied across brokers.
+        All backups for the database: nightly automatic backups (`base`, at 02:00 UTC), on-demand backups (`on_demand`), and the backups taken right before and after an upgrade to a newer major version (`before_upgrade`, `after_upgrade`), kept 30 days. `restore_window_start` is the earliest point a point-in-time restore can reach. Kafka has no backups; its topics are copied across brokers.
       operationId: listDatabaseBackups
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -5378,6 +5457,8 @@ paths:
 
         - **New database**: inherits the source's plan, storage, VPC, and project, starts with no read replicas, and bills pay-as-you-go. High availability is an explicit choice via `ha_enabled`, never inherited. If `new_name` is taken, the platform adds a suffix (`-2`, `-3`, …). Poll `GET /api/v1/databases/{new_database_id}` like any create. Free databases cannot restore into a new database.
         - **In place**: overwrites this database. A safety backup is taken first, the status is `restoring` while it runs, and `new_database_id` is empty. Data written after the restore point is lost.
+
+        A backup whose `before_upgrade` is `true` holds the version from before the database's last upgrade. Restored over the database, it returns the database to that older version and loses everything written since the upgrade. Restored as a new database, it creates that database on the older version.
       operationId: restoreDatabase
       parameters:
         - $ref: '#/components/parameters/DatabaseIDPath'
@@ -14177,7 +14258,7 @@ components:
           example: "16.10"
         status:
           type: string
-          enum: [pending, deploying, running, warning, resizing, restoring, moving, suspended, failed, deleting, deleted]
+          enum: [pending, deploying, running, warning, resizing, restoring, upgrading, moving, suspended, failed, deleting, deleted]
           description: |
             Lifecycle status.
 
@@ -14185,13 +14266,14 @@ components:
             - `warning`: running with a problem (a component down, storage full). When the database stopped answering, `down_since` is set.
             - `resizing`: a plan, storage, high availability or replica change is being applied (a short restart, not an outage).
             - `restoring`: an in-place restore is in progress.
+            - `upgrading`: being upgraded to a newer major version. `status_message` says the step. The database is offline for part of it.
             - `moving`: Raff is moving the database to other hardware for maintenance.
             - `suspended`: a free database paused after 7 days without connections. Data is kept; resume with `POST /api/v1/databases/{database_id}/resume`.
             - `failed`: provisioning did not complete.
             - `deleting`, `deleted`: being deleted, deleted.
         status_message:
           type: string
-          description: Plain-words detail for `warning`, `resizing` and `failed`
+          description: Plain-words detail for `warning`, `resizing`, `upgrading` and `failed`
         region:
           type: string
           enum: [us-east]
@@ -14294,12 +14376,62 @@ components:
             metrics_updated_at:
               type: string
               description: When the numbers were sampled, RFC 3339
+        upgrade_versions:
+          type: array
+          items:
+            type: string
+          description: Major versions this database can be upgraded to, newest first. Empty when there is none.
+          example: ["19"]
+        upgrade_note:
+          type: string
+          description: When `upgrade_versions` is empty and an upgrade exists that this database cannot take yet, the reason in plain words. Empty otherwise.
+        last_version_upgrade:
+          allOf:
+            - $ref: '#/components/schemas/DatabaseVersionUpgrade'
+          nullable: true
+          description: The most recent upgrade to a newer major version, or null if there never was one.
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+
+    DatabaseVersionUpgrade:
+      type: object
+      description: An upgrade of a database to a newer major version.
+      properties:
+        from_version:
+          type: string
+          description: Major version before the upgrade
+          example: "18"
+        to_version:
+          type: string
+          description: Major version the upgrade goes to
+          example: "19"
+        state:
+          type: string
+          enum: [backing_up, upgrading, finishing, analyzing, done, reverting, failed, undone]
+          description: |
+            Where the upgrade stands.
+
+            - `backing_up`: the backup before the upgrade is running. Nothing has changed yet.
+            - `upgrading`: the database is offline and being upgraded.
+            - `finishing`: up on the new version; extensions are being updated.
+            - `analyzing`: running again; statistics are being refreshed.
+            - `done`: the upgrade is complete.
+            - `reverting`: the upgrade could not complete and the database is returning to its version.
+            - `failed`: back on its version, unchanged. See `message`.
+            - `undone`: it had succeeded and was later returned to the older version from a backup.
+        message:
+          type: string
+          description: The reason when `state` is `failed`; empty otherwise
+        started_at:
+          type: string
+          description: When the upgrade started, RFC 3339
+        finished_at:
+          type: string
+          description: When the upgrade finished, RFC 3339 (empty while it runs)
 
     CreateDatabaseRequest:
       type: object
@@ -14390,6 +14522,17 @@ components:
         replica_count:
           type: integer
           description: Desired read replica count. Always applied — pass your current count when not changing it. PostgreSQL only.
+
+    UpgradeDatabaseRequest:
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          type: string
+          minLength: 1
+          description: The major version to upgrade to, one of the database's `upgrade_versions`
+          example: "19"
 
     ConnectDatabaseVPCRequest:
       type: object
@@ -14722,8 +14865,8 @@ components:
           description: Database this backup belongs to
         backup_type:
           type: string
-          enum: [base, on_demand]
-          description: "`base` = nightly automatic backup; `on_demand` = manually requested"
+          enum: [base, on_demand, before_upgrade, after_upgrade]
+          description: "`base` = nightly automatic backup; `on_demand` = manually requested; `before_upgrade` = taken automatically right before an upgrade to a newer major version; `after_upgrade` = the first backup on the new version"
         status:
           type: string
           enum: [pending, running, completed, failed]
@@ -14749,6 +14892,13 @@ components:
         restore_window_start:
           type: string
           description: RFC 3339. Earliest point in time a point-in-time restore can target (the same on every backup in the list). Empty when unknown.
+        engine_version:
+          type: string
+          description: Major version the backup's data is on
+          example: "18"
+        before_upgrade:
+          type: boolean
+          description: True for a backup made before the database's last upgrade to a newer major version. It holds the older version; restoring it returns to that version.
 
     DatabaseUser:
       type: object
