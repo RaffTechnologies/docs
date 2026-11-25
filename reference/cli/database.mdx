@@ -3,7 +3,7 @@ title: "raff database"
 description: "Manage databases from the CLI: create, connect, run queries, browse tables, users, backups, restore, public access, metrics, and logs."
 ---
 
-<sub>Updated November 19, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 The `raff database` command group (aliases: `raff db`, `raff databases`) covers every managed database operation in the public API for PostgreSQL, MySQL, Valkey, ClickHouse, and Kafka. Each subcommand supports `--output json` for scripting.
 
@@ -23,6 +23,7 @@ With no flags, this creates a free PostgreSQL database with public access, waits
 | [`delete`](#delete) | Delete a database and its backups |
 | [`rename`](#rename) | Rename a database |
 | [`resize`](#resize) | Change plan, storage, high availability, or read replicas |
+| [`upgrade`](#upgrade) | Upgrade PostgreSQL to a newer major version |
 | [`resume`](#resume) | Wake a free database paused after 7 idle days |
 | [`connection`](#connection) | Show how to connect |
 | [`rotate-password`](#rotate-password) | Give the admin user a new password |
@@ -107,6 +108,14 @@ raff db resize <database-id> [--plan <plan-id>] [--storage <gb>] [--ha on|off] [
 
 Storage only grows. A new plan must be the same engine.
 
+## upgrade
+
+```bash
+raff db upgrade <database-id> --version <major> [--wait] [--force]
+```
+
+Upgrades a PostgreSQL database to a newer major version in place (CLI 0.6.15 or newer). A backup is taken first, the database is offline while it upgrades, and it returns to its version by itself if the upgrade cannot complete. Without `--version`, the command names the versions the database can take; `raff db get` shows them as **Can upgrade to**. `--wait` follows the upgrade to the end and reports the reason if it did not go through. `--force` skips the confirmation. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
+
 ## resume
 
 ```bash
@@ -169,7 +178,7 @@ raff db backups list <database-id>
 raff db backups create <database-id>
 ```
 
-The list marks which backups can be restored and, for PostgreSQL, the earliest point in time you can restore to.
+The list marks which backups can be restored and, for PostgreSQL, the earliest point in time you can restore to. It shows the version each backup holds and marks the backups from before a major version upgrade.
 
 ## restore
 

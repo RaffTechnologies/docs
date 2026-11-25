@@ -3,7 +3,7 @@ title: "raff_database"
 description: "Manage Raff managed databases with Terraform: PostgreSQL, MySQL, Valkey, ClickHouse, and Kafka, with resizing, high availability, VPC, and public access in place."
 ---
 
-<sub>Updated November 19, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 Manages a **managed database**. The resource waits until the database is running (create timeout 20 minutes). Without `plan_id`, the database is created on the engine's free plan (one per account).
 
@@ -60,7 +60,7 @@ resource "raff_database" "cache" {
 |---|---|---|---|
 | `name` | string | Yes | Display name, unique within the account. Renames in place |
 | `engine` | string | No | `postgres` (default), `mysql`, `valkey`, `clickhouse`, or `kafka`. Changing it replaces the database |
-| `engine_version` | string | No | Major version from [`raff_database_engines`](/reference/terraform/data-sources#raff_database_engines). Defaults to the latest. Changing it replaces the database |
+| `engine_version` | string | No | Major version from [`raff_database_engines`](/reference/terraform/data-sources#raff_database_engines). Defaults to the latest. From provider v0.4.14, raising it on a PostgreSQL database upgrades the database in place; lowering it, or changing it on another engine, is refused. See [Upgrading PostgreSQL](#upgrading-postgresql) |
 | `plan_id` | int | No | Plan from [`raff_database_plans`](/reference/terraform/data-sources#raff_database_plans). Defaults to the free plan. Changing it resizes in place |
 | `storage_gb` | int | No | Storage in GB. Defaults to the plan's included storage. Grows in place; cannot shrink |
 | `ha_enabled` | bool | No | High availability: a standby that takes over on failure. Toggles in place |
@@ -78,6 +78,7 @@ resource "raff_database" "cache" {
 | `id`, `database_id` | Short database ID used in hostnames and the API |
 | `status` | Database status |
 | `server_version` | Full version the running server reports, e.g. `18.6`. Empty until the first reading after creation |
+| `upgrade_versions` | Major versions this database can be upgraded to, newest first. Empty when there is none (provider v0.4.14) |
 | `is_free` | True on the free plan. Free databases pause after 7 days without connections |
 | `host`, `port` | Private endpoint, reachable inside the VPC |
 | `public_host`, `public_port` | Public endpoint. For PostgreSQL, `public_port` is pooled and `public_port + 1` is direct; ports 6543 and 5432 also work on `public_host` |
@@ -86,6 +87,16 @@ resource "raff_database" "cache" {
 | `public_connection_uri` | Public URI including the password, empty while public access is off (sensitive) |
 | `ca_cert` | CA that signs the database's certificate. Kafka clients must trust it; PostgreSQL can use it with `sslmode=verify-full` |
 | `monthly_price` | Monthly price in USD |
+
+## Upgrading PostgreSQL
+
+<Warning>
+Provider versions before 0.4.14 replace the database when `engine_version` changes, which deletes its data. Update the provider before you upgrade a database that Terraform manages, whether you upgrade it with Terraform, the dashboard, the CLI or the API.
+</Warning>
+
+Raise `engine_version` to one of the versions in `upgrade_versions` and apply. The database is upgraded in place and never replaced: a backup is taken first, the database is offline while it upgrades, and it returns to its version by itself if the upgrade cannot complete (the apply then fails with the reason and the state keeps the old version). The apply waits under the `update` timeout, 30 minutes by default.
+
+`engine_version` cannot be lowered: the plan refuses it. If the database was upgraded outside Terraform, set `engine_version` to the version it is on now, or leave it out. Nothing is upgraded automatically. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
 
 ## Import
 

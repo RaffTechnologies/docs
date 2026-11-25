@@ -4,7 +4,7 @@ sidebarTitle: Features & limits
 description: Engines, versions, ports, backups, high availability and every limit of Raff managed databases in one place.
 ---
 
-<sub>Updated November 19, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 The facts about Raff Managed Databases in one place.
 
@@ -46,6 +46,7 @@ Hostnames: `<database_id>.db.raffusercloud.com` (private, in your VPC) and `<dat
 | Read replicas | Up to 5 | PostgreSQL. One read address for all replicas of a database |
 | Backups | Nightly, between 02:00 and 05:00 UTC, kept 30 days (free plan: 3 days) | Plus on-demand |
 | Backups after delete | 14 days | Restore through support |
+| Major version upgrades | PostgreSQL, in place, started by you | Several versions in one upgrade (16 to 18). Not for databases created before November 19, 2026 yet. Not for MySQL, Valkey, ClickHouse or Kafka. Cannot be scheduled for later. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version) |
 | Free plan idle pause | After 7 days without connections | Data kept; resume in about a minute |
 | Dashboard SQL | 15 seconds per statement, first 1,000 rows shown | |
 | Saved queries | 100 per database | |

@@ -1,0 +1,99 @@
+---
+title: "Upgrade PostgreSQL to a newer major version"
+sidebarTitle: Upgrade PostgreSQL version
+description: Upgrade a managed PostgreSQL database to a newer major version in place, with a backup first and an automatic return to its version if the upgrade cannot complete.
+---
+
+<sub>Updated November 25, 2026</sub>
+
+Move a PostgreSQL database to a newer major version, for example from PostgreSQL 17 to PostgreSQL 18. It stays the same database, with the same address and the same connection strings. Raff takes a backup first, and the database is offline for a short time while it upgrades. Nothing is ever upgraded automatically: you start it.
+
+## Before you start
+
+- A running PostgreSQL database. MySQL, Valkey, ClickHouse and Kafka cannot be upgraded in place.
+- A newer major version on offer for it. **Settings** shows it in **Service versions**. You can skip versions: 16 to 18 works in one upgrade.
+- A database created on or after November 19, 2026. Databases created before then run an earlier build and cannot be upgraded in place yet. In **Service versions**, their upgrade button is disabled and shows the reason.
+- To try it first, restore a backup into a new database and upgrade that copy. See [Back up and restore](/products/store/databases/quickstart-guides/back-up-and-restore). Restoring into a new database comes with paid plans.
+
+<Warning>
+**Terraform**: with provider version 0.4.14 or newer, raising `engine_version` on `raff_database` upgrades the database in place. Older provider versions replace the database on a version change, which deletes its data. Update the provider first.
+</Warning>
+
+## Upgrade from the dashboard
+
+<Steps>
+  <Step title="Open Settings">
+    Open the database and go to **Settings**. In **Service versions**, the line **PostgreSQL 18 is available.** shows the newer version.
+  </Step>
+  <Step title="Start the upgrade">
+    Click **Upgrade to PostgreSQL 18**. The dialog lists the steps.
+  </Step>
+  <Step title="Confirm">
+    Click **Upgrade now**. The status shows **Upgrading**, and the page header shows the step: first taking a backup, then the database offline while it upgrades.
+  </Step>
+</Steps>
+
+When the status is **Healthy** again, the database runs the new version.
+
+## Upgrade with the API
+
+Get the versions the database can take from `upgrade_versions` in [Get database](/api-reference/databases/get-database). When it is empty, `upgrade_note` says why. Then start the upgrade:
+
+```bash
+curl -X POST https://api.rafftechnologies.com/api/v1/databases/a1b2c3d4/upgrade \
+  -H "X-API-Key: $RAFF_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "18"}'
+```
+
+The call answers at once with the database in status `upgrading`. Poll `GET /api/v1/databases/{database_id}` until `status` is `running`, then read `last_version_upgrade`:
+
+| Field | Meaning |
+|---|---|
+| `from_version`, `to_version` | The major versions before and after |
+| `state` | `done` when it is complete; `failed` when the database returned to its version |
+| `message` | The reason when `state` is `failed` |
+| `started_at`, `finished_at` | When it started and finished |
+
+A `400` means `version` is missing or not one of the database's `upgrade_versions`. A `412` means the database cannot be upgraded right now; the message says why. See [Upgrade database](/api-reference/databases/upgrade-database).
+
+From the CLI (version 0.6.15 or newer): `raff database upgrade <database-id> --version 18 --wait`. See [raff database](/reference/cli/database#upgrade).
+
+## What happens during the upgrade
+
+1. **A check.** The database keeps running while Raff checks that it can be upgraded. If something blocks it, the upgrade is refused with the reason and nothing changes.
+2. **A backup.** Raff takes a backup before anything changes. It is listed in **Backups** as **Before upgrade**.
+3. **Offline while it upgrades.** A small database is offline for about a minute; a database with many tables takes longer. Open connections are closed, and your applications reconnect when it is back.
+
+## If the upgrade does not go through
+
+If the upgrade cannot complete, the database returns to its version by itself, unchanged. The reason is shown in the dashboard and in `last_version_upgrade.message` in the API. Fix what it names and start the upgrade again.
+
+One known case: a column that uses one of PostgreSQL's reg* types (`regproc`, `regprocedure`, `regoper`, `regoperator`, `regconfig`, `regdictionary`, `regnamespace`, `regcollation`). The check refuses the upgrade and the message names the columns. Change or remove those columns, then start again.
+
+## Go back to the older version
+
+Backups from before the upgrade are kept for the plan's backup retention: 30 days on paid plans, 3 days on the free plan. In **Backups**, each of them carries a tag with its version, such as **PostgreSQL 17**. Click **Restore** on one and choose:
+
+- **Return this database to PostgreSQL 17**: the database goes back to how it was when that backup was made, at the same address. Everything written since the upgrade is lost.
+- **New database on PostgreSQL 17**: a new database from that backup, on the older version. The upgraded database keeps running.
+
+Restore to a point in time only reaches back to the upgrade, not before it.
+
+## After the upgrade
+
+- **Extensions** are updated.
+- **Statistics** are refreshed.
+- **A new backup** is taken, listed in **Backups** as **After upgrade**.
+- **High availability and read replicas**: the standby and the replicas are rebuilt. Until then the database runs without them.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Backups and point-in-time restore" icon="lightbulb" href="/products/store/databases/concepts/backups-and-restore">
+    How backups around an upgrade work.
+  </Card>
+  <Card title="Engines" icon="lightbulb" href="/products/store/databases/concepts/engines">
+    PostgreSQL versions on Raff.
+  </Card>
+</CardGroup>

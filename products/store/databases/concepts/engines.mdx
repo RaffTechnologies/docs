@@ -4,7 +4,7 @@ sidebarTitle: Engines
 description: PostgreSQL, MySQL, Valkey, ClickHouse and Kafka on Raff, what each is for, versions, and what is different about each.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 Raff runs five engines. They share the same dashboard, API, plans and billing; what differs is what each is good at and a few engine-specific details.
 
@@ -12,11 +12,12 @@ Raff runs five engines. They share the same dashboard, API, plans and billing; w
 
 ### PostgreSQL
 
-The default choice for apps, APIs and AI. Versions 18, 17, 16 and 15; 18 when you do not choose.
+The default choice for apps, APIs and AI. Versions 18, 17 and 16; 18 when you do not choose.
 
 - Two addresses: a **pooler** (PgBouncer, transaction mode) for app traffic and a **direct** connection for migrations and session features. See [Connection pooling](/products/store/databases/concepts/connection-pooling).
 - Extensions such as `vector` (pgvector), `pg_trgm` and `pg_stat_statements`. See [Turn on extensions](/products/store/databases/quickstart-guides/turn-on-extensions).
 - Point-in-time restore to any second, high availability with a standby, and read replicas.
+- Upgrade in place to a newer major version, for example from 17 to 18, when you choose. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
 - Database `defaultdb`, admin user `raffadmin`.
 
 ### MySQL
@@ -65,7 +66,8 @@ Event streaming between services, version 4.3 (KRaft, no ZooKeeper).
 
 ## Trade-offs
 
-- The engine and its major version are fixed after create. To move, create a new database and copy the data.
+- The engine is fixed after create. To move to another engine, create a new database and copy the data.
+- A PostgreSQL database can move to a newer major version in place; Raff never does it automatically. MySQL, Valkey, ClickHouse and Kafka keep their major version: to move, create a new database and copy the data.
 - The free plan covers PostgreSQL, MySQL and Valkey. ClickHouse and Kafka start at their smallest paid plan.
 
 ## Related

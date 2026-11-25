@@ -4,7 +4,7 @@ sidebarTitle: Troubleshooting
 description: Common issues with Raff managed databases and how to fix them.
 ---
 
-<sub>Updated October 11, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 Issues you may run into with managed databases, and how to resolve them. If your problem is not listed, contact [support](mailto:support@rafftechnologies.com).
 
@@ -58,6 +58,24 @@ Issues you may run into with managed databases, and how to resolve them. If your
     **What's happening:** the pooler runs in transaction mode, which does not keep session state or session prepared statements.
 
     **Fix:** for Prisma add `pgbouncer=true` to the pooled URL, and use the direct port 5432 for migrations (`directUrl`). See [Connection pooling](/products/store/databases/concepts/connection-pooling).
+  </Accordion>
+  <Accordion title="The upgrade was refused">
+    **What's happening:** the check before a PostgreSQL major version upgrade found something that blocks it. Nothing changed; the message says why.
+
+    **Fix:**
+    1. **A column uses a reg* type** (`regproc`, `regprocedure`, `regoper`, `regoperator`, `regconfig`, `regdictionary`, `regnamespace` or `regcollation`): the message names the columns. Change them to another type or remove them, then start the upgrade again.
+    2. **The database is not running**: wait until it is **Healthy**, then start again.
+    3. **It is already being upgraded**: wait for the running upgrade to finish.
+  </Accordion>
+  <Accordion title="The upgrade did not go through">
+    **What's happening:** the upgrade could not complete, so the database returned to its version by itself, unchanged.
+
+    **Fix:** read the reason in the dashboard or in `last_version_upgrade.message` in the API. Fix what it names and start the upgrade again. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
+  </Accordion>
+  <Accordion title="The Upgrade button is disabled">
+    **What's happening:** the database cannot take the newer version yet. Databases created before November 19, 2026 cannot be upgraded in place yet. The reason shows next to the button in **Settings**, **Service versions**, and in `upgrade_note` in the API.
+
+    **Fix:** to use the newer version now, create a new database and copy the data into it.
   </Accordion>
   <Accordion title="I cannot create a free database">
     **What's happening:** each account has one free database, any engine, and it is in use.

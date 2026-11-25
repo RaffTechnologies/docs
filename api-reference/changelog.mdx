@@ -15,6 +15,28 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 ## v1.0.0 (Beta)
 
+### November 25, 2026
+
+**Managed Databases: API**
+
+- 🟢 **Added**: [Upgrade database](/api-reference/databases/upgrade-database) `POST /api/v1/databases/{database_id}/upgrade` with `{"version": "18"}` upgrades a PostgreSQL database to a newer major version in place, with the same address. It takes a backup first and returns the database to its version by itself if the upgrade cannot complete. Other engines are refused. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
+- 🟢 **Added**: `upgrade_versions`, `upgrade_note` and `last_version_upgrade` on the `Database` object, and the status `upgrading` while an upgrade runs.
+- 🟢 **Added**: `engine_version` and `before_upgrade` on each backup in [List backups](/api-reference/databases/list-database-backups), and the backup kinds `before_upgrade` and `after_upgrade` in `backup_type`. Restoring a backup whose `before_upgrade` is `true` returns the database to the older version, or creates a new database on it.
+
+**Managed Databases: CLI** (raff-cli v0.6.15)
+
+- 🟢 **Added**: [`raff db upgrade`](/reference/cli/database#upgrade) `<database-id> --version <major>` upgrades a PostgreSQL database to a newer major version; `--wait` follows it to the end.
+- 🔵 **Updated**: [`raff db get`](/reference/cli/database#get) shows the versions a database can upgrade to and its last upgrade, and [`raff db backups list`](/reference/cli/database#backups) shows the version each backup holds.
+
+**Managed Databases: Go SDK** (raff-go v0.8.11)
+
+- 🟢 **Added**: `Databases.Upgrade` and `Databases.WaitForUpgrade`. An upgrade that did not go through comes back as `*raff.UpgradeError` with the reason.
+
+**Managed Databases: Terraform** (provider v0.4.14)
+
+- 🔵 **Updated**: [`raff_database`](/reference/terraform/raff_database#upgrading-postgresql): a change of `engine_version` never replaces the database any more. Raising it on a PostgreSQL database upgrades it in place; lowering it, or changing it on another engine, is refused. Earlier provider versions replace the database, which deletes its data: update the provider before you upgrade a database that Terraform manages.
+- 🟢 **Added**: `upgrade_versions` on `raff_database` and its data source.
+
 ### November 24, 2026
 
 **Volumes: EU Central**

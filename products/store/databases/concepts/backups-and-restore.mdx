@@ -4,7 +4,7 @@ sidebarTitle: Backups and point-in-time restore
 description: When Raff backs up managed databases, how long backups are kept, and how restore and point-in-time restore work per engine.
 ---
 
-<sub>Updated November 17, 2026</sub>
+<sub>Updated November 25, 2026</sub>
 
 Raff backs up every managed database every night and keeps the backups in Raff Object Storage, three copies each. PostgreSQL and MySQL also keep a continuous change log, so you can restore to any second, not only to last night.
 
@@ -30,6 +30,13 @@ The default. Raff creates a new database on the same plan from the backup or poi
 
 Overwrites the live database with the older state. Raff first takes a safety snapshot of the current data, then rebuilds the database; it is offline for a few minutes. Writes made after the restore point are gone, except in the safety snapshot.
 
+### Backups around an upgrade (PostgreSQL)
+
+When you [upgrade PostgreSQL to a newer major version](/products/store/databases/quickstart-guides/upgrade-postgresql-version), Raff takes a backup right before it, listed as **Before upgrade**, and one right after it, listed as **After upgrade**. Backups from before the upgrade carry a tag with their version, such as **PostgreSQL 17**, and are kept for the plan's usual retention. **Restore** on such a backup offers two choices:
+
+- **Return this database to PostgreSQL 17**: the database goes back to how it was when the backup was made, at the same address. Everything written since the upgrade is lost.
+- **New database on PostgreSQL 17**: a new database on the older version. The upgraded one keeps running.
+
 ### Free databases
 
 Free databases are backed up every night, their backups are kept 3 days, and they restore in place. Point-in-time restore and restoring into a new database come with paid plans.
@@ -43,6 +50,7 @@ Free databases are backed up every night, their backups are kept 3 days, and the
 ## Trade-offs
 
 - Point-in-time restore reaches back to the oldest backup kept, shown in the **Backups** tab as **Restore to any second since...**.
+- After a PostgreSQL major version upgrade, point-in-time restore only reaches back to the upgrade. To go back further, restore a backup from before it.
 - Valkey snapshots are nightly: a restore can lose up to a day of keys.
 - After a database is deleted, its backups are kept 14 days; within that time only support can restore them.
 

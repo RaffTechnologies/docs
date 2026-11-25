@@ -348,6 +348,7 @@
                       "products/store/databases/quickstart-guides/manage-users",
                       "products/store/databases/quickstart-guides/turn-on-extensions",
                       "products/store/databases/quickstart-guides/resize-a-database",
+                      "products/store/databases/quickstart-guides/upgrade-postgresql-version",
                       "products/store/databases/quickstart-guides/back-up-and-restore",
                       "products/store/databases/quickstart-guides/monitor-a-database",
                       "products/store/databases/quickstart-guides/delete-a-database"
