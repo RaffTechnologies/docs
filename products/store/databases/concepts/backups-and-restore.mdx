@@ -32,10 +32,10 @@ Overwrites the live database with the older state. Raff first takes a safety sna
 
 ### Backups around an upgrade (PostgreSQL)
 
-When you [upgrade PostgreSQL to a newer major version](/products/store/databases/quickstart-guides/upgrade-postgresql-version), Raff takes a backup right before it, listed as **Before upgrade**, and one right after it, listed as **After upgrade**. Backups from before the upgrade carry a tag with their version, such as **PostgreSQL 17**, and are kept for the plan's usual retention. **Restore** on such a backup offers two choices:
+When you [upgrade PostgreSQL to a newer major version](/products/store/databases/quickstart-guides/upgrade-postgresql-version), Raff takes a backup right before it, listed as **Before upgrade**, and one right after it, listed as **After upgrade**. Backups from before the upgrade carry a tag with their version, such as **PostgreSQL 18**, and are kept for the plan's usual retention. **Restore** on such a backup offers two choices:
 
-- **Return this database to PostgreSQL 17**: the database goes back to how it was when the backup was made, at the same address. Everything written since the upgrade is lost.
-- **New database on PostgreSQL 17**: a new database on the older version. The upgraded one keeps running.
+- **Return this database to PostgreSQL 18**: the database goes back to how it was when the backup was made, at the same address. Everything written since the upgrade is lost.
+- **New database on PostgreSQL 18**: a new database on the older version. The upgraded one keeps running.
 
 ### Free databases
 

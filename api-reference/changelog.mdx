@@ -19,7 +19,8 @@ All changes to the Raff public API. Current version: **v1.0.0** (beta).
 
 **Managed Databases: API**
 
-- 🟢 **Added**: [Upgrade database](/api-reference/databases/upgrade-database) `POST /api/v1/databases/{database_id}/upgrade` with `{"version": "18"}` upgrades a PostgreSQL database to a newer major version in place, with the same address. It takes a backup first and returns the database to its version by itself if the upgrade cannot complete. Other engines are refused. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
+- 🟢 **Added**: PostgreSQL 19 for new databases. [Create database](/api-reference/databases/create-database) `POST /api/v1/databases` accepts `engine_version` `19`, and a create without `engine_version` now gets 19 (was 18). 18, 17 and 16 can still be chosen; [List database engines](/api-reference/databases/list-database-engines) returns the list. Existing databases keep their version.
+- 🟢 **Added**: [Upgrade database](/api-reference/databases/upgrade-database) `POST /api/v1/databases/{database_id}/upgrade` with `{"version": "19"}` upgrades a PostgreSQL database to a newer major version in place, with the same address. It takes a backup first and returns the database to its version by itself if the upgrade cannot complete. Other engines are refused. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
 - 🟢 **Added**: `upgrade_versions`, `upgrade_note` and `last_version_upgrade` on the `Database` object, and the status `upgrading` while an upgrade runs.
 - 🟢 **Added**: `engine_version` and `before_upgrade` on each backup in [List backups](/api-reference/databases/list-database-backups), and the backup kinds `before_upgrade` and `after_upgrade` in `backup_type`. Restoring a backup whose `before_upgrade` is `true` returns the database to the older version, or creates a new database on it.
 

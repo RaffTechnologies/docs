@@ -6,12 +6,12 @@ description: Upgrade a managed PostgreSQL database to a newer major version in p
 
 <sub>Updated November 25, 2026</sub>
 
-Move a PostgreSQL database to a newer major version, for example from PostgreSQL 17 to PostgreSQL 18. It stays the same database, with the same address and the same connection strings. Raff takes a backup first, and the database is offline for a short time while it upgrades. Nothing is ever upgraded automatically: you start it.
+Move a PostgreSQL database to a newer major version, for example from PostgreSQL 18 to PostgreSQL 19. It stays the same database, with the same address and the same connection strings. Raff takes a backup first, and the database is offline for a short time while it upgrades. Nothing is ever upgraded automatically: you start it.
 
 ## Before you start
 
 - A running PostgreSQL database. MySQL, Valkey, ClickHouse and Kafka cannot be upgraded in place.
-- A newer major version on offer for it. **Settings** shows it in **Service versions**. You can skip versions: 16 to 18 works in one upgrade.
+- A newer major version on offer for it. **Settings** shows it in **Service versions**. You can skip versions: 16 to 19 works in one upgrade.
 - A database created on or after November 19, 2026. Databases created before then run an earlier build and cannot be upgraded in place yet. In **Service versions**, their upgrade button is disabled and shows the reason.
 - To try it first, restore a backup into a new database and upgrade that copy. See [Back up and restore](/products/store/databases/quickstart-guides/back-up-and-restore). Restoring into a new database comes with paid plans.
 
@@ -23,10 +23,10 @@ Move a PostgreSQL database to a newer major version, for example from PostgreSQL
 
 <Steps>
   <Step title="Open Settings">
-    Open the database and go to **Settings**. In **Service versions**, the line **PostgreSQL 18 is available.** shows the newer version.
+    Open the database and go to **Settings**. In **Service versions**, the line **PostgreSQL 19 is available.** shows the newer version.
   </Step>
   <Step title="Start the upgrade">
-    Click **Upgrade to PostgreSQL 18**. The dialog lists the steps.
+    Click **Upgrade to PostgreSQL 19**. The dialog lists the steps.
   </Step>
   <Step title="Confirm">
     Click **Upgrade now**. The status shows **Upgrading**, and the page header shows the step: first taking a backup, then the database offline while it upgrades.
@@ -43,7 +43,7 @@ Get the versions the database can take from `upgrade_versions` in [Get database]
 curl -X POST https://api.rafftechnologies.com/api/v1/databases/a1b2c3d4/upgrade \
   -H "X-API-Key: $RAFF_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"version": "18"}'
+  -d '{"version": "19"}'
 ```
 
 The call answers at once with the database in status `upgrading`. Poll `GET /api/v1/databases/{database_id}` until `status` is `running`, then read `last_version_upgrade`:
@@ -57,7 +57,7 @@ The call answers at once with the database in status `upgrading`. Poll `GET /api
 
 A `400` means `version` is missing or not one of the database's `upgrade_versions`. A `412` means the database cannot be upgraded right now; the message says why. See [Upgrade database](/api-reference/databases/upgrade-database).
 
-From the CLI (version 0.6.15 or newer): `raff database upgrade <database-id> --version 18 --wait`. See [raff database](/reference/cli/database#upgrade).
+From the CLI (version 0.6.15 or newer): `raff database upgrade <database-id> --version 19 --wait`. See [raff database](/reference/cli/database#upgrade).
 
 ## What happens during the upgrade
 
@@ -73,10 +73,10 @@ One known case: a column that uses one of PostgreSQL's reg* types (`regproc`, `r
 
 ## Go back to the older version
 
-Backups from before the upgrade are kept for the plan's backup retention: 30 days on paid plans, 3 days on the free plan. In **Backups**, each of them carries a tag with its version, such as **PostgreSQL 17**. Click **Restore** on one and choose:
+Backups from before the upgrade are kept for the plan's backup retention: 30 days on paid plans, 3 days on the free plan. In **Backups**, each of them carries a tag with its version, such as **PostgreSQL 18**. Click **Restore** on one and choose:
 
-- **Return this database to PostgreSQL 17**: the database goes back to how it was when that backup was made, at the same address. Everything written since the upgrade is lost.
-- **New database on PostgreSQL 17**: a new database from that backup, on the older version. The upgraded database keeps running.
+- **Return this database to PostgreSQL 18**: the database goes back to how it was when that backup was made, at the same address. Everything written since the upgrade is lost.
+- **New database on PostgreSQL 18**: a new database from that backup, on the older version. The upgraded database keeps running.
 
 Restore to a point in time only reaches back to the upgrade, not before it.
 

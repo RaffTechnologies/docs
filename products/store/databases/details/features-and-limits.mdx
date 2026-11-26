@@ -12,7 +12,7 @@ The facts about Raff Managed Databases in one place.
 
 | Engine | Versions | High availability | Read replicas | Point-in-time restore | Public access | Free plan |
 |---|---|---|---|---|---|---|
-| PostgreSQL | 18, 17, 16 | Primary + standby | Yes | Yes | Yes | Yes |
+| PostgreSQL | 19, 18, 17, 16 | Primary + standby | Yes | Yes | Yes | Yes |
 | MySQL | 8.0 | 3-node cluster, on plans up to 2 vCPU | No | Yes | Yes | Yes |
 | Valkey | 8 | Primary + standby + Sentinel | No | No (nightly snapshots) | Yes | Yes |
 | ClickHouse | 25.8 | 2 replicas + Keeper | No | No | Yes | No |
@@ -46,7 +46,7 @@ Hostnames: `<database_id>.db.raffusercloud.com` (private, in your VPC) and `<dat
 | Read replicas | Up to 5 | PostgreSQL. One read address for all replicas of a database |
 | Backups | Nightly, between 02:00 and 05:00 UTC, kept 30 days (free plan: 3 days) | Plus on-demand |
 | Backups after delete | 14 days | Restore through support |
-| Major version upgrades | PostgreSQL, in place, started by you | Several versions in one upgrade (16 to 18). Not for databases created before November 19, 2026 yet. Not for MySQL, Valkey, ClickHouse or Kafka. Cannot be scheduled for later. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version) |
+| Major version upgrades | PostgreSQL, in place, started by you | Several versions in one upgrade (16 to 19). Not for databases created before November 19, 2026 yet. Not for MySQL, Valkey, ClickHouse or Kafka. Cannot be scheduled for later. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version) |
 | Free plan idle pause | After 7 days without connections | Data kept; resume in about a minute |
 | Dashboard SQL | 15 seconds per statement, first 1,000 rows shown | |
 | Saved queries | 100 per database | |

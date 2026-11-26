@@ -12,12 +12,12 @@ Raff runs five engines. They share the same dashboard, API, plans and billing; w
 
 ### PostgreSQL
 
-The default choice for apps, APIs and AI. Versions 18, 17 and 16; 18 when you do not choose.
+The default choice for apps, APIs and AI. Versions 19, 18, 17 and 16; 19 when you do not choose.
 
 - Two addresses: a **pooler** (PgBouncer, transaction mode) for app traffic and a **direct** connection for migrations and session features. See [Connection pooling](/products/store/databases/concepts/connection-pooling).
 - Extensions such as `vector` (pgvector), `pg_trgm` and `pg_stat_statements`. See [Turn on extensions](/products/store/databases/quickstart-guides/turn-on-extensions).
 - Point-in-time restore to any second, high availability with a standby, and read replicas.
-- Upgrade in place to a newer major version, for example from 17 to 18, when you choose. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
+- Upgrade in place to a newer major version, for example from 18 to 19, when you choose. See [Upgrade PostgreSQL version](/products/store/databases/quickstart-guides/upgrade-postgresql-version).
 - Database `defaultdb`, admin user `raffadmin`.
 
 ### MySQL
